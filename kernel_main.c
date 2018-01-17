@@ -23,12 +23,12 @@
 
 // Choose Raspi type:
 //
-//#define PERI_BASE PERI_BASE_PI1
-#define PERI_BASE PERI_BASE_PI2
+#define PERI_BASE PERI_BASE_PI1
+//#define PERI_BASE PERI_BASE_PI2
 
 // GPIO registers (see page 90):
 //
-#define GPIO_BASE (PERI_BASE + 0x00200000)
+#define GPIO_BASE (PERI_BASE + 0x200000)
 #define GPFSEL1 (GPIO_BASE + 0x04) // GPIO function select 1.
 #define GPSET0 (GPIO_BASE + 0x1C) // GPIO pin output set 0.
 #define GPCLR0 (GPIO_BASE + 0x28) // GPIO pin output clear 0.
@@ -56,6 +56,28 @@
 //
 // In addition to the Mini UART there also exist two SPI masters
 // as auxiliary peripherals.
+
+// UART0 (PL011) register map (see page 177):
+//
+#define UART0_BASE (PERI_BASE + 0x201000)
+#define UART0_DR UART0_BASE
+#define UART0_RSRECR (UART0_BASE + 0x04)
+#define UART0_FR (UART0_BASE + 0x18)
+#define UART0_ILPR (UART0_BASE + 0x20)
+#define UART0_IBRD (UART0_BASE + 0x24)
+#define UART0_FBRD (UART0_BASE + 0x28)
+#define UART0_LCRH (UART0_BASE + 0x2C)
+#define UART0_CR (UART0_BASE + 0x30)
+#define UART0_IFLS (UART0_BASE + 0x34)
+#define UART0_IMSC (UART0_BASE + 0x38)
+#define UART0_RIS (UART0_BASE + 0x3C)
+#define UART0_MIS (UART0_BASE + 0x40)
+#define UART0_ICR (UART0_BASE + 0x44)
+#define UART0_DMACR (UART0_BASE + 0x48)
+#define UART0_ITCR (UART0_BASE + 0x80)
+#define UART0_ITIP (UART0_BASE + 0x84)
+#define UART0_ITOP (UART0_BASE + 0x88)
+#define UART0_TDR (UART0_BASE + 0x8C)
 
 static void mmio_write(uint32_t const reg, uint32_t const data)
 {
@@ -111,13 +133,90 @@ static void init_uart1()
     mmio_write(AUX_MU_CNTL_REG, 3);
 }
 
+// static void uart0_flush_rx_fifo()
+// {
+//     while((mmio_read(UART0_FR) & 0x10)==0)
+//     {
+//         mmio_read(UART0_DR);
+//     }
+// }
+// static void init_uart0()
+// {
+//     uint32_t buf;
+//
+//     mmio_write(UART0_CR, 0);
+//
+//     buf = mmio_read(GPFSEL1);
+//     buf &= ~(7<<12);
+//     buf |= 4<<12;
+//     buf &= ~(7<<15);
+//     buf |= 4<<15;
+//     mmio_write(GPFSEL1, buf);
+//
+//     mmio_write(GPPUD, 0);
+//     delay(150);
+//     mmio_write(GPPUDCLK0, (1<<14)|(1<<15));
+//     delay(150);
+//     //mmio_write(GPPUD, 0); // Not necessary.
+//     mmio_write(GPPUDCLK0, 0);
+//
+//     // Hard-coded for UART0 frequency:
+//     //
+//     // (3000000 / (16 * 115200) = 1.627
+//     // (0.627*64)+0.5 = 40
+//     // int 1 frac 40
+//     //
+//     mmio_write(UART0_ICR, 0x7FF);
+//     mmio_write(UART0_IBRD, 1);
+//     mmio_write(UART0_FBRD, 40);
+//     mmio_write(UART0_LCRH, 0x70);
+//     mmio_write(UART0_CR, 0x301);
+//
+//     uart0_flush_rx_fifo();
+// }
+
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
+    uint32_t buf = 0;
+
     // To be able to compile, although these are not used (stupid?):
     //
 	(void)r0;
 	(void)r1;
 	(void)r2;
+
+    // WORKS:
+    //
+    // Raspi1, print to UART1 serial out and blink:
+    //
+    buf = mmio_read(GPFSEL1);
+    buf &= ~(7<<18);
+    buf |= 1<<18;
+    mmio_write(GPFSEL1, buf);
+    //
+    init_uart1();
+    //
+    buf = 0;
+    while(true)
+    {
+        // Print to UART1:
+        //
+        while((mmio_read(AUX_MU_LSR_REG) & 0x20) == 0)
+        {
+            ;
+        }
+        mmio_write(AUX_MU_IO_REG , 0x30 + (buf++));
+        buf = buf%10;
+
+        // Blink:
+        //
+        mmio_write(GPSET0, 1<<16);
+        delay(0x500000);
+        mmio_write(GPCLR0, 1<<16);
+        delay(0x500000);
+    }
+
+    return;
 
     //// WORKS:
     ////
@@ -141,42 +240,20 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     delay(0x200000);
     // }
 
-    // // WORKS:
+    // // Does NOT work: Print to UART0 serial out:
     // //
-    // // Raspi1: Toggle one LED (ACT - a green one) on/off:
-    //
-    // volatile uint32_t * const GPFSEL1 = (uint32_t*)0x20200004;
-    // volatile uint32_t * const GPSET0 = (uint32_t*)0x2020001C;
-    // volatile uint32_t * const GPCLR0 = (uint32_t*)0x20200028;
-    //
-    // *GPFSEL1 = (*GPFSEL1 & (~(7 << 18))) | (1 << 18);
+    // init_uart0();
+    // //
+    // buf = 0;
     // while(true)
     // {
-    //     *GPSET0 = 1 << 16;
+    //     while((mmio_read(UART0_FR) & 0x20) != 0)
+    //     {
+    //         ;
+    //     }
+    //     mmio_write(UART0_DR , 0x30 + (buf++));
     //     delay(0x1000000);
     //
-    //     *GPCLR0 = 1 << 16;
-    //     delay(0x500000);
+    //     buf = buf%10;
     // }
-
-    // WORKS:
-    //
-    // Raspi1, print to UART serial out:
-
-    init_uart1();
-
-    uint32_t buf = 0;
-
-    while(true)
-    {
-        while((mmio_read(AUX_MU_LSR_REG) & 0x20) == 0)
-        {
-            ;
-        }
-        mmio_write(AUX_MU_IO_REG , 0x30 + (buf++));
-
-        delay(0x1000000);
-
-        buf = buf%10;
-    }
 }
