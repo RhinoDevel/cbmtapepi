@@ -57,6 +57,19 @@
 // In addition to the Mini UART there also exist two SPI masters
 // as auxiliary peripherals.
 
+// ARM Timer (based on an SP804 - NOT an "AP804" -, see page 196):
+//
+#define ARM_TIMER_BASE (PERI_BASE + 0xB000)
+#define ARM_TIMER_LOD (ARM_TIMER_BASE + 0x400) // Load
+#define ARM_TIMER_VAL (ARM_TIMER_BASE + 0x404) // Value (read only).
+#define ARM_TIMER_CTL (ARM_TIMER_BASE + 0x408) // Control
+#define ARM_TIMER_CLI (ARM_TIMER_BASE + 0x40C) // IRQ clear/ACK (write only).
+#define ARM_TIMER_RIS (ARM_TIMER_BASE + 0x410) // Raw IRQ (read only).
+#define ARM_TIMER_MIS (ARM_TIMER_BASE + 0x414) // Masked IRQ (read only).
+#define ARM_TIMER_RLD (ARM_TIMER_BASE + 0x418) // Reload
+#define ARM_TIMER_DIV (ARM_TIMER_BASE + 0x41C) // Pre-divider / pre-scaler.
+#define ARM_TIMER_CNT (ARM_TIMER_BASE + 0x420) // Free running counter.
+
 // UART0 (PL011) register map (see page 177):
 //
 #define UART0_BASE (PERI_BASE + 0x201000)
@@ -93,6 +106,32 @@ static void delay(int32_t count)
 {
 	asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
 		 : "=r"(count): [count]"0"(count) : "cc");
+}
+
+/**
+ * - Hard-coded for 250 MHz clock.
+ */
+static void busy_wait_seconds(uint32_t const seconds)
+{
+    static uint32_t const clock = 250000000; // 250 MHz
+    static uint32_t const divider = 1000;
+    static uint32_t const clock_to_use = clock/divider; // 250 kHz
+
+    uint32_t const start_val = clock_to_use*seconds;
+
+    mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
+    mmio_write(ARM_TIMER_LOD, start_val-1); // Initial value to count down from.
+    mmio_write(ARM_TIMER_RLD, start_val-1); // Used after count to zero done.
+    mmio_write(ARM_TIMER_DIV, divider); // [10 bits are avail. (page 199)].
+    mmio_write(ARM_TIMER_CLI, 0);
+    mmio_write(ARM_TIMER_CTL, 0x003E0082); // Enables 32-bit counter.
+
+    while(mmio_read(ARM_TIMER_RIS)==0) // Polling interrupt flag.
+    {
+        ;
+    }
+
+    mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
 }
 
 static void init_uart1()
@@ -211,9 +250,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         // Blink:
         //
         mmio_write(GPSET0, 1<<16);
-        delay(0x500000);
+        busy_wait_seconds(7);
         mmio_write(GPCLR0, 1<<16);
-        delay(0x500000);
+        busy_wait_seconds(3);
     }
 
     return;
