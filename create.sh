@@ -24,11 +24,11 @@ export PATH="$PREFIX/bin:$PATH"
 export MTUNE=arm1176jzf-s
 export MFPU=vfp
 export MARCH=armv6zk
-
-## WORKS:
-##
-## raspi2 / BCM2836 / Cortex-A7:
-##
+#
+# # WORKS:
+# #
+# # raspi2 / BCM2836 / Cortex-A7:
+# #
 # export MTUNE=cortex-a7
 # export MFPU=neon-vfpv4
 # export MARCH=armv7-a
@@ -87,5 +87,5 @@ echo Copying..
 cp kernel.img kernel7.img # Append "7" for raspi2.
 
 #echo Starting emulator..
-#
+##
 #qemu-system-arm -m 256 -M raspi2 -kernel kernel.elf -serial stdio
