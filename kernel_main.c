@@ -108,31 +108,75 @@ static void delay(int32_t count)
 		 : "=r"(count): [count]"0"(count) : "cc");
 }
 
-/**
- * - Hard-coded for 250 MHz clock.
- */
-static void busy_wait_seconds(uint32_t const seconds)
+static void busy_wait(uint32_t const start_val, uint32_t const divider)
 {
-    static uint32_t const clock = 250000000; // 250 MHz
-    static uint32_t const divider = 1000;
-    static uint32_t const clock_to_use = clock/divider; // 250 kHz
-
-    uint32_t const start_val = clock_to_use*seconds;
-
     mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
     mmio_write(ARM_TIMER_LOD, start_val-1); // Initial value to count down from.
-    mmio_write(ARM_TIMER_RLD, start_val-1); // Used after count to zero done.
+    //mmio_write(ARM_TIMER_RLD, start_val-1); // Used after count to zero done.
     mmio_write(ARM_TIMER_DIV, divider); // [10 bits are avail. (page 199)].
     mmio_write(ARM_TIMER_CLI, 0);
     mmio_write(ARM_TIMER_CTL, 0x003E0082); // Enables 32-bit counter.
-
     while(mmio_read(ARM_TIMER_RIS)==0) // Polling interrupt flag.
     {
         ;
     }
-
-    mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
+    //mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
 }
+
+#if 0
+/** Busy-wait for given seconds
+ *  (valid input values go from 1 to 17179 seconds).
+ *
+ * - Hard-coded for 250 MHz clock.
+ */
+static void busy_wait_seconds(uint32_t const seconds)
+{
+    // Timer counts down 250.000 times in one second (with 250 kHz):
+    //
+    busy_wait(250000*seconds, 1000);
+}
+#endif //0
+
+/** Busy-wait for given milli seconds
+ *  (valid input values go from 1 to 17179869 milliseconds).
+ *
+ * - Hard-coded for 250 MHz clock.
+ */
+static void busy_wait_milliseconds(uint32_t const milliseconds)
+{
+    // Timer counts down 250 times in one millisecond (with 250 kHz):
+    //
+    busy_wait(250*milliseconds, 1000);
+}
+
+/** Busy-wait for given micro seconds
+ *  (valid input values go from 1 to 4294967295 microseconds).
+ *
+ * - Hard-coded for 250 MHz clock.
+ */
+static void busy_wait_microseconds(uint32_t const microseconds)
+{
+    // Timer counts down 1 time in one microsecond (with 1 MHz):
+    //
+    busy_wait(microseconds, 250);
+}
+
+#if 0
+// TODO: Take function time into account!
+//
+/** Busy-wait for given nano seconds
+ *  (valid input values go from 4 to 4294967292 nanoseconds,
+ *  where given value must be dividable by 4 to get precise results).
+ *
+ * - Hard-coded for 250 MHz clock.
+ */
+static void busy_wait_nanoseconds(uint32_t const nanoseconds)
+{
+    // Timer counts down 1 time in four nanoseconds (with 250 MHz):
+    //
+    busy_wait(nanoseconds/4, 1);
+}
+#endif //0
 
 static void init_uart1()
 {
@@ -250,9 +294,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         // Blink:
         //
         mmio_write(GPSET0, 1<<16);
-        busy_wait_seconds(7);
+        busy_wait_milliseconds(500); // 0.5 seconds.
         mmio_write(GPCLR0, 1<<16);
-        busy_wait_seconds(3);
+        busy_wait_microseconds(500000); // Also 0.5 seconds.
     }
 
     return;
