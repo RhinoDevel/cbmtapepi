@@ -72,28 +72,6 @@
 #define ARM_TIMER_DIV (ARM_TIMER_BASE + 0x41C) // Pre-divider / pre-scaler.
 #define ARM_TIMER_CNT (ARM_TIMER_BASE + 0x420) // Free running counter.
 
-// UART0 (PL011) register map (see page 177):
-//
-#define UART0_BASE (PERI_BASE + 0x201000)
-#define UART0_DR UART0_BASE
-#define UART0_RSRECR (UART0_BASE + 0x04)
-#define UART0_FR (UART0_BASE + 0x18)
-#define UART0_ILPR (UART0_BASE + 0x20)
-#define UART0_IBRD (UART0_BASE + 0x24)
-#define UART0_FBRD (UART0_BASE + 0x28)
-#define UART0_LCRH (UART0_BASE + 0x2C)
-#define UART0_CR (UART0_BASE + 0x30)
-#define UART0_IFLS (UART0_BASE + 0x34)
-#define UART0_IMSC (UART0_BASE + 0x38)
-#define UART0_RIS (UART0_BASE + 0x3C)
-#define UART0_MIS (UART0_BASE + 0x40)
-#define UART0_ICR (UART0_BASE + 0x44)
-#define UART0_DMACR (UART0_BASE + 0x48)
-#define UART0_ITCR (UART0_BASE + 0x80)
-#define UART0_ITIP (UART0_BASE + 0x84)
-#define UART0_ITOP (UART0_BASE + 0x88)
-#define UART0_TDR (UART0_BASE + 0x8C)
-
 static void mmio_write(uint32_t const reg, uint32_t const data)
 {
 	*(volatile uint32_t *)reg = data;
@@ -218,48 +196,6 @@ static void init_uart1()
     mmio_write(AUX_MU_CNTL_REG, 3);
 }
 
-// static void uart0_flush_rx_fifo()
-// {
-//     while((mmio_read(UART0_FR) & 0x10)==0)
-//     {
-//         mmio_read(UART0_DR);
-//     }
-// }
-// static void init_uart0()
-// {
-//     uint32_t buf;
-//
-//     mmio_write(UART0_CR, 0);
-//
-//     buf = mmio_read(GPFSEL1);
-//     buf &= ~(7<<12);
-//     buf |= 4<<12;
-//     buf &= ~(7<<15);
-//     buf |= 4<<15;
-//     mmio_write(GPFSEL1, buf);
-//
-//     mmio_write(GPPUD, 0);
-//     delay(150);
-//     mmio_write(GPPUDCLK0, (1<<14)|(1<<15));
-//     delay(150);
-//     //mmio_write(GPPUD, 0); // Not necessary.
-//     mmio_write(GPPUDCLK0, 0);
-//
-//     // Hard-coded for UART0 frequency:
-//     //
-//     // (3000000 / (16 * 115200) = 1.627
-//     // (0.627*64)+0.5 = 40
-//     // int 1 frac 40
-//     //
-//     mmio_write(UART0_ICR, 0x7FF);
-//     mmio_write(UART0_IBRD, 1);
-//     mmio_write(UART0_FBRD, 40);
-//     mmio_write(UART0_LCRH, 0x70);
-//     mmio_write(UART0_CR, 0x301);
-//
-//     uart0_flush_rx_fifo();
-// }
-
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
     uint32_t buf = 0;
@@ -343,3 +279,67 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     buf = buf%10;
     // }
 }
+
+// // UART0 (PL011) register map (see page 177):
+// //
+// #define UART0_BASE (PERI_BASE + 0x201000)
+// #define UART0_DR UART0_BASE
+// #define UART0_RSRECR (UART0_BASE + 0x04)
+// #define UART0_FR (UART0_BASE + 0x18)
+// #define UART0_ILPR (UART0_BASE + 0x20)
+// #define UART0_IBRD (UART0_BASE + 0x24)
+// #define UART0_FBRD (UART0_BASE + 0x28)
+// #define UART0_LCRH (UART0_BASE + 0x2C)
+// #define UART0_CR (UART0_BASE + 0x30)
+// #define UART0_IFLS (UART0_BASE + 0x34)
+// #define UART0_IMSC (UART0_BASE + 0x38)
+// #define UART0_RIS (UART0_BASE + 0x3C)
+// #define UART0_MIS (UART0_BASE + 0x40)
+// #define UART0_ICR (UART0_BASE + 0x44)
+// #define UART0_DMACR (UART0_BASE + 0x48)
+// #define UART0_ITCR (UART0_BASE + 0x80)
+// #define UART0_ITIP (UART0_BASE + 0x84)
+// #define UART0_ITOP (UART0_BASE + 0x88)
+// #define UART0_TDR (UART0_BASE + 0x8C)
+//
+// static void uart0_flush_rx_fifo()
+// {
+//     while((mmio_read(UART0_FR) & 0x10)==0)
+//     {
+//         mmio_read(UART0_DR);
+//     }
+// }
+// static void init_uart0()
+// {
+//     uint32_t buf;
+//
+//     mmio_write(UART0_CR, 0);
+//
+//     buf = mmio_read(GPFSEL1);
+//     buf &= ~(7<<12);
+//     buf |= 4<<12;
+//     buf &= ~(7<<15);
+//     buf |= 4<<15;
+//     mmio_write(GPFSEL1, buf);
+//
+//     mmio_write(GPPUD, 0);
+//     delay(150);
+//     mmio_write(GPPUDCLK0, (1<<14)|(1<<15));
+//     delay(150);
+//     //mmio_write(GPPUD, 0); // Not necessary.
+//     mmio_write(GPPUDCLK0, 0);
+//
+//     // Hard-coded for UART0 frequency:
+//     //
+//     // (3000000 / (16 * 115200) = 1.627
+//     // (0.627*64)+0.5 = 40
+//     // int 1 frac 40
+//     //
+//     mmio_write(UART0_ICR, 0x7FF);
+//     mmio_write(UART0_IBRD, 1);
+//     mmio_write(UART0_FBRD, 40);
+//     mmio_write(UART0_LCRH, 0x70);
+//     mmio_write(UART0_CR, 0x301);
+//
+//     uart0_flush_rx_fifo();
+// }
