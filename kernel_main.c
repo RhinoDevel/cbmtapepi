@@ -14,6 +14,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "baregpio.h"
+
 // Peripherals physical address range start
 // (these replace bus address range start 0x7E000000 in bare metal mode,
 // see page 6):
@@ -279,6 +281,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     init_uart1();
     //
+    baregpio_set_output(2, true);
+    //
     buf = 0;
     while(true)
     {
@@ -294,8 +298,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         // Blink:
         //
         mmio_write(GPSET0, 1<<16);
+        baregpio_write(2, false);
         busy_wait_milliseconds(500); // 0.5 seconds.
         mmio_write(GPCLR0, 1<<16);
+        baregpio_write(2, true);
         busy_wait_microseconds(500000); // Also 0.5 seconds.
     }
 

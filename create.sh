@@ -53,7 +53,7 @@ arm-none-eabi-gcc \
 echo Compiling..
 
 # Compile:
-#
+
 arm-none-eabi-gcc \
     $OPTIONS_GCC_ALL \
     -O2 \
@@ -65,6 +65,17 @@ arm-none-eabi-gcc \
     -c kernel_main.c \
     -o kernel_main.o
 
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_ALL \
+    -O2 \
+    -std=gnu99 \
+    -Wall \
+    -Werror \
+    -Wextra \
+\
+    -c baregpio.c \
+    -o baregpio.o
+
 echo Linking..
 
 # Link:
@@ -73,6 +84,7 @@ arm-none-eabi-ld \
     -T memmap.ld \
     boot.o \
     kernel_main.o \
+    baregpio.o \
     -o kernel.elf
 
 echo Extracting..
