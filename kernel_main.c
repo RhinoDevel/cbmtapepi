@@ -272,16 +272,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // WORKS:
     //
-    // Raspi1, print to UART1 serial out and blink:
+    // Raspi1, print to UART1 serial out and blink (internal & external LED):
     //
-    buf = mmio_read(GPFSEL1);
-    buf &= ~(7<<18);
-    buf |= 1<<18;
-    mmio_write(GPFSEL1, buf);
+    baregpio_set_output(16, true); // Internal LED (green one).
     //
     init_uart1();
     //
-    baregpio_set_output(2, true);
+    baregpio_set_output(2, false); // GPIO pin via expansion port.
     //
     buf = 0;
     while(true)
@@ -297,11 +294,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         // Blink:
         //
-        mmio_write(GPSET0, 1<<16);
-        baregpio_write(2, false);
-        busy_wait_milliseconds(500); // 0.5 seconds.
-        mmio_write(GPCLR0, 1<<16);
+        baregpio_write(16, false);
         baregpio_write(2, true);
+        busy_wait_milliseconds(500); // 0.5 seconds.
+        baregpio_write(16, true);
+        baregpio_write(2, false);
         busy_wait_microseconds(500000); // Also 0.5 seconds.
     }
 
