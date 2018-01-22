@@ -196,6 +196,66 @@ static void init_uart1()
     mmio_write(AUX_MU_CNTL_REG, 3);
 }
 
+#if 0
+void tape_test()
+{
+    // Pulse length detection triggers on descending (negative) edges.
+
+    baregpio_set_output(2, true);
+
+    // Short: 2840 Hz
+    //
+    // 1 / (2840 Hz) = 352 microseconds
+    //
+    // 352 microseconds / 2 = 176 microseconds
+    //
+    static uint32_t const s = 176;
+
+    // Medium: 1953 Hz
+    //
+    // 1 / (1953 Hz) = 512 microseconds
+    //
+    // 512 microseconds / 2 = 256 microseconds
+    //
+    static uint32_t const m = 256;
+
+    // Long: 1488 Hz
+    //
+    // 1 / (1488 Hz) = 672 microseconds
+    //
+    // 672 microseconds / 2 = 336 microseconds
+    //
+    //static uint32_t const l = 336;
+
+    while(true)
+    {
+        // Logical 0
+        //
+        baregpio_write(2, false);
+        busy_wait_microseconds(s);
+        baregpio_write(2, true);
+        busy_wait_microseconds(s);
+        //
+        baregpio_write(2, false);
+        busy_wait_microseconds(m);
+        baregpio_write(2, true);
+        busy_wait_microseconds(m);
+
+        // Logical 1
+        //
+        baregpio_write(2, false);
+        busy_wait_microseconds(m);
+        baregpio_write(2, true);
+        busy_wait_microseconds(m);
+        //
+        baregpio_write(2, false);
+        busy_wait_microseconds(s);
+        baregpio_write(2, true);
+        busy_wait_microseconds(s);
+    }
+}
+#endif //0
+
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
     uint32_t buf = 0;
@@ -205,6 +265,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 	(void)r0;
 	(void)r1;
 	(void)r2;
+
+    //tape_test();
 
     // WORKS:
     //
