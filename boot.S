@@ -1,4 +1,6 @@
 
+// See: https://sourceware.org/binutils/docs-2.29/as/index.html
+
 .section ".text.boot"
 
 .globl _start
