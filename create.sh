@@ -87,6 +87,17 @@ arm-none-eabi-gcc \
     -c mem/mem.c \
     -o mem/mem.o
 
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_ALL \
+    -O2 \
+    -std=gnu99 \
+    -Wall \
+    -Werror \
+    -Wextra \
+\
+    -c armtimer/armtimer.c \
+    -o armtimer/armtimer.o
+
 echo Linking..
 
 # Link:
@@ -97,6 +108,7 @@ arm-none-eabi-ld \
     kernel_main.o \
     baregpio/baregpio.o \
     mem/mem.o \
+    armtimer/armtimer.o \
     -o kernel.elf
 
 echo Extracting..
