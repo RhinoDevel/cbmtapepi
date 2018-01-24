@@ -98,6 +98,17 @@ arm-none-eabi-gcc \
     -c armtimer/armtimer.c \
     -o armtimer/armtimer.o
 
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_ALL \
+    -O2 \
+    -std=gnu99 \
+    -Wall \
+    -Werror \
+    -Wextra \
+\
+    -c busywait/busywait.c \
+    -o busywait/busywait.o
+
 echo Linking..
 
 # Link:
@@ -109,6 +120,7 @@ arm-none-eabi-ld \
     baregpio/baregpio.o \
     mem/mem.o \
     armtimer/armtimer.o \
+    busywait/busywait.o \
     -o kernel.elf
 
 echo Extracting..

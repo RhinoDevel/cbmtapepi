@@ -17,7 +17,7 @@
 #include "peribase.h"
 #include "baregpio/baregpio.h"
 #include "mem/mem.h"
-#include "armtimer/armtimer.h"
+#include "busywait/busywait.h"
 
 // GPIO registers (see page 90):
 //
@@ -57,61 +57,6 @@ static void delay(int32_t count)
 	asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
 		 : "=r"(count): [count]"0"(count) : "cc");
 }
-
-#if 0
-/** Busy-wait for given seconds
- *  (valid input values go from 1 to 17179 seconds).
- *
- * - Hard-coded for 250 MHz core clock.
- */
-static void busy_wait_seconds(uint32_t const seconds)
-{
-    // Timer counts down 250.000 times in one second (with 250 kHz):
-    //
-    armtimer_busywait(250000*seconds, 1000);
-}
-#endif //0
-
-/** Busy-wait for given milli seconds
- *  (valid input values go from 1 to 17179869 milliseconds).
- *
- * - Hard-coded for 250 MHz core clock.
- */
-static void busy_wait_milliseconds(uint32_t const milliseconds)
-{
-    // Timer counts down 250 times in one millisecond (with 250 kHz):
-    //
-    armtimer_busywait(250*milliseconds, 1000);
-}
-
-/** Busy-wait for given micro seconds
- *  (valid input values go from 1 to 4294967295 microseconds).
- *
- * - Hard-coded for 250 MHz core clock.
- */
-static void busy_wait_microseconds(uint32_t const microseconds)
-{
-    // Timer counts down 1 time in one microsecond (with 1 MHz):
-    //
-    armtimer_busywait(microseconds, 250);
-}
-
-#if 0
-// TODO: Take function time into account!
-//
-/** Busy-wait for given nano seconds
- *  (valid input values go from 4 to 4294967292 nanoseconds,
- *  where given value must be dividable by 4 to get precise results).
- *
- * - Hard-coded for 250 MHz core clock.
- */
-static void busy_wait_nanoseconds(uint32_t const nanoseconds)
-{
-    // Timer counts down 1 time in four nanoseconds (with 250 MHz):
-    //
-    armtimer_busywait(nanoseconds/4, 1);
-}
-#endif //0
 
 static void init_uart1()
 {
@@ -187,26 +132,26 @@ void tape_test()
         // Logical 0
         //
         baregpio_write(2, false);
-        busy_wait_microseconds(s);
+        busywait_microseconds(s);
         baregpio_write(2, true);
-        busy_wait_microseconds(s);
+        busywait_microseconds(s);
         //
         baregpio_write(2, false);
-        busy_wait_microseconds(m);
+        busywait_microseconds(m);
         baregpio_write(2, true);
-        busy_wait_microseconds(m);
+        busywait_microseconds(m);
 
         // Logical 1
         //
         baregpio_write(2, false);
-        busy_wait_microseconds(m);
+        busywait_microseconds(m);
         baregpio_write(2, true);
-        busy_wait_microseconds(m);
+        busywait_microseconds(m);
         //
         baregpio_write(2, false);
-        busy_wait_microseconds(s);
+        busywait_microseconds(s);
         baregpio_write(2, true);
-        busy_wait_microseconds(s);
+        busywait_microseconds(s);
     }
 }
 #endif //0
@@ -251,10 +196,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         //
         baregpio_write(16, false);
         baregpio_write(2, true);
-        busy_wait_milliseconds(500); // 0.5 seconds.
+        busywait_milliseconds(500); // 0.5 seconds.
         baregpio_write(16, true);
         baregpio_write(2, false);
-        busy_wait_microseconds(500000); // Also 0.5 seconds.
+        busywait_microseconds(500000); // Also 0.5 seconds.
     }
 
     return;
