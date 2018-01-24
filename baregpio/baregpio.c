@@ -39,6 +39,7 @@
 
 #include "baregpio.h"
 #include "../peribase.h"
+#include "../mem/mem.h"
 
 #define GPIO_OFFSET 0x00200000
 
@@ -74,20 +75,6 @@ static uint32_t get_pin_mask(uint32_t const pin_nr)
     return 1 << (pin_nr % 32);
 }
 
-/** Read at given address from memory.
- */
-static uint32_t read_mem(uint32_t const addr)
-{
-    return *(volatile uint32_t const *)addr;
-}
-
-/** Write value given to memory at given address.
- */
-static void write_mem(uint32_t const addr, uint32_t const val)
-{
-    *(volatile uint32_t *)addr = val;
-}
-
 /** Set function of pin with given BCM nr. to given function.
  */
 static void set_func(uint32_t const pin_nr, uint32_t const func)
@@ -95,12 +82,12 @@ static void set_func(uint32_t const pin_nr, uint32_t const func)
     uint32_t const gpfsel = get_gpfsel(pin_nr),
         shift = (pin_nr % 10) * 3,
         clear_mask = ~(7 << shift);
-    uint32_t val = read_mem(gpfsel);
+    uint32_t val = mem_read(gpfsel);
 
     val &= clear_mask;
     val |= func << shift;
 
-    write_mem(gpfsel, val);
+    mem_write(gpfsel, val);
 }
 
 void baregpio_write(uint32_t const pin_nr, bool const high)
@@ -109,10 +96,10 @@ void baregpio_write(uint32_t const pin_nr, bool const high)
 
     if(high)
     {
-        write_mem(get_gpset(pin_nr), pin_mask);
+        mem_write(get_gpset(pin_nr), pin_mask);
         return;
     }
-    write_mem(get_gpclr(pin_nr), pin_mask);
+    mem_write(get_gpclr(pin_nr), pin_mask);
 }
 
 void baregpio_set_output(uint32_t const pin_nr, bool const high)

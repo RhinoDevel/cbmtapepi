@@ -76,6 +76,17 @@ arm-none-eabi-gcc \
     -c baregpio/baregpio.c \
     -o baregpio/baregpio.o
 
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_ALL \
+    -O2 \
+    -std=gnu99 \
+    -Wall \
+    -Werror \
+    -Wextra \
+\
+    -c mem/mem.c \
+    -o mem/mem.o
+
 echo Linking..
 
 # Link:
@@ -85,6 +96,7 @@ arm-none-eabi-ld \
     boot.o \
     kernel_main.o \
     baregpio/baregpio.o \
+    mem/mem.o \
     -o kernel.elf
 
 echo Extracting..

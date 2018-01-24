@@ -16,6 +16,7 @@
 
 #include "peribase.h"
 #include "baregpio/baregpio.h"
+#include "mem/mem.h"
 
 // GPIO registers (see page 90):
 //
@@ -63,16 +64,6 @@
 
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
-static void mmio_write(uint32_t const reg, uint32_t const data)
-{
-	*(volatile uint32_t *)reg = data;
-}
-
-static uint32_t mmio_read(uint32_t const reg)
-{
-	return *(volatile uint32_t *)reg;
-}
-
 static void delay(int32_t count)
 {
 	asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
@@ -81,17 +72,17 @@ static void delay(int32_t count)
 
 static void busy_wait(uint32_t const start_val, uint32_t const divider)
 {
-    mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
-    mmio_write(ARM_TIMER_LOD, start_val-1); // Initial value to count down from.
-    //mmio_write(ARM_TIMER_RLD, start_val-1); // Used after count to zero done.
-    mmio_write(ARM_TIMER_DIV, divider); // [10 bits are avail. (page 199)].
-    mmio_write(ARM_TIMER_CLI, 0);
-    mmio_write(ARM_TIMER_CTL, 0x003E0082); // Enables 32-bit counter.
-    while(mmio_read(ARM_TIMER_RIS)==0) // Polling interrupt flag.
+    mem_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
+    mem_write(ARM_TIMER_LOD, start_val-1); // Initial value to count down from.
+    //mem_write(ARM_TIMER_RLD, start_val-1); // Used after count to zero done.
+    mem_write(ARM_TIMER_DIV, divider); // [10 bits are avail. (page 199)].
+    mem_write(ARM_TIMER_CLI, 0);
+    mem_write(ARM_TIMER_CTL, 0x003E0082); // Enables 32-bit counter.
+    while(mem_read(ARM_TIMER_RIS)==0) // Polling interrupt flag.
     {
         ;
     }
-    //mmio_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
+    //mem_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
 }
 
 #if 0
@@ -153,38 +144,38 @@ static void init_uart1()
 {
     uint32_t buf;
 
-    mmio_write(
+    mem_write(
         AUX_ENABLES, 1); // Enables Mini UART (disables SPI1 & SPI2, page 9).
-    mmio_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
-    mmio_write(AUX_MU_CNTL_REG, 0); // Not using extra features. See page 16.
-    mmio_write(AUX_MU_LCR_REG, 3); // Sets 8 bit mode (error on page 14!).
-    mmio_write(AUX_MU_MCR_REG, 0); // Sets UART1_RTS line to high (page 14).
-    mmio_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
-    mmio_write( // Clears receive and transmit FIFOs (page 13, yes, page 13!).
+    mem_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
+    mem_write(AUX_MU_CNTL_REG, 0); // Not using extra features. See page 16.
+    mem_write(AUX_MU_LCR_REG, 3); // Sets 8 bit mode (error on page 14!).
+    mem_write(AUX_MU_MCR_REG, 0); // Sets UART1_RTS line to high (page 14).
+    mem_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
+    mem_write( // Clears receive and transmit FIFOs (page 13, yes, page 13!).
         AUX_MU_IIR_REG, 0xC6/*11000110*/);
-    mmio_write( // Hard-coded for 250 MHz [((250,000,000/115200)/8)-1 = 270]!
+    mem_write( // Hard-coded for 250 MHz [((250,000,000/115200)/8)-1 = 270]!
         AUX_MU_BAUD_REG, 270);
 
     // Set GPIO pin 14 and 15 to alternate function 5 (page 92 and page 102),
     // which is using UART1:
     //
-    buf = mmio_read(GPFSEL1);
+    buf = mem_read(GPFSEL1);
     buf &= ~(7<<12); // GPIO pin 14.
     buf |= 2<<12; // TXD1.
     buf &= ~(7<<15); // GPIO pin 15.
     buf |= 2<<15; // RXD1.
-    mmio_write(GPFSEL1, buf);
+    mem_write(GPFSEL1, buf);
 
     // Enable pull-down resistors (page 101):
     //
-    mmio_write(GPPUD, 0);
+    mem_write(GPPUD, 0);
     delay(150);
-    mmio_write(GPPUDCLK0, (1<<14)|(1<<15));
+    mem_write(GPPUDCLK0, (1<<14)|(1<<15));
     delay(150);
-    //mmio_write(GPPUD, 0); // Not necessary.
-    mmio_write(GPPUDCLK0, 0);
+    //mem_write(GPPUD, 0); // Not necessary.
+    mem_write(GPPUDCLK0, 0);
 
-    mmio_write(AUX_MU_CNTL_REG, 3);
+    mem_write(AUX_MU_CNTL_REG, 3);
 }
 
 #if 0
@@ -276,11 +267,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     {
         // Print to UART1:
         //
-        while((mmio_read(AUX_MU_LSR_REG) & 0x20) == 0)
+        while((mem_read(AUX_MU_LSR_REG) & 0x20) == 0)
         {
             ;
         }
-        mmio_write(AUX_MU_IO_REG , 0x30 + ((*buf)++));
+        mem_write(AUX_MU_IO_REG , 0x30 + ((*buf)++));
         *buf = (*buf)%10;
 
         // Blink:
@@ -324,11 +315,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // *buf = 0;
     // while(true)
     // {
-    //     while((mmio_read(UART0_FR) & 0x20) != 0)
+    //     while((mem_read(UART0_FR) & 0x20) != 0)
     //     {
     //         ;
     //     }
-    //     mmio_write(UART0_DR , 0x30 + ((*buf)++));
+    //     mem_write(UART0_DR , 0x30 + ((*buf)++));
     //     delay(0x1000000);
     //
     //     *buf = (*buf)%10;
@@ -359,30 +350,30 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 //
 // static void uart0_flush_rx_fifo()
 // {
-//     while((mmio_read(UART0_FR) & 0x10)==0)
+//     while((mem_read(UART0_FR) & 0x10)==0)
 //     {
-//         mmio_read(UART0_DR);
+//         mem_read(UART0_DR);
 //     }
 // }
 // static void init_uart0()
 // {
 //     uint32_t buf;
 //
-//     mmio_write(UART0_CR, 0);
+//     mem_write(UART0_CR, 0);
 //
-//     buf = mmio_read(GPFSEL1);
+//     buf = mem_read(GPFSEL1);
 //     buf &= ~(7<<12);
 //     buf |= 4<<12;
 //     buf &= ~(7<<15);
 //     buf |= 4<<15;
-//     mmio_write(GPFSEL1, buf);
+//     mem_write(GPFSEL1, buf);
 //
-//     mmio_write(GPPUD, 0);
+//     mem_write(GPPUD, 0);
 //     delay(150);
-//     mmio_write(GPPUDCLK0, (1<<14)|(1<<15));
+//     mem_write(GPPUDCLK0, (1<<14)|(1<<15));
 //     delay(150);
-//     //mmio_write(GPPUD, 0); // Not necessary.
-//     mmio_write(GPPUDCLK0, 0);
+//     //mem_write(GPPUD, 0); // Not necessary.
+//     mem_write(GPPUDCLK0, 0);
 //
 //     // Hard-coded for UART0 frequency:
 //     //
@@ -390,11 +381,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 //     // (0.627*64)+0.5 = 40
 //     // int 1 frac 40
 //     //
-//     mmio_write(UART0_ICR, 0x7FF);
-//     mmio_write(UART0_IBRD, 1);
-//     mmio_write(UART0_FBRD, 40);
-//     mmio_write(UART0_LCRH, 0x70);
-//     mmio_write(UART0_CR, 0x301);
+//     mem_write(UART0_ICR, 0x7FF);
+//     mem_write(UART0_IBRD, 1);
+//     mem_write(UART0_FBRD, 40);
+//     mem_write(UART0_LCRH, 0x70);
+//     mem_write(UART0_CR, 0x301);
 //
 //     uart0_flush_rx_fifo();
 // }
