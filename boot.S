@@ -16,10 +16,10 @@
 _start:
 	// Set stack address (grows downwards to address 0):
 	//mov sp, #0x00008000 // Above 32kB address.
-    mov sp, #0x04000000 // Above 64MB address.
+    ldr sp, =0x04000000 // Above 64MB address.
 
 	// Set whole BSS section to zero (it is optional, but C standard):
-	ldr r4, =__bss_start
+	ldr r4, =__bss_start // See: https://community.arm.com/processors/b/blog/posts/how-to-load-constants-in-assembly-for-arm-architecture
 	ldr r9, =__bss_end
 	mov r5, #0
 	mov r6, #0
