@@ -72,7 +72,7 @@
 #define ARM_TIMER_DIV (ARM_TIMER_BASE + 0x41C) // Pre-divider / pre-scaler.
 #define ARM_TIMER_CNT (ARM_TIMER_BASE + 0x420) // Free running counter.
 
-extern uint32_t __heap;
+extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
 static void mmio_write(uint32_t const reg, uint32_t const data)
 {
@@ -260,7 +260,9 @@ void tape_test()
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
-    uint32_t buf = 0;
+    uint32_t * const heap = &__heap; // This is correct!
+
+    uint32_t * const buf = heap; // Test of heap memory usage.
 
     // To be able to compile, although these are not used (stupid?):
     //
@@ -280,7 +282,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     baregpio_set_output(2, false); // GPIO pin via expansion port.
     //
-    buf = 0;
+    *buf = 0;
     while(true)
     {
         // Print to UART1:
@@ -289,8 +291,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         {
             ;
         }
-        mmio_write(AUX_MU_IO_REG , 0x30 + (buf++));
-        buf = buf%10;
+        mmio_write(AUX_MU_IO_REG , 0x30 + ((*buf)++));
+        *buf = (*buf)%10;
 
         // Blink:
         //
@@ -330,17 +332,17 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // //
     // init_uart0();
     // //
-    // buf = 0;
+    // *buf = 0;
     // while(true)
     // {
     //     while((mmio_read(UART0_FR) & 0x20) != 0)
     //     {
     //         ;
     //     }
-    //     mmio_write(UART0_DR , 0x30 + (buf++));
+    //     mmio_write(UART0_DR , 0x30 + ((*buf)++));
     //     delay(0x1000000);
     //
-    //     buf = buf%10;
+    //     *buf = (*buf)%10;
     // }
 }
 
