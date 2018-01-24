@@ -12,10 +12,11 @@
 //
 // Preserve registers above to be used as parameters of kernel_main().
 _start:
-	// Set stack address:
-	mov sp, #0x8000
+	// Set stack address (grows downwards to address 0):
+	//mov sp, #0x00008000 // Above 32kB address.
+    mov sp, #0x04000000 // Above 64MB address.
 
-	// Set whole BSS section to zero (it is optional):
+	// Set whole BSS section to zero (it is optional, but C standard):
 	ldr r4, =__bss_start
 	ldr r9, =__bss_end
 	mov r5, #0
