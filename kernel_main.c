@@ -72,6 +72,8 @@
 #define ARM_TIMER_DIV (ARM_TIMER_BASE + 0x41C) // Pre-divider / pre-scaler.
 #define ARM_TIMER_CNT (ARM_TIMER_BASE + 0x420) // Free running counter.
 
+extern uint32_t __heap;
+
 static void mmio_write(uint32_t const reg, uint32_t const data)
 {
 	*(volatile uint32_t *)reg = data;
