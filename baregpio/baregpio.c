@@ -38,17 +38,9 @@
 //    BCM 2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27
 
 #include "baregpio.h"
+#include "../peribase.h"
 
-#define BCM2835_PERI_BASE 0x20000000 // Raspi 1
-#define BCM2836_PERI_BASE 0x3F000000 // Raspi 2
-
-#define GPIO_OFFSET 0x200000
-
-// ***********************************
-// *** SELECT RASPI VERSION, HERE: ***
-// ***********************************
-//
-#define PERI_BASE BCM2835_PERI_BASE // Using Raspi 1.
+#define GPIO_OFFSET 0x00200000
 
 #define GPIO_BASE (PERI_BASE + GPIO_OFFSET)
 

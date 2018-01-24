@@ -14,19 +14,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "peribase.h"
 #include "baregpio/baregpio.h"
-
-// Peripherals physical address range start
-// (these replace bus address range start 0x7E000000 in bare metal mode,
-// see page 6):
-//
-#define PERI_BASE_PI1 0x20000000
-#define PERI_BASE_PI2 0x3F000000
-
-// Choose Raspi type:
-//
-#define PERI_BASE PERI_BASE_PI1
-//#define PERI_BASE PERI_BASE_PI2
 
 // GPIO registers (see page 90):
 //
