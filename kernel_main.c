@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "baregpio.h"
+#include "baregpio/baregpio.h"
 
 // Peripherals physical address range start
 // (these replace bus address range start 0x7E000000 in bare metal mode,

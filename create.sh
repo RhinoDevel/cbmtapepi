@@ -73,8 +73,8 @@ arm-none-eabi-gcc \
     -Werror \
     -Wextra \
 \
-    -c baregpio.c \
-    -o baregpio.o
+    -c baregpio/baregpio.c \
+    -o baregpio/baregpio.o
 
 echo Linking..
 
@@ -84,7 +84,7 @@ arm-none-eabi-ld \
     -T memmap.ld \
     boot.o \
     kernel_main.o \
-    baregpio.o \
+    baregpio/baregpio.o \
     -o kernel.elf
 
 echo Extracting..
