@@ -40,7 +40,6 @@ SECTIONS
     . = ALIGN(4096); /* Aligns to page size. */
     __data_end = .;
 
-
     /* Uninitialized read-write data segment                                 */
     /* (to hold NOT explicitly initialized global & static local variables): */
     __bss_start = .;
@@ -51,6 +50,8 @@ SECTIONS
     }
     . = ALIGN(4096); /* Aligns to page size. */
     __bss_end = .;
+
+    __heap = .;
 
     __end = .;
 }
