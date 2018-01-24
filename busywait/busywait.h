@@ -35,4 +35,12 @@ void busywait_microseconds(uint32_t const microseconds);
  */
 void busywait_nanoseconds(uint32_t const nanoseconds);
 
+/** Busy-wait for given count of core clock cycles.
+ *  (valid input values go from 1 to 1073741823 clock cycles).
+ *
+ * * Does NOT take function time into account.
+ * - Hard-coded for 250 MHz core clock.
+ */
+void busywait_clockcycles(uint32_t const clockcycles);
+
 #endif //MT_BUSYWAIT

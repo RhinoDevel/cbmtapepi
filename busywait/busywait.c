@@ -35,3 +35,8 @@ void busywait_nanoseconds(uint32_t const nanoseconds)
     //
     armtimer_busywait(nanoseconds / 4, 1);
 }
+
+void busywait_clockcycles(uint32_t const clockcycles)
+{
+    busywait_nanoseconds(clockcycles * 4); // (1 / 250) MHz == 4ns. 
+}

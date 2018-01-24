@@ -52,12 +52,6 @@
 
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
-static void delay(int32_t count)
-{
-	asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
-		 : "=r"(count): [count]"0"(count) : "cc");
-}
-
 static void init_uart1()
 {
     uint32_t buf;
@@ -87,9 +81,9 @@ static void init_uart1()
     // Enable pull-down resistors (page 101):
     //
     mem_write(GPPUD, 0);
-    delay(150);
+    busywait_clockcycles(150);
     mem_write(GPPUDCLK0, (1<<14)|(1<<15));
-    delay(150);
+    busywait_clockcycles(150);
     //mem_write(GPPUD, 0); // Not necessary.
     mem_write(GPPUDCLK0, 0);
 
@@ -220,10 +214,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // {
     //     *GPSET1 = 1 << (47 - 32);
     //     *GPCLR1 = 1 << (35 - 32);
-    //     delay(0x100000);
+    //     busywait_clockcycles(0x100000);
     //     *GPCLR1 = 1 << (47 - 32);
     //     *GPSET1 = 1 << (35 - 32);
-    //     delay(0x200000);
+    //     busywait_clockcycles(0x200000);
     // }
 
     // // Does NOT work: Print to UART0 serial out:
@@ -238,7 +232,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         ;
     //     }
     //     mem_write(UART0_DR , 0x30 + ((*buf)++));
-    //     delay(0x1000000);
+    //     busywait_clockcycles(0x1000000);
     //
     //     *buf = (*buf)%10;
     // }
@@ -287,9 +281,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 //     mem_write(GPFSEL1, buf);
 //
 //     mem_write(GPPUD, 0);
-//     delay(150);
+//     busywait_clockcycles(150);
 //     mem_write(GPPUDCLK0, (1<<14)|(1<<15));
-//     delay(150);
+//     busywait_clockcycles(150);
 //     //mem_write(GPPUD, 0); // Not necessary.
 //     mem_write(GPPUDCLK0, 0);
 //
