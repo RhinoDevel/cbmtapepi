@@ -38,5 +38,5 @@ _start:
 
 	// Halt:
 halt:
-	wfe
+	wfe // Wait for event (hint).
 	b halt

@@ -2,9 +2,11 @@ ENTRY(_start)
 
 SECTIONS
 {
-    /* Starts at LOADER_ADDR. */
+    /* Starts at LOADER_ADDR: */
     . = 0x8000;
     __start = .;
+
+    /* Code segment: */
     __text_start = .;
     .text :
     {
@@ -14,6 +16,7 @@ SECTIONS
     . = ALIGN(4096); /* Aligns to page size. */
     __text_end = .;
 
+    /* Read-only data segment: */
     __rodata_start = .;
     .rodata :
     {
@@ -22,6 +25,8 @@ SECTIONS
     . = ALIGN(4096); /* Aligns to page size. */
     __rodata_end = .;
 
+    /* (Initialized) read-write data segment                               */
+    /* (to hold explicitly initialized global and static local variables): */
     __data_start = .;
     .data :
     {
@@ -30,6 +35,9 @@ SECTIONS
     . = ALIGN(4096); /* Aligns to page size. */
     __data_end = .;
 
+
+    /* Uninitialized read-write data segment                                 */
+    /* (to hold NOT explicitly initialized global & static local variables): */
     __bss_start = .;
     .bss :
     {
