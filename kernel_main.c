@@ -118,6 +118,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         baregpio_write(16, true);
         baregpio_write(2, false);
         busywait_microseconds(500000); // Also 0.5 seconds.
+
+        if(*buf==0)
+        {
+            miniuart_write_byte(miniuart_read_byte());
+        }
     }
 
     return;

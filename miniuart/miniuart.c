@@ -19,6 +19,15 @@
 #include "../mem/mem.h"
 #include "../baregpio/baregpio.h"
 
+uint8_t miniuart_read_byte()
+{
+    while((mem_read(AUX_MU_LSR_REG) & 0x01)==0)
+    {
+        ;
+    }
+    return mem_read(AUX_MU_IO_REG);
+}
+
 void miniuart_write_byte(uint8_t byte)
 {
     // Print to UART1:
