@@ -6,6 +6,7 @@ rm baregpio/baregpio.o
 rm mem/mem.o
 rm armtimer/armtimer.o
 rm busywait/busywait.o
+rm miniuart/miniuart.o
 rm kernel.elf
 rm kernel.img
 rm kernel7.img

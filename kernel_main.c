@@ -5,11 +5,6 @@
 // Also you MUST USE https://elinux.org/BCM2835_datasheet_errata
 // together with that document!
 
-// There are two UARTs:
-//
-// - UART0: (ARM) PL011 UART (see page 175).
-// - UART1: Mini UART (emulates a 16550, see page 8).
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -18,36 +13,9 @@
 #include "baregpio/baregpio.h"
 #include "mem/mem.h"
 #include "busywait/busywait.h"
+#include "miniuart/miniuart.h"
 
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
-
-static void init_uart1()
-{
-    mem_write(
-        AUX_ENABLES, 1); // Enables Mini UART (disables SPI1 & SPI2, page 9).
-    mem_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
-    mem_write(AUX_MU_CNTL_REG, 0); // Not using extra features. See page 16.
-    mem_write(AUX_MU_LCR_REG, 3); // Sets 8 bit mode (error on page 14!).
-    mem_write(AUX_MU_MCR_REG, 0); // Sets UART1_RTS line to high (page 14).
-    mem_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
-    mem_write( // Clears receive and transmit FIFOs (page 13, yes, page 13!).
-        AUX_MU_IIR_REG, 0xC6/*11000110*/);
-    mem_write( // Hard-coded for 250 MHz [((250,000,000/115200)/8)-1 = 270]!
-        AUX_MU_BAUD_REG, 270);
-
-    // Set GPIO pin 14 and 15 to alternate function 5 (page 92 and page 102),
-    // which is using UART1:
-    //
-    baregpio_set_func(14, gpio_func_alt5); // TXD1
-    baregpio_set_func(15, gpio_func_alt5); // RXD1
-
-    // Enable pull-down resistors (page 101):
-    //
-    baregpio_set_pud(14, gpio_pud_down);
-    baregpio_set_pud(15, gpio_pud_down);
-
-    mem_write(AUX_MU_CNTL_REG, 3);
-}
 
 #if 0
 void tape_test()
@@ -129,7 +97,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     baregpio_set_output(16, true); // Internal LED (green one).
     //
-    init_uart1();
+    miniuart_init();
     //
     baregpio_set_output(2, false); // GPIO pin via expansion port.
     //
@@ -138,11 +106,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     {
         // Print to UART1:
         //
-        while((mem_read(AUX_MU_LSR_REG) & 0x20) == 0)
-        {
-            ;
-        }
-        mem_write(AUX_MU_IO_REG , 0x30 + ((*buf)++));
+        miniuart_write_byte(0x30 + ((*buf)++));
+
         *buf = (*buf)%10;
 
         // Blink:
@@ -197,6 +162,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // }
 }
 
+// There are two UARTs:
+//
+// - UART0: (ARM) PL011 UART (see page 175).
+// - UART1: Mini UART (emulates a 16550, see page 8).
+//
 // // UART0 (PL011) register map (see page 177):
 // //
 // #define UART0_BASE (PERI_BASE + 0x201000)

@@ -109,6 +109,17 @@ arm-none-eabi-gcc \
     -c busywait/busywait.c \
     -o busywait/busywait.o
 
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_ALL \
+    -O2 \
+    -std=gnu99 \
+    -Wall \
+    -Werror \
+    -Wextra \
+\
+    -c miniuart/miniuart.c \
+    -o miniuart/miniuart.o
+
 echo Linking..
 
 # Link:
@@ -121,6 +132,7 @@ arm-none-eabi-ld \
     mem/mem.o \
     armtimer/armtimer.o \
     busywait/busywait.o \
+    miniuart/miniuart.o \
     -o kernel.elf
 
 echo Extracting..
