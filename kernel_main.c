@@ -19,15 +19,6 @@
 #include "mem/mem.h"
 #include "busywait/busywait.h"
 
-// GPIO registers (see page 90):
-//
-#define GPIO_BASE (PERI_BASE + 0x200000)
-#define GPFSEL1 (GPIO_BASE + 0x04) // GPIO function select 1.
-#define GPSET0 (GPIO_BASE + 0x1C) // GPIO pin output set 0.
-#define GPCLR0 (GPIO_BASE + 0x28) // GPIO pin output clear 0.
-#define GPPUD (GPIO_BASE + 0x94) // GPIO pin pull-up/-down enable (page 100).
-#define GPPUDCLK0 (GPIO_BASE + 0x98) // GPIO pin pull-up/-down enable clock 0.
-
 // Auxiliary peripherals register map (see page 8):
 //
 #define AUX_BASE (PERI_BASE + 0x215000)
@@ -54,8 +45,6 @@ extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
 static void init_uart1()
 {
-    uint32_t buf;
-
     mem_write(
         AUX_ENABLES, 1); // Enables Mini UART (disables SPI1 & SPI2, page 9).
     mem_write(AUX_MU_IER_REG, 0); // See page 12 (yes, page 12!).
@@ -71,21 +60,13 @@ static void init_uart1()
     // Set GPIO pin 14 and 15 to alternate function 5 (page 92 and page 102),
     // which is using UART1:
     //
-    buf = mem_read(GPFSEL1);
-    buf &= ~(7<<12); // GPIO pin 14.
-    buf |= 2<<12; // TXD1.
-    buf &= ~(7<<15); // GPIO pin 15.
-    buf |= 2<<15; // RXD1.
-    mem_write(GPFSEL1, buf);
+    baregpio_set_func(14, gpio_func_alt5); // TXD1
+    baregpio_set_func(15, gpio_func_alt5); // RXD1
 
     // Enable pull-down resistors (page 101):
     //
-    mem_write(GPPUD, 0);
-    busywait_clockcycles(150);
-    mem_write(GPPUDCLK0, (1<<14)|(1<<15));
-    busywait_clockcycles(150);
-    //mem_write(GPPUD, 0); // Not necessary.
-    mem_write(GPPUDCLK0, 0);
+    baregpio_set_pud(14, gpio_pud_down);
+    baregpio_set_pud(15, gpio_pud_down);
 
     mem_write(AUX_MU_CNTL_REG, 3);
 }

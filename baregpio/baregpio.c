@@ -1,6 +1,12 @@
 
 // Marcel Timm, RhinoDevel, 2018jan22
 
+// Pages mentioned in source code comments can be found in the document
+// "BCM2835 ARM Peripherals".
+//
+// Also you MUST USE https://elinux.org/BCM2835_datasheet_errata
+// together with that document!
+
 // * This supports 32-bit Raspi processors (e.g. Raspi 1 & 2).
 
 // GPIO pins (first 26 should be equal on at least Raspi 1 and 2)
@@ -40,19 +46,26 @@
 #include "baregpio.h"
 #include "../peribase.h"
 #include "../mem/mem.h"
+#include "../busywait/busywait.h"
 
 #define GPIO_OFFSET 0x00200000
 
 #define GPIO_BASE (PERI_BASE + GPIO_OFFSET)
 
 static uint32_t const gpfsel0 = GPIO_BASE + 0; // GPIO function select 0.
-
-// GPIO function codes:
-//
-static uint32_t const func_output = 1;
+// ["gpfsel1" will dynamically be used with the help of function get_gpfsel()]
 
 static uint32_t const gpset0 = GPIO_BASE + 0x1C; // GPIO pin output set 0.
+// ["gpset1" will dynamically be used with the help of function get_gpset()]
 static uint32_t const gpclr0 = GPIO_BASE + 0x28; // GPIO pin output clear 0.
+// ["gpclr1" will dynamically be used with the help of function get_gpclr()]
+
+static uint32_t const gppud = // GPIO pull-up/-down (page 100).
+    GPIO_BASE + 0x94;
+
+static uint32_t const gppudclk0 = // GPIO pull-up/-down enable clock 0.
+    GPIO_BASE + 0x98;
+// ["gppudclk1" will dyn. be used with the help of function get_gppudclk()]
 
 /** Return address of GPFSEL register responsible for pin with given nr.
  */
@@ -70,14 +83,37 @@ static uint32_t get_gpclr(uint32_t const pin_nr)
     return gpclr0 + 4 * (pin_nr / 32); // 4 bytes for 32 pins.
 }
 
+/** Return address of GPPUDCLK register responsible for pin with given nr.
+ */
+static uint32_t get_gppudclk(uint32_t const pin_nr)
+{
+    return gppudclk0 + 4 * (pin_nr / 32); // 4 bytes for 32 pins.
+}
+
 static uint32_t get_pin_mask(uint32_t const pin_nr)
 {
     return 1 << (pin_nr % 32);
 }
 
-/** Set function of pin with given BCM nr. to given function.
- */
-static void set_func(uint32_t const pin_nr, uint32_t const func)
+void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const pud)
+{
+    uint32_t const gppudclk = get_gppudclk(pin_nr);
+
+    // Set pull-up/-down mode:
+    //
+    mem_write(gppud, pud);
+    busywait_clockcycles(150);
+
+    mem_write(gppudclk, get_pin_mask(pin_nr));
+    busywait_clockcycles(150);
+
+    // Maybe not necessary:
+    //
+    mem_write(gppud, gpio_pud_off);
+    mem_write(gppudclk, 0);
+}
+
+void baregpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
 {
     uint32_t const gpfsel = get_gpfsel(pin_nr),
         shift = (pin_nr % 10) * 3,
@@ -85,7 +121,7 @@ static void set_func(uint32_t const pin_nr, uint32_t const func)
     uint32_t val = mem_read(gpfsel);
 
     val &= clear_mask;
-    val |= func << shift;
+    val |= (uint32_t)func << shift;
 
     mem_write(gpfsel, val);
 }
@@ -104,6 +140,24 @@ void baregpio_write(uint32_t const pin_nr, bool const high)
 
 void baregpio_set_output(uint32_t const pin_nr, bool const high)
 {
-    set_func(pin_nr, func_output);
+    baregpio_set_func(pin_nr, gpio_func_output);
     baregpio_write(pin_nr, high);
+}
+
+void baregpio_set_input_pull_off(uint32_t const pin_nr)
+{
+    baregpio_set_func(pin_nr, gpio_func_input);
+    baregpio_set_pud(pin_nr, gpio_pud_off);
+}
+
+void baregpio_set_input_pull_up(uint32_t const pin_nr)
+{
+    baregpio_set_func(pin_nr, gpio_func_input);
+    baregpio_set_pud(pin_nr, gpio_pud_up);
+}
+
+void baregpio_set_input_pull_down(uint32_t const pin_nr)
+{
+    baregpio_set_func(pin_nr, gpio_func_input);
+    baregpio_set_pud(pin_nr, gpio_pud_down);
 }
