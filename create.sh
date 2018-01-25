@@ -41,6 +41,15 @@ export OPTIONS_GCC_ALL=" \
     -fpic \
     -ffreestanding"
 
+export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
+    -O2 \
+    -std=gnu99 \
+    -Wall \
+    -Werror \
+    -Wextra"
+
+export MT_CC="arm-none-eabi-gcc $OPTIONS_GCC_C -c"
+
 echo Assembling..
 
 # Assemble:
@@ -54,71 +63,12 @@ echo Compiling..
 
 # Compile:
 
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -O2 \
-    -std=gnu99 \
-    -Wall \
-    -Werror \
-    -Wextra \
-\
-    -c kernel_main.c \
-    -o kernel_main.o
-
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -O2 \
-    -std=gnu99 \
-    -Wall \
-    -Werror \
-    -Wextra \
-\
-    -c baregpio/baregpio.c \
-    -o baregpio/baregpio.o
-
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -O2 \
-    -std=gnu99 \
-    -Wall \
-    -Werror \
-    -Wextra \
-\
-    -c mem/mem.c \
-    -o mem/mem.o
-
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -O2 \
-    -std=gnu99 \
-    -Wall \
-    -Werror \
-    -Wextra \
-\
-    -c armtimer/armtimer.c \
-    -o armtimer/armtimer.o
-
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -O2 \
-    -std=gnu99 \
-    -Wall \
-    -Werror \
-    -Wextra \
-\
-    -c busywait/busywait.c \
-    -o busywait/busywait.o
-
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -O2 \
-    -std=gnu99 \
-    -Wall \
-    -Werror \
-    -Wextra \
-\
-    -c miniuart/miniuart.c \
-    -o miniuart/miniuart.o
+$MT_CC kernel_main.c -o kernel_main.o
+$MT_CC baregpio/baregpio.c -o baregpio/baregpio.o
+$MT_CC mem/mem.c -o mem/mem.o
+$MT_CC armtimer/armtimer.c -o armtimer/armtimer.o
+$MT_CC busywait/busywait.c -o busywait/busywait.o
+$MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
 
 echo Linking..
 
