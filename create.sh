@@ -69,6 +69,7 @@ $MT_CC mem/mem.c -o mem/mem.o
 $MT_CC armtimer/armtimer.c -o armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
+$MT_CC tape/tape.c -o tape/tape.o
 
 echo Linking..
 
@@ -83,6 +84,7 @@ arm-none-eabi-ld \
     armtimer/armtimer.o \
     busywait/busywait.o \
     miniuart/miniuart.o \
+    tape/tape.o \
     -o kernel.elf
 
 echo Extracting..
