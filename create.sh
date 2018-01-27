@@ -69,7 +69,8 @@ $MT_CC mem/mem.c -o mem/mem.o
 $MT_CC armtimer/armtimer.c -o armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
-$MT_CC tape/tape.c -o tape/tape.o
+$MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
+$MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
 
 echo Linking..
 
