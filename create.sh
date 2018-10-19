@@ -115,7 +115,8 @@ arm-none-eabi-ld \
     armtimer/armtimer.o \
     busywait/busywait.o \
     miniuart/miniuart.o \
-    tape/tape.o \
+    tape/tape_fill_buf.o \
+    tape/tape_transfer_buf.o \
     -o kernel.elf
 
 echo Extracting..
