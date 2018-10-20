@@ -15,7 +15,7 @@
 #include "busywait/busywait.h"
 #include "miniuart/miniuart.h"
 
-#include "tape/tape.h"
+//#include "tape/tape.h"
 
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
