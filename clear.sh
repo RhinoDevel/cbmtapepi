@@ -12,3 +12,4 @@ rm tape/tape_transfer_buf.o
 rm kernel.elf
 rm kernel.img
 rm kernel7.img
+rm kernel.ihx
