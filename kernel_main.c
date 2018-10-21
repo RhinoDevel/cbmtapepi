@@ -16,8 +16,23 @@
 #include "miniuart/miniuart.h"
 
 //#include "tape/tape.h"
+//#include "tape/tape_sample.h"
 
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
+
+#if 0
+bool tape_test(uint32_t const gpio_pin_nr, uint32_t * const mem)
+{
+    struct tape_input * const sample = (struct tape_input *)mem;
+    uint8_t * const buf = (uint8_t *)mem + sizeof *sample;
+
+    tape_sample_fill_buf(sample);
+
+    tape_fill_buf(sample, buf);
+
+    return tape_transfer_buf(buf, gpio_pin_nr);
+}
+#endif //0
 
 #if 0
 void tape_test()
@@ -91,7 +106,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 	(void)r1;
 	(void)r2;
 
-    //tape_test();
+    // while(true)
+    // {
+    //     tape_test(2, buf); // Return value ignored.
+    // }
+    // return;
 
     // WORKS:
     //
@@ -126,7 +145,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
             miniuart_write_byte(miniuart_read_byte());
         }
     }
-
     return;
 
     //// WORKS:

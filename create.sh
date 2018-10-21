@@ -109,6 +109,7 @@ $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
+$MT_CC tape/tape_sample.c -o tape/tape_sample.o
 
 echo Linking..
 
@@ -125,6 +126,7 @@ arm-none-eabi-ld \
     miniuart/miniuart.o \
     tape/tape_fill_buf.o \
     tape/tape_transfer_buf.o \
+    tape/tape_sample.o \
     -o kernel.elf
 
 echo Extracting..
