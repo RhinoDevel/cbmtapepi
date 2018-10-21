@@ -5,7 +5,7 @@ export CARDPATH=/run/media/marc/BOOT/
 set -e
 
 echo Copying..
-#cp kernel7.img $CARDPATH
+cp kernel7.img $CARDPATH
 cp kernel.img $CARDPATH
 
 echo Unmounting..
