@@ -207,4 +207,6 @@ void tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
 
     add_headerdatablock(input, buf, &i);
     add_contentdatablock(input, buf, &i);
+    
+    add_symbol(tape_symbol_done, buf, &i);
 }
