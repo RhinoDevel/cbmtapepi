@@ -36,15 +36,12 @@
 # Get bootcode.bin, start.elf and fixup.dat (necessary?) from:
 # https://github.com/raspberrypi/firmware/tree/master/boot
 
-# Get prograspi from:
-# https://github.com/dwelch67/raspberrypi/tree/master/bootloader01
-
-# Get bootloader for Raspberry Pi 2 from:
+# Get (Intel HEX) bootloader for Raspberry Pi 2 from:
 # https://github.com/dwelch67/raspberrypi/tree/master/boards/pi2/bootloader07
 #
 # OR
 #
-# Get bootloader for Raspberry Pi 1 from:
+# Get (Intel HEX) bootloader for Raspberry Pi 1 from:
 # https://github.com/dwelch67/raspberrypi/tree/master/boards/pi1/bootloader07
 
 #set -x
@@ -144,10 +141,6 @@ cp kernel.img kernel7.img # Append "7" for raspi2 [(still) necessary?].
 echo Create Intel HEX output..
 
 arm-none-eabi-objcopy -O ihex kernel.elf kernel.ihx
-
-#echo Sending Intel HEX file..
-##
-#../prograspi/prograspi kernel.ihx /dev/ttyUSB0
 
 #echo Starting emulator..
 ##
