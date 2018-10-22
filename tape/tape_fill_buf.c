@@ -46,9 +46,10 @@ static void add_byte(uint8_t const byte, uint8_t * const buf, int * const pos)
 static void add_countdown(
     bool const second, uint8_t * const buf, int * const pos)
 {
-    uint8_t c = second ? 9 : 0x89;
+    uint8_t c = second ? 9 : 0x89,
+        lim = second ? 0 : 0x80;
 
-    while(c > 0)
+    while(c > lim)
     {
         add_byte(c, buf, pos);
         --c;
@@ -207,6 +208,6 @@ void tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
 
     add_headerdatablock(input, buf, &i);
     add_contentdatablock(input, buf, &i);
-    
+
     add_symbol(tape_symbol_done, buf, &i);
 }
