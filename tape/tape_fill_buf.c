@@ -142,7 +142,7 @@ static void add_headerdatablock(
 {
     int i = 0, c = 0;
     uint16_t const addr_high = input->addr / 256,
-        end_addr_plus_one = input->addr + input->len + 1,
+        end_addr_plus_one = input->addr + input->len,
         end_addr_plus_one_high = end_addr_plus_one / 256;
     uint8_t header_data[header_data_byte_count];
 
