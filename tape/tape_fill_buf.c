@@ -207,6 +207,9 @@ void tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
     int i = 0;
 
     add_headerdatablock(input, buf, &i);
+
+    add_symbol(tape_symbol_pause, buf, &i); // TODO: Replace with motor line usage!
+
     add_contentdatablock(input, buf, &i);
 
     add_symbol(tape_symbol_done, buf, &i);

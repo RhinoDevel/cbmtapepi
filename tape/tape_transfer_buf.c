@@ -33,6 +33,16 @@ static uint32_t const micro_medium = 256;
 //
 static uint32_t const micro_long = 336;
 
+// Pause:
+//
+static uint32_t const milli_pause = 5000; // 5 seconds.
+
+static void transfer_pause(uint32_t const gpio_pin_nr)
+{
+    baregpio_write(gpio_pin_nr, false);
+    busywait_milliseconds(milli_pause);
+}
+
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
     baregpio_write(gpio_pin_nr, false);
@@ -94,6 +104,10 @@ bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr)
                 break;
             }
 
+            case tape_symbol_pause:
+            {
+                break; // Handled below!
+            }
             case tape_symbol_done:
             {
                 return true; // Transfer done.
@@ -104,7 +118,14 @@ bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr)
                 return false; // Error!
             }
         }
+        if(buf[i] == tape_symbol_pause)
+        {
+            transfer_pause(gpio_pin_nr);
+        }
+        else
+        {
+            transfer_symbol(f, l, gpio_pin_nr);
+        }
         ++i;
-        transfer_symbol(f, l, gpio_pin_nr);
     }
 }

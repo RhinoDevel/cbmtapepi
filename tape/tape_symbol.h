@@ -14,6 +14,7 @@ enum tape_symbol
     tape_symbol_new = 4,
     tape_symbol_end = 8, // (also for transmit block gap start)
 
+    tape_symbol_pause = 16, // Pseudo-symbol for no-signal.
     tape_symbol_done = 0xFF // Pseudo-symbol to stop transfer.
 };
 
