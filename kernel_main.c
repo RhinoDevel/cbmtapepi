@@ -15,84 +15,58 @@
 #include "busywait/busywait.h"
 #include "miniuart/miniuart.h"
 
-//#include "tape/tape.h"
-//#include "tape/tape_sample.h"
+#include "tape/tape.h"
+#include "tape/tape_sample.h"
 
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
-#if 0
+//#if 0
 bool tape_test(uint32_t const gpio_pin_nr, uint32_t * const mem)
 {
+    baregpio_set_output(2, true); // Tape read.
+
+    miniuart_write_byte(0x30 + 1);
+
+    // Use start of given memory for sample input structure:
+
     struct tape_input * const sample = (struct tape_input *)mem;
+
+    miniuart_write_byte(0x30 + 2);
+
+    // Use follow-up memory for sample data to send:
+
     uint8_t * const buf = (uint8_t *)mem + sizeof *sample;
+
+    miniuart_write_byte(0x30 + 3);
+
+    // Get sample input structure (content):
 
     tape_sample_fill_buf(sample);
 
+    miniuart_write_byte(0x30 + 4);
+
+    // Get sample data to send:
+
     tape_fill_buf(sample, buf);
 
-    return tape_transfer_buf(buf, gpio_pin_nr);
-}
-#endif //0
+    miniuart_write_byte(0x30 + 5);
 
-#if 0
-void tape_test()
-{
-    // Pulse length detection triggers on descending (negative) edges.
+    // Send sample data via GPIO pin with given nr:
 
-    baregpio_set_output(2, true);
-
-    // Short: 2840 Hz
-    //
-    // 1 / (2840 Hz) = 352 microseconds
-    //
-    // 352 microseconds / 2 = 176 microseconds
-    //
-    static uint32_t const s = 176;
-
-    // Medium: 1953 Hz
-    //
-    // 1 / (1953 Hz) = 512 microseconds
-    //
-    // 512 microseconds / 2 = 256 microseconds
-    //
-    static uint32_t const m = 256;
-
-    // Long: 1488 Hz
-    //
-    // 1 / (1488 Hz) = 672 microseconds
-    //
-    // 672 microseconds / 2 = 336 microseconds
-    //
-    //static uint32_t const l = 336;
-
-    while(true)
+    baregpio_set_output(3, false); // Sense
+    if(tape_transfer_buf(buf, gpio_pin_nr))
     {
-        // Logical 0
-        //
-        baregpio_write(2, false);
-        busywait_microseconds(s);
-        baregpio_write(2, true);
-        busywait_microseconds(s);
-        //
-        baregpio_write(2, false);
-        busywait_microseconds(m);
-        baregpio_write(2, true);
-        busywait_microseconds(m);
-
-        // Logical 1
-        //
-        baregpio_write(2, false);
-        busywait_microseconds(m);
-        baregpio_write(2, true);
-        busywait_microseconds(m);
-        //
-        baregpio_write(2, false);
-        busywait_microseconds(s);
-        baregpio_write(2, true);
-        busywait_microseconds(s);
+        miniuart_write_byte(0x30 + 6);
+        baregpio_set_output(2, true); // Tape read.
+        baregpio_set_output(3, true); // Sense
+        return true;
     }
+    miniuart_write_byte(0x30 + 7);
+    baregpio_set_output(2, true); // Tape read.
+    baregpio_set_output(3, true); // Sense
+    return false;
 }
-#endif //0
+//#endif //0
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
@@ -106,46 +80,60 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 	(void)r1;
 	(void)r2;
 
-    // while(true)
-    // {
-    //     tape_test(2, buf); // Return value ignored.
-    // }
-    // return;
-
-    // WORKS:
-    //
-    // Raspi1, print to UART1 serial out and blink (internal & external LED):
-    //
-    baregpio_set_output(16, true); // Internal LED (green one).
-    //
-    miniuart_init();
-    //
-    baregpio_set_output(2, false); // GPIO pin via expansion port.
-    //
-    *buf = 0;
-    while(true)
     {
-        // Print to UART1:
-        //
-        miniuart_write_byte(0x30 + ((*buf)++));
+        bool lightOn = false;
 
-        *buf = (*buf)%10;
+        miniuart_init();
 
-        // Blink:
-        //
-        baregpio_write(16, false);
-        baregpio_write(2, true);
-        busywait_milliseconds(500); // 0.5 seconds.
-        baregpio_write(16, true);
-        baregpio_write(2, false);
-        busywait_microseconds(500000); // Also 0.5 seconds.
+        baregpio_set_output(3, true); // Sense
 
-        if(*buf==0)
+        while(true)
         {
-            miniuart_write_byte(miniuart_read_byte());
+            for(int i = 0;i < 10;++i)
+            {
+                baregpio_set_output(16, lightOn); // Raspi1: Internal LED (green one).
+                lightOn = !lightOn;
+                busywait_seconds(1);
+            }
+            tape_test(2, buf); // Return value ignored.
         }
     }
     return;
+
+    // // WORKS:
+    // //
+    // // Raspi1, print to UART1 serial out and blink (internal & external LED):
+    // //
+    // baregpio_set_output(16, true); // Internal LED (green one).
+    // //
+    // miniuart_init();
+    // //
+    // baregpio_set_output(2, false); // GPIO pin via expansion port.
+    // //
+    // *buf = 0;
+    // while(true)
+    // {
+    //     // Print to UART1:
+    //     //
+    //     miniuart_write_byte(0x30 + ((*buf)++));
+    //
+    //     *buf = (*buf)%10;
+    //
+    //     // Blink:
+    //     //
+    //     baregpio_write(16, false);
+    //     baregpio_write(2, true);
+    //     busywait_milliseconds(500); // 0.5 seconds.
+    //     baregpio_write(16, true);
+    //     baregpio_write(2, false);
+    //     busywait_microseconds(500000); // Also 0.5 seconds.
+    //
+    //     if(*buf==0)
+    //     {
+    //         miniuart_write_byte(miniuart_read_byte());
+    //     }
+    // }
+    // return;
 
     //// WORKS:
     ////
