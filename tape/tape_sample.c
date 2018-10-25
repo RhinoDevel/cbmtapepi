@@ -28,7 +28,7 @@ void tape_sample_fill_buf(struct tape_input * const buf)
             0x20, 0x20, 0x20, 0x20
         };
 
-        for(int i = 0;i<16;++i)
+        for(int i = 0;i<MT_TAPE_INPUT_NAME_LEN;++i)
         {
             buf->name[i] = name[i];
         }
@@ -40,11 +40,11 @@ void tape_sample_fill_buf(struct tape_input * const buf)
     //buf->addr = 826; // PET ROM v2 and v3 tape #2 buffer.
 
     buf->bytes = bytes;
-    buf->len = 6;
+    buf->len = sizeof bytes;
 
     // Additional bytes (to be stored in header):
     //
-    for(int i = 0;i<171;++i)
+    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
     {
         buf->add_bytes[i] = 0x20;
     }
