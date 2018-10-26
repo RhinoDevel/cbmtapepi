@@ -208,9 +208,9 @@ void tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
 
     add_headerdatablock(input, buf, &i);
 
-    // Does this make sense with a PET?
-    //
     add_symbol(tape_symbol_pause, buf, &i); // TODO: Replace with motor line usage!
+    //
+    // (the PET does not stop the motor, but also does not care about the pause)
 
     add_contentdatablock(input, buf, &i);
 
