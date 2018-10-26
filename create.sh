@@ -111,6 +111,7 @@ $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
 $MT_CC console/console.c -o console/console.o
+$MT_CC calc/calc.c -o calc/calc.o
 
 echo Linking..
 
@@ -129,6 +130,7 @@ arm-none-eabi-ld \
     tape/tape_transfer_buf.o \
     tape/tape_sample.o \
     console/console.o \
+    calc/calc.o \
     -o kernel.elf
 
 echo Extracting..
