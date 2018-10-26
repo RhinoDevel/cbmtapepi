@@ -37,7 +37,7 @@ void tape_sample_fill_buf(struct tape_input * const buf)
     buf->type = tape_filetype_non_relocatable;
 
     buf->addr = 2024; // C64: 16 unused bytes.
-    //buf->addr = 826; // PET ROM v2 and v3 tape #2 buffer.
+    // DON'T USE TAPE BUFFER: buf->addr = 826; // PET ROM v2 and v3 tape #2 buffer.
 
     buf->bytes = bytes;
     buf->len = sizeof bytes;
