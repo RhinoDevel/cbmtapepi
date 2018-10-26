@@ -29,7 +29,7 @@
 #define AUX_MU_STAT_REG (AUX_BASE + 0x64) // Mini UART extra status.
 #define AUX_MU_BAUD_REG (AUX_BASE + 0x68) // Mini UART Baud rate.
 //
-// The Mini UART emulates 16550 behaviour, but is NOT a 16650 compatible UART.
+// The Mini UART emulates 16550 behavior, but is NOT a 16650 compatible UART.
 //
 // In addition to the Mini UART there also exist two SPI masters
 // as auxiliary peripherals.
