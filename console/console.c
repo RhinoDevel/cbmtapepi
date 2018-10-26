@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "../calc/calc.h"
 #include "console.h"
 
 static uint8_t (*s_read_byte)() = 0;
@@ -23,6 +24,16 @@ void console_init(struct console_params const * const p)
 void console_write_key(char const key)
 {
     s_write_byte((uint8_t)key);
+}
+
+void console_write_hex(uint8_t const byte)
+{
+    char h = 0, l = 0;
+
+    calc_byte_to_hex(byte, &h, &l);
+
+    console_write_key(h);
+    console_write_key(l);
 }
 
 void console_write(char const * const buf)

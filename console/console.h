@@ -20,6 +20,10 @@ char console_read_char();
  */
 void console_read(char * const buf, int const buf_len);
 
+void console_write_key(char const key);
+
+void console_write_hex(uint8_t const byte);
+
 /* Write characters from buffer, until '\0' was read.
  * '\0' will not be written.
  */
