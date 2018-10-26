@@ -18,50 +18,50 @@
 #include "tape/tape.h"
 #include "tape/tape_sample.h"
 
+#include "console/console.h"
+
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
 //#if 0
 bool tape_test(uint32_t const gpio_pin_nr, uint32_t * const mem)
 {
+    console_writeline("Setting tape read line to HIGH..");
     baregpio_set_output(2, true); // Tape read.
-
-    miniuart_write_byte(0x30 + 1);
 
     // Use start of given memory for sample input structure:
 
     struct tape_input * const sample = (struct tape_input *)mem;
 
-    miniuart_write_byte(0x30 + 2);
-
     // Use follow-up memory for sample data to send:
 
     uint8_t * const buf = (uint8_t *)mem + sizeof *sample;
 
-    miniuart_write_byte(0x30 + 3);
-
     // Get sample input structure (content):
 
+    console_writeline("Filling input structure with sample data..");
     tape_sample_fill_buf(sample);
-
-    miniuart_write_byte(0x30 + 4);
 
     // Get sample data to send:
 
+    console_writeline("Filling send buffer from input structure..");
     tape_fill_buf(sample, buf);
-
-    miniuart_write_byte(0x30 + 5);
 
     // Send sample data via GPIO pin with given nr:
 
+    console_writeline("Setting sense line to LOW..");
     baregpio_set_output(3, false); // Sense
+
+    console_writeline("Sending buffer content..");
     if(tape_transfer_buf(buf, gpio_pin_nr))
     {
-        miniuart_write_byte(0x30 + 6);
+        console_writeline(
+            "Success. Setting tape read line and sense line to HIGH..");
         baregpio_set_output(2, true); // Tape read.
         baregpio_set_output(3, true); // Sense
         return true;
     }
-    miniuart_write_byte(0x30 + 7);
+    console_writeline(
+        "Failure! Setting tape read line and sense line to HIGH..");
     baregpio_set_output(2, true); // Tape read.
     baregpio_set_output(3, true); // Sense
     return false;
@@ -80,11 +80,34 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 	(void)r1;
 	(void)r2;
 
+    // Initialize console via MiniUART:
+    //
+    {
+        struct console_params p;
+
+        p.read_byte = miniuart_read_byte;
+        p.write_byte = miniuart_write_byte;
+
+        miniuart_init();
+        console_init(&p);
+    }
+
+    // Console test:
+    //
+    // char input_buf[256];
+    // while(true)
+    // {
+    //     console_write("What's your name? ");
+    //     console_read(input_buf, 256);
+    //     console_write("Aha! Your name is: ");
+    //     console_writeline(input_buf);
+    //     console_writeline(":-)");
+    // }
+
     {
         bool lightOn = false;
 
-        miniuart_init();
-
+        console_writeline("Setting sense line to HIGH..");
         baregpio_set_output(3, true); // Sense
 
         while(true)

@@ -110,6 +110,7 @@ $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
+$MT_CC console/console.c -o console/console.o
 
 echo Linking..
 
@@ -127,6 +128,7 @@ arm-none-eabi-ld \
     tape/tape_fill_buf.o \
     tape/tape_transfer_buf.o \
     tape/tape_sample.o \
+    console/console.o \
     -o kernel.elf
 
 echo Extracting..

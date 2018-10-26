@@ -28,7 +28,7 @@ uint8_t miniuart_read_byte()
     return mem_read(AUX_MU_IO_REG);
 }
 
-void miniuart_write_byte(uint8_t byte)
+void miniuart_write_byte(uint8_t const byte)
 {
     // Print to UART1:
     //

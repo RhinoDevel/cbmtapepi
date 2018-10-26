@@ -12,6 +12,6 @@
 void miniuart_init();
 
 uint8_t miniuart_read_byte();
-void miniuart_write_byte(uint8_t byte);
+void miniuart_write_byte(uint8_t const byte);
 
 #endif //MT_MINIUART
