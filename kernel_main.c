@@ -105,8 +105,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // }
 
     {
-        bool lightOn = false;
-
         console_writeline("Setting sense line to HIGH..");
         baregpio_set_output(3, true); // Sense
 
@@ -114,10 +112,16 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         {
             for(int i = 0;i < 10;++i)
             {
-                baregpio_set_output(16, lightOn); // Raspi1: Internal LED (green one).
-                lightOn = !lightOn;
-                busywait_seconds(1);
+                console_write_key(0x30 + 10 - i - 1);
+                console_writeline("");
+
+                baregpio_set_output(16, false); // Raspi1: Internal LED (green one).
+                busywait_milliseconds(500);
+
+                baregpio_set_output(16, true); // Raspi1: Internal LED (green one).
+                busywait_milliseconds(500);
             }
+            console_writeline("GO!");
             tape_test(2, buf); // Return value ignored.
         }
     }
