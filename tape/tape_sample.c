@@ -16,7 +16,7 @@ void tape_sample_fill_buf(struct tape_input * const buf)
         4, // Higher byte of 1024.
         //
         //0, // Lower byte of 32768 (0x8000 - PET video RAM start).
--       //128, // Higher byte of 32768.
+        //128, // Higher byte of 32768.
 
         96 // RTS.
     };
