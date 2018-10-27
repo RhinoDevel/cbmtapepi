@@ -60,6 +60,9 @@ static uint32_t const gpset0 = GPIO_BASE + 0x1C; // GPIO pin output set 0.
 static uint32_t const gpclr0 = GPIO_BASE + 0x28; // GPIO pin output clear 0.
 // ["gpclr1" will dynamically be used with the help of function get_gpclr()]
 
+static uint32_t const gplev0 = GPIO_BASE + 0x34; // GPIO pin level 0.
+// ["gplev1" will dynamically be used with the help of function get_gplev()]
+
 static uint32_t const gppud = // GPIO pull-up/-down (page 100).
     GPIO_BASE + 0x94;
 
@@ -81,6 +84,10 @@ static uint32_t get_gpset(uint32_t const pin_nr)
 static uint32_t get_gpclr(uint32_t const pin_nr)
 {
     return gpclr0 + 4 * (pin_nr / 32); // 4 bytes for 32 pins.
+}
+static uint32_t get_gplev(uint32_t const pin_nr)
+{
+    return gplev0 + 4 * (pin_nr / 32); // 4 bytes for 32 pins.
 }
 
 /** Return address of GPPUDCLK register responsible for pin with given nr.
@@ -136,6 +143,11 @@ void baregpio_write(uint32_t const pin_nr, bool const high)
         return;
     }
     mem_write(get_gpclr(pin_nr), pin_mask);
+}
+
+bool baregpio_read(uint32_t const pin_nr)
+{
+    return (bool)(get_gplev(pin_nr) & get_pin_mask(pin_nr));
 }
 
 void baregpio_set_output(uint32_t const pin_nr, bool const high)
