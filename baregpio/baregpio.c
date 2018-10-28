@@ -147,7 +147,7 @@ void baregpio_write(uint32_t const pin_nr, bool const high)
 
 bool baregpio_read(uint32_t const pin_nr)
 {
-    return (bool)(get_gplev(pin_nr) & get_pin_mask(pin_nr));
+    return (mem_read(get_gplev(pin_nr)) & get_pin_mask(pin_nr)) != 0;
 }
 
 void baregpio_set_output(uint32_t const pin_nr, bool const high)
