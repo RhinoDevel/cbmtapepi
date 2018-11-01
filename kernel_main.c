@@ -56,7 +56,7 @@ bool tape_test(
     baregpio_set_output(gpio_pin_nr_sense, false); // Sense
 
     console_writeline("Sending buffer content..");
-    if(tape_transfer_buf(buf, gpio_pin_nr_read, gpio_pin_nr_motor))
+    if(tape_transfer_buf(buf, gpio_pin_nr_motor, gpio_pin_nr_read))
     {
         console_writeline(
             "Success. Setting tape read line and sense line to HIGH..");
