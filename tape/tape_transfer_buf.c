@@ -8,6 +8,7 @@
 #include "tape_symbol.h"
 #include "../busywait/busywait.h"
 #include "../baregpio/baregpio.h"
+#include "../console/console.h"
 
 // Short: 2840 Hz
 //
@@ -76,12 +77,15 @@ bool tape_transfer_buf(
 
         if(buf[i] == tape_symbol_done)
         {
+            console_writeline("Done pseudo-symbol found. Stopping transfer.");
             return true; // Transfer done (fake symbol, don't care about motor).
         }
 
         while(!baregpio_read(gpio_pin_nr_motor))
         {
             // Pause, as long as motor signal from Commodore computer is LOW.
+
+            console_writeline("Motor is OFF, waiting..");
         }
 
         switch(buf[i])
