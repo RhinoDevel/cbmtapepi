@@ -23,10 +23,14 @@
 extern uint32_t __heap; // There is not really an uint32_t object allocated.
 
 //#if 0
-bool tape_test(uint32_t const gpio_pin_nr, uint32_t * const mem)
+bool tape_test(
+    uint32_t const gpio_pin_nr_read,
+    uint32_t const gpio_pin_nr_sense,
+    uint32_t const gpio_pin_nr_motor,
+    uint32_t * const mem)
 {
     console_writeline("Setting tape read line to HIGH..");
-    baregpio_set_output(2, true); // Tape read.
+    baregpio_set_output(gpio_pin_nr_read, true); // Tape read.
 
     // Use start of given memory for sample input structure:
 
@@ -49,21 +53,21 @@ bool tape_test(uint32_t const gpio_pin_nr, uint32_t * const mem)
     // Send sample data via GPIO pin with given nr:
 
     console_writeline("Setting sense line to LOW..");
-    baregpio_set_output(3, false); // Sense
+    baregpio_set_output(gpio_pin_nr_sense, false); // Sense
 
     console_writeline("Sending buffer content..");
-    if(tape_transfer_buf(buf, gpio_pin_nr))
+    if(tape_transfer_buf(buf, gpio_pin_nr_read, gpio_pin_nr_motor))
     {
         console_writeline(
             "Success. Setting tape read line and sense line to HIGH..");
-        baregpio_set_output(2, true); // Tape read.
-        baregpio_set_output(3, true); // Sense
+        baregpio_set_output(gpio_pin_nr_read, true); // Tape read.
+        baregpio_set_output(gpio_pin_nr_sense, true); // Sense
         return true;
     }
     console_writeline(
         "Failure! Setting tape read line and sense line to HIGH..");
-    baregpio_set_output(2, true); // Tape read.
-    baregpio_set_output(3, true); // Sense
+    baregpio_set_output(gpio_pin_nr_read, true); // Tape read.
+    baregpio_set_output(gpio_pin_nr_sense, true); // Sense
     return false;
 }
 //#endif //0
@@ -92,21 +96,12 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         console_init(&p);
     }
 
-    // Console test:
-    //
-    // char input_buf[256];
-    // while(true)
-    // {
-    //     console_write("What's your name? ");
-    //     console_read(input_buf, 256);
-    //     console_write("Aha! Your name is: ");
-    //     console_writeline(input_buf);
-    //     console_writeline(":-)");
-    // }
-
     {
         console_writeline("Setting sense line to HIGH..");
         baregpio_set_output(3, true); // Sense
+
+        console_writeline("Setting motor line to input without pull..");
+        baregpio_set_input_pull_off(4);
 
         while(true)
         {
@@ -120,9 +115,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
                 baregpio_set_output(16, true); // Raspi1: Internal LED (green one).
                 busywait_milliseconds(500);
+
+                console_writeline(baregpio_read(4) ? "Motor: ON" : "Motor: OFF");
             }
             console_writeline("GO!");
-            tape_test(2, buf); // Return value ignored.
+            tape_test(2, 3, 4, buf); // Return value ignored.
         }
     }
     return;

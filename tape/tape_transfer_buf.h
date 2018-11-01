@@ -7,14 +7,23 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/** Send Commodore datassette/datasette symbols in given buffer via GPIO pin
- *  with given nr., until pseudo-symbol tape_symbol_done is found.
+/** Send Commodore datassette/datasette symbols in given buffer via read-from-
+ *  tape GPIO pin with given nr., until pseudo-symbol tape_symbol_done is found.
+ *
+ *  Pauses each time, when the motor signal gets LOW,
+ *  until it is getting HIGH again.
  *
  *  See tape_fill_buf() for how to fill the buffer.
  *
  *  - Does not care about sense line (must already be set to low).
- *  - GPIO pin must already be configured as output and set to HIGH.
+ *  - Read-from-tape GPIO pin must already be configured as output and set to
+ *    HIGH.
+ *  - Motor GPIO pin must already be configured as input without any internal
+ *    pull resistor.
  */
-bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr);
+bool tape_transfer_buf(
+    uint8_t const * const buf,
+    uint32_t const gpio_pin_nr_motor,
+    uint32_t const gpio_pin_nr_read);
 
 #endif //MT_TAPE_TRANSFER_BUF

@@ -60,7 +60,10 @@ static void transfer_symbol(
     transfer_pulse(micro_last, gpio_pin_nr);
 }
 
-bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr)
+bool tape_transfer_buf(
+    uint8_t const * const buf,
+    uint32_t const gpio_pin_nr_motor,
+    uint32_t const gpio_pin_nr_read)
 {
     int i = 0;
 
@@ -70,6 +73,16 @@ bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr)
     while(true)
     {
         uint32_t f = 0, l = 0;
+
+        if(buf[i] == tape_symbol_done)
+        {
+            return true; // Transfer done (fake symbol, don't care about motor).
+        }
+
+        while(!baregpio_read(gpio_pin_nr_motor))
+        {
+            // Pause, as long as motor signal from Commodore computer is LOW.
+        }
 
         switch(buf[i])
         {
@@ -110,7 +123,7 @@ bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr)
             }
             case tape_symbol_done:
             {
-                return true; // Transfer done.
+                return false; // Error (really handled, above)!
             }
 
             default: // Must not happen.
@@ -120,11 +133,11 @@ bool tape_transfer_buf(uint8_t const * const buf, uint32_t const gpio_pin_nr)
         }
         if(buf[i] == tape_symbol_pause)
         {
-            transfer_pause(gpio_pin_nr);
+            transfer_pause(gpio_pin_nr_read);
         }
         else
         {
-            transfer_symbol(f, l, gpio_pin_nr);
+            transfer_symbol(f, l, gpio_pin_nr_read);
         }
         ++i;
     }
