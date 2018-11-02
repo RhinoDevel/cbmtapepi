@@ -5,7 +5,6 @@ ENTRY(_start) /* Just necessary for intermediately build ELF output file. */
 
 SECTIONS
 {
-    /* Starts at LOADER_ADDR: */
     . = 0x8000; /* (sets the location counter, which is initially 0) */
     __start = .; /* (creates symbol, usable by source files) */
 

@@ -11,7 +11,8 @@
 // r0 : 0 = Boot device code.
 // r1 : 0x00000C42 = ARM Linux Machine Type,
 //                   see: http://www.arm.linux.org.uk/developer/machines/
-// r2 : 0x00000100 = ATAGs beginning.
+// r2 : 0x00000100 = ATAGs beginning,
+//                   see: http://www.simtec.co.uk/products/SWLINUX/files/booting_article.html#appendix_tag_reference
 //
 // Preserve registers above to be used as parameters of kernel_main().
 _start:
