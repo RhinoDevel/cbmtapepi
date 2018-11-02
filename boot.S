@@ -8,9 +8,10 @@
 // Kernel entry point.
 //
 // r15: Execution should start at 0x8000.
-// r0 : 0
-// r1 : 0x00000C42
-// r2 : 0x00000100
+// r0 : 0 = Boot device code.
+// r1 : 0x00000C42 = ARM Linux Machine Type,
+//                   see: http://www.arm.linux.org.uk/developer/machines/
+// r2 : 0x00000100 = ATAGs beginning.
 //
 // Preserve registers above to be used as parameters of kernel_main().
 _start:
