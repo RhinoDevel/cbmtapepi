@@ -20,7 +20,7 @@
 
 #include "console/console.h"
 
-extern uint32_t __heap; // There is not really an uint32_t object allocated.
+extern uint32_t __heap;
 
 //#if 0
 bool tape_test(
@@ -74,7 +74,7 @@ bool tape_test(
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
-    uint32_t * const heap = &__heap; // This is correct!
+    uint32_t * const heap = &__heap; // Gets heap address as pointer.
 
     uint32_t * const buf = heap; // Test of heap memory usage.
 
