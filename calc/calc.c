@@ -25,3 +25,12 @@ void calc_byte_to_hex(
     *out_high = calc_get_hex(high);
     *out_low = calc_get_hex(low);
 }
+
+void calc_word_to_hex(uint16_t const word, char * const out_four)
+{
+    uint8_t const high = word / 256,
+        low = word - 256 * high;
+
+    calc_byte_to_hex(high, out_four[0], out_four[1]);
+    calc_byte_to_hex(low, out_four[2], out_four[3]);
+}

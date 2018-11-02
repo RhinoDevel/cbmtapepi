@@ -14,4 +14,9 @@
 void calc_byte_to_hex(
     uint8_t const byte, char * const out_high, char * const out_low);
 
+/**
+ *  E.g.: word == 43981 => out_four[0...3] = 'a', 'b', 'c', 'd'
+ */
+void calc_word_to_hex(uint16_t const word, char * const out_four);
+
 #endif //MT_CALC
