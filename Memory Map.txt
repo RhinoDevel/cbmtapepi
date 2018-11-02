@@ -1,0 +1,23 @@
+0
+
+0x00000100 / 256 B  ATAGs (created here by boot loader).
+
+0x00008000 / 32 kB  Code segment
+                    ------------
+
+                    Code from boot.S file.
+
+                    Code from C files.
+
+                    Read-only data segment.
+
+                    Initialized read-write data segment.
+
+                    Uninitialized read-write data segment (BSS).
+
+                    HEAP
+
+^
+| (stack grows downwards)
+|
+0x04000000 / 64 MB  Top of stack.
