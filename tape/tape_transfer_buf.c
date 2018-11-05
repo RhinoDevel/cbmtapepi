@@ -34,16 +34,6 @@ static uint32_t const micro_medium = 256;
 //
 static uint32_t const micro_long = 336;
 
-// Pause:
-//
-static uint32_t const milli_pause = 5000; // 5 seconds.
-
-static void transfer_pause(uint32_t const gpio_pin_nr)
-{
-    baregpio_write(gpio_pin_nr, false);
-    busywait_milliseconds(milli_pause);
-}
-
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
     baregpio_write(gpio_pin_nr, false);
@@ -74,12 +64,6 @@ bool tape_transfer_buf(
     while(true)
     {
         uint32_t f = 0, l = 0;
-
-        if(buf[i] == tape_symbol_done)
-        {
-            console_writeline("Done pseudo-symbol found. Stopping transfer.");
-            return true; // Transfer done (fake symbol, don't care about motor).
-        }
 
         while(!baregpio_read(gpio_pin_nr_motor))
         {
@@ -121,28 +105,16 @@ bool tape_transfer_buf(
                 break;
             }
 
-            case tape_symbol_pause:
-            {
-                break; // Handled below!
-            }
             case tape_symbol_done:
             {
-                return false; // Error (really handled, above)!
+                return true; // Transfer done (fake symbol).
             }
-
             default: // Must not happen.
             {
                 return false; // Error!
             }
         }
-        if(buf[i] == tape_symbol_pause)
-        {
-            transfer_pause(gpio_pin_nr_read);
-        }
-        else
-        {
-            transfer_symbol(f, l, gpio_pin_nr_read);
-        }
+        transfer_symbol(f, l, gpio_pin_nr_read);
         ++i;
     }
 }
