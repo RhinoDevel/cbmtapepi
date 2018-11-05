@@ -57,6 +57,7 @@ bool tape_transfer_buf(
     uint32_t const gpio_pin_nr_read)
 {
     int i = 0;
+    bool motor_wait = true; // Initially wait for motor to be HIGH.
 
     // As pulse length detection triggers on descending (negative) edges,
     // GPIO pin's current output value is expected to be set to HIGH.
@@ -65,11 +66,25 @@ bool tape_transfer_buf(
     {
         uint32_t f = 0, l = 0;
 
-        while(!baregpio_read(gpio_pin_nr_motor))
+        if(!baregpio_read(gpio_pin_nr_motor))
         {
-            // Pause, as long as motor signal from Commodore computer is LOW.
+            if(motor_wait)
+            {
+                console_writeline("tape_transfer_buf: Motor is OFF, waiting..");
 
-            console_writeline("Motor is OFF, waiting..");
+                while(!baregpio_read(gpio_pin_nr_motor))
+                {
+                    // Pause, as long as motor signal from Commodore computer is
+                    // LOW.
+                }
+
+                console_writeline("tape_transfer_buf: Motor is ON, resuming..");
+            }
+            else
+            {
+                console_writeline("tape_transfer_buf: Motor is OFF, done.");
+                return true; // Done
+            }
         }
 
         switch(buf[i])
@@ -105,16 +120,29 @@ bool tape_transfer_buf(
                 break;
             }
 
+            case tape_symbol_motor_wait_off: // (fake symbol)
+            {
+                console_writeline("tape_transfer_buf: Disabling motor-wait..");
+                motor_wait = false;
+                break;
+            }
             case tape_symbol_done:
             {
+                console_writeline(
+                    "tape_transfer_buf: Done symbol found. Done.");
                 return true; // Transfer done (fake symbol).
             }
+
             default: // Must not happen.
             {
+                console_writeline("tape_transfer_buf: Error: Unknown symbol!");
                 return false; // Error!
             }
         }
-        transfer_symbol(f, l, gpio_pin_nr_read);
+        if(f != 0) // => No fake symbol.
+        {
+            transfer_symbol(f, l, gpio_pin_nr_read);
+        }
         ++i;
     }
 }

@@ -11,7 +11,9 @@
  *  tape GPIO pin with given nr., until pseudo-symbol tape_symbol_done is found.
  *
  *  Pauses each time, when the motor signal gets LOW,
- *  until it is getting HIGH again.
+ *  until it is getting HIGH again OR exits (with return value true),
+ *  if motor-wait was already disabled by pseudo-symbol
+ *  tape_symbol_motor_wait_off.
  *
  *  See tape_fill_buf() for how to fill the buffer.
  *
