@@ -26,7 +26,7 @@ void console_write_key(char const key)
     s_write_byte((uint8_t)key);
 }
 
-void console_write_hex(uint8_t const byte)
+void console_write_byte(uint8_t const byte)
 {
     char h = 0, l = 0;
 
@@ -34,6 +34,18 @@ void console_write_hex(uint8_t const byte)
 
     console_write_key(h);
     console_write_key(l);
+}
+
+void console_write_word(uint16_t const word)
+{
+    char four[4];
+
+    calc_word_to_hex(word, four);
+
+    console_write_key(four[0]);
+    console_write_key(four[1]);
+    console_write_key(four[2]);
+    console_write_key(four[3]);
 }
 
 void console_write(char const * const buf)
