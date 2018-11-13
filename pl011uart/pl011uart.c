@@ -42,17 +42,17 @@
 #define PL011_ITOP (PL011_BASE + 0x88)
 #define PL011_TDR (PL011_BASE + 0x8C)
 
-static void flush_rx_fifo()
-{
-    // Read, until receive FIFO is empty (page 182):
-    //
-    while((mem_read(PL011_FR) & (1 << 4)) == 0) // Checks RXFE.
-    {
-        // RXFE flag is 0 <=> Receive FIFO is not empty.
-
-        mem_read(PL011_DR);
-    }
-}
+// static void flush_rx_fifo()
+// {
+//     // Read, until receive FIFO is empty (page 182):
+//     //
+//     while((mem_read(PL011_FR) & (1 << 4)) == 0) // Checks RXFE.
+//     {
+//         // RXFE flag is 0 <=> Receive FIFO is not empty.
+//
+//         mem_read(PL011_DR);
+//     }
+// }
 
 uint8_t pl011uart_read_byte()
 {
@@ -76,13 +76,13 @@ void pl011uart_write_byte(uint8_t const byte)
     mem_write(PL011_DR, byte);
 }
 
-// TODO: Fix bug(-s):
+// TODO: Fix bug:
 //
 void pl011uart_init()
 {
     mem_write(PL011_CR, 0); // Disables everything (UARTEN = bit 0, page 187).
 
-    busywait_clockcycles(150); // Maybe not necessary.
+    //busywait_clockcycles(150); // Maybe not necessary.
 
     // Set GPIO pin 14 and 15 to alternate function 0 (page 92 and page 102),
     // which is using UART0:
@@ -99,14 +99,14 @@ void pl011uart_init()
 
     // Does NOT work on Raspi1:
     //
-    // Hard-coded for UART0 default reference clock frequency of 3 MHz:
+    // Hard-coded for UART0 default reference clock frequency of 48 MHz:
     //
-    // (3000000 / (16 * 115200) = 1.627
-    // (0.627*64)+0.5 = 40
-    // int 1 frac 40
+    // (48000000 / (16 * 115200) = 26.04167
+    // (0.04167*64)+0.5 = 3
+    // int 26 frac 3
     //
-    // mem_write(PL011_IBRD, 1);
-    // mem_write(PL011_FBRD, 40); // Fractional Baud rate divisor (bits 0-5).
+    mem_write(PL011_IBRD, 26);
+    mem_write(PL011_FBRD, 3); // Fractional Baud rate divisor (bits 0-5).
 
     // Enable FIFO & 8 bit data transmission (1 stop bit, no parity):
     //
@@ -129,5 +129,5 @@ void pl011uart_init()
         | (1 << 8) // TXE (page 186).
         | (1 << 9)); // RXE (page 186).
 
-    flush_rx_fifo(); // Maybe not necessary.
+    //flush_rx_fifo(); // Maybe not necessary.
 }
