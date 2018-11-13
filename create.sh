@@ -107,6 +107,7 @@ $MT_CC mem/mem.c -o mem/mem.o
 $MT_CC armtimer/armtimer.c -o armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
+$MT_CC pl011uart/pl011uart.c -o pl011uart/pl011uart.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
@@ -126,6 +127,7 @@ arm-none-eabi-ld \
     armtimer/armtimer.o \
     busywait/busywait.o \
     miniuart/miniuart.o \
+    pl011uart/pl011uart.o \
     tape/tape_fill_buf.o \
     tape/tape_transfer_buf.o \
     tape/tape_sample.o \
@@ -148,6 +150,6 @@ echo Create Intel HEX output..
 
 arm-none-eabi-objcopy -O ihex kernel.elf kernel.ihx
 
-#echo Starting emulator..
-##
-#qemu-system-arm -m 256 -M raspi2 -kernel kernel.elf -serial stdio
+# echo Starting emulator..
+# #
+# qemu-system-arm -m 256 -M raspi2 -kernel kernel.elf -serial stdio

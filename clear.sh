@@ -1,15 +1,18 @@
 #!/bin/sh
 
+rm armtimer/armtimer.o
+rm baregpio/baregpio.o
+rm busywait/busywait.o
+rm calc/calc.o
+rm console/console.o
+rm mem/mem.o
+rm miniuart/miniuart.o
+rm pl011uart/pl011uart.o
+rm tape/tape_fill_buf.o
+rm tape/tape_sample.o
+rm tape/tape_transfer_buf.o
 rm boot.o
 rm kernel_main.o
-rm baregpio/baregpio.o
-rm mem/mem.o
-rm armtimer/armtimer.o
-rm busywait/busywait.o
-rm miniuart/miniuart.o
-rm tape/tape_fill_buf.o
-rm tape/tape_transfer_buf.o
-rm tape/tape_sample.o
 rm kernel.elf
 rm kernel.img
 rm kernel7.img

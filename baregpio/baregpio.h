@@ -13,6 +13,7 @@ enum gpio_func
 {
     gpio_func_input = 0,
     gpio_func_output = 1,
+    gpio_func_alt0 = 4,
     gpio_func_alt5 = 2
     // ...
 };
