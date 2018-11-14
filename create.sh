@@ -150,6 +150,9 @@ echo Create Intel HEX output..
 
 arm-none-eabi-objcopy -O ihex kernel.elf kernel.ihx
 
+# QEMU will work (with a more or less reliable serial console..),
+# if you use PL011UART without calling pl011uart_init():
+#
 # echo Starting emulator..
 # #
 # qemu-system-arm -m 256 -M raspi2 -kernel kernel.elf -serial stdio
