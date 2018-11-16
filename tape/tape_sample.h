@@ -6,6 +6,7 @@
 
 #include "tape_input.h"
 
-void tape_sample_fill_buf(struct tape_input * const buf);
+void tape_sample_pet_fill_buf(struct tape_input * const buf);
+void tape_sample_c64_fill_buf(struct tape_input * const buf);
 
 #endif //MT_TAPE_SAMPLE

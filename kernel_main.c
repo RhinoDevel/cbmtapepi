@@ -6,75 +6,72 @@
 // together with that document!
 
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
-#include "auxiliary.h"
 #include "baregpio/baregpio.h"
-#include "mem/mem.h"
 #include "busywait/busywait.h"
-#include "miniuart/miniuart.h"
-#include "pl011uart/pl011uart.h"
 
-#include "tape/tape.h"
-#include "tape/tape_sample.h"
+#include "miniuart/miniuart.h"
+//#include "pl011uart/pl011uart.h"
 
 #include "console/console.h"
 
+#include "ui/ui.h"
+
+#include "tape/tape_send_params.h"
+#include "tape/tape_send.h"
+#include "tape/tape_sample.h"
+
 extern uint32_t __heap;
 
-bool tape_test(
+static bool tape_test(
     uint32_t const gpio_pin_nr_read,
     uint32_t const gpio_pin_nr_sense,
     uint32_t const gpio_pin_nr_motor,
     uint32_t * const mem)
 {
-    console_writeline("Setting tape read line to HIGH..");
-    baregpio_set_output(gpio_pin_nr_read, true); // Tape read.
-
     // Use start of given memory for sample input structure:
 
-    struct tape_input * const sample = (struct tape_input *)mem;
+    struct tape_send_params p;
 
-    // Use follow-up memory for sample data to send:
+    p.gpio_pin_nr_read = gpio_pin_nr_read;
+    p.gpio_pin_nr_sense = gpio_pin_nr_sense;
+    p.gpio_pin_nr_motor = gpio_pin_nr_motor;
 
-    uint8_t * const buf = (uint8_t *)mem + sizeof *sample;
-
-    // Get sample input structure (content):
+    p.data = (struct tape_input *)mem;
 
     console_writeline("Filling input structure with sample data..");
-    tape_sample_fill_buf(sample);
+    tape_sample_c64_fill_buf(p.data);
 
-    // Get sample data to send:
+    return tape_send(
+        &p,
+        mem + sizeof *(p.data)); // Uses follow-up memory for sample data to send.
+}
 
-    console_writeline("Filling send buffer from input structure..");
-    tape_fill_buf(sample, buf);
+/** Connect console (singleton) to wanted in-/output.
+ */
+static void init_console()
+{
+    struct console_params p;
 
-    // Send sample data via GPIO pin with given nr:
+    // Initialize console via MiniUART:
+    //
+    p.read_byte = miniuart_read_byte;
+    p.write_byte = miniuart_write_byte;
+    miniuart_init();
+    //
+    // // Initialize console via PL011 UART (also use this for QEMU):
+    // //
+    // p.read_byte = pl011uart_read_byte;
+    // p.write_byte = pl011uart_write_byte;
+    // pl011uart_init(); // (don't do this while using QEMU)
 
-    console_writeline("Setting sense line to LOW..");
-    baregpio_set_output(gpio_pin_nr_sense, false); // Sense
-
-    console_writeline("Sending buffer content..");
-    if(tape_transfer_buf(buf, gpio_pin_nr_motor, gpio_pin_nr_read))
-    {
-        console_writeline(
-            "Success. Setting tape read line and sense line to HIGH..");
-        baregpio_set_output(gpio_pin_nr_read, true); // Tape read.
-        baregpio_set_output(gpio_pin_nr_sense, true); // Sense
-        return true;
-    }
-    console_writeline(
-        "Failure! Setting tape read line and sense line to HIGH..");
-    baregpio_set_output(gpio_pin_nr_read, true); // Tape read.
-    baregpio_set_output(gpio_pin_nr_sense, true); // Sense
-    return false;
+    console_init(&p);
 }
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
     uint32_t * const heap = &__heap; // Gets heap address as pointer.
-
     uint32_t * const buf = heap; // Test of heap memory usage.
 
     // To be able to compile, although these are not used (stupid?):
@@ -83,49 +80,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 	(void)r1;
 	(void)r2;
 
-/*
-    // Initialize console via MiniUART:
-    //
-    {
-        struct console_params p;
-
-        p.read_byte = miniuart_read_byte;
-        p.write_byte = miniuart_write_byte;
-
-        miniuart_init();
-        console_init(&p);
-    }
-*/
-    // Initialize console via PL011 UART:
-    //
-    {
-        struct console_params p;
-
-        p.read_byte = pl011uart_read_byte;
-        p.write_byte = pl011uart_write_byte;
-
-        pl011uart_init();
-        console_init(&p);
-    }
-
-    // while(true)
-    // {
-    //         console_write_key(0x30 + 0);
-    //         baregpio_set_output(16, false); // Raspi1: Internal LED (green one).
-    //         busywait_milliseconds(500);
-    //
-    //         console_write_key(0x30 + 1);
-    //         baregpio_set_output(16, true); // Raspi1: Internal LED (green one).
-    //         busywait_milliseconds(500);
-    // }
+    init_console();
+    ui_enter();
 
     {
-        console_writeline("Setting sense line to HIGH..");
-        baregpio_set_output(3, true); // Sense
-
-        console_writeline("Setting motor line to input without pull..");
-        baregpio_set_input_pull_off(4);
-
         while(true)
         {
             for(int i = 0;i < 10;++i)
@@ -146,6 +104,25 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         }
     }
     return;
+
+    // // Read and show PL011 UART (UART0) Baud rate divisor:
+    // //
+    // // (x / (16 * 115200) = i.z
+    // // (0.z * 64) + 0.5 = f
+    // // int i frac f
+    // //
+    // console_write("IBRD: i = "); // Raspi1: 0x1A = 26
+    // console_write_word(
+    //     (uint16_t)(
+    //         0x0000FFFF // Bits 0-15.
+    //         & mem_read(/*PL011_IBRD*/ PERI_BASE + 0x201000 + 0x24)));
+    // console_writeline("");
+    // console_write("FBRD: f = "); // Raspi1: 0x03 = 3
+    // console_write_byte(
+    //     (uint8_t)(
+    //         0x0000003F // Bits 0-5
+    //         & mem_read(/*PL011_FBRD*/ PERI_BASE + 0x201000 + 0x28)));
+    // console_writeline("");
 
     // // WORKS:
     // //
