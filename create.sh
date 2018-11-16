@@ -111,6 +111,9 @@ $MT_CC pl011uart/pl011uart.c -o pl011uart/pl011uart.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
+$MT_CC tape/tape_send.c -o tape/tape_send.o
+$MT_CC ui/ui_send_sample.c -o ui/ui_send_sample.o
+$MT_CC ui/ui.c -o ui/ui.o
 $MT_CC console/console.c -o console/console.o
 $MT_CC calc/calc.c -o calc/calc.o
 
@@ -131,6 +134,9 @@ arm-none-eabi-ld \
     tape/tape_fill_buf.o \
     tape/tape_transfer_buf.o \
     tape/tape_sample.o \
+    tape/tape_send.o \
+    ui/ui_send_sample.o \
+    ui/ui.o \
     console/console.o \
     calc/calc.o \
     -o kernel.elf
