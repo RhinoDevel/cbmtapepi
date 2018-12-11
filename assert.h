@@ -10,16 +10,16 @@
     #define MT_ASSERT_ACTIVE 1
 #endif //NDEBUG
 
-#include <stdbool.h>
+#include "console/console.h"
 
 // Original source code: http://stackoverflow.com/questions/1644868/c-define-macro-for-debug-printing
 //
 #define assert(result) \
     do \
     { \
-        if(MT_ASSERT_ACTIVE) \
+        if(MT_ASSERT_ACTIVE && !(result)) \
         { \
-            /* Currently doing nothing, even in debug mode!! */ \
+            console_writeline("*** ERROR: An assertion happened (ignored)!!! ***"); \
         } \
     }while(0);
 
