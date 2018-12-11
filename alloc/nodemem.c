@@ -19,8 +19,8 @@ static struct node * s_first_node_addr = 0; // First node's address.
 
 static void * get_first_block_addr()
 {
-    assert(s_first_node_addr > 0);
-    assert(s_max_node_count > 0);
+    assert(s_first_node_addr != 0);
+    assert(s_max_node_count != 0);
 
     // First block begins behind last node.
 
@@ -31,7 +31,7 @@ static void * get_first_block_addr()
  */
 static void mark_node_space_as_free(struct node * const node_addr)
 {
-    assert(s_first_node_addr > 0);
+    assert(s_first_node_addr != 0);
     assert(node_addr >= s_first_node_addr);
     assert((void*)node_addr <= get_first_block_addr());
 
@@ -40,8 +40,8 @@ static void mark_node_space_as_free(struct node * const node_addr)
 
 static struct node * get_free_node_addr()
 {
-    assert(s_max_node_count > 0);
-    assert(s_first_node_addr > 0);
+    assert(s_max_node_count != 0);
+    assert(s_first_node_addr != 0);
 
     for(MT_USIGN i = 0;i < s_max_node_count; ++i)
     {
@@ -109,9 +109,9 @@ static struct node * get_or_create_free_node_space()
 
 struct node * nodemem_get_block_node_addr(void const * const block_addr)
 {
-    assert(block_addr > 0);
-    assert(s_max_node_count > 0);
-    assert(s_first_node_addr > 0);
+    assert(block_addr != 0);
+    assert(s_max_node_count != 0);
+    assert(s_first_node_addr != 0);
 
     struct node * ret_val = 0;
 
@@ -131,7 +131,7 @@ struct node * nodemem_get_block_node_addr(void const * const block_addr)
             break;
         }
     }
-    assert(ret_val > 0);
+    assert(ret_val != 0);
     return ret_val;
 }
 
@@ -162,7 +162,7 @@ struct node * nodemem_store(struct node const * const n)
 
 struct node * nodemem_get_alloc_node_addr(MT_USIGN const wanted_len)
 {
-    assert(wanted_len > 0);
+    assert(wanted_len != 0);
 
     struct node * ret_val = 0;
     void const * const first_block_addr = get_first_block_addr();
@@ -320,8 +320,8 @@ void nodemem_init(void * const mem, MT_USIGN const mem_len)
     assert(s_first_node_addr == 0);
     assert(s_mem_len == 0);
 
-    assert(mem > 0);
-    assert(mem_len > 0);
+    assert(mem != 0);
+    assert(mem_len != 0);
 
     s_mem_len = mem_len;
     s_max_node_count = 1;
