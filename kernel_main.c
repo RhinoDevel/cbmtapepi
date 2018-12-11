@@ -22,30 +22,39 @@
 #include "tape/tape_send.h"
 #include "tape/tape_sample.h"
 
+#include "config.h"
+
+#include "alloc/alloc.h"
+
 extern uint32_t __heap;
+
+static uint8_t * s_heap = 0;
 
 static bool tape_test(
     uint32_t const gpio_pin_nr_read,
     uint32_t const gpio_pin_nr_sense,
-    uint32_t const gpio_pin_nr_motor,
-    uint32_t * const mem)
+    uint32_t const gpio_pin_nr_motor)
 {
     // Use start of given memory for sample input structure:
 
+    bool ret_val = false;
     struct tape_send_params p;
+    uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
+
+    p.data = alloc_alloc(sizeof p.data);
 
     p.gpio_pin_nr_read = gpio_pin_nr_read;
     p.gpio_pin_nr_sense = gpio_pin_nr_sense;
     p.gpio_pin_nr_motor = gpio_pin_nr_motor;
 
-    p.data = (struct tape_input *)mem;
-
     console_writeline("Filling input structure with sample data..");
     tape_sample_c64_fill_buf(p.data);
 
-    return tape_send(
-        &p,
-        mem + sizeof *(p.data)); // Uses follow-up memory for sample data to send.
+    ret_val = tape_send(&p, mem_addr);
+
+    alloc_free(mem_addr);
+    alloc_free(p.data);
+    return ret_val;
 }
 
 /** Connect console (singleton) to wanted in-/output.
@@ -71,8 +80,11 @@ static void init_console()
 
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
-    uint32_t * const heap = &__heap; // Gets heap address as pointer.
-    uint32_t * const buf = heap; // Test of heap memory usage.
+    s_heap = (uint8_t*)(&__heap);
+
+    alloc_init(
+        s_heap, // Gets heap address as pointer.
+        MT_HEAP_SIZE);
 
     // To be able to compile, although these are not used (stupid?):
     //
@@ -81,7 +93,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 	(void)r2;
 
     init_console();
-    ui_enter();
+    //ui_enter();
 
     {
         while(true)
@@ -100,7 +112,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                 console_writeline(baregpio_read(4) ? "Motor: ON" : "Motor: OFF");
             }
             console_writeline("GO!");
-            tape_test(2, 3, 4, buf); // Return value ignored.
+            tape_test(
+                MT_TAPE_GPIO_PIN_NR_READ,
+                MT_TAPE_GPIO_PIN_NR_SENSE,
+                MT_TAPE_GPIO_PIN_NR_MOTOR); // Return value ignored.
         }
     }
     return;

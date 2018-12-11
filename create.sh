@@ -80,6 +80,7 @@ export OPTIONS_GCC_ALL=" \
     -ffreestanding"
 
 export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
+    -DNDEBUG \
     -O2 \
     -std=gnu99 \
     -Wall \
@@ -116,6 +117,9 @@ $MT_CC ui/ui_send_sample.c -o ui/ui_send_sample.o
 $MT_CC ui/ui.c -o ui/ui.o
 $MT_CC console/console.c -o console/console.o
 $MT_CC calc/calc.c -o calc/calc.o
+$MT_CC alloc/alloc.c -o alloc/alloc.o
+$MT_CC alloc/mem.c -o alloc/mem.o
+$MT_CC alloc/nodemem.c -o alloc/nodemem.o
 
 echo Linking..
 
@@ -139,6 +143,9 @@ arm-none-eabi-ld \
     ui/ui.o \
     console/console.o \
     calc/calc.o \
+    alloc/alloc.o \
+    alloc/mem.o \
+    alloc/nodemem.o \
     -o kernel.elf
 
 echo Extracting..
