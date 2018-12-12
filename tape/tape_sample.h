@@ -4,9 +4,8 @@
 #ifndef MT_TAPE_SAMPLE
 #define MT_TAPE_SAMPLE
 
-#include "tape_input.h"
+#include "tape_sample_type.h"
 
-void tape_sample_pet_fill_buf(struct tape_input * const buf);
-void tape_sample_c64_fill_buf(struct tape_input * const buf);
+bool tape_sample_send(enum tape_sample_type const t);
 
 #endif //MT_TAPE_SAMPLE

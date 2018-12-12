@@ -1,9 +1,16 @@
 
 // Marcel Timm, RhinoDevel, 2018feb03
 
+#include <stdbool.h>
+
 #include "tape_input.h"
+#include "tape_send_params.h"
 #include "tape_filetype.h"
 #include "tape_sample.h"
+#include "tape_sample_type.h"
+#include "tape_send.h"
+#include "../alloc/alloc.h"
+#include "../config.h"
 
 // How to get byte array from (PRG) file:
 //
@@ -33,7 +40,7 @@ static void fill_add_bytes(uint8_t * const add_bytes)
     }
 }
 
-void tape_sample_pet_fill_buf(struct tape_input * const buf)
+static void pet_fill_buf(struct tape_input * const buf)
 {
     static uint8_t const bytes[] = {
         169, // Immediate LDA.
@@ -52,7 +59,7 @@ void tape_sample_pet_fill_buf(struct tape_input * const buf)
     fill_add_bytes(buf->add_bytes);
 }
 
-void tape_sample_c64_fill_buf(struct tape_input * const buf)
+static void c64_fill_buf(struct tape_input * const buf)
 {
     static uint8_t const bytes[] = {
         169, // Immediate LDA.
@@ -69,4 +76,39 @@ void tape_sample_c64_fill_buf(struct tape_input * const buf)
     buf->bytes = bytes;
     buf->len = sizeof bytes;
     fill_add_bytes(buf->add_bytes);
+}
+
+bool tape_sample_send(enum tape_sample_type const t)
+{
+    bool ret_val = true; // TRUE by default!
+    struct tape_send_params p;
+    uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
+
+    p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
+    p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
+    p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
+    p.data = alloc_alloc(sizeof p.data);
+
+    switch(t)
+    {
+        case tape_sample_type_pet:
+            pet_fill_buf(p.data);
+            break;
+        case tape_sample_type_c64:
+            c64_fill_buf(p.data);
+            break;
+
+        default:
+            ret_val = false;
+            break;
+    }
+
+    if(ret_val)
+    {
+        ret_val = tape_send(&p, mem_addr);
+    }
+
+    alloc_free(mem_addr);
+    alloc_free(p.data);
+    return ret_val;
 }
