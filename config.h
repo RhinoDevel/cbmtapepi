@@ -14,4 +14,6 @@
 //
 // ./alloc/allocconf.h: #define MT_ALLOC_BITS MT_ALLOC_BITS_32
 
+// Also see ./peribase.h
+
 #endif //MT_CONFIG
