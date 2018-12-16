@@ -6,6 +6,12 @@
 #include "ui.h"
 #include "ui_send_sample.h"
 #include "../console/console.h"
+#include "../watchdog/watchdog.h"
+
+static void reset()
+{
+    watchdog_reset_system();
+}
 
 void ui_enter()
 {
@@ -14,6 +20,7 @@ void ui_enter()
         char c[2];
 
         console_writeline("s - Send a sample.");
+        console_writeline("r - Reset!");
         console_write("? ");
         console_read(c, 2);
         console_writeline("");
@@ -23,6 +30,10 @@ void ui_enter()
             case 's':
                 ui_send_sample();
                 break;
+            case 'r':
+                reset();
+                break;
+                
             default:
                 console_writeline("Please select a menu entry.");
                 break;
