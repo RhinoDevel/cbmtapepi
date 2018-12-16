@@ -5,8 +5,20 @@
 #include "../tape/tape_sample_type.h"
 #include "../tape/tape_sample.h"
 
+static void load_hint()
+{
+    char c[2];
+
+    console_write(
+        "Enter LOAD and press Return key on Commodore, now. Then press anykey (here)..");
+    console_read(c, 2);
+    console_writeline("");
+}
+
 static void send_sample_pet()
 {
+    load_hint();
+
     if(tape_sample_send(tape_sample_type_pet))
     {
         console_writeline("PET (ROM v2 and v3) sample send.");
@@ -17,6 +29,8 @@ static void send_sample_pet()
 
 static void send_sample_c64()
 {
+    load_hint();
+
     if(tape_sample_send(tape_sample_type_c64))
     {
         console_writeline("C64 sample send.");
