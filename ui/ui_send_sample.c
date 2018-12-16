@@ -17,7 +17,7 @@ static void send_sample_pet()
 
 static void send_sample_c64()
 {
-    if(tape_sample_send(tape_sample_type_pet))
+    if(tape_sample_send(tape_sample_type_c64))
     {
         console_writeline("C64 sample send.");
         return;
