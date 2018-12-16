@@ -21,8 +21,11 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
     console_writeline("tape_send: Setting sense line to HIGH..");
     baregpio_set_output(p->gpio_pin_nr_sense, true);
 
-    console_writeline("tape_send: Setting motor line to input without pull..");
-    baregpio_set_input_pull_off(p->gpio_pin_nr_motor);
+    console_writeline("tape_send: Setting motor line to input with pull-down..");
+    baregpio_set_input_pull_down(p->gpio_pin_nr_motor);
+    //
+    // console_writeline("tape_send: Setting motor line to input without pull..");
+    // baregpio_set_input_pull_off(p->gpio_pin_nr_motor);
 
     console_writeline("tape_send: Setting tape read line to HIGH..");
     baregpio_set_output(p->gpio_pin_nr_read, true);
