@@ -87,7 +87,7 @@ bool tape_sample_send(enum tape_sample_type const t)
     p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
     p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
-    p.data = alloc_alloc(sizeof p.data);
+    p.data = alloc_alloc(sizeof *(p.data));
 
     switch(t)
     {
