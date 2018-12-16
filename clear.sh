@@ -14,10 +14,10 @@ rm tape/tape_send.o
 rm tape/tape_transfer_buf.o
 rm ui/ui_send_sample.o
 rm ui/ui.o
-
 rm alloc/alloc.o
 rm alloc/mem.o
 rm alloc/nodemem.o
+rm watchdog/watchdog.o
 
 rm boot.o
 rm kernel_main.o
