@@ -31,7 +31,7 @@ uint32_t armtimer_get_tick()
 
 void armtimer_start_one_mhz()
 {
-    // 0xF9 => 250 MHz / ( 249 + 1) = 1 MHz (see page 197)
+    // 0xF9 = 249 => 250 MHz / ( 249 + 1) = 1 MHz (see page 197)
     //
     mem_write(ARM_TIMER_CTL, 0x00F90000); // Set frequency and disable.
     mem_write(ARM_TIMER_CTL, 0x00F90200); // Start free running counter.
