@@ -13,6 +13,7 @@
 // - UART1: Mini UART (emulates a 16550, see page 8).
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "pl011uart.h"
 #include "../peribase.h"
@@ -54,18 +55,23 @@
 //     }
 // }
 
+bool pl011uart_is_ready_to_read()
+{
+    return (mem_read(PL011_FR) & (1 << 4)) == 0; // Checks RXFE.
+}
+
 uint8_t pl011uart_read_byte()
 {
     // Wait for receive FIFO being full (page 182):
     //
-    while((mem_read(PL011_FR) & (1 << 4)) != 0) // Checks RXFE.
+    while(!pl011uart_is_ready_to_read())
     {
         ; // RXFE flag is 1 <=> Receive FIFO is empty.
     }
-    return mem_read(PL011_DR);
+    return (uint8_t)mem_read(PL011_DR);
 }
 
-void pl011uart_write_byte(uint8_t const byte)
+void pl011uart_write(uint32_t const val)
 {
     // Wait for the transmit FIFO being empty (page 182):
     //
@@ -73,7 +79,12 @@ void pl011uart_write_byte(uint8_t const byte)
     {
         ; // TXFF flag is 1 <=> Transceive FIFO is full.
     }
-    mem_write(PL011_DR, byte);
+    mem_write(PL011_DR, val);
+}
+
+void pl011uart_write_byte(uint8_t const byte)
+{
+    pl011uart_write((uint32_t)byte);
 }
 
 // TODO: Fix bug:

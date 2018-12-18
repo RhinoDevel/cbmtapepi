@@ -11,7 +11,9 @@
  */
 void pl011uart_init();
 
+bool pl011uart_is_ready_to_read();
 uint8_t pl011uart_read_byte();
+void pl011uart_write(uint32_t const val);
 void pl011uart_write_byte(uint8_t const byte);
 
 #endif //MT_PL011UART

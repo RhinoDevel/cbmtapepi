@@ -13,22 +13,28 @@
 // - UART1: Mini UART (used here; emulates a 16550, see page 8).
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "miniuart.h"
 #include "../auxiliary.h"
 #include "../mem/mem.h"
 #include "../baregpio/baregpio.h"
 
+bool miniuart_is_ready_to_read()
+{
+    return (mem_read(AUX_MU_LSR_REG) & 0x01) != 0;
+}
+
 uint8_t miniuart_read_byte()
 {
-    while((mem_read(AUX_MU_LSR_REG) & 0x01)==0)
+    while(!miniuart_is_ready_to_read())
     {
         ;
     }
-    return mem_read(AUX_MU_IO_REG);
+    return (uint8_t)mem_read(AUX_MU_IO_REG);
 }
 
-void miniuart_write_byte(uint8_t const byte)
+void miniuart_write(uint32_t const val)
 {
     // Print to UART1:
     //
@@ -37,7 +43,12 @@ void miniuart_write_byte(uint8_t const byte)
         ;
     }
 
-    mem_write(AUX_MU_IO_REG , byte);
+    mem_write(AUX_MU_IO_REG, val);
+}
+
+void miniuart_write_byte(uint8_t const byte)
+{
+    miniuart_write((uint32_t)byte);
 }
 
 void miniuart_init()
