@@ -24,6 +24,19 @@
 #define ARM_TIMER_DIV (ARM_TIMER_BASE + 0x41C) // Pre-divider / pre-scaler.
 #define ARM_TIMER_CNT (ARM_TIMER_BASE + 0x420) // Free running counter.
 
+uint32_t armtimer_get_tick()
+{
+    return mem_read(ARM_TIMER_CNT);
+}
+
+void armtimer_start_one_mhz()
+{
+    // 0xF9 => 250 MHz / ( 249 + 1) = 1 MHz (see page 197)
+    //
+    mem_write(ARM_TIMER_CTL, 0x00F90000); // Set frequency and disable.
+    mem_write(ARM_TIMER_CTL, 0x00F90200); // Start free running counter.
+}
+
 void armtimer_busywait(uint32_t const start_val, uint32_t const divider)
 {
     mem_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
