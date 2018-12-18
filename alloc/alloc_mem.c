@@ -8,10 +8,10 @@
     #include "../console/console.h"
 #endif //NDEBUG
 
-#include "mem.h"
+#include "alloc_mem.h"
 #include "allocconf.h"
 
-void mem_clear(void * const addr, MT_USIGN const len, uint8_t const val)
+void alloc_mem_clear(void * const addr, MT_USIGN const len, uint8_t const val)
 {
     uint8_t * const p = (uint8_t*)addr;
 
@@ -22,7 +22,7 @@ void mem_clear(void * const addr, MT_USIGN const len, uint8_t const val)
 }
 
 #ifndef NDEBUG
-void mem_print(void const * const mem, MT_USIGN const mem_len)
+void alloc_mem_print(void const * const mem, MT_USIGN const mem_len)
 {
     static MT_USIGN const columns = 16;
     uint8_t const * p = (uint8_t const *)mem;

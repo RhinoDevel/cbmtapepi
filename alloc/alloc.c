@@ -6,7 +6,7 @@
 #include "../assert.h"
 
 #include "node.h"
-#include "mem.h"
+#include "alloc_mem.h"
 #include "nodemem.h"
 #include "alloc.h"
 #include "allocconf.h"
@@ -37,7 +37,7 @@ void alloc_free(void * const block_addr)
     n->is_allocated = 0;
 
 #ifndef NDEBUG
-    mem_clear(n->block_addr, n->block_len, MT_ALLOC_DEB_CLR_4);
+    alloc_mem_clear(n->block_addr, n->block_len, MT_ALLOC_DEB_CLR_4);
 #endif //NDEBUG
 
     if(n->next_node_addr != 0)

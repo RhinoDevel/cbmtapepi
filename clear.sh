@@ -15,7 +15,7 @@ rm tape/tape_transfer_buf.o
 rm ui/ui_send_sample.o
 rm ui/ui.o
 rm alloc/alloc.o
-rm alloc/mem.o
+rm alloc/alloc_mem.o
 rm alloc/nodemem.o
 rm watchdog/watchdog.o
 rm xmodem/xmodem.o

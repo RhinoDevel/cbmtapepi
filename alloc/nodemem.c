@@ -6,7 +6,7 @@
 
 #include "../assert.h"
 #include "nodemem.h"
-#include "mem.h"
+#include "alloc_mem.h"
 #include "node.h"
 #include "allocconf.h"
 
@@ -309,7 +309,7 @@ void nodemem_limit_free_nodes()
     assert(get_last_free_node_count() == 1);
 
 #ifndef NDEBUG
-    mem_clear(
+    alloc_mem_clear(
         s_first_node_addr->block_addr, s_first_node_addr->block_len, MT_ALLOC_DEB_CLR_3);
 #endif //NDEBUG
 }
@@ -328,7 +328,7 @@ void nodemem_init(void * const mem, MT_USIGN const mem_len)
     s_first_node_addr = (struct node *)mem;
 
 #ifndef NDEBUG
-    mem_clear(s_first_node_addr, s_node_len, MT_ALLOC_DEB_CLR_5);
+    alloc_mem_clear(s_first_node_addr, s_node_len, MT_ALLOC_DEB_CLR_5);
 #endif //NDEBUG
 
     // The first (and initially only) block will occupy the complete

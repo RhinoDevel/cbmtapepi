@@ -118,7 +118,7 @@ $MT_CC ui/ui.c -o ui/ui.o
 $MT_CC console/console.c -o console/console.o
 $MT_CC calc/calc.c -o calc/calc.o
 $MT_CC alloc/alloc.c -o alloc/alloc.o
-$MT_CC alloc/mem.c -o alloc/mem.o
+$MT_CC alloc/alloc_mem.c -o alloc/alloc_mem.o
 $MT_CC alloc/nodemem.c -o alloc/nodemem.o
 $MT_CC watchdog/watchdog.c -o watchdog/watchdog.o
 $MT_CC xmodem/xmodem.c -o xmodem/xmodem.o
@@ -146,7 +146,7 @@ arm-none-eabi-ld \
     console/console.o \
     calc/calc.o \
     alloc/alloc.o \
-    alloc/mem.o \
+    alloc/alloc_mem.o \
     alloc/nodemem.o \
     watchdog/watchdog.o \
     xmodem/xmodem.o \
