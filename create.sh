@@ -121,6 +121,7 @@ $MT_CC alloc/alloc.c -o alloc/alloc.o
 $MT_CC alloc/mem.c -o alloc/mem.o
 $MT_CC alloc/nodemem.c -o alloc/nodemem.o
 $MT_CC watchdog/watchdog.c -o watchdog/watchdog.o
+$MT_CC xmodem/xmodem.c -o xmodem/xmodem.o
 
 echo Linking..
 
@@ -148,6 +149,7 @@ arm-none-eabi-ld \
     alloc/mem.o \
     alloc/nodemem.o \
     watchdog/watchdog.o \
+    xmodem/xmodem.o \
     -o kernel.elf
 
 echo Extracting..
