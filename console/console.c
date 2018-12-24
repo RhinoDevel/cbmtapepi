@@ -42,10 +42,22 @@ void console_write_word(uint16_t const word)
 
     calc_word_to_hex(word, four);
 
-    console_write_key(four[0]);
-    console_write_key(four[1]);
-    console_write_key(four[2]);
-    console_write_key(four[3]);
+    for(int i = 0;i < 4;++i)
+    {
+        console_write_key(four[i]);
+    }
+}
+
+void console_write_dword(uint32_t const dword)
+{
+    char eight[8];
+
+    calc_dword_to_hex(dword, eight);
+
+    for(int i = 0;i < 8;++i)
+    {
+        console_write_key(eight[i]);
+    }
 }
 
 void console_write(char const * const buf)
