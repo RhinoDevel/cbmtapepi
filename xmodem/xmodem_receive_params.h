@@ -12,8 +12,8 @@ struct xmodem_receive_params
     void (*write_byte)(uint8_t const byte);
     uint8_t (*read_byte)();
     bool (*is_ready_to_read)();
-    uint8_t * const buf;
-    uint32_t const len;
+    uint8_t * buf;
+    uint32_t len;
 };
 
 #endif //MT_XMODEM_RECEIVE_PARAMS
