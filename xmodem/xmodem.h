@@ -8,6 +8,7 @@
 
 #include "xmodem_receive_params.h"
 
-bool xmodem_receive(struct xmodem_receive_params const * const p);
+bool xmodem_receive(
+    struct xmodem_receive_params const * const p, uint32_t * const count);
 
 #endif //MT_XMODEM

@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include "../armtimer/armtimer.h"
+//#include "../console/console.h"
 #include "xmodem_receive_params.h"
 #include "xmodem.h"
 
@@ -17,6 +18,8 @@ static uint8_t const NAK = 0x15; // Negative acknowledge.
 static uint8_t const EOT = 0x04; // End of transmission.
 static uint8_t const CAN = 0x18; // Cancel
 
+static uint8_t const SUB = 0x1A; // Substitute
+
 static uint8_t const LF = 0x0A; // Line feed.
 static uint8_t const CR = 0x0D; // Carriage return.
 
@@ -26,7 +29,8 @@ static uint32_t const NAKSOH_TIMEOUT = 4000000;
 static uint32_t const WAIT_AFTER_EOT_TIMEOUT = 2000000;
 static uint32_t const WAIT_AFTER_CAN_TIMEOUT = 2000000;
 
-bool xmodem_receive(struct xmodem_receive_params const * const p)
+bool xmodem_receive(
+    struct xmodem_receive_params const * const p, uint32_t * const count)
 {
     // - Block numbers start with 1.
     //
@@ -43,8 +47,13 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
 
     uint8_t rb, block = 1, state = 192, csum = 0;
     uint32_t rx, package_offset = 0;
+    bool subRead = false;
+
+    //console_writeline("xmodem_receive: Starting timer with 1 MHz..");
 
     armtimer_start_one_mhz();
+
+    //console_writeline("xmodem_receive: Starting initial NAK writes..");
 
     // (not going to deal with timeouts other than here)
     //
@@ -59,9 +68,17 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
         }
     }while(!p->is_ready_to_read());
 
+    //console_writeline("xmodem_receive: Starting receive loop..");
+
     do // (initial state must be 192)
     {
         rb = p->read_byte();
+
+        //console_write("xmodem_receive: State is ");
+        //console_write_byte(state);
+        //console_write(", read byte is ");
+        //console_write_byte(rb);
+        //console_writeline(".");
 
         switch(state)
         {
@@ -71,12 +88,15 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
                 {
                     case SOH:
                     {
+                        //console_writeline("xmodem_receive: Read SOH.");
                         csum = rb;
                         ++state;
                         break;
                     }
                     case EOT: // Successfully retrieved data.
                     {
+                        //console_writeline("xmodem_receive: Read EOT.");
+
                         p->write_byte(ACK);
 
                         rx = armtimer_get_tick();
@@ -89,11 +109,14 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
                         p->write_byte(LF);
                         p->write_byte(LF);
 
+                        //console_writeline(
+                        //    "xmodem_receive: Success. Returning..");
                         return true; // *** RETURN ***
                     }
 
                     default: // Error!
                     {
+                        //console_writeline("xmodem_receive: Error (192)!");
                         state = 255;
                         break;
                     }
@@ -105,10 +128,13 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
             {
                 if(rb == block)
                 {
+                    //console_writeline(
+                    //    "xmodem_receive: Retrieved uninverted block nr.");
                     csum += rb;
                     ++state;
                     break;
                 }
+                //console_writeline("xmodem_receive: Error (193)!");
                 state = 255; // Error!
                 break;
             }
@@ -117,10 +143,13 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
             {
                 if(rb == 0xFF - block)
                 {
+                    //console_writeline(
+                    //    "xmodem_receive: Retrieved inverted block nr.");
                     csum += rb;
                     state = 0;
                     break;
                 }
+                //console_writeline("xmodem_receive: Error (194)!");
                 state = 255; // Error!
                 break;
             }
@@ -129,17 +158,21 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
             {
                 if(rb == csum)
                 {
+                    //console_writeline("xmodem_receive: Retrieved checksum.");
                     p->write_byte(ACK);
                     ++block;
                     package_offset += 128;
                     if(package_offset >= p->len)
                     {
+                        //console_writeline(
+                        //    "xmodem_receive: Error (128; buffer is too small)!");
                         state = 255; // Error!
                         break;
                     }
                     state = 192;
                     break;
                 }
+                //console_writeline("xmodem_receive: Error (128)!");
                 state = 255; // Error!
                 break;
             }
@@ -148,14 +181,23 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
             {
                 uint32_t const full_offset = package_offset + (uint32_t)state;
 
+                //console_writeline("xmodem_receive: Retrieved data (default).");
+
                 if(full_offset >= p->len)
                 {
+                    //console_writeline(
+                    //    "xmodem_receive: Error (default; buffer is too small)!");
                     state = 255; // Error!
                     break;
                 }
 
                 csum += rb;
-                p->buf[full_offset] = rb;
+                subRead = subRead || rb == SUB;
+                if(!subRead)
+                {
+                    p->buf[full_offset] = rb;
+                    *count = full_offset + 1;
+                }
                 ++state;
                 break;
             }
@@ -163,6 +205,8 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
     }while(state != 255);
 
     // Something went wrong!
+
+    //console_writeline("xmodem_receive: Error, broke out of receive loop!");
 
     p->write_byte(CAN);
     p->write_byte(CAN);
@@ -180,7 +224,7 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
     p->write_byte(LF);
     p->write_byte(LF);
 
-    //p->flush(); // MT_TODO: TEST: Necessary?
+    //p->flush(); // Necessary?
 
     // Try to flush some out so we hit this timeout fewer times.
 
@@ -189,6 +233,7 @@ bool xmodem_receive(struct xmodem_receive_params const * const p)
         p->read_byte();
     }
 
+    //console_writeline("xmodem_receive: Failure! Returning..");
     return false;
 }
 
