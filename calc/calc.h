@@ -19,4 +19,6 @@ void calc_byte_to_hex(
  */
 void calc_word_to_hex(uint16_t const word, char * const out_four);
 
+void calc_dword_to_hex(uint32_t const dword, char * const out_eight);
+
 #endif //MT_CALC

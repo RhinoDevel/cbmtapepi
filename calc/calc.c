@@ -34,3 +34,12 @@ void calc_word_to_hex(uint16_t const word, char * const out_four)
     calc_byte_to_hex(high, out_four, out_four + 1);
     calc_byte_to_hex(low, out_four + 2, out_four + 3);
 }
+
+void calc_dword_to_hex(uint32_t const dword, char * const out_eight)
+{
+    uint16_t const high = dword / 65536,
+        low = dword - 65536 * high;
+
+    calc_word_to_hex(high, out_eight);
+    calc_word_to_hex(low, out_eight + 4);
+}
