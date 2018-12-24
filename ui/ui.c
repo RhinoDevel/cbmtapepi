@@ -5,6 +5,7 @@
 
 #include "ui.h"
 #include "ui_send_sample.h"
+#include "ui_receive_test.h"
 #include "../console/console.h"
 #include "../watchdog/watchdog.h"
 
@@ -20,6 +21,7 @@ void ui_enter()
         char c[2];
 
         console_writeline("s - Send a sample.");
+        console_writeline("e - Receive test.");
         console_writeline("r - Reset!");
         console_write("? ");
         console_read(c, 2);
@@ -30,10 +32,13 @@ void ui_enter()
             case 's':
                 ui_send_sample();
                 break;
+            case 'e':
+                ui_receive_test();
+                break;
             case 'r':
                 reset();
                 break;
-                
+
             default:
                 console_writeline("Please select a menu entry.");
                 break;
