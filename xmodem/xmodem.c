@@ -47,7 +47,6 @@ bool xmodem_receive(
 
     uint8_t rb, block = 1, state = 192, csum = 0;
     uint32_t rx, package_offset = 0;
-    bool subRead = false;
 
     //console_writeline("xmodem_receive: Starting timer with 1 MHz..");
 
@@ -108,6 +107,20 @@ bool xmodem_receive(
                         p->write_byte(CR);
                         p->write_byte(LF);
                         p->write_byte(LF);
+
+                        // TODO: This is NOT safe:
+                        //
+                        {
+                            uint32_t real_count = *count,
+                                i = *count - 1;
+
+                            while(p->buf[i] == SUB)
+                            {
+                                --real_count;
+                                --i;
+                            }
+                            *count = real_count;
+                        }
 
                         //console_writeline(
                         //    "xmodem_receive: Success. Returning..");
@@ -192,12 +205,8 @@ bool xmodem_receive(
                 }
 
                 csum += rb;
-                subRead = subRead || rb == SUB;
-                if(!subRead)
-                {
-                    p->buf[full_offset] = rb;
-                    *count = full_offset + 1;
-                }
+                p->buf[full_offset] = rb;
+                *count = full_offset + 1;
                 ++state;
                 break;
             }
