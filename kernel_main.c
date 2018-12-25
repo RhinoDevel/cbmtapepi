@@ -17,7 +17,7 @@
 #include "config.h"
 #include "alloc/alloc.h"
 
-extern uint32_t __heap;
+extern uint32_t __heap; // See memmap.ld.
 
 /** Connect console (singleton) to wanted in-/output.
  */
@@ -60,25 +60,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     ui_enter();
 }
-
-// // Read and show PL011 UART (UART0) Baud rate divisor:
-// //
-// // (x / (16 * 115200) = i.z
-// // (0.z * 64) + 0.5 = f
-// // int i frac f
-// //
-// console_write("IBRD: i = "); // Raspi1: 0x1A = 26
-// console_write_word(
-//     (uint16_t)(
-//         0x0000FFFF // Bits 0-15.
-//         & mem_read(/*PL011_IBRD*/ PERI_BASE + 0x201000 + 0x24)));
-// console_writeline("");
-// console_write("FBRD: f = "); // Raspi1: 0x03 = 3
-// console_write_byte(
-//     (uint8_t)(
-//         0x0000003F // Bits 0-5
-//         & mem_read(/*PL011_FBRD*/ PERI_BASE + 0x201000 + 0x28)));
-// console_writeline("");
 
 // // WORKS:
 // //
