@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "ui_send_sample.h"
 #include "ui_receive_test.h"
+#include "ui_terminal_to_commodore.h"
 #include "../console/console.h"
 #include "../watchdog/watchdog.h"
 
@@ -20,6 +21,7 @@ void ui_enter()
     {
         char c[2];
 
+        console_writeline("f - Transfer from terminal to Commodore.");
         console_writeline("s - Send a sample.");
         console_writeline("e - Receive test.");
         console_writeline("r - Reset!");
@@ -29,6 +31,9 @@ void ui_enter()
 
         switch(c[0])
         {
+            case 'f':
+                ui_terminal_to_commodore();
+                break;
             case 's':
                 ui_send_sample();
                 break;

@@ -115,6 +115,7 @@ $MT_CC tape/tape_sample.c -o tape/tape_sample.o
 $MT_CC tape/tape_send.c -o tape/tape_send.o
 $MT_CC ui/ui_send_sample.c -o ui/ui_send_sample.o
 $MT_CC ui/ui_receive_test.c -o ui/ui_receive_test.o
+$MT_CC ui/ui_terminal_to_commodore.c -o ui/ui_terminal_to_commodore.o
 $MT_CC ui/ui.c -o ui/ui.o
 $MT_CC console/console.c -o console/console.o
 $MT_CC calc/calc.c -o calc/calc.o
@@ -144,6 +145,7 @@ arm-none-eabi-ld \
     tape/tape_send.o \
     ui/ui_send_sample.o \
     ui/ui_receive_test.o \
+    ui/ui_terminal_to_commodore.o \
     ui/ui.o \
     console/console.o \
     calc/calc.o \
