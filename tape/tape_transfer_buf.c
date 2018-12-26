@@ -56,7 +56,7 @@ bool tape_transfer_buf(
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_read)
 {
-    int i = 0;
+    uint32_t i = 0;
     bool motor_wait = true; // Initially wait for motor to be HIGH.
 
     // As pulse length detection triggers on descending (negative) edges,
@@ -143,6 +143,7 @@ bool tape_transfer_buf(
         {
             transfer_symbol(f, l, gpio_pin_nr_read);
         }
+
         ++i;
     }
 }
