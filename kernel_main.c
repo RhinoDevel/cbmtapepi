@@ -16,6 +16,7 @@
 #include "ui/ui.h"
 #include "config.h"
 #include "alloc/alloc.h"
+#include "tape/tape_init.h"
 
 extern uint32_t __heap; // See memmap.ld.
 
@@ -55,6 +56,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
     alloc_init(&__heap, MT_HEAP_SIZE);
+
+    // Initialize for tape transfer:
+    //
+    tape_init();
 
     // Start user interface (via console):
     //
