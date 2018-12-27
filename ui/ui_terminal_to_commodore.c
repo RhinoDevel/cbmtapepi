@@ -65,11 +65,15 @@ static bool send_to_commodore(uint8_t const * const bytes, uint32_t const count)
 
     p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
     //
-    // Hard-coded - maybe not always correct!
+    // Hard-coded - maybe not always correct, but works for C64 and PET,
+    // both with machine language and BASIC PRG files.
 
+    // First two bytes hold the start address:
+    //
     p.data->addr = *((uint16_t const *)bytes);
     p.data->bytes = bytes + 2;
     p.data->len = count - 2;
+
     fill_add_bytes(p.data->add_bytes);
 
     console_write("Start address is 0x");
