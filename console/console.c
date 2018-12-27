@@ -48,6 +48,18 @@ void console_write_byte_dec(uint8_t const byte)
     }
 }
 
+void console_write_word_dec(uint16_t const word)
+{
+    char five[5];
+
+    calc_word_to_dec(word, five);
+
+    for(int i = 0;i < 5;++i)
+    {
+        console_write_key(five[i]);
+    }
+}
+
 void console_write_word(uint16_t const word)
 {
     char four[4];
