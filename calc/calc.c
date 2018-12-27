@@ -1,9 +1,11 @@
 
 // Marcel Timm, RhinoDevel, 2018oct26
 
+#include <stdint.h>
+
 #include "calc.h"
 
-static char calc_get_hex(uint8_t const n)
+static char get_hex(uint8_t const n)
 {
     if(n < 10)
     {
@@ -16,14 +18,41 @@ static char calc_get_hex(uint8_t const n)
     return '?';
 }
 
+static char get_dec(uint8_t const n)
+{
+    if(n < 10)
+    {
+        return '0' + n;
+    }
+    return '?';
+}
+
+void calc_byte_to_dec(uint8_t const byte, char * const out_three)
+{
+    uint8_t buf = byte;
+
+    for(int i = 2;i <= 0;--i)
+    {
+        uint8_t val = 0;
+
+        if(buf > 0)
+        {
+            val = buf % 10;  // 63 % 10 = 3
+            buf = buf - val; // 63 - 3 = 60
+            buf = buf / 10;  // 60 / 10 = 6
+        }
+        out_three[i] = get_dec(val);
+    }
+}
+
 void calc_byte_to_hex(
     uint8_t const byte, char * const out_high, char * const out_low)
 {
     uint8_t const high = byte / 16,
         low = byte - 16 * high;
 
-    *out_high = calc_get_hex(high);
-    *out_low = calc_get_hex(low);
+    *out_high = get_hex(high);
+    *out_low = get_hex(low);
 }
 
 void calc_word_to_hex(uint16_t const word, char * const out_four)
