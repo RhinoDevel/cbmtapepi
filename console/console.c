@@ -36,6 +36,18 @@ void console_write_byte(uint8_t const byte)
     console_write_key(l);
 }
 
+void console_write_byte_dec(uint8_t const byte)
+{
+    char three[3];
+
+    calc_byte_to_dec(byte, three);
+
+    for(int i = 0;i < 3;++i)
+    {
+        console_write_key(three[i]);
+    }
+}
+
 void console_write_word(uint16_t const word)
 {
     char four[4];
