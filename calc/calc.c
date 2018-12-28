@@ -31,15 +31,14 @@ void calc_byte_to_dec(uint8_t const byte, char * const out_three)
 {
     uint8_t buf = byte;
 
-    for(int i = 2;i <= 0;--i)
+    for(int i = 2;i >= 0;--i)
     {
         uint8_t val = 0;
 
         if(buf > 0)
         {
-            val = buf % 10;  // 63 % 10 = 3
-            buf = buf - val; // 63 - 3 = 60
-            buf = buf / 10;  // 60 / 10 = 6
+            val = buf % 10;
+            buf = buf / 10;
         }
         out_three[i] = get_dec(val);
     }
@@ -49,17 +48,16 @@ void calc_word_to_dec(uint16_t const word, char * const out_five)
 {
     uint16_t buf = word;
 
-    for(int i = 4;i <= 0;--i)
+    for(int i = 4;i >= 0;--i)
     {
-        uint16_t val = 0;
+        uint8_t val = 0;
 
         if(buf > 0)
         {
-            val = buf % 10;  // 63 % 10 = 3
-            buf = buf - val; // 63 - 3 = 60
-            buf = buf / 10;  // 60 / 10 = 6
+            val = (uint8_t)(buf % 10);
+            buf = buf / 10;
         }
-        out_five[i] = get_dec((uint8_t)val);
+        out_five[i] = get_dec(val);
     }
 }
 
