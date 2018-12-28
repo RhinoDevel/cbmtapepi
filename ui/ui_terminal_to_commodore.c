@@ -78,7 +78,7 @@ static bool send_to_commodore(uint8_t const * const bytes, uint32_t const count)
 
     console_write("Start address is 0x");
     console_write_word(p.data->addr);
-    console_write("(");
+    console_write(" (");
     console_write_word_dec(p.data->addr);
     console_writeline(").");
 
