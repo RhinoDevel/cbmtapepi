@@ -27,4 +27,6 @@ void calc_byte_to_dec(uint8_t const byte, char * const out_three);
 
 void calc_word_to_dec(uint16_t const word, char * const out_five);
 
+void calc_dword_to_dec(uint32_t const dword, char * const out_ten);
+
 #endif //MT_CALC

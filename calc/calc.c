@@ -61,6 +61,23 @@ void calc_word_to_dec(uint16_t const word, char * const out_five)
     }
 }
 
+void calc_dword_to_dec(uint32_t const dword, char * const out_ten)
+{
+    uint32_t buf = dword;
+
+    for(int i = 9;i >= 0;--i)
+    {
+        uint8_t val = 0;
+
+        if(buf > 0)
+        {
+            val = (uint8_t)(buf % 10);
+            buf = buf / 10;
+        }
+        out_ten[i] = calc_get_dec(val);
+    }
+}
+
 void calc_byte_to_hex(
     uint8_t const byte, char * const out_high, char * const out_low)
 {
