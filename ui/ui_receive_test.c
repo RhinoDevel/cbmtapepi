@@ -15,7 +15,7 @@
 
 void ui_receive_test()
 {
-    static uint32_t const len = 1 * 1024; // 1 kB.
+    static uint32_t const len = 64 * 1024; // 64 kB.
 
     struct xmodem_receive_params p;
     uint32_t count = 0;
@@ -31,8 +31,8 @@ void ui_receive_test()
     {
         console_writeline("Failed to receive bytes! Retrying..");
     }
-    console_write("Received following 0x");
-    console_write_dword(count);
+    console_write("Received following ");
+    console_write_dword_dec(count);
     console_writeline(" bytes:");
     console_writeline("***");
     for(uint32_t i = 0;i < count; ++i)
