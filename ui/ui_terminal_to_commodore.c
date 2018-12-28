@@ -108,8 +108,8 @@ void ui_terminal_to_commodore()
     {
         console_writeline("Failed to receive file! Retrying..");
     }
-    console_write("Received 0x");
-    console_write_dword(count);
+    console_write("Received ");
+    console_write_dword_dec(count);
     console_writeline(" bytes.");
 
     send_to_commodore(p.buf, count);
