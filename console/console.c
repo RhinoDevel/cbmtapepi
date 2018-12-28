@@ -75,6 +75,25 @@ void console_write_word_dec(uint16_t const word)
     }
 }
 
+void console_write_dword_dec(uint32_t const dword)
+{
+    char const zero = calc_get_dec(0);
+    char ten[10];
+    bool zeroes = true;
+
+    calc_dword_to_dec(dword, ten);
+
+    for(int i = 0;i < 10;++i)
+    {
+        if(zeroes && ten[i] == zero)
+        {
+            continue;
+        }
+        zeroes = false;
+        console_write_key(ten[i]);
+    }
+}
+
 void console_write_word(uint16_t const word)
 {
     char four[4];
