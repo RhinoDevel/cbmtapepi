@@ -2,6 +2,7 @@
 // Marcel Timm, RhinoDevel, 2018oct25
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "../calc/calc.h"
 #include "console.h"
@@ -38,24 +39,38 @@ void console_write_byte(uint8_t const byte)
 
 void console_write_byte_dec(uint8_t const byte)
 {
+    char const zero = calc_get_dec(0);
     char three[3];
+    bool zeroes = true;
 
     calc_byte_to_dec(byte, three);
 
     for(int i = 0;i < 3;++i)
     {
+        if(zeroes && three[i] == zero)
+        {
+            continue;
+        }
+        zeroes = false;
         console_write_key(three[i]);
     }
 }
 
 void console_write_word_dec(uint16_t const word)
 {
+    char const zero = calc_get_dec(0);
     char five[5];
+    bool zeroes = true;
 
     calc_word_to_dec(word, five);
 
     for(int i = 0;i < 5;++i)
     {
+        if(zeroes && five[i] == zero)
+        {
+            continue;
+        }
+        zeroes = false;
         console_write_key(five[i]);
     }
 }
