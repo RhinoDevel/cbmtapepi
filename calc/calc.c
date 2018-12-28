@@ -18,7 +18,7 @@ static char get_hex(uint8_t const n)
     return '?';
 }
 
-static char get_dec(uint8_t const n)
+char calc_get_dec(uint8_t const n)
 {
     if(n < 10)
     {
@@ -40,7 +40,7 @@ void calc_byte_to_dec(uint8_t const byte, char * const out_three)
             val = buf % 10;
             buf = buf / 10;
         }
-        out_three[i] = get_dec(val);
+        out_three[i] = calc_get_dec(val);
     }
 }
 
@@ -57,7 +57,7 @@ void calc_word_to_dec(uint16_t const word, char * const out_five)
             val = (uint8_t)(buf % 10);
             buf = buf / 10;
         }
-        out_five[i] = get_dec(val);
+        out_five[i] = calc_get_dec(val);
     }
 }
 

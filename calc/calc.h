@@ -6,6 +6,8 @@
 
 #include <stdint.h>
 
+char calc_get_dec(uint8_t const n);
+
 /** Split given byte into high and low parts and fill characters at
  *  addresses given with ASCII representation of the corresponding parts.
  *
