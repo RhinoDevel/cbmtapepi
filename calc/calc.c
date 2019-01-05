@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "calc.h"
+#include "../str/str.h"
 
 static char get_hex(uint8_t const n)
 {
@@ -25,6 +26,22 @@ char calc_get_dec(uint8_t const n)
         return '0' + n;
     }
     return '?';
+}
+
+/**
+ *  - Returns UINT8_MAX on error.
+ */
+uint8_t calc_get_digit(char const c)
+{
+    if(c < '0')
+    {
+        return UINT8_MAX;
+    }
+    if(c > '9')
+    {
+        return UINT8_MAX;
+    }
+    return (uint8_t)(c - '0');
 }
 
 void calc_byte_to_dec(uint8_t const byte, char * const out_three)
@@ -76,6 +93,38 @@ void calc_dword_to_dec(uint32_t const dword, char * const out_ten)
         }
         out_ten[i] = calc_get_dec(val);
     }
+}
+
+uint32_t calc_get_pow_of_ten(uint32_t const val)
+{
+    uint32_t ret_val = 1;
+
+    for(uint32_t i = 0;i < val;++i)
+    {
+        ret_val *= 10;
+    }
+    return ret_val;
+}
+
+uint32_t calc_str_to_dword(char const * const s)
+{
+    uint32_t const len = str_get_len(s);
+
+    uint32_t ret_val = 0;
+
+    for(uint32_t i = 0;i < len;++i)
+    {
+        uint8_t const digit = calc_get_digit(s[i]);
+
+        if(digit > 9)
+        {
+            return UINT32_MAX; // Bad: Could be a valid return value, too!
+        }
+
+        ret_val += (uint32_t)digit * calc_get_pow_of_ten(len - i - 1);
+    }
+
+    return ret_val;
 }
 
 void calc_byte_to_hex(

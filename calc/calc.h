@@ -29,4 +29,8 @@ void calc_word_to_dec(uint16_t const word, char * const out_five);
 
 void calc_dword_to_dec(uint32_t const dword, char * const out_ten);
 
+uint32_t calc_get_pow_of_ten(uint32_t const val);
+
+uint32_t calc_str_to_dword(char const * const s);
+
 #endif //MT_CALC
