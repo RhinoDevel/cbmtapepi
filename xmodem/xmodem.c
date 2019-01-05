@@ -34,7 +34,7 @@ bool xmodem_receive(
 {
     // - Block numbers start with 1.
     //
-    // - 132 byte long packets, each containing:
+    // - Each packet contains:
     //
     //     1. SOH (1 byte).
     //     2. Block number (1 byte).
