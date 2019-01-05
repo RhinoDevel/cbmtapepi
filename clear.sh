@@ -22,6 +22,7 @@ rm alloc/alloc_mem.o
 rm alloc/nodemem.o
 rm watchdog/watchdog.o
 rm xmodem/xmodem.o
+rm ymodem/ymodem.o
 
 rm boot.o
 rm kernel_main.o
