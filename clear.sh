@@ -3,6 +3,7 @@
 rm armtimer/armtimer.o
 rm baregpio/baregpio.o
 rm busywait/busywait.o
+rm str/str.o
 rm calc/calc.o
 rm console/console.o
 rm mem/mem.o

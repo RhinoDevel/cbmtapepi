@@ -119,6 +119,7 @@ $MT_CC ui/ui_receive_test.c -o ui/ui_receive_test.o
 $MT_CC ui/ui_terminal_to_commodore.c -o ui/ui_terminal_to_commodore.o
 $MT_CC ui/ui.c -o ui/ui.o
 $MT_CC console/console.c -o console/console.o
+$MT_CC str/str.c -o str/str.o
 $MT_CC calc/calc.c -o calc/calc.o
 $MT_CC alloc/alloc.c -o alloc/alloc.o
 $MT_CC alloc/alloc_mem.c -o alloc/alloc_mem.o
@@ -151,6 +152,7 @@ arm-none-eabi-ld \
     ui/ui_terminal_to_commodore.o \
     ui/ui.o \
     console/console.o \
+    str/str.o \
     calc/calc.o \
     alloc/alloc.o \
     alloc/alloc_mem.o \
