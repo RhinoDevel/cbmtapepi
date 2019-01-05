@@ -49,6 +49,10 @@ void console_write_byte_dec(uint8_t const byte)
     {
         if(zeroes && three[i] == zero)
         {
+            if(i == 3 - 1)
+            {
+                console_write_key(three[i]/*zero*/);
+            }
             continue;
         }
         zeroes = false;
@@ -68,6 +72,10 @@ void console_write_word_dec(uint16_t const word)
     {
         if(zeroes && five[i] == zero)
         {
+            if(i == 5 - 1)
+            {
+                console_write_key(five[i]/*zero*/);
+            }
             continue;
         }
         zeroes = false;
@@ -87,6 +95,10 @@ void console_write_dword_dec(uint32_t const dword)
     {
         if(zeroes && ten[i] == zero)
         {
+            if(i == 10 - 1)
+            {
+                console_write_key(ten[i]/*zero*/);
+            }
             continue;
         }
         zeroes = false;
