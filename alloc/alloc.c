@@ -17,7 +17,7 @@ void alloc_free(void * const block_addr)
 
     if(block_addr == 0)
     {
-        assert(false);
+        //assert(false);
         return; // Nothing to do.
     }
 
