@@ -14,10 +14,10 @@
 #include "ymodem_receive_params.h"
 
 /**
- * - Given buffer will hold the LAST file retrieved, only (count output
- *   parameter will hold the size of that LAST retrieved file).
+ * - Given buffer will hold the LAST file retrieved, only (.count property
+ *   will hold the size of that LAST retrieved file, .name its name's first
+ *   characters).
  */
-bool ymodem_receive(
-    struct ymodem_receive_params const * const p, uint32_t * const count);
+bool ymodem_receive(struct ymodem_receive_params * const p);
 
 #endif //MT_YMODEM
