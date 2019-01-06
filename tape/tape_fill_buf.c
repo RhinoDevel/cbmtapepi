@@ -173,7 +173,7 @@ static void add_headerdatablock(
 
     // - File name:
 
-    for(c = 0;c < 16;++c) // Hard-coded
+    for(c = 0;c < MT_TAPE_INPUT_NAME_LEN;++c)
     {
         header_data[i] = input->name[c];
         ++i;
