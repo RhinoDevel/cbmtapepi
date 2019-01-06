@@ -16,9 +16,9 @@ struct ymodem_receive_params
     bool (*is_ready_to_read)();
 
     uint8_t * buf; // Buffer to fill with received file's content.
-    uint32_t len; // Buffer length in byte.
+    uint32_t buf_len; // Buffer length in byte.
 
-    uint32_t count; // To be filled with received file's content's byte count.
+    uint32_t file_len; // To be filled with received file's content byte count.
 
     char name[16 + 1];
     //

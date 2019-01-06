@@ -12,12 +12,13 @@
 #include <stdbool.h>
 
 #include "ymodem_receive_params.h"
+#include "ymodem_receive_err.h"
 
 /**
- * - Given buffer will hold the LAST file retrieved, only (.count property
+ * - Given buffer will hold the LAST file retrieved, only (.file_len property
  *   will hold the size of that LAST retrieved file, .name its name's first
  *   characters).
  */
-bool ymodem_receive(struct ymodem_receive_params * const p);
+enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p);
 
 #endif //MT_YMODEM

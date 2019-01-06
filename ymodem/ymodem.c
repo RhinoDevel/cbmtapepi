@@ -9,6 +9,7 @@
 #include "../calc/calc.h"
 #include "ymodem_receive_params.h"
 #include "ymodem_receive_state.h"
+#include "ymodem_receive_err.h"
 #include "ymodem.h"
 
 // Control characters
@@ -30,8 +31,7 @@ static uint32_t const NAKSOH_TIMEOUT = 4000000;
 static uint32_t const WAIT_AFTER_EOT_TIMEOUT = 2000000;
 static uint32_t const WAIT_AFTER_CAN_TIMEOUT = 2000000;
 
-bool ymodem_receive(
-    struct ymodem_receive_params * const p)
+enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
 {
     // - Data block nr. 0 holds meta data (file name, size).
     //
@@ -52,6 +52,7 @@ bool ymodem_receive(
     //
     // - Send an ACK after receiving EOT, too.
 
+    enum ymodem_receive_err err = ymodem_receive_err_unknown;
     uint8_t rb, csum, block_nr = 0;
     uint16_t block_size, data_byte_nr = 0;
     enum ymodem_receive_state state = ymodem_receive_state_start_or_end;
@@ -116,6 +117,7 @@ bool ymodem_receive(
                 }
 
                 state = ymodem_receive_state_error;
+                err = ymodem_receive_err_start_or_end;
                 break;
             }
 
@@ -123,7 +125,8 @@ bool ymodem_receive(
             {
                 if(rb != block_nr)
                 {
-                    state = ymodem_receive_state_error; // Error!
+                    state = ymodem_receive_state_error;
+                    err = ymodem_receive_err_block_nr;
                     break;
                 }
                 csum += rb;
@@ -136,6 +139,7 @@ bool ymodem_receive(
                 if(rb != 0xFF - block_nr)
                 {
                     state = ymodem_receive_state_error;
+                    err = ymodem_receive_err_inverted_block_nr;
                     break;
                 }
                 csum += rb;
@@ -162,7 +166,7 @@ bool ymodem_receive(
                     }
                     else
                     {
-                        p->count = 0;
+                        p->file_len = 0;
                         p->name[0] = '\0';
 
                         meta_buf = alloc_alloc(block_size * sizeof *meta_buf);
@@ -193,10 +197,22 @@ bool ymodem_receive(
                             }
                         }
                         p->name[sizeof p->name - 1] = '\0';
+                        while(meta_buf[i] != '\0' && i < block_size)
+                        {
+                            ++i;
+                        }
+
+                        ++i;
+
+                        if(i >= block_size)
+                        {
+                            state = ymodem_receive_state_error;
+                            err = ymodem_receive_err_meta_data;
+                            break;
+                        }
 
                         // Get file's byte count:
                         //
-                        ++i;
                         while(j < sizeof dec - 1)
                         {
                             dec[j] = meta_buf[i];
@@ -213,8 +229,14 @@ bool ymodem_receive(
                             }
                         }
                         dec[j] = '\0';
-                        p->count = calc_str_to_dword(dec);
+                        p->file_len = calc_str_to_dword(dec);
 
+                        if(p->file_len > p->buf_len)
+                        {
+                            state = ymodem_receive_state_error;
+                            err = ymodem_receive_err_meta_len;
+                            break;
+                        }
                         alloc_free(meta_buf);
                         meta_buf = 0;
                     }
@@ -230,6 +252,7 @@ bool ymodem_receive(
                 if(rb != csum)
                 {
                     state = ymodem_receive_state_error; // Error!
+                    err = ymodem_receive_err_checksum_meta;
                     break;
                 }
 
@@ -250,7 +273,7 @@ bool ymodem_receive(
                     p->write_byte(LF);
                     p->write_byte(LF);
 
-                    return true; // *** RETURN ***
+                    return ymodem_receive_err_none;
                 }
                 break;
             }
@@ -260,13 +283,13 @@ bool ymodem_receive(
                 uint32_t const full_offset =
                                     package_offset + (uint32_t)data_byte_nr;
 
-                if(full_offset >= p->len)
-                {
-                    state = ymodem_receive_state_error;
-                    break;
-                }
                 csum += rb;
-                p->buf[full_offset] = rb;
+
+                if(full_offset < p->file_len)
+                {
+                    p->buf[full_offset] = rb;
+                }
+
                 ++data_byte_nr;
                 if(data_byte_nr == block_size)
                 {
@@ -280,17 +303,13 @@ bool ymodem_receive(
             {
                 if(rb != csum)
                 {
-                    state = ymodem_receive_state_error; // Error!
+                    state = ymodem_receive_state_error;
+                    err = ymodem_receive_err_checksum_content;
                     break;
                 }
 
                 ++block_nr;
                 package_offset += (uint32_t)block_size;
-                if(package_offset >= p->len)
-                {
-                    state = ymodem_receive_state_error; // Error!
-                    break;
-                }
                 state = ymodem_receive_state_start_or_end;
                 p->write_byte(ACK);
                 break;
@@ -327,7 +346,7 @@ bool ymodem_receive(
                     p->read_byte();
                 }
 
-                return false; // *** RETURN ***
+                return err;
             }
         }
     }
