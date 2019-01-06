@@ -18,16 +18,24 @@
 #include "../tape/tape_input.h"
 #include "../tape/tape_send_params.h"
 
-static void fill_name(uint8_t * const name)
+static void fill_name(uint8_t * const name_out, char const * const name_in)
 {
-    static uint8_t const sample_name[] = {
-        'R', 'H', 'I', 'N', 'O', 'D', 'E', 'V', 'E', 'L',
-        0x20, 0x20, 0x20, 0x20, 0x20, 0x20
-    };
+    // static uint8_t const sample_name[] = {
+    //     'R', 'H', 'I', 'N', 'O', 'D', 'E', 'V', 'E', 'L',
+    //     0x20, 0x20, 0x20, 0x20, 0x20, 0x20
+    // };
 
-    for(int i = 0;i<MT_TAPE_INPUT_NAME_LEN;++i)
+    int i = 0;
+
+    while(i < MT_TAPE_INPUT_NAME_LEN && name_in[i] != '\0')
     {
-        name[i] = sample_name[i];
+        name_out[i] = (uint8_t)name_in[i]; // TODO: Implement real conversion to PETSCII.
+        ++i;
+    }
+    while(i < MT_TAPE_INPUT_NAME_LEN)
+    {
+        name_out[i] = 0x20;
+        ++i;
     }
 }
 
@@ -51,7 +59,8 @@ static void hint()
     console_writeline("");
 }
 
-static bool send_to_commodore(uint8_t const * const bytes, uint32_t const count)
+static bool send_to_commodore(
+    uint8_t const * const bytes, char const * const name, uint32_t const count)
 {
     bool ret_val = false;
     struct tape_send_params p;
@@ -62,7 +71,7 @@ static bool send_to_commodore(uint8_t const * const bytes, uint32_t const count)
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
     p.data = alloc_alloc(sizeof *(p.data));
 
-    fill_name(p.data->name);
+    fill_name(p.data->name, name);
 
     p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
     //
@@ -126,7 +135,7 @@ void ui_terminal_to_commodore()
     console_write_dword_dec(p.file_len);
     console_writeline(" bytes.");
 
-    send_to_commodore(p.buf, p.file_len);
+    send_to_commodore(p.buf, p.name, p.file_len);
 
     alloc_free(p.buf);
     p.buf = 0;
