@@ -18,7 +18,7 @@ static uint8_t const NAK = 0x15; // Negative acknowledge.
 static uint8_t const EOT = 0x04; // End of transmission.
 static uint8_t const CAN = 0x18; // Cancel
 
-static uint8_t const SUB = 0x1A; // Substitute
+// static uint8_t const SUB = 0x1A; // Substitute
 
 static uint8_t const LF = 0x0A; // Line feed.
 static uint8_t const CR = 0x0D; // Carriage return.
@@ -110,17 +110,17 @@ bool xmodem_receive(
 
                         // TODO: This is NOT safe:
                         //
-                        {
-                            uint32_t real_count = *count,
-                                i = *count - 1;
-
-                            while(p->buf[i] == SUB)
-                            {
-                                --real_count;
-                                --i;
-                            }
-                            *count = real_count;
-                        }
+                        // {
+                        //     uint32_t real_count = *count,
+                        //         i = *count - 1;
+                        //
+                        //     while(p->buf[i] == SUB)
+                        //     {
+                        //         --real_count;
+                        //         --i;
+                        //     }
+                        //     *count = real_count;
+                        // }
 
                         //console_writeline(
                         //    "xmodem_receive: Success. Returning..");
