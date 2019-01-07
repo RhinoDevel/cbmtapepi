@@ -17,6 +17,7 @@
 #include "../tape/tape_send.h"
 #include "../tape/tape_input.h"
 #include "../tape/tape_send_params.h"
+#include "../str/str.h"
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
 {
@@ -26,10 +27,13 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
     // };
 
     int i = 0;
+    char * const buf = alloc_alloc(str_get_len(name_in) + 1);
 
-    while(i < MT_TAPE_INPUT_NAME_LEN && name_in[i] != '\0')
+    str_to_upper(buf, name_in);
+
+    while(i < MT_TAPE_INPUT_NAME_LEN && buf[i] != '\0')
     {
-        name_out[i] = (uint8_t)name_in[i]; // TODO: Implement real conversion to PETSCII.
+        name_out[i] = (uint8_t)buf[i]; // TODO: Implement real conversion to PETSCII.
         ++i;
     }
     while(i < MT_TAPE_INPUT_NAME_LEN)
@@ -37,6 +41,8 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
         name_out[i] = 0x20;
         ++i;
     }
+
+    alloc_free(buf);
 }
 
 static void fill_add_bytes(uint8_t * const add_bytes)
