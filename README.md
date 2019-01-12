@@ -1,7 +1,7 @@
 # CBM Tape Pi
 Use a Raspberry Pi as datassette drive with your Commodore computer!
 
-CBM Tape Pi is a Commodore datassette/tape drive simulator.
+CBM Tape Pi is a Commodore datassette/tape drive replacement.
 
 It is written in bare-metal C and independent of any OS (like Raspbian).
 
