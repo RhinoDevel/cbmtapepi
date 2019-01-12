@@ -13,6 +13,7 @@
 //#include "pl011uart/pl011uart.h"
 
 #include "console/console.h"
+#include "ui/ui_terminal_to_commodore.h"
 #include "ui/ui.h"
 #include "config.h"
 #include "alloc/alloc.h"
@@ -61,9 +62,16 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     tape_init();
 
+#ifdef MT_INTERACTIVE
     // Start user interface (via console):
     //
     ui_enter();
+#else //MT_INTERACTIVE
+    while(true)
+    {
+        ui_terminal_to_commodore(false);
+    }
+#endif //MT_INTERACTIVE
 }
 
 // // WORKS:

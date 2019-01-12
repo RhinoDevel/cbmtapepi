@@ -66,7 +66,10 @@ static void hint()
 }
 
 static bool send_to_commodore(
-    uint8_t const * const bytes, char const * const name, uint32_t const count)
+    uint8_t const * const bytes,
+    char const * const name,
+    uint32_t const count,
+    bool const interactive)
 {
     bool ret_val = false;
     struct tape_send_params p;
@@ -98,7 +101,10 @@ static bool send_to_commodore(
     console_write_word_dec(p.data->addr);
     console_writeline(").");
 
-    hint();
+    if(interactive)
+    {
+        hint();
+    }
     ret_val = tape_send(&p, mem_addr);
 
     alloc_free(mem_addr);
@@ -106,7 +112,7 @@ static bool send_to_commodore(
     return ret_val;
 }
 
-void ui_terminal_to_commodore()
+void ui_terminal_to_commodore(bool const interactive)
 {
     static uint32_t const len = 64 * 1024; // 64 kB.
 
@@ -141,7 +147,7 @@ void ui_terminal_to_commodore()
     console_write_dword_dec(p.file_len);
     console_writeline(" bytes.");
 
-    send_to_commodore(p.buf, p.name, p.file_len);
+    send_to_commodore(p.buf, p.name, p.file_len, interactive);
 
     alloc_free(p.buf);
     p.buf = 0;

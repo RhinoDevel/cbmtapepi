@@ -32,7 +32,7 @@ void ui_enter()
         switch(c[0])
         {
             case 'f':
-                ui_terminal_to_commodore();
+                ui_terminal_to_commodore(true);
                 break;
             case 's':
                 ui_send_sample();
