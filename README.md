@@ -1,5 +1,5 @@
 # CBM Tape Pi
-*Marcel Timm, RhinoDevel, 2019, rhinodevel.com*
+*Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
 Use a Raspberry Pi as datassette drive with your Commodore computer!
 
