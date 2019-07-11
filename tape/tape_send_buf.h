@@ -1,8 +1,8 @@
 
 // Marcel Timm, RhinoDevel, 2018jan27
 
-#ifndef MT_TAPE_TRANSFER_BUF
-#define MT_TAPE_TRANSFER_BUF
+#ifndef MT_TAPE_SEND_BUF
+#define MT_TAPE_SEND_BUF
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -28,4 +28,4 @@ bool tape_send_buf(
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_read);
 
-#endif //MT_TAPE_TRANSFER_BUF
+#endif //MT_TAPE_SEND_BUF
