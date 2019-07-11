@@ -14,16 +14,16 @@
 
 bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
 {
-    // Use memory at given position for sample data to send:
+    // Use memory at given position for data to send:
 
     uint8_t * const buf = (uint8_t *)mem;
 
-    // Get sample data to send:
+    // Create data to send from given:
 
     console_writeline("tape_send: Filling send buffer from input structure..");
     tape_fill_buf(p->data, buf);
 
-    // Send sample data via GPIO pin with given nr:
+    // Send data via GPIO pin with given nr:
 
     console_writeline("tape_send: Setting sense line to LOW..");
     baregpio_set_output(p->gpio_pin_nr_sense, false);
