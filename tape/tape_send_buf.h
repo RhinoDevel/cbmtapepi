@@ -20,8 +20,8 @@
  *  - Does not care about sense line (must already be set to low).
  *  - Read-from-tape GPIO pin must already be configured as output and set to
  *    HIGH.
- *  - Motor GPIO pin must already be configured as input without any internal
- *    pull resistor.
+ *  - Motor GPIO pin must already be configured as input with internal pull-down
+ *    resistor.
  */
 bool tape_send_buf(
     uint8_t const * const buf,
