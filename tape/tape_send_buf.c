@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "tape_transfer_buf.h"
+#include "tape_send_buf.h"
 #include "tape_symbol.h"
 #include "../busywait/busywait.h"
 #include "../baregpio/baregpio.h"
@@ -51,7 +51,7 @@ static void transfer_symbol(
     transfer_pulse(micro_last, gpio_pin_nr);
 }
 
-bool tape_transfer_buf(
+bool tape_send_buf(
     uint8_t const * const buf,
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_read)
@@ -70,7 +70,7 @@ bool tape_transfer_buf(
         {
             if(motor_wait)
             {
-                console_writeline("tape_transfer_buf: Motor is OFF, waiting..");
+                console_writeline("tape_send_buf: Motor is OFF, waiting..");
 
                 while(!baregpio_read(gpio_pin_nr_motor))
                 {
@@ -78,11 +78,11 @@ bool tape_transfer_buf(
                     // LOW.
                 }
 
-                console_writeline("tape_transfer_buf: Motor is ON, resuming..");
+                console_writeline("tape_send_buf: Motor is ON, resuming..");
             }
             else
             {
-                console_writeline("tape_transfer_buf: Motor is OFF, done.");
+                console_writeline("tape_send_buf: Motor is OFF, done.");
                 return true; // Done
             }
         }
@@ -122,20 +122,20 @@ bool tape_transfer_buf(
 
             case tape_symbol_motor_wait_off: // (fake symbol)
             {
-                console_writeline("tape_transfer_buf: Disabling motor-wait..");
+                console_writeline("tape_send_buf: Disabling motor-wait..");
                 motor_wait = false;
                 break;
             }
             case tape_symbol_done:
             {
                 console_writeline(
-                    "tape_transfer_buf: Done symbol found. Done.");
+                    "tape_send_buf: Done symbol found. Done.");
                 return true; // Transfer done (fake symbol).
             }
 
             default: // Must not happen.
             {
-                console_writeline("tape_transfer_buf: Error: Unknown symbol!");
+                console_writeline("tape_send_buf: Error: Unknown symbol!");
                 return false; // Error!
             }
         }

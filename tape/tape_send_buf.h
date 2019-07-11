@@ -23,7 +23,7 @@
  *  - Motor GPIO pin must already be configured as input without any internal
  *    pull resistor.
  */
-bool tape_transfer_buf(
+bool tape_send_buf(
     uint8_t const * const buf,
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_read);

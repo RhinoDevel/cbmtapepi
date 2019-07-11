@@ -8,7 +8,7 @@
 #include "../console/console.h"
 
 #include "tape_fill_buf.h"
-#include "tape_transfer_buf.h"
+#include "tape_send_buf.h"
 
 #include "tape_send.h"
 
@@ -29,7 +29,7 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
     baregpio_set_output(p->gpio_pin_nr_sense, false);
 
     console_writeline("tape_send: Sending buffer content..");
-    if(tape_transfer_buf(buf, p->gpio_pin_nr_motor, p->gpio_pin_nr_read))
+    if(tape_send_buf(buf, p->gpio_pin_nr_motor, p->gpio_pin_nr_read))
     {
         console_writeline(
             "tape_send: Success. Setting tape read line and sense line to HIGH..");

@@ -111,7 +111,7 @@ $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
 $MT_CC pl011uart/pl011uart.c -o pl011uart/pl011uart.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
-$MT_CC tape/tape_transfer_buf.c -o tape/tape_transfer_buf.o
+$MT_CC tape/tape_send_buf.c -o tape/tape_send_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
 $MT_CC tape/tape_send.c -o tape/tape_send.o
 $MT_CC tape/tape_init.c -o tape/tape_init.o
@@ -144,7 +144,7 @@ arm-none-eabi-ld \
     miniuart/miniuart.o \
     pl011uart/pl011uart.o \
     tape/tape_fill_buf.o \
-    tape/tape_transfer_buf.o \
+    tape/tape_send_buf.o \
     tape/tape_sample.o \
     tape/tape_send.o \
     tape/tape_init.o \

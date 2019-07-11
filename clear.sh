@@ -12,7 +12,7 @@ rm pl011uart/pl011uart.o
 rm tape/tape_fill_buf.o
 rm tape/tape_sample.o
 rm tape/tape_send.o
-rm tape/tape_transfer_buf.o
+rm tape/tape_send_buf.o
 rm tape/tape_init.o
 rm ui/ui_send_sample.o
 rm ui/ui_receive_test.o
