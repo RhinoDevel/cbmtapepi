@@ -9,6 +9,7 @@
 #define MT_TAPE_GPIO_PIN_NR_READ 2
 #define MT_TAPE_GPIO_PIN_NR_SENSE 3
 #define MT_TAPE_GPIO_PIN_NR_MOTOR 4
+#define MT_TAPE_GPIO_PIN_NR_WRITE 23
 
 // Comment this out for non-interactive mode,
 // otherwise a menu-based UI will be shown via serial interface:
