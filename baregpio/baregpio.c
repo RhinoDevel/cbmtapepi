@@ -150,6 +150,26 @@ bool baregpio_read(uint32_t const pin_nr)
     return (mem_read(get_gplev(pin_nr)) & get_pin_mask(pin_nr)) != 0;
 }
 
+void baregpio_wait_for_low(uint32_t const pin_nr)
+{
+    while(baregpio_read(pin_nr))
+    {
+        // Pin is HIGH.
+    }
+
+    // Pin is LOW.
+}
+
+void baregpio_wait_for_high(uint32_t const pin_nr)
+{
+    while(!baregpio_read(pin_nr))
+    {
+        // Pin is LOW.
+    }
+
+    // Pin is HIGH.
+}
+
 void baregpio_set_output(uint32_t const pin_nr, bool const high)
 {
     baregpio_set_func(pin_nr, gpio_func_output);

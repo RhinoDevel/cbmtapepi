@@ -31,6 +31,14 @@ void baregpio_write(uint32_t const pin_nr, bool const high);
 
 bool baregpio_read(uint32_t const pin_nr);
 
+/** Busy-wait, until pin with given nr. is LOW.
+ */
+void baregpio_wait_for_low(uint32_t const pin_nr);
+
+/** Busy-wait, until pin with given nr. is HIGH.
+ */
+void baregpio_wait_for_high(uint32_t const pin_nr);
+
 /** Set function of pin with given BCM nr. to given function.
  */
 void baregpio_set_func(uint32_t const pin_nr, enum gpio_func const func);
