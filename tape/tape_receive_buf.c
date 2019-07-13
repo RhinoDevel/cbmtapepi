@@ -76,7 +76,7 @@ static enum tape_symbol get_symbol(
     console_write(", ");
     console_write_dword_dec(l);
     console_writeline(")!");
-    return tape_symbol_done;
+    return tape_symbol_done; // Misused as error indicator.
 }
 
 bool tape_receive_buf(
@@ -85,7 +85,7 @@ bool tape_receive_buf(
     uint8_t * const buf)
 {
     static int const sync_count = 32; // (there are more than 1000 sync pulses)
-    static uint32_t const ticks_timeout = 5000000; // 5 seconds.
+    static uint32_t const ticks_timeout = 3000000; // 3 seconds.
 
     assert(sync_count % 2 == 0);
 
@@ -210,6 +210,10 @@ bool tape_receive_buf(
             }
 
             buf[pos] = get_symbol(pulse_type[0], pulse_type[1]);
+            if(buf[pos] == tape_symbol_done) // Misused as error indicator.
+            {
+                return false;
+            }
             ++pos;
         }
 
@@ -238,5 +242,5 @@ bool tape_receive_buf(
         console_writeline(" times.");
     }
 
-    return false; // TODO: Implement!
+    return true;
 }
