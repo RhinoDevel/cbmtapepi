@@ -36,8 +36,30 @@ static void debug_tape_receive()
     };
     struct tape_input * input = tape_receive(&p);
 
-    alloc_free(input->bytes);
-    alloc_free(input);
+    if(input != 0)
+    {
+        console_write("debug_tape_receive : Name: \"");
+        for(int i = 0;i < 16;++i) // Hard-coded
+        {
+            console_write_key((char)input->name[i]);
+        }
+        console_writeline("\".");
+
+        console_write("debug_tape_receive : Type: ");
+        console_write_byte_dec((uint8_t)input->type);
+        console_writeline(".");
+
+        console_write("debug_tape_receive : Address: ");
+        console_write_word_dec(input->addr);
+        console_writeline(".");
+
+        console_write("debug_tape_receive : Length: ");
+        console_write_word_dec(input->len);
+        console_writeline(".");
+
+        alloc_free(input->bytes);
+        alloc_free(input);
+    }
 }
 
 #endif //NDEBUG

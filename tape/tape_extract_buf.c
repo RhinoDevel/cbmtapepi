@@ -26,10 +26,15 @@ static bool extract_byte(
     uint8_t byte_buf = 0,
         parity = 1;
 
+    //console_writeline("extract_byte : Entered..");
+
     // New data marker:
 
     if(buf[*pos] != tape_symbol_new)
     {
+        console_write("extract_byte : Error: Symbol new not found, but ");
+        console_write_byte_dec(buf[*pos]);
+        console_writeline(" instead!");
         return false;
     }
     ++(*pos);
@@ -53,6 +58,8 @@ static bool extract_byte(
             ++(*pos);
             continue;
         }
+
+        console_writeline("extract_byte : Error: Unsupported symbol found!");
         return false;
     }
 
@@ -64,6 +71,8 @@ static bool extract_byte(
         {
             if(parity != 0)
             {
+                console_writeline(
+                    "extract_byte : Error: Parity zero read, but not counted!");
                 return false;
             }
             break;
@@ -72,6 +81,8 @@ static bool extract_byte(
         {
             if(parity != 1)
             {
+                console_writeline(
+                    "extract_byte : Error: Parity one read, but not counted!");
                 return false;
             }
             break;
@@ -79,9 +90,12 @@ static bool extract_byte(
 
         default:
         {
+            console_writeline(
+                "extract_byte : Error: Unexpected parity symbol read!");
             return false; // Unexpected symbol.
         }
     }
+    ++(*pos);
 
     *byte = byte_buf;
     return true;
@@ -111,6 +125,8 @@ static bool consume_countdown(
             return false;
         }
         --c;
+
+        //console_writeline("consume_countdown : Starting next following loop..");
     }
     return true;
 }
@@ -150,9 +166,18 @@ static uint8_t* get_payload_from_transmit_data(
         ++offset_end;
     }
 
+    if(offset_end % byte_symbol_count != 0)
+    {
+        // Must not happen!
+
+        console_writeline(
+            "get_payload_from_transmit_data : Error: Offset end must be multiple of symbol per byte count!");
+        return 0;
+    }
+
     // offset_end == symbol count for payload bytes plus parity byte:
     //
-    payload_byte_count = offset_end * byte_symbol_count - 1;
+    payload_byte_count = offset_end / byte_symbol_count - 1;
 
     // Payload:
 
@@ -188,7 +213,27 @@ static uint8_t* get_payload_from_transmit_data(
 
     // Optional end-of-data marker:
 
-    if(buf[*pos + offset_end + 1] == tape_symbol_end)
+// #ifndef NDEBUG
+//     console_write(" | ");
+//     for(int d = 0;d < 16;++d)
+//     {
+//         console_write_byte(buf[*pos + d]);
+//         console_write(" | ");
+//     }
+//     console_writeline("");
+// #endif //NDEBUG
+
+    if(buf[*pos] != tape_symbol_end)
+    {
+        // Must not happen:
+
+        console_writeline(
+            "get_payload_from_transmit_data : Error: Expected symbol end!");
+        alloc_free(payload);
+        return 0;
+    }
+
+    if(buf[*pos + 1] == tape_symbol_end)
     {
         // This is the optional end-of-data marker:
 
@@ -229,9 +274,16 @@ static uint8_t* get_data_from_transmit(
 
     // First countdown sequence:
 
-    consume_countdown(second, buf, pos);
+    console_writeline("get_data_from_transmit : Starting countdown consume..");
+
+    if(!consume_countdown(second, buf, pos))
+    {
+        return 0;
+    }
 
     // Data:
+
+    console_writeline("get_data_from_transmit : Starting payload retrieval..");
 
     payload = get_payload_from_transmit_data(buf, pos, len);
     if(payload == 0)
@@ -240,6 +292,8 @@ static uint8_t* get_data_from_transmit(
     }
 
     // Transmit block gap:
+
+    console_writeline("get_data_from_transmit : Starting gap consume..");
 
     if(!consume_transmit_block_gap(buf, pos))
     {
@@ -268,6 +322,8 @@ static uint8_t* get_data_following_sync(
 
     // Data:
 
+    console_writeline("get_data_following_sync : Starting 1st data extract..");
+
     // 1st data transmit:
     //
     data_first = get_data_from_transmit(false, buf, pos, &len_first);
@@ -275,6 +331,8 @@ static uint8_t* get_data_following_sync(
     {
         return 0;
     }
+
+    console_writeline("get_data_following_sync : Starting 2nd data extract..");
 
     // 2nd data transmit:
     //
@@ -317,9 +375,12 @@ static bool extract_headerdatablock(
 
     int len, // This is the HEADER data length.
         i = 0;
-    uint8_t* data = get_data_following_sync(buf, pos, &len);
+    uint8_t* data;
     uint16_t end_addr_plus_one;
 
+    console_writeline("extract_headerdatablock : Entered function.");
+
+    data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
         return false;
@@ -376,8 +437,11 @@ static bool extract_contentdatablock(
     uint8_t const * const buf, int * const pos, struct tape_input * const input)
 {
     int len;
-    uint8_t * const data = get_data_following_sync(buf, pos, &len);
+    uint8_t* data;
 
+    console_writeline("extract_contentdatablock : Entered function.");
+
+    data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
         return false;
