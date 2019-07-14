@@ -25,7 +25,7 @@ static void consume_sync(uint8_t const * const buf, int * const pos)
 /**
  * - Caller takes ownership of return value.
  */
-static uint8_t* extract_data_following_sync(
+static uint8_t* get_data_following_sync(
     uint8_t const * const buf, int * const pos, int const * len)
 {
     // TODO: Implement!
@@ -58,7 +58,7 @@ static bool extract_headerdatablock(
 
     // Payload:
 
-    data = extract_data_following_sync(buf, pos, &len);
+    data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
         return false;
@@ -76,9 +76,22 @@ static bool extract_contentdatablock(
 {
     (void)input; // TODO: Remove!
 
+    uint8_t* data;
+    int len;
+
     // Synchronization:
 
     consume_sync(buf, pos);
+
+    // Payload:
+
+    data = get_data_following_sync(buf, pos, &len);
+    if(data == 0)
+    {
+        return false;
+    }
+
+    alloc_free(data);
 
     // TODO: Implement!
     //
