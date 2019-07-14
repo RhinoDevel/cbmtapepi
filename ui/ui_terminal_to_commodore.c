@@ -66,7 +66,7 @@ static void hint()
 }
 
 static bool send_to_commodore(
-    uint8_t const * const bytes,
+    uint8_t /*const*/ * const bytes,
     char const * const name,
     uint32_t const count,
     bool const interactive)

@@ -220,6 +220,10 @@ bool tape_receive_buf(
         pulse_type_index = 1 - pulse_type_index;
     }
 
+    buf[pos] = tape_symbol_done;
+    //++pos;
+
+#ifndef NDEBUG
     console_write("tape_receive_buf: Short tick count: ");
     console_write_dword_dec(ticks_short);
     console_writeline("");
@@ -241,6 +245,7 @@ bool tape_receive_buf(
         console_write_dword_dec((uint32_t)sync_workaround_count);
         console_writeline(" times.");
     }
+#endif //NDEBUG
 
     return true;
 }

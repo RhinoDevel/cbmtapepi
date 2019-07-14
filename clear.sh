@@ -16,6 +16,7 @@ rm tape/tape_send_buf.o
 rm tape/tape_init.o
 rm tape/tape_receive_buf.o
 rm tape/tape_receive.o
+rm tape/tape_extract_buf.o
 rm ui/ui_send_sample.o
 rm ui/ui_receive_test.o
 rm ui/ui_terminal_to_commodore.o

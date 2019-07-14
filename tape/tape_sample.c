@@ -42,7 +42,7 @@ static void fill_add_bytes(uint8_t * const add_bytes)
 
 static void pet_fill_buf(struct tape_input * const buf)
 {
-    static uint8_t const bytes[] = {
+    static uint8_t /*const*/ bytes[] = {
         169, // Immediate LDA.
         83, // Heart symbol (yes, it is romantic).
         141, // Absolute STA.
@@ -61,7 +61,7 @@ static void pet_fill_buf(struct tape_input * const buf)
 
 static void c64_fill_buf(struct tape_input * const buf)
 {
-    static uint8_t const bytes[] = {
+    static uint8_t /*const*/ bytes[] = {
         169, // Immediate LDA.
         83, // Heart symbol (yes, it is romantic).
         141, // Absolute STA.

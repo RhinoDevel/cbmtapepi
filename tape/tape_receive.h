@@ -15,6 +15,9 @@
  *               - Write line must be configured as input with internal pull-
  *                 down resistor usage.
  *
+ *               - p->data->bytes must point to memory position with enough
+ *                 space to store largest tape data (e.g. a PRG file).            
+ *
  * <=> Call tape_init() before calling this function!
  */
 bool tape_receive(

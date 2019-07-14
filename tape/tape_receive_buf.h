@@ -10,6 +10,8 @@
 /** Receive data from Commodore datassette/datasette write-to-tape GPIO pin with
  *  given nr. and write it as symbols to given buffer.
  *
+ *  Adds pseudo-symbol tape_symbol_done after received data in buffer.
+ *
  *  See tape_extract_buf() for how to extract data from buffer.
  *
  *  - Does not care about sense line (must already be set to low).

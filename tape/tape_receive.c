@@ -9,6 +9,7 @@
 
 #include "tape_receive.h"
 #include "tape_receive_buf.h"
+#include "tape_extract_buf.h"
 
 bool tape_receive(
     struct tape_receive_params const * const p, uint32_t * const mem)
@@ -29,11 +30,7 @@ bool tape_receive(
             "tape_receive: Success. Setting sense line to HIGH..");
         baregpio_set_output(p->gpio_pin_nr_sense, true);
 
-        // TODO: Fill p.data [implement tape_extract_buf()]!
-        //
-        return false;
-        //
-        //return true;
+        return tape_extract_buf(buf, p->data);
     }
     console_writeline(
         "tape_receive: Failure! Setting sense line to HIGH..");
