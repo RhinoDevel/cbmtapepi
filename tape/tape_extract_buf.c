@@ -10,10 +10,7 @@
 #include "tape_extract_buf.h"
 #include "tape_input.h"
 #include "tape_symbol.h"
-
-// TODO: Replace!
-//
-//static int const header_data_byte_count = 192;
+#include "tape_filetype.h"
 
 static void consume_sync(uint8_t const * const buf, int * const pos)
 {
@@ -50,7 +47,7 @@ static bool extract_byte(
         }
         if(buf[*pos] == tape_symbol_one)
         {
-            byte_buf &= (1 << i);
+            byte_buf |= (1 << i);
             parity ^= 1;
 
             ++(*pos);
@@ -93,8 +90,8 @@ static bool extract_byte(
 static bool consume_countdown(
     bool const second, uint8_t const * const buf, int * const pos)
 {
-    uint8_t c = second ? 9 : 0x89,
-        lim = second ? 0 : 0x80;
+    uint8_t c = second ? 9 : 0x89, // TODO: Replace!
+        lim = second ? 0 : 0x80; // TODO: Replace!
 
     while(c > lim)
     {
@@ -306,44 +303,88 @@ static uint8_t* get_data_following_sync(
     return data_first;
 }
 
+/**
+ * - Also sets input->len.
+ * - Properties of input may also be changed, if returning with error.
+ */
 static bool extract_headerdatablock(
     uint8_t const * const buf, int * const pos, struct tape_input * const input)
 {
-    (void)input; // TODO: Remove!
+    static int const header_data_byte_count = 192, // TODO: Replace!
+        name_len = (int)(sizeof input->name / sizeof *input->name),
+        add_bytes_len =
+            (int)(sizeof input->add_bytes / sizeof *input->add_bytes);
 
-    int len;
+    int len, // This is the HEADER data length.
+        i = 0;
     uint8_t* data = get_data_following_sync(buf, pos, &len);
+    uint16_t end_addr_plus_one;
 
     if(data == 0)
     {
         return false;
     }
+    if(len != header_data_byte_count)
+    {
+        alloc_free(data);
+        return false;
+    }
 
-    alloc_free(data);
+    // File type:
 
-    // TODO: Implement!
-    //
-    return false;
+    input->type = (enum tape_filetype)data[0];
+    if(input->type != tape_filetype_relocatable
+        && input->type != tape_filetype_non_relocatable)
+    {
+        console_writeline(
+            "extract_headerdatablock: Error: Unsupported file type!");
+
+        alloc_free(data);
+        return false;
+    }
+
+    // Destination infos:
+
+    input->addr = ((uint16_t)data[2] << 8) | (uint16_t)data[1];
+    end_addr_plus_one = ((uint16_t)data[4] << 8) | (uint16_t)data[3];
+    input->len = end_addr_plus_one - input->addr;
+
+    // File name:
+
+    while(i < name_len)
+    {
+        input->name[i] = data[5 + i];
+
+        ++i;
+    }
+
+    // Additional bytes:
+
+    for(i = 0;i < add_bytes_len;++i)
+    {
+        input->add_bytes[i] = data[5 + name_len + i];
+    }
+
+    return true;
 }
 
+/**
+ * - Caller takes ownership of filled input->bytes.
+ */
 static bool extract_contentdatablock(
     uint8_t const * const buf, int * const pos, struct tape_input * const input)
 {
-    (void)input; // TODO: Remove!
-
     int len;
-    uint8_t* data = get_data_following_sync(buf, pos, &len);
+    uint8_t * const data = get_data_following_sync(buf, pos, &len);
 
     if(data == 0)
     {
         return false;
     }
 
-    alloc_free(data);
-
-    // TODO: Implement!
-    //
-    return false;
+    input->bytes = data;
+    input->len = (uint16_t)len;
+    return true;
 }
 
 struct tape_input * tape_extract_buf(uint8_t const * const buf)
