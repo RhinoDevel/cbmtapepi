@@ -118,20 +118,111 @@ static bool consume_countdown(
     return true;
 }
 
+/**
+ * - Caller takes ownership of return value.
+ */
+static uint8_t* get_payload_from_transmit_data(
+    uint8_t const * const buf, int * const pos, int * const len)
+{
+    static int const byte_symbol_count = 10;
+    //
+    // Hard-coded, see extract_byte().
+
+    int offset_end = 0,
+        payload_byte_count;
+    uint8_t *payload,
+        byte,
+        checksum = 0;
+
+    while(true)
+    {
+        uint8_t const cur = buf[*pos + offset_end];
+
+        if(cur == tape_symbol_done)
+        {
+            return 0; // Expected symbol could not be found.
+        }
+
+        if(cur == tape_symbol_end)
+        {
+            // Found optional end-of-data marker or transmit block gap start.
+
+            break;
+        }
+
+        ++offset_end;
+    }
+
+    // offset_end == symbol count for payload bytes plus parity byte:
+    //
+    payload_byte_count = offset_end * byte_symbol_count - 1;
+
+    // Payload:
+
+    payload = alloc_alloc(payload_byte_count * sizeof *payload);
+    if(payload == 0)
+    {
+        return 0;
+    }
+
+    for(int i = 0;i < payload_byte_count;++i)
+    {
+        if(!extract_byte(buf, pos, &byte))
+        {
+            alloc_free(payload);
+            return 0;
+        }
+        payload[i] = byte;
+        checksum ^= byte;
+    }
+
+    // Checksum:
+
+    if(!extract_byte(buf, pos, &byte))
+    {
+        alloc_free(payload);
+        return 0;
+    }
+    if(byte != checksum)
+    {
+        alloc_free(payload);
+        return 0;
+    }
+
+    // Optional end-of-data marker:
+
+    if(buf[*pos + offset_end + 1] == tape_symbol_end)
+    {
+        // This is the optional end-of-data marker:
+
+        ++(*pos); // Consume optional end-of-data marker.
+    }
+    //
+    // Otherwise: This is the start of transmit block gap.
+
+    *len = payload_byte_count;
+    return payload;
+}
+
 static uint8_t* get_data_from_transmit(
     bool const second,
     uint8_t const * const buf,
     int * const pos,
-    int const * len)
+    int * const len)
 {
-    (void)second;
-    (void)len; // TODO: Remove!
+    uint8_t* payload;
 
-    consume_countdown(false, buf, pos);
+    // First countdown sequence:
+
+    consume_countdown(second, buf, pos);
 
     // Data:
 
-    // TODO: Implement!
+    payload = get_payload_from_transmit_data(buf, pos, len);
+    if(payload == 0)
+    {
+        return 0;
+    }
 
     // Transmit block gap:
 
