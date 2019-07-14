@@ -23,13 +23,71 @@ static void consume_sync(uint8_t const * const buf, int * const pos)
     }
 }
 
-static uint8_t get_byte(uint8_t const * const buf, int * const pos)
+static bool extract_byte(
+    uint8_t const * const buf, int * const pos, uint8_t * const byte)
 {
-    // TODO: Implement!
+    uint8_t byte_buf = 0,
+        parity = 1;
+
+    // New data marker:
+
+    if(buf[*pos] != tape_symbol_new)
+    {
+        return false;
+    }
+    ++(*pos);
+
+    // Payload bits:
+
+    for(int i = 0;i < 8;++i)
+    {
+        if(buf[*pos] == tape_symbol_zero)
+        {
+            parity ^= 0;
+
+            ++(*pos);
+            continue;
+        }
+        if(buf[*pos] == tape_symbol_one)
+        {
+            byte_buf &= (1 << i);
+            parity ^= 1;
+
+            ++(*pos);
+            continue;
+        }
+        return false;
+    }
+
+    // Parity bit:
     //
-    (void)buf;
-    (void)pos;
-    return 0;
+    switch(buf[*pos])
+    {
+        case tape_symbol_zero:
+        {
+            if(parity != 0)
+            {
+                return false;
+            }
+            break;
+        }
+        case tape_symbol_one:
+        {
+            if(parity != 1)
+            {
+                return false;
+            }
+            break;
+        }
+
+        default:
+        {
+            return false; // Unexpected symbol.
+        }
+    }
+
+    *byte = byte_buf;
+    return true;
 }
 
 static bool consume_countdown(
@@ -40,7 +98,16 @@ static bool consume_countdown(
 
     while(c > lim)
     {
-        if(get_byte(buf, pos) != c)
+        uint8_t byte;
+
+        if(!extract_byte(buf, pos, &byte))
+        {
+            console_writeline(
+                "consume_countdown : Error: Failed to extract byte value!");
+            return false;
+        }
+
+        if(byte != c)
         {
             console_writeline(
                 "consume_countdown : Error: Unexpected byte value received!");
