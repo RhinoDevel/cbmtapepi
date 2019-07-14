@@ -204,6 +204,24 @@ static uint8_t* get_payload_from_transmit_data(
     return payload;
 }
 
+static bool consume_transmit_block_gap(
+    uint8_t const * const buf, int * const pos)
+{
+    if(buf[*pos] != tape_symbol_end)
+    {
+        return false;
+    }
+
+    ++(*pos); // Consumes transmit block gap start.
+
+    consume_sync(buf, pos);
+
+    return true;
+}
+
+/**
+ * - Caller takes ownership of return value.
+ */
 static uint8_t* get_data_from_transmit(
     bool const second,
     uint8_t const * const buf,
@@ -226,9 +244,13 @@ static uint8_t* get_data_from_transmit(
 
     // Transmit block gap:
 
-    // TODO: Implement!
-    //
-    return 0;
+    if(!consume_transmit_block_gap(buf, pos))
+    {
+        alloc_free(payload);
+        return 0;
+    }
+
+    return payload;
 }
 
 /**
