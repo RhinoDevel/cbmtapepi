@@ -6,6 +6,7 @@
 
 #include "../alloc/alloc.h"
 #include "../console/console.h"
+#include "../mem/mem.h"
 #include "tape_extract_buf.h"
 #include "tape_input.h"
 #include "tape_symbol.h"
@@ -22,26 +23,107 @@ static void consume_sync(uint8_t const * const buf, int * const pos)
     }
 }
 
-/**
- * - Caller takes ownership of return value.
- */
-static uint8_t* get_data_following_sync(
-    uint8_t const * const buf, int * const pos, int const * len)
+static uint8_t get_byte(uint8_t const * const buf, int * const pos)
 {
     // TODO: Implement!
     //
     (void)buf;
     (void)pos;
-    (void)len;
     return 0;
+}
+
+static bool consume_countdown(
+    bool const second, uint8_t const * const buf, int * const pos)
+{
+    uint8_t c = second ? 9 : 0x89,
+        lim = second ? 0 : 0x80;
+
+    while(c > lim)
+    {
+        if(get_byte(buf, pos) != c)
+        {
+            console_writeline(
+                "consume_countdown : Error: Unexpected byte value received!");
+            return false;
+        }
+        --c;
+    }
+    return true;
+}
+
+static uint8_t* get_data_from_transmit(
+    bool const second,
+    uint8_t const * const buf,
+    int * const pos,
+    int const * len)
+{
+    (void)second;
+    (void)len; // TODO: Remove!
+
+    consume_countdown(false, buf, pos);
+
+    // Data:
+
+    // TODO: Implement!
+
+    // Transmit block gap:
+
+    // TODO: Implement!
     //
-    // // 1st data transmit:
+    return 0;
+}
+
+/**
+ * - Consumes leading sync symbols.
+ * - Caller takes ownership of return value.
+ */
+static uint8_t* get_data_following_sync(
+    uint8_t const * const buf, int * const pos, int * const len)
+{
+    uint8_t *data_first,
+        *data_second;
+    int len_first,
+        len_second;
+
+    // Synchronization:
+
+    consume_sync(buf, pos);
+
+    // Data:
+
+    // 1st data transmit:
     //
-    // add_data_transmit(false, data, len, buf, pos);
+    data_first = get_data_from_transmit(false, buf, pos, &len_first);
+    if(data_first == 0)
+    {
+        return 0;
+    }
+
+    // 2nd data transmit:
     //
-    // // 2nd data transmit:
-    //
-    // add_data_transmit(true, data, len, buf, pos);
+    data_second = get_data_from_transmit(true, buf, pos, &len_second);
+    if(data_second == 0)
+    {
+        alloc_free(data_first);
+        return 0;
+    }
+
+    if(len_first != len_second)
+    {
+        alloc_free(data_first);
+        alloc_free(data_second);
+        return 0;
+    }
+    if(!mem_cmp_byte(data_first, data_second, len_first))
+    {
+        alloc_free(data_first);
+        alloc_free(data_second);
+        return 0;
+    }
+
+    alloc_free(data_second);
+    *len = len_first;
+    return data_first;
 }
 
 static bool extract_headerdatablock(
@@ -49,16 +131,9 @@ static bool extract_headerdatablock(
 {
     (void)input; // TODO: Remove!
 
-    uint8_t* data;
     int len;
+    uint8_t* data = get_data_following_sync(buf, pos, &len);
 
-    // Synchronization:
-
-    consume_sync(buf, pos);
-
-    // Payload:
-
-    data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
         return false;
@@ -76,16 +151,9 @@ static bool extract_contentdatablock(
 {
     (void)input; // TODO: Remove!
 
-    uint8_t* data;
     int len;
+    uint8_t* data = get_data_following_sync(buf, pos, &len);
 
-    // Synchronization:
-
-    consume_sync(buf, pos);
-
-    // Payload:
-
-    data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
         return false;
