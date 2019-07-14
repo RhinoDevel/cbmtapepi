@@ -7,6 +7,7 @@
 #include <stdbool.h>
 
 #include "tape_receive_params.h"
+#include "tape_input.h"
 
 /**
  * Requirements: - Sense line must be configured as output and set to HIGH.
@@ -15,12 +16,10 @@
  *               - Write line must be configured as input with internal pull-
  *                 down resistor usage.
  *
- *               - p->data->bytes must point to memory position with enough
- *                 space to store largest tape data (e.g. a PRG file).            
+ * - Caller takes ownership of return value.
  *
  * <=> Call tape_init() before calling this function!
  */
-bool tape_receive(
-    struct tape_receive_params const * const p, uint32_t * const mem);
+struct tape_input * tape_receive(struct tape_receive_params const * const p);
 
 #endif //MT_TAPE_RECEIVE

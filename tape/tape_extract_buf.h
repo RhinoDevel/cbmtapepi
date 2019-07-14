@@ -11,10 +11,8 @@
 /** Convert Commodore datassette/datasette symbols in given buffer into
  *  binary tape content (e.g. a PRG file).
  *
- *  - input->bytes must point to memory position with enough
- *    space to store largest tape data (e.g. a PRG file). 
+ *  - Caller takes ownership of return value.
  */
-bool tape_extract_buf(
-    uint8_t const * const buf, struct tape_input * const input);
+struct tape_input * tape_extract_buf(uint8_t const * const buf);
 
 #endif //MT_TAPE_EXTRACT_BUF

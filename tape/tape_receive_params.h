@@ -11,8 +11,6 @@ struct tape_receive_params
     uint32_t gpio_pin_nr_write;
     uint32_t gpio_pin_nr_sense;
     uint32_t gpio_pin_nr_motor;
-
-    struct tape_input* data;
 };
 
 #endif //MT_TAPE_RECEIVE_PARAMS

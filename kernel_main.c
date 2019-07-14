@@ -21,6 +21,27 @@
 
 extern uint32_t __heap; // See memmap.ld.
 
+#ifndef NDEBUG
+
+#include "tape/tape_receive_params.h"
+#include "tape/tape_receive.h"
+#include "tape/tape_input.h"
+
+static void debug_tape_receive()
+{
+    struct tape_receive_params const p = {
+        .gpio_pin_nr_write = MT_TAPE_GPIO_PIN_NR_WRITE,
+        .gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE,
+        .gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR
+    };
+    struct tape_input * input = tape_receive(&p);
+
+    alloc_free(input->bytes);
+    alloc_free(input);
+}
+
+#endif //NDEBUG
+
 /** Connect console (singleton) to wanted in-/output.
  */
 static void init_console()
@@ -61,6 +82,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // Initialize for tape transfer:
     //
     tape_init();
+
+#ifndef NDEBUG
+    console_writeline("DEBUG: Press key to start receival..");
+    console_read_char();
+    console_writeline("DEBUG: Starting receival..");
+    debug_tape_receive();
+#endif //NDEBUG
 
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
