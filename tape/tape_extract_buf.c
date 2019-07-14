@@ -370,6 +370,7 @@ static bool extract_headerdatablock(
 
 /**
  * - Caller takes ownership of filled input->bytes.
+ * - input->len must already be set. Will be checked, here.
  */
 static bool extract_contentdatablock(
     uint8_t const * const buf, int * const pos, struct tape_input * const input)
@@ -382,8 +383,17 @@ static bool extract_contentdatablock(
         return false;
     }
 
+    if(input->len != (uint16_t)len)
+    {
+        console_writeline(
+            "extract_contentdatablock: Error: Lengths mismatch!");
+
+        alloc_free(data);
+        return false;
+    }
+
     input->bytes = data;
-    input->len = (uint16_t)len;
+
     return true;
 }
 
