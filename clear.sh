@@ -20,6 +20,7 @@ rm tape/tape_extract_buf.o
 rm ui/ui_send_sample.o
 rm ui/ui_receive_test.o
 rm ui/ui_terminal_to_commodore.o
+rm ui/ui_commodore_to_terminal.o
 rm ui/ui.o
 rm alloc/alloc.o
 rm alloc/alloc_mem.o
