@@ -7,6 +7,7 @@
 #include "../alloc/alloc.h"
 #include "../console/console.h"
 #include "../mem/mem.h"
+#include "../assert.h"
 #include "tape_extract_buf.h"
 #include "tape_input.h"
 #include "tape_symbol.h"
@@ -479,11 +480,20 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
         return 0;
     }
 
+    // For compatibility with tape_fill_buf():
+    //
+    if(buf[i] == tape_symbol_motor_wait_off)
+    {
+        ++i;
+    }
+
     if(!extract_contentdatablock(buf, &i, input))
     {
         alloc_free(input);
         return 0;
     }
+
+    assert(buf[i] == tape_symbol_done);
 
     return input;
 }
