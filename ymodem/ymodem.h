@@ -11,8 +11,18 @@
 
 #include <stdbool.h>
 
+#include "ymodem_send_params.h"
+#include "ymodem_send_err.h"
+
 #include "ymodem_receive_params.h"
 #include "ymodem_receive_err.h"
+
+/**
+ * - Supports sending one file, only.
+ * - No support for CRC-16 in response to a "C" pathname ACK.
+ * - No file date or other attributes in block 0 (just file name and length).
+ */
+enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p);
 
 /**
  * - Given buffer will hold the LAST file retrieved, only (.file_len property

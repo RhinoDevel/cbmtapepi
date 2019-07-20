@@ -7,10 +7,16 @@
 #include "../armtimer/armtimer.h"
 #include "../alloc/alloc.h"
 #include "../calc/calc.h"
+//#include "../assert.h"
+#include "ymodem_send_params.h"
+#include "ymodem_send_state.h"
+#include "ymodem_send_err.h"
 #include "ymodem_receive_params.h"
 #include "ymodem_receive_state.h"
 #include "ymodem_receive_err.h"
 #include "ymodem.h"
+
+// YMODEM documentation at: http://pauillac.inria.fr/~doligez/zmodem/ymodem.txt
 
 // Control characters
 // (see: https://en.wikipedia.org/wiki/C0_and_C1_control_codes):
@@ -30,6 +36,278 @@ static uint8_t const CR = 0x0D; // Carriage return.
 static uint32_t const NAKSOH_TIMEOUT = 4000000;
 static uint32_t const WAIT_AFTER_EOT_TIMEOUT = 2000000;
 static uint32_t const WAIT_AFTER_CAN_TIMEOUT = 2000000;
+
+enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
+{
+    uint16_t const block_size = 1024;
+    enum ymodem_send_err err = ymodem_send_err_unknown;
+    enum ymodem_send_state state = ymodem_send_state_start;
+    uint8_t sb, csum, block_nr = 0;
+    uint32_t offset = 0;
+    bool send_null_file = false;
+
+    // Waiting for NAK:
+    //
+    if(p->read_byte() != NAK) // (p->read_byte() waits for being ready to read)
+    {
+        state = ymodem_send_state_error;
+        err = ymodem_send_err_nak;
+    }
+    while(true)
+    {
+        switch(state)
+        {
+            case ymodem_send_state_start:
+            {
+                if(block_size == 128)
+                {
+                    sb = SOH;
+                }
+                else
+                {
+                    //assert(block_size == 1024);
+
+                    sb = STX;
+                }
+                p->write_byte(sb);
+                csum = sb;
+                state = ymodem_send_state_block_nr;
+                break;
+            }
+            case ymodem_send_state_end:
+            {
+                //assert(send_null_file);
+
+                sb = EOT;
+                p->write_byte(sb);
+
+                // Waiting for NAK:
+                //
+                if(p->read_byte() != ACK)
+                {
+                    state = ymodem_send_state_error;
+                    err = ymodem_send_err_end;
+                    break;
+                }
+
+                // Done:
+
+                err = ymodem_send_err_none;
+                return err;
+            }
+
+            case ymodem_send_state_block_nr:
+            {
+                sb = block_nr;
+                p->write_byte(sb);
+                csum += sb;
+                state = ymodem_send_state_inverted_block_nr;
+                break;
+            }
+
+            case ymodem_send_state_inverted_block_nr:
+            {
+                sb = 0xFF - block_nr;
+                p->write_byte(sb);
+                csum += sb;
+                if(block_nr == 0)
+                {
+                    state = ymodem_send_state_meta;
+                }
+                else
+                {
+                    state = ymodem_send_state_content;
+                }
+                break;
+            }
+
+            case ymodem_send_state_meta:
+            {
+                //assert(block_nr == 0);
+
+                uint32_t i = 0; // Position in current block.
+
+                if(send_null_file)
+                {
+                    // End of (complete) transfer, signalize to receiver by
+                    // sending an empty/null file name:
+
+                    while(i < block_size)
+                    {
+                        sb = '\0';
+                        p->write_byte(sb);
+                        csum += sb;
+
+                        ++i;
+                    }
+                    state = ymodem_receive_state_checksum_meta;
+                    break;
+                }
+
+                // Send meta data of file to transfer:
+
+                // Send terminated file name:
+                //
+                while(i < sizeof p->name - 1)
+                {
+                    sb = p->name[i];
+                    p->write_byte(sb);
+                    csum += sb;
+
+                    ++i;
+                }
+                //assert(p->name[i] == '\0');
+                sb = '\0';
+                p->write_byte(sb);
+                csum += sb;
+                ++i;
+
+                // Send file length in decimal as ASCII string:
+                //
+                { // (limit scopes)
+                    char dec[10];
+                    uint32_t j = 0; // Position in array dec.
+
+                    calc_dword_to_dec(p->file_len, dec);
+
+                    while(dec[j] == 0)
+                    {
+                        ++j;
+
+                        //assert(j < sizeof dec);
+                    }
+
+                    while(j < sizeof dec)
+                    {
+                        sb = dec[j];
+                        p->write_byte(sb);
+                        csum += sb;
+
+                        ++i;
+                        ++j;
+                    }
+                }
+
+                // Terminate file length and fill unused part of block:
+                //
+                while(i < block_size)
+                {
+                    sb = '\0';
+                    p->write_byte(sb);
+                    csum += sb;
+
+                    ++i;
+                }
+
+                state = ymodem_send_state_checksum_meta;
+                break;
+            }
+
+            case ymodem_send_state_checksum_meta:
+            {
+                //assert(block_nr == 0);
+
+                sb = csum;
+                p->write_byte(sb);
+
+                if(p->read_byte() != ACK) // Receival acknowledged?
+                {
+                    state = ymodem_send_state_error;
+                    err = ymodem_send_err_checksum_meta_ack;
+                    break;
+                }
+                if(p->read_byte() != NAK) // 8-bit checksum requested?
+                {
+                    // ('C' will be send for 16-bit checksum request,
+                    // not supported, here)
+
+                    state = ymodem_send_state_error;
+                    err = ymodem_send_err_checksum_meta_nak;
+                    break;
+                }
+
+                block_nr = 1;
+                if(send_null_file)
+                {
+                    state = ymodem_send_state_end;
+                }
+                else
+                {
+                    state = ymodem_send_state_start;
+                }
+                break;
+            }
+
+            case ymodem_send_state_content:
+            {
+                //assert(block_nr > 0);
+                //assert(
+                //    (block_nr == 1 && offset == 0)
+                //    || (block_nr > 1 && offset > 0);
+                //assert(offset % block_size == 0);
+
+                uint32_t i = 0;
+
+                do
+                {
+                    if(offset < p->file_len)
+                    {
+                        sb = p->buf[offset]; // Content
+                    }
+                    else
+                    {
+                        sb = 0; // Padding
+                    }
+                    ++offset;
+
+                    p->write_byte(sb);
+                    csum += sb;
+
+                    ++i;
+                }while(i < block_size);
+
+                state = ymodem_send_state_checksum_content;
+                break;
+            }
+
+            case ymodem_send_state_checksum_content:
+            {
+                //assert(block_nr > 0);
+                //assert(!send_null_file);
+
+                sb = csum;
+                p->write_byte(sb);
+
+                if(p->read_byte() != ACK) // Receival acknowledged?
+                {
+                    state = ymodem_send_state_error;
+                    err = ymodem_send_err_checksum_content_ack;
+                    break;
+                }
+
+                ++block_nr;
+                state = ymodem_send_state_start;
+                break;
+            }
+
+            default: // Should not happen, but would fall through..
+                //assert(false);
+            case ymodem_send_state_error:
+            {
+                //p->flush(); // Necessary?
+
+                while(p->is_ready_to_read())
+                {
+                    p->read_byte();
+                }
+
+                return err;
+            }
+        }
+    }
+
+    //assert(false);
+}
 
 enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
 {
@@ -213,7 +491,7 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
 
                         // Get file's byte count:
                         //
-                        while(j < sizeof dec - 1)
+                        while(j < sizeof dec - 1) // Is this correct?
                         {
                             dec[j] = meta_buf[i];
 
@@ -258,8 +536,12 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
 
                 block_nr = 1;
                 state = ymodem_receive_state_start_or_end;
-                p->write_byte(ACK);
+                p->write_byte(ACK); // Acknowledge receival of block 0.
+
                 p->write_byte(NAK);
+                //
+                // Requests 8-bit checksum
+                // (send 'C' for 16-bit checksum - not supported, here).
 
                 if(null_file_received)
                 {
