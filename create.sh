@@ -119,6 +119,7 @@ $MT_CC tape/tape_receive.c -o tape/tape_receive.o
 $MT_CC tape/tape_extract_buf.c -o tape/tape_extract_buf.o
 $MT_CC ui/ui_send_sample.c -o ui/ui_send_sample.o
 $MT_CC ui/ui_receive_test.c -o ui/ui_receive_test.o
+$MT_CC ui/ui_send_test.c -o ui/ui_send_test.o
 $MT_CC ui/ui_terminal_to_commodore.c -o ui/ui_terminal_to_commodore.o
 $MT_CC ui/ui_commodore_to_terminal.c -o ui/ui_commodore_to_terminal.o
 $MT_CC ui/ui.c -o ui/ui.o
@@ -156,6 +157,7 @@ arm-none-eabi-ld \
     tape/tape_extract_buf.o \
     ui/ui_send_sample.o \
     ui/ui_receive_test.o \
+    ui/ui_send_test.o \
     ui/ui_terminal_to_commodore.o \
     ui/ui_commodore_to_terminal.o \
     ui/ui.o \

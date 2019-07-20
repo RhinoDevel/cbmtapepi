@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "ui_send_sample.h"
 #include "ui_receive_test.h"
+#include "ui_send_test.h"
 #include "ui_terminal_to_commodore.h"
 #include "ui_commodore_to_terminal.h"
 #include "../console/console.h"
@@ -24,8 +25,9 @@ void ui_enter()
 
         console_writeline("f - Transfer from terminal to Commodore.");
         console_writeline("t - Transfer from Commodore to terminal.");
-        console_writeline("s - Send a sample.");
-        console_writeline("e - Receive test.");
+        console_writeline("s - Send a sample (to Commodore).");
+        console_writeline("e - Receive test (from terminal, via XMODEM).");
+        console_writeline("n - Send test (to terminal, via YMODEM).");
         console_writeline("r - Reset!");
         console_write("? ");
         console_read(c, 2);
@@ -44,6 +46,9 @@ void ui_enter()
                 break;
             case 'e':
                 ui_receive_test();
+                break;
+            case 'n':
+                ui_send_test();
                 break;
             case 'r':
                 reset();
