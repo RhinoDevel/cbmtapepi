@@ -19,10 +19,12 @@
 
 /**
  * - Supports sending one file, only.
- * - No support for CRC-16 in response to a "C" pathname ACK.
  * - No file date or other attributes in block 0 (just file name and length).
  */
-enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p);
+enum ymodem_send_err ymodem_send(
+    struct ymodem_send_params * const p,
+    uint8_t * const debug_buf,
+    uint32_t * const debug_buf_len);
 
 /**
  * - Given buffer will hold the LAST file retrieved, only (.file_len property

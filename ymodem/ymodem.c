@@ -16,6 +16,11 @@
 #include "ymodem_receive_err.h"
 #include "ymodem.h"
 
+#ifndef NDEBUG
+    #include "../busywait/busywait.h"
+    #include "../baregpio/baregpio.h"
+#endif //NDEBUG
+
 // YMODEM documentation at: http://pauillac.inria.fr/~doligez/zmodem/ymodem.txt
 
 // Control characters
@@ -27,6 +32,7 @@ static uint8_t const ACK = 0x06; // Acknowledge
 static uint8_t const NAK = 0x15; // Negative acknowledge.
 static uint8_t const EOT = 0x04; // End of transmission.
 static uint8_t const CAN = 0x18; // Cancel
+static uint8_t const CRC = 0x43; // 'C'
 
 static uint8_t const LF = 0x0A; // Line feed.
 static uint8_t const CR = 0x0D; // Carriage return.
@@ -37,21 +43,74 @@ static uint32_t const NAKSOH_TIMEOUT = 4000000;
 static uint32_t const WAIT_AFTER_EOT_TIMEOUT = 2000000;
 static uint32_t const WAIT_AFTER_CAN_TIMEOUT = 2000000;
 
-enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
+static uint16_t get_crc(uint8_t const byte, uint16_t const crc)
 {
-    uint16_t const block_size = 1024;
-    enum ymodem_send_err err = ymodem_send_err_unknown;
-    enum ymodem_send_state state = ymodem_send_state_start;
-    uint8_t sb, csum, block_nr = 0;
-    uint32_t offset = 0;
-    bool send_null_file = false;
+    uint16_t ret_val = crc ^ (uint16_t)byte << 8;
 
-    // Waiting for NAK:
-    //
-    if(p->read_byte() != NAK) // (p->read_byte() waits for being ready to read)
+    for (int i = 0;i < 8;++i)
     {
-        state = ymodem_send_state_error;
-        err = ymodem_send_err_nak;
+        if(ret_val & 0x8000)
+        {
+            ret_val = ret_val << 1 ^ 0x1021;
+        }
+        else
+        {
+            ret_val = ret_val << 1;
+        }
+    }
+    return ret_val;
+}
+
+enum ymodem_send_err ymodem_send(
+    struct ymodem_send_params * const p,
+    uint8_t * const debug_buf,
+    uint32_t * const debug_buf_len)
+{
+    uint16_t const block_size = 128;
+    enum ymodem_send_err err = ymodem_send_err_unknown;
+    enum ymodem_send_state state = ymodem_send_state_error;
+    uint8_t sb, csum, block_nr = 0;
+    uint16_t crc;
+    uint32_t offset = 0;
+    bool send_null_file = false,
+        use_crc;
+
+    uint8_t * debug_buf_to_use = debug_buf;
+
+// #ifndef NDEBUG
+//     busywait_seconds(1);
+//     while(p->is_ready_to_read())
+//     {
+//         p->read_byte();
+//     }
+//     busywait_seconds(1);
+// #endif //NDEBUG
+
+    // Waiting for NAK or CRC:
+    //
+    {
+        uint8_t const rb = p->read_byte();
+        //
+        // (p->read_byte() waits for being ready to read)
+
+        if(rb == NAK)
+        {
+            state = ymodem_send_state_start;
+            use_crc = false;
+        }
+        else
+        {
+            if(rb == CRC)
+            {
+                state = ymodem_send_state_start;
+                use_crc = true;
+            }
+            else
+            {
+                state = ymodem_send_state_error;
+                err = ymodem_send_err_nak;
+            }
+        }
     }
     while(true)
     {
@@ -70,8 +129,10 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                     sb = STX;
                 }
                 p->write_byte(sb);
-                csum = sb;
+                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 state = ymodem_send_state_block_nr;
+                csum = 0;
+                crc = 0;
                 break;
             }
             case ymodem_send_state_end:
@@ -80,8 +141,9 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
 
                 sb = EOT;
                 p->write_byte(sb);
+                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
 
-                // Waiting for NAK:
+                // Waiting for ACK:
                 //
                 if(p->read_byte() != ACK)
                 {
@@ -100,7 +162,7 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
             {
                 sb = block_nr;
                 p->write_byte(sb);
-                csum += sb;
+                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 state = ymodem_send_state_inverted_block_nr;
                 break;
             }
@@ -109,7 +171,7 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
             {
                 sb = 0xFF - block_nr;
                 p->write_byte(sb);
-                csum += sb;
+                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 if(block_nr == 0)
                 {
                     state = ymodem_send_state_meta;
@@ -136,7 +198,9 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                     {
                         sb = '\0';
                         p->write_byte(sb);
+                        debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                         csum += sb;
+                        crc = get_crc(sb, crc);
 
                         ++i;
                     }
@@ -152,14 +216,18 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 {
                     sb = p->name[i];
                     p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     csum += sb;
+                    crc = get_crc(sb, crc);
 
                     ++i;
                 }
                 //assert(p->name[i] == '\0');
                 sb = '\0';
                 p->write_byte(sb);
+                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 csum += sb;
+                crc = get_crc(sb, crc);
                 ++i;
 
                 // Send file length in decimal as ASCII string:
@@ -170,7 +238,7 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
 
                     calc_dword_to_dec(p->file_len, dec);
 
-                    while(dec[j] == 0)
+                    while(dec[j] == '0')
                     {
                         ++j;
 
@@ -181,7 +249,9 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                     {
                         sb = dec[j];
                         p->write_byte(sb);
+                        debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                         csum += sb;
+                        crc = get_crc(sb, crc);
 
                         ++i;
                         ++j;
@@ -194,7 +264,9 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 {
                     sb = '\0';
                     p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     csum += sb;
+                    crc = get_crc(sb, crc);
 
                     ++i;
                 }
@@ -207,8 +279,25 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
             {
                 //assert(block_nr == 0);
 
-                sb = csum;
-                p->write_byte(sb);
+                int rb;
+
+                // crc = get_crc(0, crc);
+                // crc = get_crc(0, crc);
+                if(use_crc)
+                {
+                    sb = (uint8_t)(crc >> 8);
+                    p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+                    sb = (uint8_t)(crc & 0x00FF);
+                    p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+                }
+                else
+                {
+                    sb = csum;
+                    p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+                }
 
                 if(p->read_byte() != ACK) // Receival acknowledged?
                 {
@@ -216,14 +305,30 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                     err = ymodem_send_err_checksum_meta_ack;
                     break;
                 }
-                if(p->read_byte() != NAK) // 8-bit checksum requested?
-                {
-                    // ('C' will be send for 16-bit checksum request,
-                    // not supported, here)
 
-                    state = ymodem_send_state_error;
-                    err = ymodem_send_err_checksum_meta_nak;
-                    break;
+                baregpio_set_output(16, false); // Internal LED (green one).
+
+                rb = p->read_byte();
+
+                // Not sure, if YMODEM supports CRC on/off toggling during
+                // transfer..
+                //
+                if(rb == NAK)
+                {
+                    use_crc = false;
+                }
+                else
+                {
+                    if(rb == CRC)
+                    {
+                        use_crc = true;
+                    }
+                    else
+                    {
+                        state = ymodem_send_state_error;
+                        err = ymodem_send_err_checksum_meta_nak;
+                        break;
+                    }
                 }
 
                 block_nr = 1;
@@ -261,7 +366,9 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                     ++offset;
 
                     p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     csum += sb;
+                    crc = get_crc(sb, crc);
 
                     ++i;
                 }while(i < block_size);
@@ -275,8 +382,23 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 //assert(block_nr > 0);
                 //assert(!send_null_file);
 
-                sb = csum;
-                p->write_byte(sb);
+                // crc = get_crc(0, crc);
+                // crc = get_crc(0, crc);
+                if(use_crc)
+                {
+                    sb = (uint8_t)(crc >> 8);
+                    p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+                    sb = (uint8_t)(crc & 0x00FF);
+                    p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+                }
+                else
+                {
+                    sb = csum;
+                    p->write_byte(sb);
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+                }
 
                 if(p->read_byte() != ACK) // Receival acknowledged?
                 {
@@ -352,6 +474,9 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
             rx += NAKSOH_TIMEOUT;
         }
     }while(!p->is_ready_to_read());
+    //
+    // Requests 8-bit checksum
+    // (send 'C' for 16-bit checksum - not supported, here).
 
     while(true)
     {
