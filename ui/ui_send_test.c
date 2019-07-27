@@ -16,7 +16,7 @@
 
 void ui_send_test()
 {
-    static uint32_t const len = 26;
+    static uint32_t const len = 26 + 1;
     uint32_t i;
 
     uint8_t * const debug_buf = alloc_alloc(1024 * 1);
@@ -32,11 +32,11 @@ void ui_send_test()
     };
     enum ymodem_send_err err;
 
-    // Name == "0123456789\0\0\0\0\0\0" (one more '\0' implied).
+    // Name == "123456789\0\0\0\0\0\0\0" (one more '\0' implied).
     //
-    for(i = 0;i < 10;++i)
+    for(i = 0;i < 9;++i)
     {
-        p.name[i] = '0' + i;
+        p.name[i] = '0' + i + 1;
     }
     while(i < sizeof p.name)
     {
@@ -44,12 +44,13 @@ void ui_send_test()
         ++i;
     }
 
-    // Buffer content == 'abcdefghijklmnopqrstuvwxyz' (no \0 implied).
+    // Buffer content == 'abcdefghijklmnopqrstuvwxyz\n' (no \0 implied).
     //
-    for(i = 0;i < p.file_len;++i)
+    for(i = 0;i < p.file_len - 1;++i)
     {
-        p.buf[i] = 'a' + i;
+        p.buf[i] = 'A' + i;
     }
+    p.buf[i] = 0x0A; // LF
 
     console_writeline("Please trigger receival, now (via YMODEM).");
     err = ymodem_send(&p, debug_buf, &debug_buf_len);
