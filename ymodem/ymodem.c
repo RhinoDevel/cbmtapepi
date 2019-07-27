@@ -36,6 +36,7 @@ static uint8_t const CRC = 0x43; // 'C'
 
 static uint8_t const LF = 0x0A; // Line feed.
 static uint8_t const CR = 0x0D; // Carriage return.
+static uint8_t const SUB = 0x1A; // CPMEOF
 
 // Hard-coded for timer being set to 1 million ticks per second (see below):
 //
@@ -76,6 +77,10 @@ enum ymodem_send_err ymodem_send(
         use_crc;
 
     uint8_t * debug_buf_to_use = debug_buf;
+
+#ifndef NDEBUG
+    baregpio_set_output(16, true); // Internal LED (green one) off.
+#endif //NDEBUG
 
 // #ifndef NDEBUG
 //     busywait_seconds(1);
@@ -138,7 +143,6 @@ enum ymodem_send_err ymodem_send(
             case ymodem_send_state_end:
             {
                 //assert(send_null_file);
-
                 sb = EOT;
                 p->write_byte(sb);
                 debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
@@ -212,7 +216,7 @@ enum ymodem_send_err ymodem_send(
 
                 // Send terminated file name:
                 //
-                while(i < sizeof p->name - 1)
+                while((i < sizeof p->name - 1) && (p->name[i] != '\0'))
                 {
                     sb = p->name[i];
                     p->write_byte(sb);
@@ -252,8 +256,8 @@ enum ymodem_send_err ymodem_send(
                         debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                         csum += sb;
                         crc = get_crc(sb, crc);
-
                         ++i;
+
                         ++j;
                     }
                 }
@@ -281,8 +285,6 @@ enum ymodem_send_err ymodem_send(
 
                 int rb;
 
-                // crc = get_crc(0, crc);
-                // crc = get_crc(0, crc);
                 if(use_crc)
                 {
                     sb = (uint8_t)(crc >> 8);
@@ -306,12 +308,10 @@ enum ymodem_send_err ymodem_send(
                     break;
                 }
 
-                baregpio_set_output(16, false); // Internal LED (green one).
-
                 rb = p->read_byte();
 
                 // Not sure, if YMODEM supports CRC on/off toggling during
-                // transfer..
+                // transfer, but should do no harm..
                 //
                 if(rb == NAK)
                 {
@@ -321,6 +321,9 @@ enum ymodem_send_err ymodem_send(
                 {
                     if(rb == CRC)
                     {
+#ifndef NDEBUG
+                        baregpio_set_output(16, false); // Internal LED (green one) on.
+#endif //NDEBUG
                         use_crc = true;
                     }
                     else
@@ -334,10 +337,14 @@ enum ymodem_send_err ymodem_send(
                 block_nr = 1;
                 if(send_null_file)
                 {
+                    // Was the last block of this single file.
+
                     state = ymodem_send_state_end;
                 }
                 else
                 {
+                    // Send next block of this file.
+
                     state = ymodem_send_state_start;
                 }
                 break;
@@ -361,7 +368,11 @@ enum ymodem_send_err ymodem_send(
                     }
                     else
                     {
-                        sb = 0; // Padding
+                        send_null_file = true;
+                        //
+                        // Single file was completely transmitted.
+
+                        sb = SUB; // Padding
                     }
                     ++offset;
 
