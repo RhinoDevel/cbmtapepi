@@ -54,9 +54,15 @@ void ui_send_test()
 
     console_writeline("Please trigger receival, now (via YMODEM).");
     err = ymodem_send(&p, debug_buf, &debug_buf_len);
-    console_write("ymodem_send() error code was ");
-    console_write_dword_dec((uint32_t)err);
-    console_writeline(" .");
+
+    {
+        char c[2];
+
+        do
+        {
+            console_read(c, 2);
+        }while(c[0] != 'X');
+    }
 
     console_writeline("***");
     for(i = 0;i < debug_buf_len; ++i)
@@ -69,6 +75,11 @@ void ui_send_test()
     }
     console_writeline("***");
     console_write_dword_dec(debug_buf_len);
+    console_writeline("***");
+
+    console_write("ymodem_send() error code was ");
+    console_write_dword_dec((uint32_t)err);
+    console_writeline(".");
     console_writeline("***");
 
     alloc_free(debug_buf);
