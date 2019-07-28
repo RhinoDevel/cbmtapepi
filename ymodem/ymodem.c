@@ -82,15 +82,6 @@ enum ymodem_send_err ymodem_send(
     baregpio_set_output(16, true); // Internal LED (green one) off.
 #endif //NDEBUG
 
-// #ifndef NDEBUG
-//     busywait_seconds(1);
-//     while(p->is_ready_to_read())
-//     {
-//         p->read_byte();
-//     }
-//     busywait_seconds(1);
-// #endif //NDEBUG
-
     // Waiting for NAK or CRC:
     //
     {
@@ -121,8 +112,10 @@ enum ymodem_send_err ymodem_send(
     {
         switch(state)
         {
-            case ymodem_send_state_start:
+            case ymodem_send_state_start: // Start another block/sector:
             {
+                // Send block size as header of current block:
+                //
                 if(block_size == 128)
                 {
                     sb = SOH;
@@ -136,8 +129,12 @@ enum ymodem_send_err ymodem_send(
                 p->write_byte(sb);
                 debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 state = ymodem_send_state_block_nr;
+
+                // Reset checksum/CRC, do not add SOH/STX to checksum/CRC:
+                //
                 csum = 0;
                 crc = 0;
+
                 break;
             }
             case ymodem_send_state_end:
@@ -156,26 +153,31 @@ enum ymodem_send_err ymodem_send(
                     break;
                 }
 
-                // Done:
+                // Done (triggers sending of empty file):
 
-                err = ymodem_send_err_none;
-                return err;
+                block_nr = 0;
+                state = ymodem_send_state_start;
+                break;
             }
 
-            case ymodem_send_state_block_nr:
+            case ymodem_send_state_block_nr: // Send block number:
             {
                 sb = block_nr;
                 p->write_byte(sb);
                 debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 state = ymodem_send_state_inverted_block_nr;
+
+                // (do not add block nr. to checksum/CRC)
+
                 break;
             }
 
-            case ymodem_send_state_inverted_block_nr:
+            case ymodem_send_state_inverted_block_nr: // Send inverted block nr:
             {
                 sb = 0xFF - block_nr;
                 p->write_byte(sb);
                 debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
+
                 if(block_nr == 0)
                 {
                     state = ymodem_send_state_meta;
@@ -184,10 +186,13 @@ enum ymodem_send_err ymodem_send(
                 {
                     state = ymodem_send_state_content;
                 }
+
+                // (do not add inverted block nr. to checksum/CRC)
+
                 break;
             }
 
-            case ymodem_send_state_meta:
+            case ymodem_send_state_meta: // Send meta data:
             {
                 //assert(block_nr == 0);
 
@@ -208,7 +213,7 @@ enum ymodem_send_err ymodem_send(
 
                         ++i;
                     }
-                    state = ymodem_receive_state_checksum_meta;
+                    state = ymodem_send_state_checksum_meta;
                     break;
                 }
 
@@ -279,7 +284,7 @@ enum ymodem_send_err ymodem_send(
                 break;
             }
 
-            case ymodem_send_state_checksum_meta:
+            case ymodem_send_state_checksum_meta: // Send meta data CRC/checks.:
             {
                 //assert(block_nr == 0);
 
@@ -308,6 +313,16 @@ enum ymodem_send_err ymodem_send(
                     break;
                 }
 
+                if(send_null_file) // Done:
+                {
+#ifndef NDEBUG
+                    baregpio_set_output(16, false); // Internal LED (green one) on.
+#endif //NDEBUG
+
+                    err = ymodem_send_err_none;
+                    return err;
+                }
+
                 rb = p->read_byte();
 
                 // Not sure, if YMODEM supports CRC on/off toggling during
@@ -321,9 +336,6 @@ enum ymodem_send_err ymodem_send(
                 {
                     if(rb == CRC)
                     {
-#ifndef NDEBUG
-                        baregpio_set_output(16, false); // Internal LED (green one) on.
-#endif //NDEBUG
                         use_crc = true;
                     }
                     else
@@ -334,19 +346,10 @@ enum ymodem_send_err ymodem_send(
                     }
                 }
 
+                // Send next block/sector (first content block) of this file:
+
                 block_nr = 1;
-                if(send_null_file)
-                {
-                    // Was the last block of this single file.
-
-                    state = ymodem_send_state_end;
-                }
-                else
-                {
-                    // Send next block of this file.
-
-                    state = ymodem_send_state_start;
-                }
+                state = ymodem_send_state_start;
                 break;
             }
 
@@ -419,7 +422,15 @@ enum ymodem_send_err ymodem_send(
                 }
 
                 ++block_nr;
-                state = ymodem_send_state_start;
+
+                if(send_null_file)
+                {
+                    state = ymodem_send_state_end;
+                }
+                else
+                {
+                    state = ymodem_send_state_start;
+                }
                 break;
             }
 
