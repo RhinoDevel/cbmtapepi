@@ -139,18 +139,43 @@ enum ymodem_send_err ymodem_send(
             }
             case ymodem_send_state_end:
             {
+                uint8_t rb;
+
                 //assert(send_null_file);
                 sb = EOT;
                 p->write_byte(sb);
                 debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
 
                 // Waiting for ACK:
-                //
-                if(p->read_byte() != ACK)
+
+                rb = p->read_byte();
+                if(rb != ACK)
                 {
                     state = ymodem_send_state_error;
-                    err = ymodem_send_err_end;
+                    err = ymodem_send_err_end_ack;
                     break;
+                }
+
+                // Not sure, if YMODEM supports CRC on/off toggling during
+                // transfer, but should do no harm..
+                //
+                rb = p->read_byte();
+                if(rb == NAK)
+                {
+                    use_crc = false;
+                }
+                else
+                {
+                    if(rb == CRC)
+                    {
+                        use_crc = true;
+                    }
+                    else
+                    {
+                        state = ymodem_send_state_error;
+                        err = ymodem_send_err_end_nak;
+                        break;
+                    }
                 }
 
                 // Done (triggers sending of empty file):
@@ -306,8 +331,16 @@ enum ymodem_send_err ymodem_send(
                     debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 }
 
-                if(p->read_byte() != ACK) // Receival acknowledged?
+                rb = p->read_byte();
+                if(rb != ACK) // Receival acknowledged?
                 {
+#ifndef NDEBUG
+                    baregpio_set_output(16, false); // Internal LED (green one) on.
+
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = 0xFF;
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = rb;
+                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = 0xFF;
+#endif //NDEBUG
                     state = ymodem_send_state_error;
                     err = ymodem_send_err_checksum_meta_ack;
                     break;
@@ -315,10 +348,6 @@ enum ymodem_send_err ymodem_send(
 
                 if(send_null_file) // Done:
                 {
-#ifndef NDEBUG
-                    baregpio_set_output(16, false); // Internal LED (green one) on.
-#endif //NDEBUG
-
                     err = ymodem_send_err_none;
                     return err;
                 }
@@ -396,8 +425,6 @@ enum ymodem_send_err ymodem_send(
                 //assert(block_nr > 0);
                 //assert(!send_null_file);
 
-                // crc = get_crc(0, crc);
-                // crc = get_crc(0, crc);
                 if(use_crc)
                 {
                     sb = (uint8_t)(crc >> 8);
