@@ -16,11 +16,6 @@
 #include "ymodem_receive_err.h"
 #include "ymodem.h"
 
-#ifndef NDEBUG
-    #include "../busywait/busywait.h"
-    #include "../baregpio/baregpio.h"
-#endif //NDEBUG
-
 // YMODEM documentation at: http://pauillac.inria.fr/~doligez/zmodem/ymodem.txt
 
 // Control characters
@@ -62,10 +57,7 @@ static uint16_t get_crc(uint8_t const byte, uint16_t const crc)
     return ret_val;
 }
 
-enum ymodem_send_err ymodem_send(
-    struct ymodem_send_params * const p,
-    uint8_t * const debug_buf,
-    uint32_t * const debug_buf_len)
+enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
 {
     uint16_t const block_size = 128;
     enum ymodem_send_err err = ymodem_send_err_unknown;
@@ -75,12 +67,6 @@ enum ymodem_send_err ymodem_send(
     uint32_t offset = 0;
     bool send_null_file = false,
         use_crc;
-
-    uint8_t * debug_buf_to_use = debug_buf;
-
-#ifndef NDEBUG
-    baregpio_set_output(16, true); // Internal LED (green one) off.
-#endif //NDEBUG
 
     // Waiting for NAK or CRC:
     //
@@ -127,7 +113,6 @@ enum ymodem_send_err ymodem_send(
                     sb = STX;
                 }
                 p->write_byte(sb);
-                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 state = ymodem_send_state_block_nr;
 
                 // Reset checksum/CRC, do not add SOH/STX to checksum/CRC:
@@ -144,7 +129,6 @@ enum ymodem_send_err ymodem_send(
                 //assert(send_null_file);
                 sb = EOT;
                 p->write_byte(sb);
-                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
 
                 // Waiting for ACK:
 
@@ -189,7 +173,6 @@ enum ymodem_send_err ymodem_send(
             {
                 sb = block_nr;
                 p->write_byte(sb);
-                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 state = ymodem_send_state_inverted_block_nr;
 
                 // (do not add block nr. to checksum/CRC)
@@ -201,7 +184,6 @@ enum ymodem_send_err ymodem_send(
             {
                 sb = 0xFF - block_nr;
                 p->write_byte(sb);
-                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
 
                 if(block_nr == 0)
                 {
@@ -232,7 +214,6 @@ enum ymodem_send_err ymodem_send(
                     {
                         sb = '\0';
                         p->write_byte(sb);
-                        debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                         csum += sb;
                         crc = get_crc(sb, crc);
 
@@ -250,7 +231,6 @@ enum ymodem_send_err ymodem_send(
                 {
                     sb = p->name[i];
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     csum += sb;
                     crc = get_crc(sb, crc);
 
@@ -259,7 +239,6 @@ enum ymodem_send_err ymodem_send(
                 //assert(p->name[i] == '\0');
                 sb = '\0';
                 p->write_byte(sb);
-                debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 csum += sb;
                 crc = get_crc(sb, crc);
                 ++i;
@@ -283,7 +262,6 @@ enum ymodem_send_err ymodem_send(
                     {
                         sb = dec[j];
                         p->write_byte(sb);
-                        debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                         csum += sb;
                         crc = get_crc(sb, crc);
                         ++i;
@@ -298,7 +276,6 @@ enum ymodem_send_err ymodem_send(
                 {
                     sb = '\0';
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     csum += sb;
                     crc = get_crc(sb, crc);
 
@@ -319,28 +296,18 @@ enum ymodem_send_err ymodem_send(
                 {
                     sb = (uint8_t)(crc >> 8);
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     sb = (uint8_t)(crc & 0x00FF);
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 }
                 else
                 {
                     sb = csum;
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 }
 
                 rb = p->read_byte();
                 if(rb != ACK) // Receival acknowledged?
                 {
-#ifndef NDEBUG
-                    baregpio_set_output(16, false); // Internal LED (green one) on.
-
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = 0xFF;
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = rb;
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = 0xFF;
-#endif //NDEBUG
                     state = ymodem_send_state_error;
                     err = ymodem_send_err_checksum_meta_ack;
                     break;
@@ -409,7 +376,6 @@ enum ymodem_send_err ymodem_send(
                     ++offset;
 
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     csum += sb;
                     crc = get_crc(sb, crc);
 
@@ -429,16 +395,13 @@ enum ymodem_send_err ymodem_send(
                 {
                     sb = (uint8_t)(crc >> 8);
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                     sb = (uint8_t)(crc & 0x00FF);
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 }
                 else
                 {
                     sb = csum;
                     p->write_byte(sb);
-                    debug_buf_to_use[(++(*debug_buf_len)) - 1] = sb;
                 }
 
                 if(p->read_byte() != ACK) // Receival acknowledged?

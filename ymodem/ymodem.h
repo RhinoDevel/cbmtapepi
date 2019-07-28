@@ -21,10 +21,7 @@
  * - Supports sending one file, only.
  * - No file date or other attributes in block 0 (just file name and length).
  */
-enum ymodem_send_err ymodem_send(
-    struct ymodem_send_params * const p,
-    uint8_t * const debug_buf,
-    uint32_t * const debug_buf_len);
+enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p);
 
 /**
  * - Given buffer will hold the LAST file retrieved, only (.file_len property

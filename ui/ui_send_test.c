@@ -18,10 +18,6 @@ void ui_send_test()
 {
     static uint32_t const len = 26 + 1;
     uint32_t i;
-
-    uint8_t * const debug_buf = alloc_alloc(1024 * 1);
-    uint32_t debug_buf_len = 0;
-
     struct ymodem_send_params p = {
         .write_byte = miniuart_write_byte,
         .read_byte = miniuart_read_byte,
@@ -53,36 +49,11 @@ void ui_send_test()
     p.buf[i] = 0x0A; // LF
 
     console_writeline("Please trigger receival, now (via YMODEM).");
-    err = ymodem_send(&p, debug_buf, &debug_buf_len);
-
-    {
-        char c[2];
-
-        do
-        {
-            console_read(c, 2);
-        }while(c[0] != 'X');
-    }
-
-    console_writeline("***");
-    for(i = 0;i < debug_buf_len; ++i)
-    {
-        console_write_byte(debug_buf[i]);
-        if(((i + 1) % 8) == 0)
-        {
-            console_writeline("");
-        }
-    }
-    console_writeline("***");
-    console_write_dword_dec(debug_buf_len);
-    console_writeline("***");
+    err = ymodem_send(&p);
 
     console_write("ymodem_send() error code was ");
     console_write_dword_dec((uint32_t)err);
     console_writeline(".");
-    console_writeline("***");
-
-    alloc_free(debug_buf);
 
     alloc_free(p.buf);
 }
