@@ -13,6 +13,10 @@
 #include "../tape/tape_receive.h"
 #include "../tape/tape_input.h"
 #include "../tape/tape_receive_params.h"
+#include "../ymodem/ymodem_send_params.h"
+#include "../ymodem/ymodem_send_err.h"
+#include "../ymodem/ymodem.h"
+#include "../miniuart/miniuart.h"
 
 static void hint()
 {
@@ -73,41 +77,53 @@ static struct tape_input * receive_from_commodore(bool const interactive)
 void ui_commodore_to_terminal(bool const interactive)
 {
     struct tape_input * input = receive_from_commodore(interactive);
+    struct ymodem_send_params p = {
+        .write_byte = miniuart_write_byte,
+        .read_byte = miniuart_read_byte,
+        .is_ready_to_read = miniuart_is_ready_to_read,
+        //.buf // See below.
+        .file_len = input->len + 2
+        //.name // See below.
+    };
+    uint32_t i = 0;
+    enum ymodem_send_err err;
 
-    // TODO: Implement forwarding via YMODEM (1/2):
+    // Address:
     //
-    // struct ymodem_send_params p;
-    // enum ymodem_send_err e;
+    p.buf = alloc_alloc(p.file_len);
+    p.buf[i] = (uint8_t)(input->addr & 0x00FF); // Low byte.
+    ++i;
+    p.buf[i] = (uint8_t)(input->addr >> 8); // High byte.
+    ++i;
 
-    // TODO: Implement:
+    // Actual binary data:
     //
-    //receive_from_commodore(..., interactive);
+    while(i < p.file_len)
+    {
+        p.buf[i] = input->bytes[i - 2];
+        ++i;
+    }
 
-    // TODO: Implement forwarding via YMODEM (2/2):
+    // Name:
     //
-    // // TODO: Prepare YMODEM send parameters.
-    //
-    // console_writeline("Please prepare for file retrieval, now (via YMODEM).");
-    //
-    // e = ymodem_send(&p);
-    // if(e != ymodem_send_err_none)
-    // {
-    //     console_write("Failed to send file (error ");
-    //     console_write_dword_dec((uint32_t)e);
-    //     console_writeline(")!");
-    //
-    //     // TODO: Deallocate stuff!
-    //     return;
-    // }
-    //
-    // console_write("Send file \"");
-    // console_write(p.name);
-    // console_write("\" with a length of ");
-    // console_write_dword_dec(p.file_len);
-    // console_writeline(" bytes.");
-    //
-    // // TODO: Deallocate stuff!
+    for(i = 0;i < sizeof p.name - 1 && i < sizeof input->name;++i)
+    {
+        p.name[i] = input->name[i]; // TODO: PETSCII to ASCII conversion!
+    }
+    while(i < sizeof p.name)
+    {
+        p.name[i] = '\0';
+        ++i;
+    }
 
+    console_writeline("Please trigger receival, now (via YMODEM).");
+    err = ymodem_send(&p);
+
+    console_write("YMODEM send error code was ");
+    console_write_dword_dec((uint32_t)err);
+    console_writeline(".");
+
+    alloc_free(p.buf);
     alloc_free(input->bytes);
     alloc_free(input);
 }
