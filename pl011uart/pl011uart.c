@@ -93,7 +93,7 @@ void pl011uart_init()
 {
     mem_write(PL011_CR, 0); // Disables everything (UARTEN = bit 0, page 187).
 
-    //busywait_clockcycles(150); // Maybe not necessary.
+    //armtimer_busywait_microseconds(1); // Maybe not necessary.
 
     // Set GPIO pin 14 and 15 to alternate function 0 (page 92 and page 102),
     // which is using UART0:
