@@ -46,7 +46,7 @@
 #include "baregpio.h"
 #include "../peribase.h"
 #include "../mem/mem.h"
-#include "../busywait/busywait.h"
+#include "../armtimer/armtimer.h"
 
 #define GPIO_OFFSET 0x00200000
 
@@ -109,10 +109,10 @@ void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const pud)
     // Set pull-up/-down mode:
     //
     mem_write(gppud, pud);
-    busywait_clockcycles(150);
+    armtimer_busywait_microseconds(1);
 
     mem_write(gppudclk, get_pin_mask(pin_nr));
-    busywait_clockcycles(150);
+    armtimer_busywait_microseconds(1);
 
     // Maybe not necessary:
     //
