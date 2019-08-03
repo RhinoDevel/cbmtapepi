@@ -8,6 +8,11 @@
 
 uint32_t armtimer_get_tick();
 
+/**
+ * - Uses (maybe already running) 1 MHz counter.
+ */
+void armtimer_busywait_microseconds(uint32_t const microseconds);
+
 /** Start ARM timer (free running counter) with 1 MHz frequency.
  *
  *  - Will NOT restart, if already running(!).

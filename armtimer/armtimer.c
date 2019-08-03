@@ -64,3 +64,16 @@ void armtimer_busywait(uint32_t const start_val, uint32_t const divider)
     }
     //mem_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
 }
+
+void armtimer_busywait_microseconds(uint32_t const microseconds)
+{
+    uint32_t rx;
+
+    armtimer_start_one_mhz(); // Starts counter, if not already running.
+
+    rx = armtimer_get_tick();
+    while(armtimer_get_tick() - rx < microseconds)
+    {
+        // (do nothing)
+    }
+}
