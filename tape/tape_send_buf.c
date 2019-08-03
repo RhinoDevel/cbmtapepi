@@ -6,7 +6,7 @@
 
 #include "tape_send_buf.h"
 #include "tape_symbol.h"
-#include "../busywait/busywait.h"
+#include "../armtimer/armtimer.h"
 #include "../baregpio/baregpio.h"
 #include "../console/console.h"
 
@@ -37,9 +37,9 @@ static uint32_t const micro_long = 336;
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
     baregpio_write(gpio_pin_nr, false);
-    busywait_microseconds(micro);
+    armtimer_busywait_microseconds(micro);
     baregpio_write(gpio_pin_nr, true);
-    busywait_microseconds(micro);
+    armtimer_busywait_microseconds(micro);
 }
 
 static void transfer_symbol(
