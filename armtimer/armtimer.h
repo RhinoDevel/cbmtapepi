@@ -10,6 +10,7 @@ uint32_t armtimer_get_tick();
 
 /** Start ARM timer (free running counter) with 1 MHz frequency.
  *
+ *  - Will NOT restart, if already running(!).
  *  - Hard-coded for 250 MHz core clock.
  */
 void armtimer_start_one_mhz();

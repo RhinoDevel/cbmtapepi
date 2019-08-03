@@ -11,6 +11,8 @@
 #include "../peribase.h"
 #include "../mem/mem.h"
 
+#include <stdbool.h>
+
 // ARM Timer (based on an SP804 - NOT an "AP804" -, see page 196):
 //
 #define ARM_TIMER_BASE (PERI_BASE + 0xB000)
@@ -24,6 +26,8 @@
 #define ARM_TIMER_DIV (ARM_TIMER_BASE + 0x41C) // Pre-divider / pre-scaler.
 #define ARM_TIMER_CNT (ARM_TIMER_BASE + 0x420) // Free running counter.
 
+static bool s_is_running_at_one_mhz = false;
+
 uint32_t armtimer_get_tick()
 {
     return mem_read(ARM_TIMER_CNT);
@@ -31,14 +35,23 @@ uint32_t armtimer_get_tick()
 
 void armtimer_start_one_mhz()
 {
+    if(s_is_running_at_one_mhz)
+    {
+        return;
+    }
+
     // 0xF9 = 249 => 250 MHz / ( 249 + 1) = 1 MHz (see page 197)
     //
     mem_write(ARM_TIMER_CTL, 0x00F90000); // Set frequency and disable.
     mem_write(ARM_TIMER_CTL, 0x00F90200); // Start free running counter.
-}
 
+    s_is_running_at_one_mhz = true;
+}
+//
 void armtimer_busywait(uint32_t const start_val, uint32_t const divider)
 {
+    s_is_running_at_one_mhz = false;
+
     mem_write(ARM_TIMER_CTL, 0x003E0000); // Disables counter.
     mem_write(ARM_TIMER_LOD, start_val-1); // Initial value to count down from.
     //mem_write(ARM_TIMER_RLD, start_val-1); // Used after count to zero done.
