@@ -8,12 +8,15 @@
 
 uint32_t armtimer_get_tick();
 
-/** Start ARM time with 1 MHz frequency.
+/** Start ARM timer (free running counter) with 1 MHz frequency.
  *
  *  - Hard-coded for 250 MHz core clock.
  */
 void armtimer_start_one_mhz();
 
+/**
+ * - Disables maybe running free running counter [see armtimer_start_one_mhz()]!
+ */
 void armtimer_busywait(uint32_t const start_val, uint32_t const divider);
 
 #endif //MT_ARMTIMER

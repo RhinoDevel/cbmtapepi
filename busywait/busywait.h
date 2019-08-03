@@ -10,6 +10,7 @@
  *  (valid input values go from 1 to 17179 seconds).
  *
  * - Hard-coded for 250 MHz core clock.
+ * - Disables maybe running free running counter [see armtimer_start_one_mhz()]
  */
 void busywait_seconds(uint32_t const seconds);
 
@@ -17,6 +18,7 @@ void busywait_seconds(uint32_t const seconds);
  *  (valid input values go from 1 to 17179869 milliseconds).
  *
  * - Hard-coded for 250 MHz core clock.
+ * - Disables maybe running free running counter [see armtimer_start_one_mhz()]
  */
 void busywait_milliseconds(uint32_t const milliseconds);
 
@@ -24,6 +26,7 @@ void busywait_milliseconds(uint32_t const milliseconds);
  *  (valid input values go from 1 to 4294967295 microseconds).
  *
  * - Hard-coded for 250 MHz core clock.
+ * - Disables maybe running free running counter [see armtimer_start_one_mhz()]
  */
 void busywait_microseconds(uint32_t const microseconds);
 
@@ -32,6 +35,7 @@ void busywait_microseconds(uint32_t const microseconds);
  *  where given value must be dividable by 4 to get precise results).
  *
  * - Hard-coded for 250 MHz core clock.
+ * - Disables maybe running free running counter [see armtimer_start_one_mhz()]
  */
 void busywait_nanoseconds(uint32_t const nanoseconds);
 
@@ -40,6 +44,7 @@ void busywait_nanoseconds(uint32_t const nanoseconds);
  *
  * * Does NOT take function time into account.
  * - Hard-coded for 250 MHz core clock.
+ * - Disables maybe running free running counter [see armtimer_start_one_mhz()]
  */
 void busywait_clockcycles(uint32_t const clockcycles);
 
