@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 /** Read at given address from memory.
  */
@@ -20,5 +21,12 @@ void mem_write(uint32_t const addr, uint32_t const val);
  */
 bool mem_cmp_byte(
     uint8_t const * const a, uint8_t const * const b, uint32_t const len);
+
+/**
+ * - Implemented for the linker (e.g. for structs with function pointers set to
+ *   NULL or just not set explicitly to anything).
+ * - Returns ptr.
+ */
+void* memset(void* ptr, int value, size_t num);
 
 #endif //MT_MEM

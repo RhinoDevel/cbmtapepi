@@ -3,6 +3,10 @@
 
 #include "mem.h"
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+
 uint32_t mem_read(uint32_t const addr)
 {
     return *(volatile uint32_t const *)addr;
@@ -27,4 +31,16 @@ bool mem_cmp_byte(
         ++i;
     }
     return true;
+}
+
+void* memset(void* ptr, int value, size_t num)
+{
+    unsigned char const v = (unsigned char)value;
+    unsigned char * const p = (unsigned char *)ptr;
+
+    for(size_t i = 0;i < num; ++i)
+    {
+        p[i] = v;
+    }
+    return ptr;
 }
