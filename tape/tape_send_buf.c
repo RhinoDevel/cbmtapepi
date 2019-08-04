@@ -128,8 +128,7 @@ bool tape_send_buf(
             }
             case tape_symbol_done:
             {
-                console_writeline(
-                    "tape_send_buf: Done symbol found. Done.");
+                console_writeline("tape_send_buf: Done symbol found. Done.");
                 return true; // Transfer done (fake symbol).
             }
 
