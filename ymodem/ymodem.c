@@ -445,25 +445,6 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
 
 enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
 {
-    // - Data block nr. 0 holds meta data (file name, size).
-    //
-    // - (Non-meta) data block numbers start with 1.
-    //
-    // - Each packet contains:
-    //
-    //     1. SOH (for data block size of 128)
-    //        or STX (for data block size of 1024 byte).
-    //     2. Data block number (1 byte).
-    //     3. Inverted data block number (255 - data block number) (1 byte).
-    //     4. Data block (block_size bytes).
-    //     5. Checksum for whole packet (1 byte).
-    //
-    // - Send NAK after first packet's checksum (packet with data block nr. 0).
-    //
-    // - The last packet is followed by an EOT.
-    //
-    // - Send an ACK after receiving EOT, too.
-
     enum ymodem_receive_err err = ymodem_receive_err_unknown;
     uint8_t rb, csum, block_nr = 0;
     uint16_t block_size, data_byte_nr = 0;
