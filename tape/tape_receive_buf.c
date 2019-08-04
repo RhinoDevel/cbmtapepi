@@ -82,7 +82,8 @@ static enum tape_symbol get_symbol(
 bool tape_receive_buf(
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_write,
-    uint8_t * const buf)
+    uint8_t * const buf,
+    bool (*is_stop_requested)())
 {
     static int const sync_count = 32; // (there are more than 1000 sync pulses)
     static uint32_t const ticks_timeout = 3000000; // 3 seconds.
@@ -104,6 +105,11 @@ bool tape_receive_buf(
         {
             // Pause, as long as motor signal from Commodore computer is
             // LOW.
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
         }
 
         console_writeline("tape_receive_buf: Motor is ON, starting..");
@@ -125,7 +131,17 @@ bool tape_receive_buf(
     // *** Sync: ***
     // *************
 
-    baregpio_wait_for_low(gpio_pin_nr_write);
+    // Wait for low:
+    //
+    while(baregpio_read(gpio_pin_nr_write))
+    {
+        // Pin is HIGH.
+
+        if(is_stop_requested != 0 && is_stop_requested())
+        {
+            return false;
+        }
+    }
     //
     // => Next high will be the start of a pulse.
 
@@ -135,13 +151,29 @@ bool tape_receive_buf(
     {
         // LOW, wait for start of (next) SAVE sync pulse:
 
-        baregpio_wait_for_high(gpio_pin_nr_write);
+        while(!baregpio_read(gpio_pin_nr_write))
+        {
+            // Pin is LOW.
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
 
         // HIGH <=> A SAVE sync pulse has started.
 
         start_tick = armtimer_get_tick();
 
-        baregpio_wait_for_low(gpio_pin_nr_write);
+        while(baregpio_read(gpio_pin_nr_write))
+        {
+            // Pin is HIGH.
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
 
         // HIGH half of sync pulse finished.
 
@@ -190,7 +222,15 @@ bool tape_receive_buf(
 
         start_tick = armtimer_get_tick();
 
-        baregpio_wait_for_low(gpio_pin_nr_write);
+        while(baregpio_read(gpio_pin_nr_write))
+        {
+            // Pin is HIGH.
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
 
         // HIGH half of pulse finished.
 

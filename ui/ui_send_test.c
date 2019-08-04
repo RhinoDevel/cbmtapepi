@@ -13,6 +13,7 @@
 #include "../ymodem/ymodem_send_params.h"
 #include "../ymodem/ymodem_send_err.h"
 #include "../miniuart/miniuart.h"
+#include "../statetoggle/statetoggle.h"
 
 void ui_send_test()
 {
@@ -22,6 +23,12 @@ void ui_send_test()
         .write_byte = miniuart_write_byte,
         .read_byte = miniuart_read_byte,
         .is_ready_to_read = miniuart_is_ready_to_read,
+
+        .is_stop_requested = 0,
+        //
+        // If this is set to 0 (or just ignored), memset() must be available to
+        // the linker (see mem/mem.h)!
+
         .buf = alloc_alloc(len * sizeof (uint8_t)),
         .file_len = len
         //.name // See below.

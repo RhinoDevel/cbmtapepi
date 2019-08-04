@@ -18,6 +18,7 @@
 #include "../tape/tape_input.h"
 #include "../tape/tape_send_params.h"
 #include "../str/str.h"
+#include "../statetoggle/statetoggle.h"
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
 {
@@ -75,6 +76,9 @@ static bool send_to_commodore(
     struct tape_send_params p;
     uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
 
+    p.is_stop_requested = interactive
+        ? 0
+        : statetoggle_is_requested;
     p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
     p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
@@ -122,6 +126,9 @@ void ui_terminal_to_commodore(bool const interactive)
     p.write_byte = miniuart_write_byte;
     p.read_byte = miniuart_read_byte;
     p.is_ready_to_read = miniuart_is_ready_to_read;
+    p.is_stop_requested = interactive
+        ? 0
+        : statetoggle_is_requested;
     p.buf = alloc_alloc(len * sizeof (uint8_t));
     p.buf_len = len;
     p.file_len = 0;

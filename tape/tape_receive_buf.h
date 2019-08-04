@@ -23,6 +23,7 @@
 bool tape_receive_buf(
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_write,
-    uint8_t * const buf);
+    uint8_t * const buf,
+    bool (*is_stop_requested)());
 
 #endif //MT_TAPE_RECEIVE_BUF

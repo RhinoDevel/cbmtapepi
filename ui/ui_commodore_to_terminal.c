@@ -17,6 +17,7 @@
 #include "../ymodem/ymodem_send_err.h"
 #include "../ymodem/ymodem.h"
 #include "../miniuart/miniuart.h"
+#include "../statetoggle/statetoggle.h"
 
 static void hint()
 {
@@ -35,6 +36,9 @@ static struct tape_input * receive_from_commodore(bool const interactive)
 {
     struct tape_input * ret_val;
     struct tape_receive_params const p = {
+        .is_stop_requested = interactive
+            ? 0
+            : statetoggle_is_requested,
         .gpio_pin_nr_write = MT_TAPE_GPIO_PIN_NR_WRITE,
         .gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE,
         .gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR
@@ -81,6 +85,9 @@ void ui_commodore_to_terminal(bool const interactive)
         .write_byte = miniuart_write_byte,
         .read_byte = miniuart_read_byte,
         .is_ready_to_read = miniuart_is_ready_to_read,
+        .is_stop_requested = interactive
+            ? 0
+            : statetoggle_is_requested,
         //.buf // See below.
         .file_len = input->len + 2
         //.name // See below.

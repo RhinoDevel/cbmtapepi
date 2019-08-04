@@ -15,6 +15,10 @@ struct ymodem_send_params
     uint8_t (*read_byte)();
     bool (*is_ready_to_read)();
 
+    // Optional function to be able to stop waiting for receiver:
+    //
+    bool (*is_stop_requested)();
+
     uint8_t * buf; // Buffer to fill with file's content.
     uint32_t file_len; // File's content byte count AND length of buffer.
 

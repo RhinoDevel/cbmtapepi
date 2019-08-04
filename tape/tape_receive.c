@@ -29,7 +29,8 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
     baregpio_set_output(p->gpio_pin_nr_sense, false);
 
     console_writeline("tape_receive: Receiving data..");
-    if(tape_receive_buf(p->gpio_pin_nr_motor, p->gpio_pin_nr_write, buf))
+    if(tape_receive_buf(
+        p->gpio_pin_nr_motor, p->gpio_pin_nr_write, buf, p->is_stop_requested))
     {
         struct tape_input * input;
 

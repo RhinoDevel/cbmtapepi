@@ -71,6 +71,18 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
     // Waiting for NAK or CRC:
     //
     {
+        if(p->is_stop_requested != 0)
+        {
+            while(!p->is_ready_to_read())
+            {
+                if(p->is_stop_requested())
+                {
+                    err = ymodem_send_err_stop_requested;
+                    return err;
+                }
+            }
+        }
+
         uint8_t const rb = p->read_byte();
         //
         // (p->read_byte() waits for being ready to read)
@@ -465,6 +477,12 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
         {
             p->write_byte(NAK);
             rx += NAKSOH_TIMEOUT;
+        }
+
+        if(p->is_stop_requested != 0 && p->is_stop_requested())
+        {
+            err = ymodem_receive_err_stop_requested;
+            return err;
         }
     }while(!p->is_ready_to_read());
     //

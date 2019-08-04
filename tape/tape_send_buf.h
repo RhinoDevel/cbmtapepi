@@ -26,6 +26,7 @@
 bool tape_send_buf(
     uint8_t const * const buf,
     uint32_t const gpio_pin_nr_motor,
-    uint32_t const gpio_pin_nr_read);
+    uint32_t const gpio_pin_nr_read,
+    bool (*is_stop_requested)());
 
 #endif //MT_TAPE_SEND_BUF

@@ -14,7 +14,8 @@ enum ymodem_receive_err
     ymodem_receive_err_meta_data = 5,
     ymodem_receive_err_meta_len = 6,
     ymodem_receive_err_checksum_meta = 7,
-    ymodem_receive_err_checksum_content = 8
+    ymodem_receive_err_checksum_content = 8,
+    ymodem_receive_err_stop_requested = 9 // Not really an error.
 };
 
 #endif //MT_YMODEM_RECEIVE_ERR

@@ -84,6 +84,7 @@ bool tape_sample_send(enum tape_sample_type const t)
     struct tape_send_params p;
     uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
 
+    p.is_stop_requested = 0;
     p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
     p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;

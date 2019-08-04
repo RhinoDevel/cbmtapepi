@@ -54,7 +54,8 @@ static void transfer_symbol(
 bool tape_send_buf(
     uint8_t const * const buf,
     uint32_t const gpio_pin_nr_motor,
-    uint32_t const gpio_pin_nr_read)
+    uint32_t const gpio_pin_nr_read,
+    bool (*is_stop_requested)())
 {
     uint32_t i = 0;
     bool motor_wait = true; // Initially wait for motor to be HIGH.
@@ -66,6 +67,11 @@ bool tape_send_buf(
     {
         uint32_t f = 0, l = 0;
 
+        if(is_stop_requested != 0 && is_stop_requested())
+        {
+            return false;
+        }
+
         if(!baregpio_read(gpio_pin_nr_motor))
         {
             if(motor_wait)
@@ -76,6 +82,11 @@ bool tape_send_buf(
                 {
                     // Pause, as long as motor signal from Commodore computer is
                     // LOW.
+
+                    if(is_stop_requested != 0 && is_stop_requested())
+                    {
+                        return false;
+                    }
                 }
 
                 console_writeline("tape_send_buf: Motor is ON, resuming..");

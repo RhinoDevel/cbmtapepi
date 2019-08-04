@@ -11,6 +11,9 @@
 #define MT_TAPE_GPIO_PIN_NR_MOTOR 4
 #define MT_TAPE_GPIO_PIN_NR_WRITE 23
 
+#define MT_GPIO_PIN_NR_BUTTON 17
+#define MT_GPIO_PIN_NR_LED 27
+
 // Comment this out for non-interactive mode,
 // otherwise a menu-based UI will be shown via serial interface:
 //

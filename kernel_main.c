@@ -14,10 +14,12 @@
 
 #include "console/console.h"
 #include "ui/ui_terminal_to_commodore.h"
+#include "ui/ui_commodore_to_terminal.h"
 #include "ui/ui.h"
 #include "config.h"
 #include "alloc/alloc.h"
 #include "tape/tape_init.h"
+#include "statetoggle/statetoggle.h"
 
 extern uint32_t __heap; // See memmap.ld.
 
@@ -42,6 +44,9 @@ static void init_console()
     console_init(&p);
 }
 
+/**
+ * - Entry point (see boot.S).
+ */
 void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 {
     // To be able to compile, although these are not used (stupid?):
@@ -62,6 +67,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     tape_init();
 
+    statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, false);
+
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
     //
@@ -69,7 +76,19 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 #else //MT_INTERACTIVE
     while(true)
     {
-        ui_terminal_to_commodore(false);
+        if(statetoggle_get_state())
+        {
+            ui_commodore_to_terminal(false);
+        }
+        else
+        {
+            ui_terminal_to_commodore(false);
+        }
+
+        if(statetoggle_is_requested())
+        {
+            statetoggle_toggle();
+        }
     }
 #endif //MT_INTERACTIVE
 }
