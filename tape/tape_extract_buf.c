@@ -27,8 +27,6 @@ static bool extract_byte(
     uint8_t byte_buf = 0,
         parity = 1;
 
-    //console_writeline("extract_byte : Entered..");
-
     // New data marker:
 
     if(buf[*pos] != tape_symbol_new)
@@ -126,8 +124,6 @@ static bool consume_countdown(
             return false;
         }
         --c;
-
-        //console_writeline("consume_countdown : Starting next following loop..");
     }
     return true;
 }
@@ -214,16 +210,6 @@ static uint8_t* get_payload_from_transmit_data(
 
     // Optional end-of-data marker:
 
-// #ifndef NDEBUG
-//     console_write(" | ");
-//     for(int d = 0;d < 16;++d)
-//     {
-//         console_write_byte(buf[*pos + d]);
-//         console_write(" | ");
-//     }
-//     console_writeline("");
-// #endif //NDEBUG
-
     if(buf[*pos] != tape_symbol_end)
     {
         // Must not happen:
@@ -275,16 +261,12 @@ static uint8_t* get_data_from_transmit(
 
     // First countdown sequence:
 
-    console_writeline("get_data_from_transmit : Starting countdown consume..");
-
     if(!consume_countdown(second, buf, pos))
     {
         return 0;
     }
 
     // Data:
-
-    console_writeline("get_data_from_transmit : Starting payload retrieval..");
 
     payload = get_payload_from_transmit_data(buf, pos, len);
     if(payload == 0)
@@ -293,8 +275,6 @@ static uint8_t* get_data_from_transmit(
     }
 
     // Transmit block gap:
-
-    console_writeline("get_data_from_transmit : Starting gap consume..");
 
     if(!consume_transmit_block_gap(buf, pos))
     {
@@ -323,8 +303,6 @@ static uint8_t* get_data_following_sync(
 
     // Data:
 
-    console_writeline("get_data_following_sync : Starting 1st data extract..");
-
     // 1st data transmit:
     //
     data_first = get_data_from_transmit(false, buf, pos, &len_first);
@@ -332,8 +310,6 @@ static uint8_t* get_data_following_sync(
     {
         return 0;
     }
-
-    console_writeline("get_data_following_sync : Starting 2nd data extract..");
 
     // 2nd data transmit:
     //
@@ -378,8 +354,6 @@ static bool extract_headerdatablock(
         i = 0;
     uint8_t* data;
     uint16_t end_addr_plus_one;
-
-    console_writeline("extract_headerdatablock : Entered function.");
 
     data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
@@ -438,11 +412,7 @@ static bool extract_contentdatablock(
     uint8_t const * const buf, int * const pos, struct tape_input * const input)
 {
     int len;
-    uint8_t* data;
-
-    console_writeline("extract_contentdatablock : Entered function.");
-
-    data = get_data_following_sync(buf, pos, &len);
+    uint8_t * const data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
         return false;
