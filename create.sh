@@ -109,6 +109,7 @@ $MT_CC armtimer/armtimer.c -o armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
 $MT_CC pl011uart/pl011uart.c -o pl011uart/pl011uart.o
+$MT_CC statetoggle/statetoggle.c -o statetoggle/statetoggle.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_send_buf.c -o tape/tape_send_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
@@ -147,6 +148,7 @@ arm-none-eabi-ld \
     busywait/busywait.o \
     miniuart/miniuart.o \
     pl011uart/pl011uart.o \
+    statetoggle/statetoggle.o \
     tape/tape_fill_buf.o \
     tape/tape_send_buf.o \
     tape/tape_sample.o \
