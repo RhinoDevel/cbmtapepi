@@ -15,7 +15,9 @@
 #define MT_GPIO_PIN_NR_LED 27
 
 // Comment this out for non-interactive mode,
-// otherwise a menu-based UI will be shown via serial interface:
+// otherwise a menu-based UI will be shown via serial interface
+// (it makes a lot of sense to also define NDEBUG, if MT_INTERACTIVE is
+// defined):
 //
 //#define MT_INTERACTIVE
 
