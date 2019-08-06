@@ -11,16 +11,16 @@
 
 void tape_init()
 {
-    console_writeline("tape_init: Setting sense output line to HIGH..");
+    console_deb_writeline("tape_init: Setting sense output line to HIGH..");
     baregpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, true);
 
-    console_writeline("tape_init: Setting motor line to input with pull-down..");
+    console_deb_writeline("tape_init: Setting motor line to input with pull-down..");
     baregpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_MOTOR);
 
-    console_writeline("tape_init: Setting tape read output line to HIGH..");
+    console_deb_writeline("tape_init: Setting tape read output line to HIGH..");
     baregpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, true);
 
-    console_writeline(
+    console_deb_writeline(
         "tape_init: Setting tape write line to input with pull-down..");
     baregpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_WRITE);
 }

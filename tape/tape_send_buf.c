@@ -76,7 +76,7 @@ bool tape_send_buf(
         {
             if(motor_wait)
             {
-                console_writeline("tape_send_buf: Motor is OFF, waiting..");
+                console_deb_writeline("tape_send_buf: Motor is OFF, waiting..");
 
                 while(!baregpio_read(gpio_pin_nr_motor))
                 {
@@ -89,11 +89,11 @@ bool tape_send_buf(
                     }
                 }
 
-                console_writeline("tape_send_buf: Motor is ON, resuming..");
+                console_deb_writeline("tape_send_buf: Motor is ON, resuming..");
             }
             else
             {
-                console_writeline("tape_send_buf: Motor is OFF, done.");
+                console_deb_writeline("tape_send_buf: Motor is OFF, done.");
                 return true; // Done
             }
         }
@@ -133,19 +133,20 @@ bool tape_send_buf(
 
             case tape_symbol_motor_wait_off: // (fake symbol)
             {
-                console_writeline("tape_send_buf: Disabling motor-wait..");
+                console_deb_writeline("tape_send_buf: Disabling motor-wait..");
                 motor_wait = false;
                 break;
             }
             case tape_symbol_done:
             {
-                console_writeline("tape_send_buf: Done symbol found. Done.");
+                console_deb_writeline(
+                    "tape_send_buf: Done symbol found. Done.");
                 return true; // Transfer done (fake symbol).
             }
 
             default: // Must not happen.
             {
-                console_writeline("tape_send_buf: Error: Unknown symbol!");
+                console_deb_writeline("tape_send_buf: Error: Unknown symbol!");
                 return false; // Error!
             }
         }

@@ -31,9 +31,11 @@ static bool extract_byte(
 
     if(buf[*pos] != tape_symbol_new)
     {
+#ifndef NDEBUG
         console_write("extract_byte : Error: Symbol new not found, but ");
         console_write_byte_dec(buf[*pos]);
         console_writeline(" instead!");
+#endif //NDEBUG
         return false;
     }
     ++(*pos);
@@ -58,7 +60,7 @@ static bool extract_byte(
             continue;
         }
 
-        console_writeline("extract_byte : Error: Unsupported symbol found!");
+        console_deb_writeline("extract_byte : Error: Unsupported symbol found!");
         return false;
     }
 
@@ -70,7 +72,7 @@ static bool extract_byte(
         {
             if(parity != 0)
             {
-                console_writeline(
+                console_deb_writeline(
                     "extract_byte : Error: Parity zero read, but not counted!");
                 return false;
             }
@@ -80,7 +82,7 @@ static bool extract_byte(
         {
             if(parity != 1)
             {
-                console_writeline(
+                console_deb_writeline(
                     "extract_byte : Error: Parity one read, but not counted!");
                 return false;
             }
@@ -89,7 +91,7 @@ static bool extract_byte(
 
         default:
         {
-            console_writeline(
+            console_deb_writeline(
                 "extract_byte : Error: Unexpected parity symbol read!");
             return false; // Unexpected symbol.
         }
@@ -112,14 +114,14 @@ static bool consume_countdown(
 
         if(!extract_byte(buf, pos, &byte))
         {
-            console_writeline(
+            console_deb_writeline(
                 "consume_countdown : Error: Failed to extract byte value!");
             return false;
         }
 
         if(byte != c)
         {
-            console_writeline(
+            console_deb_writeline(
                 "consume_countdown : Error: Unexpected byte value received!");
             return false;
         }
@@ -167,7 +169,7 @@ static uint8_t* get_payload_from_transmit_data(
     {
         // Must not happen!
 
-        console_writeline(
+        console_deb_writeline(
             "get_payload_from_transmit_data : Error: Offset end must be multiple of symbol per byte count!");
         return 0;
     }
@@ -214,7 +216,7 @@ static uint8_t* get_payload_from_transmit_data(
     {
         // Must not happen:
 
-        console_writeline(
+        console_deb_writeline(
             "get_payload_from_transmit_data : Error: Expected symbol end!");
         alloc_free(payload);
         return 0;
@@ -372,7 +374,7 @@ static bool extract_headerdatablock(
     if(input->type != tape_filetype_relocatable
         && input->type != tape_filetype_non_relocatable)
     {
-        console_writeline(
+        console_deb_writeline(
             "extract_headerdatablock: Error: Unsupported file type!");
 
         alloc_free(data);
@@ -420,7 +422,7 @@ static bool extract_contentdatablock(
 
     if(input->len != (uint16_t)len)
     {
-        console_writeline(
+        console_deb_writeline(
             "extract_contentdatablock: Error: Lengths mismatch!");
 
         alloc_free(data);
@@ -439,7 +441,7 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
 
     if(input == 0)
     {
-        console_writeline(
+        console_deb_writeline(
             "tape_extract_buf: Error: Failed to allocate input memory!");
         return 0;
     }

@@ -93,7 +93,9 @@ void ui_commodore_to_terminal(bool const interactive)
         //.name // See below.
     };
     uint32_t i = 0;
+#ifndef NDEBUG
     enum ymodem_send_err err;
+#endif //NDEBUG
 
     // Address:
     //
@@ -123,12 +125,17 @@ void ui_commodore_to_terminal(bool const interactive)
         ++i;
     }
 
-    console_writeline("Please trigger receival, now (via YMODEM).");
+    console_deb_writeline("Please trigger receival, now (via YMODEM).");
+
+#ifndef NDEBUG
     err = ymodem_send(&p);
 
     console_write("YMODEM send error code was ");
     console_write_dword_dec((uint32_t)err);
     console_writeline(".");
+#else //NDEBUG
+    ymodem_send(&p); // Return value ignored.
+#endif //NDEBUG
 
     alloc_free(p.buf);
     alloc_free(input->bytes);

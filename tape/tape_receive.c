@@ -18,23 +18,23 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
 
     if(buf == 0)
     {
-        console_writeline(
+        console_deb_writeline(
             "tape_receive: Error: Failed to allocate buffer memory!");
         return 0;
     }
 
     // Receive data via GPIO pin with given nr:
 
-    console_writeline("tape_receive: Setting sense line to LOW..");
+    console_deb_writeline("tape_receive: Setting sense line to LOW..");
     baregpio_set_output(p->gpio_pin_nr_sense, false);
 
-    console_writeline("tape_receive: Receiving data..");
+    console_deb_writeline("tape_receive: Receiving data..");
     if(tape_receive_buf(
         p->gpio_pin_nr_motor, p->gpio_pin_nr_write, buf, p->is_stop_requested))
     {
         struct tape_input * input;
 
-        console_writeline(
+        console_deb_writeline(
             "tape_receive: Success. Setting sense line to HIGH..");
         baregpio_set_output(p->gpio_pin_nr_sense, true);
 
@@ -42,7 +42,7 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
         alloc_free(buf);
         return input;
     }
-    console_writeline(
+    console_deb_writeline(
         "tape_receive: Failure! Setting sense line to HIGH..");
     baregpio_set_output(p->gpio_pin_nr_sense, true);
     alloc_free(buf);

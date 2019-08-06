@@ -71,11 +71,15 @@ static enum tape_symbol get_symbol(
     // Unhandled error (must not happen):
     //
     assert(false);
+
+#ifndef NDEBUG
     console_write("get_symbol: Error: Unsupported pulse combination (");
     console_write_dword_dec(f);
     console_write(", ");
     console_write_dword_dec(l);
     console_writeline(")!");
+#endif //NDEBUG
+
     return tape_symbol_done; // Misused as error indicator.
 }
 
@@ -99,7 +103,7 @@ bool tape_receive_buf(
 
     if(!baregpio_read(gpio_pin_nr_motor))
     {
-        console_writeline("tape_receive_buf: Motor is OFF, waiting..");
+        console_deb_writeline("tape_receive_buf: Motor is OFF, waiting..");
 
         while(!baregpio_read(gpio_pin_nr_motor))
         {
@@ -112,7 +116,7 @@ bool tape_receive_buf(
             }
         }
 
-        console_writeline("tape_receive_buf: Motor is ON, starting..");
+        console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
     }
 
     // 1 MHz <=> 1,000,000 ticks per second.

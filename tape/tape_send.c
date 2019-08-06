@@ -20,25 +20,26 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
 
     // Create data to send from given:
 
-    console_writeline("tape_send: Filling send buffer from input structure..");
+    console_deb_writeline(
+        "tape_send: Filling send buffer from input structure..");
     tape_fill_buf(p->data, buf);
 
     // Send data via GPIO pin with given nr:
 
-    console_writeline("tape_send: Setting sense line to LOW..");
+    console_deb_writeline("tape_send: Setting sense line to LOW..");
     baregpio_set_output(p->gpio_pin_nr_sense, false);
 
-    console_writeline("tape_send: Sending buffer content..");
+    console_deb_writeline("tape_send: Sending buffer content..");
     if(tape_send_buf(
         buf, p->gpio_pin_nr_motor, p->gpio_pin_nr_read, p->is_stop_requested))
     {
-        console_writeline(
+        console_deb_writeline(
             "tape_send: Success. Setting tape read line and sense line to HIGH..");
         baregpio_set_output(p->gpio_pin_nr_read, true);
         baregpio_set_output(p->gpio_pin_nr_sense, true);
         return true;
     }
-    console_writeline(
+    console_deb_writeline(
         "tape_send: Failure! Setting tape read line and sense line to HIGH..");
     baregpio_set_output(p->gpio_pin_nr_read, true);
     baregpio_set_output(p->gpio_pin_nr_sense, true);

@@ -30,11 +30,11 @@ void statetoggle_init(
     s_gpio_pin_nr_button = gpio_pin_nr_button;
     s_gpio_pin_nr_led = gpio_pin_nr_led;
 
-    console_writeline(
+    console_deb_writeline(
         "statetoggle_init: Setting button line to input with pull-down..");
     baregpio_set_input_pull_down(s_gpio_pin_nr_button);
 
-    console_writeline(
+    console_deb_writeline(
         "statetoggle_init: Setting LED output line to reflect state..");
     update_led();
 

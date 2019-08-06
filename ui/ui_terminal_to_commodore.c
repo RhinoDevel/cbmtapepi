@@ -99,11 +99,13 @@ static bool send_to_commodore(
 
     fill_add_bytes(p.data->add_bytes);
 
+#ifndef NDEBUG
     console_write("Start address is 0x");
     console_write_word(p.data->addr);
     console_write(" (");
     console_write_word_dec(p.data->addr);
     console_writeline(").");
+#endif //NDEBUG
 
     if(interactive)
     {
@@ -134,25 +136,29 @@ void ui_terminal_to_commodore(bool const interactive)
     p.file_len = 0;
     p.name[0] = '\0';
 
-    console_writeline("Please send your file, now (via YMODEM).");
+    console_deb_writeline("Please send your file, now (via YMODEM).");
 
     e = ymodem_receive(&p);
     if(e != ymodem_receive_err_none)
     {
+#ifndef NDEBUG
         console_write("Failed to receive file (error ");
         console_write_dword_dec((uint32_t)e);
         console_writeline(")!");
+#endif //NDEBUG
 
         alloc_free(p.buf);
         p.buf = 0;
         return;
     }
 
+#ifndef NDEBUG
     console_write("Received file \"");
     console_write(p.name);
     console_write("\" with a length of ");
     console_write_dword_dec(p.file_len);
     console_writeline(" bytes.");
+#endif //NDEBUG
 
     send_to_commodore(p.buf, p.name, p.file_len, interactive);
 
