@@ -68,21 +68,22 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
     bool send_null_file = false,
         use_crc;
 
-    // Waiting for NAK or CRC:
+    // Waiting for stop request, NAK or CRC:
     //
+    if(p->is_stop_requested != 0)
     {
-        if(p->is_stop_requested != 0)
+        while(!p->is_ready_to_read())
         {
-            while(!p->is_ready_to_read())
+            if(p->is_stop_requested())
             {
-                if(p->is_stop_requested())
-                {
-                    err = ymodem_send_err_stop_requested;
-                    return err;
-                }
+                err = ymodem_send_err_stop_requested;
+                state = ymodem_send_state_error;
+                break;
             }
         }
-
+    }
+    if(err != ymodem_send_err_stop_requested)
+    {
         uint8_t const rb = p->read_byte();
         //
         // (p->read_byte() waits for being ready to read)
@@ -106,6 +107,7 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
             }
         }
     }
+
     while(true)
     {
         switch(state)
@@ -482,7 +484,7 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
         if(p->is_stop_requested != 0 && p->is_stop_requested())
         {
             err = ymodem_receive_err_stop_requested;
-            return err;
+            return err; // (a flush should not be necessary)
         }
     }while(!p->is_ready_to_read());
     //
