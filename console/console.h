@@ -4,6 +4,12 @@
 #ifndef MT_CONSOLE
 #define MT_CONSOLE
 
+#ifdef NDEBUG
+    #define MT_CONSOLE_DEBUG_ACTIVE 0
+#else
+    #define MT_CONSOLE_DEBUG_ACTIVE 1
+#endif //NDEBUG
+
 #include "console_params.h"
 
 void console_init(struct console_params const * const p);
@@ -36,5 +42,16 @@ void console_write_dword_dec(uint32_t const dword);
 void console_write(char const * const buf);
 
 void console_writeline(char const * const buf);
+
+// Original source code: http://stackoverflow.com/questions/1644868/c-define-macro-for-debug-printing
+//
+#define console_deb_writeline(buf) \
+    do \
+    { \
+        if(MT_CONSOLE_DEBUG_ACTIVE) \
+        { \
+            console_writeline(buf); \
+        } \
+    }while(0);
 
 #endif //MT_CONSOLE
