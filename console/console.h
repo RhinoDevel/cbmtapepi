@@ -6,7 +6,7 @@
 
 #ifdef NDEBUG
     #define MT_CONSOLE_DEBUG_ACTIVE 0
-#else
+#else //NDEBUG
     #define MT_CONSOLE_DEBUG_ACTIVE 1
 #endif //NDEBUG
 
