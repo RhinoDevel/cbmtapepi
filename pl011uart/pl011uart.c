@@ -17,7 +17,7 @@
 
 #include "pl011uart.h"
 #include "../peribase.h"
-#include "../busywait/busywait.h"
+#include "../armtimer/armtimer.h"
 #include "../mem/mem.h"
 #include "../baregpio/baregpio.h"
 
@@ -83,13 +83,11 @@ void pl011uart_write_byte(uint8_t const byte)
     pl011uart_write((uint32_t)byte);
 }
 
-// TODO: Fix bug:
-//
 void pl011uart_init()
 {
     mem_write(PL011_CR, 0); // Disables everything (UARTEN = bit 0, page 187).
 
-    //armtimer_busywait_microseconds(1); // Maybe not necessary.
+    armtimer_busywait_microseconds(1000);
 
     // Set GPIO pin 14 and 15 to alternate function 0 (page 92 and page 102),
     // which is using UART0:
@@ -104,8 +102,6 @@ void pl011uart_init()
 
     mem_write(PL011_ICR, 0x7FF); // Clears pending interrupts.
 
-    // Does NOT work on Raspi1:
-    //
     // Hard-coded for UART0 default reference clock frequency of 48 MHz:
     //
     // (48000000 / (16 * 115200) = 26.04167
@@ -121,6 +117,8 @@ void pl011uart_init()
         (1 << 4) // FEN (enable FIFOs, page 184).
         | (1 << 5) | (1 << 6)); // WLEN = "b11" = 8 bits (page 184).
 
+    // Probably not necessary:
+    //
     // Mask all interrupts:
     //
     mem_write(
@@ -135,6 +133,8 @@ void pl011uart_init()
         (1 << 0) // UARTEN (page 187).
         | (1 << 8) // TXE (page 186).
         | (1 << 9)); // RXE (page 186).
+
+    armtimer_busywait_microseconds(1000);
 
     pl011uart_flush();
 }

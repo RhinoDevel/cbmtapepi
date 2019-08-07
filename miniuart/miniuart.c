@@ -18,6 +18,7 @@
 #include "miniuart.h"
 #include "../auxiliary.h"
 #include "../mem/mem.h"
+#include "../armtimer/armtimer.h"
 #include "../baregpio/baregpio.h"
 
 bool miniuart_is_ready_to_read()
@@ -107,6 +108,8 @@ void miniuart_init()
     // Enables receiver and transmitter (see page 17):
     //
     mem_write(AUX_MU_CNTL_REG, 3/*...00000011*/);
+
+    armtimer_busywait_microseconds(1000);
 
     miniuart_flush();
 
