@@ -34,6 +34,14 @@ uint8_t miniuart_read_byte()
     return (uint8_t)mem_read(AUX_MU_IO_REG);
 }
 
+void miniuart_flush()
+{
+    while(miniuart_is_ready_to_read())
+    {
+        miniuart_read_byte();
+    }
+}
+
 void miniuart_write(uint32_t const val)
 {
     // Print to UART1:
@@ -99,6 +107,8 @@ void miniuart_init()
     // Enables receiver and transmitter (see page 17):
     //
     mem_write(AUX_MU_CNTL_REG, 3/*...00000011*/);
+
+    miniuart_flush();
 
     // Notes:
     // ------

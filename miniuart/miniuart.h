@@ -14,6 +14,11 @@ void miniuart_init();
 
 bool miniuart_is_ready_to_read();
 uint8_t miniuart_read_byte();
+
+/** Read from receive FIFO, until it is empty.
+ */
+void miniuart_flush();
+
 void miniuart_write(uint32_t const val);
 void miniuart_write_byte(uint8_t const byte);
 

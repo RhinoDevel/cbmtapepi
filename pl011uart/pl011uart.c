@@ -43,18 +43,6 @@
 #define PL011_ITOP (PL011_BASE + 0x88)
 #define PL011_TDR (PL011_BASE + 0x8C)
 
-// static void flush_rx_fifo()
-// {
-//     // Read, until receive FIFO is empty (page 182):
-//     //
-//     while((mem_read(PL011_FR) & (1 << 4)) == 0) // Checks RXFE.
-//     {
-//         // RXFE flag is 0 <=> Receive FIFO is not empty.
-//
-//         mem_read(PL011_DR);
-//     }
-// }
-
 bool pl011uart_is_ready_to_read()
 {
     return (mem_read(PL011_FR) & (1 << 4)) == 0; // Checks RXFE.
@@ -69,6 +57,14 @@ uint8_t pl011uart_read_byte()
         ; // RXFE flag is 1 <=> Receive FIFO is empty.
     }
     return (uint8_t)mem_read(PL011_DR);
+}
+
+void pl011uart_flush()
+{
+    while(pl011uart_is_ready_to_read())
+    {
+        pl011uart_read_byte();
+    }
 }
 
 void pl011uart_write(uint32_t const val)
@@ -140,5 +136,5 @@ void pl011uart_init()
         | (1 << 8) // TXE (page 186).
         | (1 << 9)); // RXE (page 186).
 
-    //flush_rx_fifo(); // Maybe not necessary.
+    pl011uart_flush();
 }

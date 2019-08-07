@@ -5,6 +5,7 @@
 #define MT_PL011UART
 
 #include <stdint.h>
+#include <stdbool.h>
 
 /** Initializes PL011 UART to be used with GPIO pins 14 (TXD) and 15 (RXD)
  *  with hard-coded communication parameters (baudrate, parity, etc.).
@@ -13,6 +14,11 @@ void pl011uart_init();
 
 bool pl011uart_is_ready_to_read();
 uint8_t pl011uart_read_byte();
+
+/** Read from receive FIFO, until it is empty.
+ */
+void pl011uart_flush();
+
 void pl011uart_write(uint32_t const val);
 void pl011uart_write_byte(uint8_t const byte);
 
