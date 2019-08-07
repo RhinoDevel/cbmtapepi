@@ -20,6 +20,7 @@
 #include "alloc/alloc.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
+#include "video/video.h"
 
 extern uint32_t __heap; // See memmap.ld.
 
@@ -58,6 +59,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // Initialize console in-/output:
     //
     init_console();
+
+    // Initialize video (test):
+    //
+    video_init();
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
