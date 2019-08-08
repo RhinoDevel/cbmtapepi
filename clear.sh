@@ -6,6 +6,7 @@ rm busywait/busywait.o
 rm str/str.o
 rm calc/calc.o
 rm console/console.o
+rm mailbox/mailbox.o
 rm mem/mem.o
 rm miniuart/miniuart.o
 rm pl011uart/pl011uart.o
