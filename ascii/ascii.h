@@ -4,6 +4,8 @@
 #ifndef MT_ASCII
 #define MT_ASCII
 
+#include <stdint.h>
+
 static uint8_t const ascii[][8 * 8] = {
     { // ' '
         0,0,0,0,0,0,0,0,
