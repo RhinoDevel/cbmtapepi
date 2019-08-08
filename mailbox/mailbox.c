@@ -32,7 +32,7 @@ void mailbox_write(uint32_t const channel, uint32_t const val)
     {
         // Mailbox is full. Wait.
     }
-    mem_write(s_mailbox0_write, (val << 16) | channel);
+    mem_write(s_mailbox0_write, (val << 4) | channel);
 }
 
 uint32_t mailbox_read(uint32_t const channel)

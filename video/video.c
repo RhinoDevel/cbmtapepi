@@ -36,7 +36,7 @@ void video_init()
     mem_write(msg_buf_addr + 32, 0); /* #32 Framebuffer address. */
     mem_write(msg_buf_addr + 36, 0); /* #36 Framebuffer size. */
 
-    mailbox_write(channel_nr, msg_buf_addr >> 16);
+    mailbox_write(channel_nr, msg_buf_addr >> 4);
     mailbox_read(channel_nr);
 
     rb = mem_read(0x40040020);
