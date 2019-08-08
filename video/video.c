@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+// TODO: Memory barriers or data cache invalidation/flushing may be required!
+//
 void video_init()
 {
     static uint32_t const channel_nr = 1; // Of mailbox 0.
