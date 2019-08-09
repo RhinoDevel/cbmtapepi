@@ -16,11 +16,14 @@ static uint32_t const s_char_height = 8;
 
 // Framebuffer parameters:
 //
-static uint32_t const s_physical_width = 320;
-static uint32_t const s_physical_height = 200;
+static uint32_t const s_physical_width = 640;
+static uint32_t const s_physical_height = 480;
 static uint32_t const s_fb_width = s_physical_width;
 static uint32_t const s_fb_height = s_physical_height;
 static uint32_t const s_bit_depth = 32;
+
+static uint32_t const s_color_foreground = 0xFF6C5EB5;
+static uint32_t const s_color_background = 0xFF352879;
 
 static uint32_t const s_char_row_count = s_fb_height / s_char_height;
 static uint32_t const s_char_col_count = s_fb_width / s_char_width;
@@ -37,9 +40,24 @@ static void forward_cursor()
         ++s_char_cursor_row;
         if(s_char_cursor_row == s_char_row_count)
         {
-            s_char_cursor_row = 0;
+            s_char_cursor_row = 0; // No scrolling..
         }
     }
+}
+
+static void draw_fill(uint32_t * const fb, uint32_t const val)
+{
+    static uint32_t const pixel_count = s_fb_width * s_fb_height;
+
+    for(uint32_t i = 0;i < pixel_count;++i)
+    {
+        fb[i] = val;
+    }
+}
+
+static void draw_background(uint32_t * const fb)
+{
+    draw_fill(fb, s_color_background);
 }
 
 /**
@@ -65,11 +83,11 @@ static void draw_char_at_cursor(
 
             if((char_row_buf & 1) == 1)
             {
-                *fb_col_ptr = 0xFF6C5EB5;
+                *fb_col_ptr = s_color_foreground;
             }
             else
             {
-                *fb_col_ptr = 0xFF352879;
+                *fb_col_ptr = s_color_background;
             }
 
             char_row_buf = char_row_buf >> 1;
@@ -93,7 +111,7 @@ void video_init()
     //
     // "__attribute__", etc. seems to be GCC-specific..
 
-    uint32_t rb, rx, ry;
+    uint32_t* fb;
 
     // DEPRECATED mailbox?
     //
@@ -118,18 +136,22 @@ void video_init()
 
     //assert(msg_buf[4] == 0); // No support for pitch implemented..
 
-    rb = msg_buf[8];
-    for(ry=0;ry<s_fb_height;ry++)
+    fb = (uint32_t*)msg_buf[8];
+
+    draw_background(fb);
+
+    for(uint32_t i = 0;i < s_char_col_count * s_char_row_count;i += 10)
     {
-        for(rx=0;rx<s_fb_width;rx++)
+        for(uint8_t ascii_index = 'A';ascii_index <= 'J';++ascii_index)
         {
-            mem_write(rb, 0xFF352879);
-            rb += 4;
+            draw_char_at_cursor(ascii_index, fb);
         }
     }
-
-    for(uint8_t ascii_index = 0x20;ascii_index <= 0x7E;++ascii_index)
+    for(uint32_t i = 0;i < s_char_col_count;i += 10)
     {
-        draw_char_at_cursor(ascii_index, (uint32_t*)(msg_buf[8]));
+        for(uint8_t ascii_index = '0';ascii_index <= '9';++ascii_index)
+        {
+            draw_char_at_cursor(ascii_index, fb);
+        }
     }
 }
