@@ -9,10 +9,14 @@
 
 static uint8_t (*s_read_byte)() = 0;
 static void (*s_write_byte)(uint8_t const) = 0;
+static bool s_write_newline_with_cr = true;
 
 static void write_newline()
 {
-    s_write_byte((uint8_t)'\r');
+    if(s_write_newline_with_cr)
+    {
+        s_write_byte((uint8_t)'\r');
+    }
     s_write_byte((uint8_t)'\n');
 }
 
@@ -20,6 +24,7 @@ void console_init(struct console_params const * const p)
 {
     s_read_byte = p->read_byte;
     s_write_byte = p->write_byte;
+    s_write_newline_with_cr = p->write_newline_with_cr;
 }
 
 void console_write_key(char const key)

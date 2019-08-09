@@ -33,7 +33,8 @@ static void init_console()
     // Initialize console via MiniUART:
     //
     p.read_byte = miniuart_read_byte;
-    p.write_byte = miniuart_write_byte;
+    p.write_byte = miniuart_write_byte/*video_write_byte*/;
+    p.write_newline_with_cr = true/*false*/;
     miniuart_init();
     //
     // // Initialize console via PL011 UART (also use this for QEMU):
