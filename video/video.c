@@ -9,6 +9,11 @@
 
 #include <stdint.h>
 
+// Hard-coded for 8x8 character size font (see ascii.h file):
+//
+static uint32_t const s_char_width = 8;
+static uint32_t const s_char_height = 8;
+
 // Framebuffer parameters:
 //
 static uint32_t const s_physical_width = 320;
@@ -16,6 +21,65 @@ static uint32_t const s_physical_height = 200;
 static uint32_t const s_fb_width = s_physical_width;
 static uint32_t const s_fb_height = s_physical_height;
 static uint32_t const s_bit_depth = 32;
+
+static uint32_t const s_char_row_count = s_fb_height / s_char_height;
+static uint32_t const s_char_col_count = s_fb_width / s_char_width;
+
+static uint32_t s_char_cursor_row = 0; // In characters.
+static uint32_t s_char_cursor_col = 0; // In characters.
+
+static void forward_cursor()
+{
+    ++s_char_cursor_col;
+    if(s_char_cursor_col == s_char_col_count)
+    {
+        s_char_cursor_col = 0;
+        ++s_char_cursor_row;
+        if(s_char_cursor_row == s_char_row_count)
+        {
+            s_char_cursor_row = 0;
+        }
+    }
+}
+
+/**
+ * - Also forwards cursor.
+ */
+static void draw_char_at_cursor(
+    uint8_t const ascii_index, uint32_t * const fb)
+{
+    uint32_t const fb_row_start = s_char_height * s_char_cursor_row,
+        fb_row_lim = fb_row_start + s_char_height,
+        fb_col_start = s_char_width * s_char_cursor_col,
+        fb_col_lim = fb_col_start + s_char_width;
+    uint32_t char_row = 0;
+
+    for(uint32_t fb_row = fb_row_start; fb_row < fb_row_lim; ++fb_row)
+    {
+        uint32_t * const fb_row_ptr = fb + fb_row * s_fb_width;
+        uint8_t char_row_buf = ascii[ascii_index][char_row];
+
+        for(uint32_t fb_col = fb_col_start;fb_col < fb_col_lim; ++fb_col)
+        {
+            uint32_t * const fb_col_ptr = fb_row_ptr + fb_col;
+
+            if((char_row_buf & 1) == 1)
+            {
+                *fb_col_ptr = 0xFF6C5EB5;
+            }
+            else
+            {
+                *fb_col_ptr = 0xFF352879;
+            }
+
+            char_row_buf = char_row_buf >> 1;
+        }
+
+        ++char_row;
+    }
+
+    forward_cursor();
+}
 
 // TODO: May not work reliably on anything newer than Raspberry Pi 1!
 //
@@ -64,24 +128,8 @@ void video_init()
         }
     }
 
-    for(int i = 0;i < 25;++i)
+    for(uint8_t ascii_index = 0x20;ascii_index <= 0x7E;++ascii_index)
     {
-        for(ry = 0;ry < 8; ++ry)
-        {
-            rb = msg_buf[8] + i * 4 * 8 * s_fb_width + 4 * ry * s_fb_width;
-
-            for(rx = 0;rx < 8;++rx)
-            {
-                if(((ascii[0x41 + i][ry] >> rx) & 1) == 1)
-                {
-                    mem_write(rb, 0xFF6C5EB5);
-                }
-                else
-                {
-                    mem_write(rb, 0xFF352879);
-                }
-                rb += 4;
-            }
-        }
+        draw_char_at_cursor(ascii_index, (uint32_t*)(msg_buf[8]));
     }
 }
