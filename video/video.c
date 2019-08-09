@@ -31,6 +31,8 @@ static uint32_t const s_char_col_count = s_fb_width / s_char_width;
 static uint32_t s_char_cursor_row = 0; // In characters.
 static uint32_t s_char_cursor_col = 0; // In characters.
 
+static uint32_t * s_fb = 0; // Framebuffer address.
+
 static void forward_cursor()
 {
     ++s_char_cursor_col;
@@ -45,49 +47,59 @@ static void forward_cursor()
     }
 }
 
-static void draw_fill(uint32_t * const fb, uint32_t const val)
+static void newline_cursor()
+{
+    s_char_cursor_col = s_char_col_count - 1;
+    forward_cursor();
+}
+
+static void draw_fill(uint32_t const val)
 {
     static uint32_t const pixel_count = s_fb_width * s_fb_height;
 
     for(uint32_t i = 0;i < pixel_count;++i)
     {
-        fb[i] = val;
+        s_fb[i] = val;
     }
 }
 
-static void draw_background(uint32_t * const fb)
+static void draw_background()
 {
-    draw_fill(fb, s_color_background);
+    draw_fill(s_color_background);
 }
 
 /**
  * - Also forwards cursor.
  */
-static void draw_char_at_cursor(
-    uint8_t const ascii_index, uint32_t * const fb)
+static void draw_visible_char_at_cursor(
+    uint8_t const ascii_index, bool const swap_colors)
 {
+    //assert(ascii_index >= ' ' && ascii_index <= '~');
+
     uint32_t const fb_row_start = s_char_height * s_char_cursor_row,
         fb_row_lim = fb_row_start + s_char_height,
         fb_col_start = s_char_width * s_char_cursor_col,
-        fb_col_lim = fb_col_start + s_char_width;
+        fb_col_lim = fb_col_start + s_char_width,
+        fg_color = swap_colors ? s_color_background : s_color_foreground,
+        bg_color = swap_colors ? s_color_foreground : s_color_background;
     uint32_t char_row = 0;
 
     for(uint32_t fb_row = fb_row_start; fb_row < fb_row_lim; ++fb_row)
     {
-        uint32_t * const fb_row_ptr = fb + fb_row * s_fb_width;
+        uint32_t * const fb_row_ptr = s_fb + fb_row * s_fb_width;
         uint8_t char_row_buf = ascii[ascii_index][char_row];
 
-        for(uint32_t fb_col = fb_col_start;fb_col < fb_col_lim; ++fb_col)
+        for(uint32_t fb_col = fb_col_start;fb_col < fb_col_lim;++fb_col)
         {
             uint32_t * const fb_col_ptr = fb_row_ptr + fb_col;
 
             if((char_row_buf & 1) == 1)
             {
-                *fb_col_ptr = s_color_foreground;
+                *fb_col_ptr = fg_color;
             }
             else
             {
-                *fb_col_ptr = s_color_background;
+                *fb_col_ptr = bg_color;
             }
 
             char_row_buf = char_row_buf >> 1;
@@ -97,6 +109,38 @@ static void draw_char_at_cursor(
     }
 
     forward_cursor();
+}
+
+/**
+ * - Also alters cursor accordingly.
+ */
+static void draw_char_at_cursor(uint8_t const ascii_index)
+{
+    if(ascii_index >= 0x20 && ascii_index <= 0x7E)
+    {
+        draw_visible_char_at_cursor(ascii_index, false);
+        return;
+    }
+    switch(ascii_index)
+    {
+        case '\n': // Line feed.
+        {
+            newline_cursor();
+            break;
+        }
+
+        default: // Unsupported character.
+        {
+            draw_visible_char_at_cursor('?', true);
+            break;
+        }
+    }
+    //assert(false);
+}
+
+void video_write_byte(uint8_t const byte)
+{
+    draw_char_at_cursor(byte);
 }
 
 // TODO: May not work reliably on anything newer than Raspberry Pi 1!
@@ -110,8 +154,6 @@ void video_init()
     volatile uint32_t msg_buf[10] __attribute__((aligned (16)));
     //
     // "__attribute__", etc. seems to be GCC-specific..
-
-    uint32_t* fb;
 
     // DEPRECATED mailbox?
     //
@@ -136,22 +178,7 @@ void video_init()
 
     //assert(msg_buf[4] == 0); // No support for pitch implemented..
 
-    fb = (uint32_t*)msg_buf[8];
+    s_fb = (uint32_t*)msg_buf[8];
 
-    draw_background(fb);
-
-    for(uint32_t i = 0;i < s_char_col_count * s_char_row_count;i += 10)
-    {
-        for(uint8_t ascii_index = 'A';ascii_index <= 'J';++ascii_index)
-        {
-            draw_char_at_cursor(ascii_index, fb);
-        }
-    }
-    for(uint32_t i = 0;i < s_char_col_count;i += 10)
-    {
-        for(uint8_t ascii_index = '0';ascii_index <= '9';++ascii_index)
-        {
-            draw_char_at_cursor(ascii_index, fb);
-        }
-    }
+    draw_background();
 }
