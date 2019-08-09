@@ -22,8 +22,8 @@ static uint32_t const s_fb_width = s_physical_width;
 static uint32_t const s_fb_height = s_physical_height;
 static uint32_t const s_bit_depth = 32;
 
-static uint32_t const s_color_foreground = 0xFF6C5EB5;
-static uint32_t const s_color_background = 0xFF352879;
+static uint32_t const s_color_foreground = 0xFF00FF00;//0xFF6C5EB5;
+static uint32_t const s_color_background = 0xFF000000;//0xFF352879;
 
 static uint32_t const s_char_row_count = s_fb_height / s_char_height;
 static uint32_t const s_char_col_count = s_fb_width / s_char_width;
