@@ -38,12 +38,13 @@ void ui_receive_test()
     for(uint32_t i = 0;i < count; ++i)
     {
         console_write_byte(p.buf[i]);
+        console_write(" |");
         if(((i + 1) % 32) == 0)
         {
             console_writeline("");
             continue;
         }
-        console_write(" | ");
+        console_write(" ");
     }
     console_writeline("***");
 
