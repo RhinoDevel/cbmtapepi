@@ -33,6 +33,43 @@ static uint32_t s_char_cursor_col = 0; // In characters.
 
 static uint32_t * s_fb = 0; // Framebuffer address.
 
+static void draw_fill(
+    uint32_t const val, uint32_t * const fb_ptr, uint32_t const pixel_count)
+{
+    for(uint32_t i = 0;i < pixel_count;++i)
+    {
+        fb_ptr[i] = val;
+    }
+}
+
+static void draw_fill_screen(uint32_t const val)
+{
+    draw_fill(val, s_fb, s_fb_width * s_fb_height);
+}
+
+static void draw_background()
+{
+    draw_fill_screen(s_color_background);
+}
+
+static void scroll_up(uint32_t const fb_row_count)
+{
+    uint32_t const offset = fb_row_count * s_fb_width;
+    uint32_t const * const fb_lim = s_fb + s_fb_height * s_fb_width - offset;
+    uint32_t* fb;
+
+    for(fb = s_fb; fb < fb_lim; ++fb)
+    {
+        *fb = fb[offset];
+    }
+    draw_fill(s_color_background, fb, offset);
+}
+
+static void scroll_char_up(uint32_t const char_row_count)
+{
+    scroll_up(char_row_count * s_char_height);
+}
+
 static void forward_cursor()
 {
     ++s_char_cursor_col;
@@ -42,7 +79,8 @@ static void forward_cursor()
         ++s_char_cursor_row;
         if(s_char_cursor_row == s_char_row_count)
         {
-            s_char_cursor_row = 0; // No scrolling..
+            scroll_char_up(1);
+            --s_char_cursor_row;
         }
     }
 }
@@ -51,21 +89,6 @@ static void newline_cursor()
 {
     s_char_cursor_col = s_char_col_count - 1;
     forward_cursor();
-}
-
-static void draw_fill(uint32_t const val)
-{
-    static uint32_t const pixel_count = s_fb_width * s_fb_height;
-
-    for(uint32_t i = 0;i < pixel_count;++i)
-    {
-        s_fb[i] = val;
-    }
-}
-
-static void draw_background()
-{
-    draw_fill(s_color_background);
 }
 
 /**
