@@ -16,6 +16,10 @@
 #include "ymodem_receive_err.h"
 #include "ymodem.h"
 
+// #ifndef NDEBUG
+//     #include "../console/console.h"
+// #endif //NDEBUG
+
 // YMODEM documentation at: http://pauillac.inria.fr/~doligez/zmodem/ymodem.txt
 
 // Control characters
@@ -66,7 +70,7 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
     uint16_t crc;
     uint32_t offset = 0;
     bool send_null_file = false,
-        use_crc;
+        use_crc = false;
 
     // Waiting for stop request, NAK or CRC:
     //
@@ -84,14 +88,38 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
     }
     if(err != ymodem_send_err_stop_requested)
     {
-        uint8_t const rb = p->read_byte();
+        uint8_t rb = p->read_byte();
         //
         // (p->read_byte() waits for being ready to read)
+
+// #ifndef NDEBUG
+//         console_write("ymodem_send : Read byte ");
+//         console_write_byte(rb);
+//         console_writeline(" (1).");
+// #endif //NDEBUG
 
         if(rb == NAK)
         {
             state = ymodem_send_state_start;
             use_crc = false;
+
+            while(p->is_ready_to_read())
+            {
+                rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                 console_write("ymodem_send : Read byte ");
+//                 console_write_byte(rb);
+//                 console_writeline(" (8).");
+// #endif //NDEBUG
+
+                if(rb != NAK)
+                {
+                    state = ymodem_send_state_error;
+                    err = ymodem_send_err_nak_flush;
+                    break;
+                }
+            }
         }
         else
         {
@@ -99,6 +127,24 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
             {
                 state = ymodem_send_state_start;
                 use_crc = true;
+
+                while(p->is_ready_to_read())
+                {
+                    rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                     console_write("ymodem_send : Read byte ");
+//                     console_write_byte(rb);
+//                     console_writeline(" (9).");
+// #endif //NDEBUG
+
+                    if(rb != CRC)
+                    {
+                        state = ymodem_send_state_error;
+                        err = ymodem_send_err_crc_flush;
+                        break;
+                    }
+                }
             }
             else
             {
@@ -108,8 +154,22 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
         }
     }
 
+// #ifndef NDEBUG
+//     console_write("ymodem_send : State is ");
+//     console_write_byte((uint8_t)state);
+//     console_write(", CRC is ");
+//     console_write(use_crc ? "enabled" : "disabled");
+//     console_writeline(", entering send loop..");
+// #endif //NDEBUG
+
     while(true)
     {
+// #ifndef NDEBUG
+//             console_write("ymodem_send : State at beginning of send loop is ");
+//             console_write_byte((uint8_t)state);
+//             console_writeline(".");
+// #endif //NDEBUG
+
         switch(state)
         {
             case ymodem_send_state_start: // Start another block/sector:
@@ -147,6 +207,13 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 // Waiting for ACK:
 
                 rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                 console_write("ymodem_send : Read byte ");
+//                 console_write_byte(rb);
+//                 console_writeline(" (2).");
+// #endif //NDEBUG
+
                 if(rb != ACK)
                 {
                     state = ymodem_send_state_error;
@@ -158,6 +225,13 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 // transfer, but should do no harm..
                 //
                 rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                 console_write("ymodem_send : Read byte ");
+//                 console_write_byte(rb);
+//                 console_writeline(" (3).");
+// #endif //NDEBUG
+
                 if(rb == NAK)
                 {
                     use_crc = false;
@@ -320,10 +394,23 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 }
 
                 rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                 console_write("ymodem_send : Read byte ");
+//                 console_write_byte(rb);
+//                 console_writeline(" (4).");
+// #endif //NDEBUG
+
                 if(rb != ACK) // Receival acknowledged?
                 {
                     state = ymodem_send_state_error;
                     err = ymodem_send_err_checksum_meta_ack;
+
+// #ifndef NDEBUG
+//                     console_write("ymodem_send : Error: Retrieved byte ");
+//                     console_write_byte((uint8_t)rb);
+//                     console_writeline("!");
+// #endif //NDEBUG
                     break;
                 }
 
@@ -334,6 +421,12 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 }
 
                 rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                 console_write("ymodem_send : Read byte ");
+//                 console_write_byte(rb);
+//                 console_writeline(" (5).");
+// #endif //NDEBUG
 
                 // Not sure, if YMODEM supports CRC on/off toggling during
                 // transfer, but should do no harm..
@@ -405,6 +498,8 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 //assert(block_nr > 0);
                 //assert(!send_null_file);
 
+                uint8_t rb;
+
                 if(use_crc)
                 {
                     sb = (uint8_t)(crc >> 8);
@@ -418,7 +513,15 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                     p->write_byte(sb);
                 }
 
-                if(p->read_byte() != ACK) // Receival acknowledged?
+                rb = p->read_byte();
+
+// #ifndef NDEBUG
+//                 console_write("ymodem_send : Read byte ");
+//                 console_write_byte(rb);
+//                 console_writeline(" (6).");
+// #endif //NDEBUG
+
+                if(rb != ACK) // Receival acknowledged?
                 {
                     state = ymodem_send_state_error;
                     err = ymodem_send_err_checksum_content_ack;
@@ -442,11 +545,17 @@ enum ymodem_send_err ymodem_send(struct ymodem_send_params * const p)
                 //assert(false);
             case ymodem_send_state_error:
             {
-                //p->flush(); // Necessary?
-
                 while(p->is_ready_to_read())
                 {
+// #ifndef NDEBUG
+//                     uint8_t rb = p->read_byte();
+//
+//                     console_write("ymodem_send : Read byte ");
+//                     console_write_byte(rb);
+//                     console_writeline(" (7).");
+// #elseif //NDEBUG
                     p->read_byte();
+// #endif //NDEBUG
                 }
 
                 return err;
