@@ -6,6 +6,9 @@
 
 #include <stdint.h>
 
+// This file holds a byte array with R,G,B;R,G,B;R,G,B;... pixel values
+// representing the RhinoDevel logo.
+
 static uint32_t const s_rhino_width = 80; // Pixel width.
 static uint32_t const s_rhino_height = 80; // Pixel height.
 static uint32_t const s_rhino_bytes_per_pixel = 3; // R, G, B.
