@@ -2,7 +2,6 @@
 
 # RhinoDevel, Marcel Timm, 2019aug12
 
-
 # This script does the following:
 # -------------------------------
 #
