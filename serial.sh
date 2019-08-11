@@ -32,29 +32,25 @@ su -c ./create.sh ${USER_CREATE}
 #
 echo
 
-echo "*********************************"
-echo "*** Configuring serial device ***"
-echo "*********************************"
+echo "***********************************"
+echo "*** Configuring serial device.. ***"
+echo "***********************************"
 echo
 #
 stty -F ${SERIAL_DEVICE} 115200
-#
-echo
 
-echo "*********************************"
-echo "*** Sending created file..    ***"
-echo "*********************************"
+echo "******************************"
+echo "*** Sending created file.. ***"
+echo "******************************"
 echo
 #
 sx ${KERNEL_FILENAME} < ${SERIAL_DEVICE} > ${SERIAL_DEVICE}
 #
 echo
 
-echo "*********************************"
-echo "*** Sending start command..   ***"
-echo "*********************************"
+echo "*******************************"
+echo "*** Sending start command.. ***"
+echo "*******************************"
 echo
 #
 echo -n g > ${SERIAL_DEVICE}
-#
-echo
