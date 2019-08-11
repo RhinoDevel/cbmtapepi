@@ -30,11 +30,13 @@ static void init_console()
 {
     struct console_params p;
 
-    // Initialize console via MiniUART:
+    // Initialize console via MiniUART to read and video to write:
     //
     p.read_byte = miniuart_read_byte;
-    p.write_byte = miniuart_write_byte/*video_write_byte*/;
-    p.write_newline_with_cr = true/*false*/;
+    // p.write_byte = miniuart_write_byte;
+    // p.write_newline_with_cr = true;
+    p.write_byte = video_write_byte;
+    p.write_newline_with_cr = false;
     miniuart_init();
     //
     // // Initialize console via PL011 UART (also use this for QEMU):
