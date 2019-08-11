@@ -2,6 +2,7 @@
 // Marcel Timm, RhinoDevel, 2019aug07
 
 #include "video.h"
+#include "rhino.h"
 #include "../ascii/ascii.h"
 #include "../mem/mem.h"
 #include "../mailbox/mailbox.h"
@@ -161,6 +162,34 @@ static void draw_char_at_cursor(uint8_t const ascii_index)
     //assert(false);
 }
 
+static void draw_rhino()
+{
+    static uint32_t const pos_x = s_fb_width - s_rhino_width;
+    static uint32_t const pos_y = 0/*s_fb_height - s_rhino_height*/;
+    static uint32_t const row_lim = pos_y + s_rhino_height;
+    static uint32_t const col_lim = pos_x + s_rhino_width;
+
+    uint32_t rhino_index = 0;
+
+    for(uint32_t row = pos_y;row < row_lim;++row)
+    {
+        uint32_t * const fb_row = s_fb + row * s_fb_width;
+
+        for(uint32_t col = pos_x;col < col_lim;++col)
+        {
+            //assert(s_rhino_bytes_per_pixel == 3);
+
+            uint32_t const r = (uint32_t)s_rhino[rhino_index],
+                g = (uint32_t)s_rhino[rhino_index + 1],
+                b = (uint32_t)s_rhino[rhino_index + 2];
+
+            fb_row[col] = 0xFF000000 | r << 16 | g << 8 | b;
+
+            rhino_index += s_rhino_bytes_per_pixel;
+        }
+    }
+}
+
 void video_write_byte(uint8_t const byte)
 {
     draw_char_at_cursor(byte);
@@ -204,4 +233,5 @@ void video_init()
     s_fb = (uint32_t*)msg_buf[8];
 
     draw_background();
+    draw_rhino();
 }
