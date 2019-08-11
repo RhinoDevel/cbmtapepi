@@ -2,8 +2,6 @@
 // Marcel Timm, RhinoDevel, 2018dec24
 
 // Hard-coded for MiniUART and YMODEM usage.
-//
-// Warning: console_... is probably linked to MiniUART, too!
 
 #include "ui_terminal_to_commodore.h"
 

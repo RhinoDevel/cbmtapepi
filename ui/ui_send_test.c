@@ -2,8 +2,6 @@
 // Marcel Timm, RhinoDevel, 2019jul20
 
 // Hard-coded for MiniUART and YMODEM usage.
-//
-// Warning: console_... is probably linked to MiniUART, too!
 
 #include "ui_send_test.h"
 

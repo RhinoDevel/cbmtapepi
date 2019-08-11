@@ -2,8 +2,6 @@
 // Marcel Timm, RhinoDevel, 2018dec21
 
 // Hard-coded for MiniUART and XMODEM usage.
-//
-// Warning: console_... is probably linked to MiniUART, too!
 
 #include "ui_receive_test.h"
 

@@ -31,18 +31,32 @@ static void init_console()
     struct console_params p;
 
     // Initialize console via MiniUART to read and video to write:
-    //
+
     p.read_byte = miniuart_read_byte;
+
     // p.write_byte = miniuart_write_byte;
+    // //
+    // // If MiniUART is also used for serial transfer, using UART as console
+    // // may cause serial transfers to fail (e.g. assertions and debug output)!
+    // //
     // p.write_newline_with_cr = true;
+    //
     p.write_byte = video_write_byte;
     p.write_newline_with_cr = false;
+
     miniuart_init();
+
+    // // Initialize console via PL011 UART (use this for QEMU):
     //
-    // // Initialize console via PL011 UART (also use this for QEMU):
-    // //
     // p.read_byte = pl011uart_read_byte;
+    //
     // p.write_byte = pl011uart_write_byte;
+    // //
+    // // If PL011 UART is also used for serial transfer, using UART as console
+    // // may cause serial transfers to fail (e.g. assertions and debug output)!
+    // //
+    // p.write_newline_with_cr = true;
+    //
     // pl011uart_init(); // (don't do this while using QEMU)
 
     console_init(&p);
