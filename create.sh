@@ -79,9 +79,9 @@ export OPTIONS_GCC_ALL=" \
     -fpic \
     -ffreestanding"
 
-#    -DNDEBUG \
 export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
     -O2 \
+    -DNDEBUG \
     -std=gnu99 \
     -Wall \
     -Werror \
