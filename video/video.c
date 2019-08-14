@@ -224,7 +224,7 @@ void video_init()
 
     mailbox_write(
         channel_nr,
-        (0x40000000 + (uint32_t)msg_buf) // TODO: Replace hard-coded conversion to physical memory address.
+        (0x40000000 + (uint32_t)msg_buf) // TODO: Replace hard-coded conversion to physical memory address. Assuming L2 cache to be enabled, otherwise 0xC0000000 would be correct!
             >> 4);
     mailbox_read(channel_nr);
 
