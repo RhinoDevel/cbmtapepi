@@ -18,11 +18,24 @@
 #include "ui/ui.h"
 #include "config.h"
 #include "alloc/alloc.h"
+#include "assert.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
 #include "video/video.h"
 
 extern uint32_t __heap; // See memmap.ld.
+
+#ifndef MT_INTERACTIVE
+/**
+ * - Must not be called. Just for error handling..
+ */
+static uint8_t dummy_read()
+{
+    assert(false);
+
+    return 0;
+}
+#endif //MT_INTERACTIVE
 
 /** Connect console (singleton) to wanted in-/output.
  */
@@ -32,7 +45,13 @@ static void init_console()
 
     // Initialize console via MiniUART to read and video to write:
 
+    // No read in non-interactive mode:
+    //
+#ifdef MT_INTERACTIVE
     p.read_byte = miniuart_read_byte;
+#else //MT_INTERACTIVE
+    p.read_byte = dummy_read;
+#endif //MT_INTERACTIVE
 
     // p.write_byte = miniuart_write_byte;
     // //
