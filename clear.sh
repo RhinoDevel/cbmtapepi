@@ -4,7 +4,7 @@ rm hardware/armtimer/armtimer.o
 rm hardware/baregpio/baregpio.o
 rm busywait/busywait.o
 rm lib/str/str.o
-rm calc/calc.o
+rm lib/calc/calc.o
 rm console/console.o
 rm mailbox/mailbox.o
 rm mem/mem.o

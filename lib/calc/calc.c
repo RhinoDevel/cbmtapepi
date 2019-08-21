@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "calc.h"
-#include "../lib/str/str.h"
+#include "../str/str.h"
 
 static char get_hex(uint8_t const n)
 {

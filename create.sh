@@ -127,7 +127,7 @@ $MT_CC ui/ui_commodore_to_terminal.c -o ui/ui_commodore_to_terminal.o
 $MT_CC ui/ui.c -o ui/ui.o
 $MT_CC console/console.c -o console/console.o
 $MT_CC lib/str/str.c -o lib/str/str.o
-$MT_CC calc/calc.c -o calc/calc.o
+$MT_CC lib/calc/calc.c -o lib/calc/calc.o
 $MT_CC lib/alloc/alloc.c -o lib/alloc/alloc.o
 $MT_CC lib/alloc/alloc_mem.c -o lib/alloc/alloc_mem.o
 $MT_CC lib/alloc/nodemem.c -o lib/alloc/nodemem.o
@@ -168,7 +168,7 @@ arm-none-eabi-ld \
     ui/ui.o \
     console/console.o \
     lib/str/str.o \
-    calc/calc.o \
+    lib/calc/calc.o \
     lib/alloc/alloc.o \
     lib/alloc/alloc_mem.o \
     lib/alloc/nodemem.o \

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../calc/calc.h"
+#include "../lib/calc/calc.h"
 #include "console.h"
 
 static uint8_t (*s_read_byte)() = 0;

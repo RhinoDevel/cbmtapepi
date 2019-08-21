@@ -6,7 +6,7 @@
 
 #include "../hardware/armtimer/armtimer.h"
 #include "../lib/alloc/alloc.h"
-#include "../calc/calc.h"
+#include "../lib/calc/calc.h"
 //#include "../lib/assert.h"
 #include "ymodem_send_params.h"
 #include "ymodem_send_state.h"
