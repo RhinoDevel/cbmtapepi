@@ -4,7 +4,7 @@
 #include "mailbox.h"
 #include "../mem/mem.h"
 #include "../hardware/peribase.h"
-//#include "../assert.h"
+//#include "../lib/assert.h"
 
 #include <stdint.h>
 

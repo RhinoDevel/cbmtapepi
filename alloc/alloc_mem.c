@@ -2,7 +2,7 @@
 // RhinoDevel, MT, 2018nov18
 
 #include <stdint.h>
-#include "../assert.h"
+#include "../lib/assert.h"
 
 #ifndef NDEBUG
     #include "../console/console.h"

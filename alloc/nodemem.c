@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../assert.h"
+#include "../lib/assert.h"
 #include "nodemem.h"
 #include "alloc_mem.h"
 #include "node.h"

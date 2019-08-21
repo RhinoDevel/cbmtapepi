@@ -10,7 +10,7 @@
     #define MT_ASSERT_ACTIVE 1
 #endif //NDEBUG
 
-#include "console/console.h"
+#include "../console/console.h"
 
 // Original source code: http://stackoverflow.com/questions/1644868/c-define-macro-for-debug-printing
 //

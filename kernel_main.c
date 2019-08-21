@@ -18,7 +18,7 @@
 #include "ui/ui.h"
 #include "config.h"
 #include "alloc/alloc.h"
-#include "assert.h"
+#include "lib/assert.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
 #include "video/video.h"

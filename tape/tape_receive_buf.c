@@ -9,7 +9,7 @@
 #include "../hardware/baregpio/baregpio.h"
 #include "../console/console.h"
 #include "../hardware/armtimer/armtimer.h"
-#include "../assert.h"
+#include "../lib/assert.h"
 
 // TODO: Replace:
 //
