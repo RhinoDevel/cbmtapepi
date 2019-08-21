@@ -21,7 +21,7 @@
 #include "lib/assert.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
-#include "hardware/video/video.h"
+#include "lib/video/video.h"
 
 extern uint32_t __heap; // See memmap.ld.
 
@@ -96,7 +96,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     init_console();
 
-    // Initialize video (test):
+    // Initialize video:
     //
     video_init();
 

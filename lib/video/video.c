@@ -2,11 +2,11 @@
 // Marcel Timm, RhinoDevel, 2019aug07
 
 #include "video.h"
-#include "../framebuffer/framebuffer.h"
+#include "../../hardware/framebuffer/framebuffer.h"
 #include "../../data/rhino.h"
 #include "../../data/ascii.h"
-#include "../../lib/mem/mem.h"
-//#include "../../lib/assert.h"
+#include "../mem/mem.h"
+//#include "../../assert.h"
 
 #include <stdint.h>
 
