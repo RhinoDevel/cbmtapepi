@@ -9,7 +9,7 @@
 #include "../alloc/alloc.h"
 #include "../xmodem/xmodem.h"
 #include "../xmodem/xmodem_receive_params.h"
-#include "../miniuart/miniuart.h"
+#include "../hardware/miniuart/miniuart.h"
 
 void ui_receive_test()
 {

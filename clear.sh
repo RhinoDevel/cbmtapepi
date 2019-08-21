@@ -8,7 +8,7 @@ rm calc/calc.o
 rm console/console.o
 rm mailbox/mailbox.o
 rm mem/mem.o
-rm miniuart/miniuart.o
+rm hardware/miniuart/miniuart.o
 rm pl011uart/pl011uart.o
 rm statetoggle/statetoggle.o
 rm tape/tape_fill_buf.o

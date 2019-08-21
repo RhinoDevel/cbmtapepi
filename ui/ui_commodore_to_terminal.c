@@ -14,7 +14,7 @@
 #include "../ymodem/ymodem_send_params.h"
 #include "../ymodem/ymodem_send_err.h"
 #include "../ymodem/ymodem.h"
-#include "../miniuart/miniuart.h"
+#include "../hardware/miniuart/miniuart.h"
 #include "../statetoggle/statetoggle.h"
 
 static void hint()

@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-#include "miniuart/miniuart.h"
+#include "hardware/miniuart/miniuart.h"
 //#include "pl011uart/pl011uart.h"
 
 #include "console/console.h"

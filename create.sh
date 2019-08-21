@@ -108,7 +108,7 @@ $MT_CC mailbox/mailbox.c -o mailbox/mailbox.o
 $MT_CC mem/mem.c -o mem/mem.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
-$MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
+$MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC pl011uart/pl011uart.c -o pl011uart/pl011uart.o
 $MT_CC statetoggle/statetoggle.c -o statetoggle/statetoggle.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
@@ -149,7 +149,7 @@ arm-none-eabi-ld \
     mem/mem.o \
     hardware/armtimer/armtimer.o \
     busywait/busywait.o \
-    miniuart/miniuart.o \
+    hardware/miniuart/miniuart.o \
     pl011uart/pl011uart.o \
     statetoggle/statetoggle.o \
     tape/tape_fill_buf.o \

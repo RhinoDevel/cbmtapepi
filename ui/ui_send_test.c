@@ -10,7 +10,7 @@
 #include "../ymodem/ymodem.h"
 #include "../ymodem/ymodem_send_params.h"
 #include "../ymodem/ymodem_send_err.h"
-#include "../miniuart/miniuart.h"
+#include "../hardware/miniuart/miniuart.h"
 #include "../statetoggle/statetoggle.h"
 
 void ui_send_test()
