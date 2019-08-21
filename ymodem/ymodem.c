@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../hardware/armtimer/armtimer.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/calc/calc.h"
 //#include "../lib/assert.h"
@@ -576,15 +575,15 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
     bool null_file_received = false;
     uint8_t* meta_buf = 0;
 
-    armtimer_start_one_mhz();
+    p->timer_start_one_mhz();
 
     // (not going to deal with timeouts other than here)
     //
     p->write_byte(NAK);
-    rx = armtimer_get_tick();
+    rx = p->timer_get_tick();
     do
     {
-        if(armtimer_get_tick() - rx >= NAKSOH_TIMEOUT)
+        if(p->timer_get_tick() - rx >= NAKSOH_TIMEOUT)
         {
             p->write_byte(NAK);
             rx += NAKSOH_TIMEOUT;
@@ -792,8 +791,8 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
 
                 if(null_file_received)
                 {
-                    rx = armtimer_get_tick();
-                    while(armtimer_get_tick() - rx < WAIT_AFTER_EOT_TIMEOUT)
+                    rx = p->timer_get_tick();
+                    while(p->timer_get_tick() - rx < WAIT_AFTER_EOT_TIMEOUT)
                     {
                         // (do nothing)
                     }
@@ -856,8 +855,8 @@ enum ymodem_receive_err ymodem_receive(struct ymodem_receive_params * const p)
                 p->write_byte(CAN);
                 p->write_byte(CAN);
 
-                rx = armtimer_get_tick();
-                while(armtimer_get_tick() - rx < WAIT_AFTER_CAN_TIMEOUT)
+                rx = p->timer_get_tick();
+                while(p->timer_get_tick() - rx < WAIT_AFTER_CAN_TIMEOUT)
                 {
                     // (do nothing)
                 }

@@ -11,6 +11,7 @@
 #include "../ymodem/ymodem.h"
 #include "../ymodem/ymodem_receive_params.h"
 #include "../ymodem/ymodem_receive_err.h"
+#include "../hardware/armtimer/armtimer.h"
 #include "../hardware/miniuart/miniuart.h"
 #include "../tape/tape_send.h"
 #include "../tape/tape_input.h"
@@ -123,6 +124,8 @@ void ui_terminal_to_commodore(bool const interactive)
     struct ymodem_receive_params p;
     enum ymodem_receive_err e;
 
+    p.timer_start_one_mhz = armtimer_start_one_mhz;
+    p.timer_get_tick = armtimer_get_tick;
     p.write_byte = miniuart_write_byte;
     p.read_byte = miniuart_read_byte;
     p.is_ready_to_read = miniuart_is_ready_to_read;

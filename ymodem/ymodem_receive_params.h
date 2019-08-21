@@ -9,6 +9,9 @@
 
 struct ymodem_receive_params
 {
+    void (*timer_start_one_mhz)();
+    uint32_t (*timer_get_tick)();
+
     // Functions for communication:
     //
     void (*write_byte)(uint8_t const byte);
