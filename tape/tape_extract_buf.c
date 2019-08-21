@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../alloc/alloc.h"
+#include "../lib/alloc/alloc.h"
 #include "../console/console.h"
 #include "../mem/mem.h"
 #include "../lib/assert.h"

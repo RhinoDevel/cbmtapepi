@@ -17,7 +17,7 @@
 #include "ui/ui_commodore_to_terminal.h"
 #include "ui/ui.h"
 #include "config.h"
-#include "alloc/alloc.h"
+#include "lib/alloc/alloc.h"
 #include "lib/assert.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"

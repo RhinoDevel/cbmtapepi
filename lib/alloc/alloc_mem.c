@@ -2,10 +2,10 @@
 // RhinoDevel, MT, 2018nov18
 
 #include <stdint.h>
-#include "../lib/assert.h"
+#include "../assert.h"
 
 #ifndef NDEBUG
-    #include "../console/console.h"
+    #include "../../console/console.h"
 #endif //NDEBUG
 
 #include "alloc_mem.h"

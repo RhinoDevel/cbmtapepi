@@ -7,7 +7,7 @@
 
 #include "../config.h"
 #include "../console/console.h"
-#include "../alloc/alloc.h"
+#include "../lib/alloc/alloc.h"
 #include "../ymodem/ymodem.h"
 #include "../ymodem/ymodem_receive_params.h"
 #include "../ymodem/ymodem_receive_err.h"

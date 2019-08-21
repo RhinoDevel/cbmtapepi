@@ -25,9 +25,9 @@ rm ui/ui_send_test.o
 rm ui/ui_terminal_to_commodore.o
 rm ui/ui_commodore_to_terminal.o
 rm ui/ui.o
-rm alloc/alloc.o
-rm alloc/alloc_mem.o
-rm alloc/nodemem.o
+rm lib/alloc/alloc.o
+rm lib/alloc/alloc_mem.o
+rm lib/alloc/nodemem.o
 rm video/video.o
 rm hardware/watchdog/watchdog.o
 rm xmodem/xmodem.o

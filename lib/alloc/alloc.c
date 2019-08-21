@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "../lib/assert.h"
+#include "../assert.h"
 
 #include "node.h"
 #include "alloc_mem.h"

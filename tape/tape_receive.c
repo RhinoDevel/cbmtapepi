@@ -6,7 +6,7 @@
 
 #include "../hardware/baregpio/baregpio.h"
 #include "../console/console.h"
-#include "../alloc/alloc.h"
+#include "../lib/alloc/alloc.h"
 
 #include "tape_receive.h"
 #include "tape_receive_buf.h"
