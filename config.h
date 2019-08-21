@@ -19,7 +19,7 @@
 // (it makes a lot of sense to also define NDEBUG, if MT_INTERACTIVE is
 // defined):
 //
-#define MT_INTERACTIVE
+//#define MT_INTERACTIVE
 
 // Set this additionally (for 32 bit):
 //
