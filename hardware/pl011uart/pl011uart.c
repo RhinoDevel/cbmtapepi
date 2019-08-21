@@ -16,10 +16,10 @@
 #include <stdbool.h>
 
 #include "pl011uart.h"
-#include "../hardware/peribase.h"
-#include "../hardware/armtimer/armtimer.h"
-#include "../mem/mem.h"
-#include "../hardware/baregpio/baregpio.h"
+#include "../peribase.h"
+#include "../armtimer/armtimer.h"
+#include "../../mem/mem.h"
+#include "../baregpio/baregpio.h"
 
 // UART0 (PL011) register map (see page 177):
 //

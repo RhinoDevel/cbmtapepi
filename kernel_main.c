@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 #include "hardware/miniuart/miniuart.h"
-//#include "pl011uart/pl011uart.h"
+//#include "hardware/pl011uart/pl011uart.h"
 
 #include "console/console.h"
 #include "ui/ui_terminal_to_commodore.h"
