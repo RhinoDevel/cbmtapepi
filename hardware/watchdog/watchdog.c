@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "watchdog.h"
-#include "../../mem/mem.h"
+#include "../../lib/mem/mem.h"
 #include "../peribase.h"
 
 // Power management, reset controller and watchdog registers:

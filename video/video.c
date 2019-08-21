@@ -4,7 +4,7 @@
 #include "video.h"
 #include "../data/rhino.h"
 #include "../data/ascii.h"
-#include "../mem/mem.h"
+#include "../lib/mem/mem.h"
 #include "../mailbox/mailbox.h"
 //#include "../lib/assert.h"
 

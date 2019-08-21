@@ -105,7 +105,7 @@ echo Compiling..
 $MT_CC kernel_main.c -o kernel_main.o
 $MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC mailbox/mailbox.c -o mailbox/mailbox.o
-$MT_CC mem/mem.c -o mem/mem.o
+$MT_CC lib/mem/mem.c -o lib/mem/mem.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
@@ -146,7 +146,7 @@ arm-none-eabi-ld \
     kernel_main.o \
     hardware/baregpio/baregpio.o \
     mailbox/mailbox.o \
-    mem/mem.o \
+    lib/mem/mem.o \
     hardware/armtimer/armtimer.o \
     busywait/busywait.o \
     hardware/miniuart/miniuart.o \

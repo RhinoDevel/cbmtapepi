@@ -18,7 +18,7 @@
 #include "pl011uart.h"
 #include "../peribase.h"
 #include "../armtimer/armtimer.h"
-#include "../../mem/mem.h"
+#include "../../lib/mem/mem.h"
 #include "../baregpio/baregpio.h"
 
 // UART0 (PL011) register map (see page 177):

@@ -6,7 +6,7 @@
 
 #include "../lib/alloc/alloc.h"
 #include "../lib/console/console.h"
-#include "../mem/mem.h"
+#include "../lib/mem/mem.h"
 #include "../lib/assert.h"
 #include "tape_extract_buf.h"
 #include "tape_input.h"

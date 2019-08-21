@@ -9,7 +9,7 @@
 
 #include "armtimer.h"
 #include "../peribase.h"
-#include "../../mem/mem.h"
+#include "../../lib/mem/mem.h"
 
 #include <stdbool.h>
 

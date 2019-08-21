@@ -45,7 +45,7 @@
 
 #include "baregpio.h"
 #include "../peribase.h"
-#include "../../mem/mem.h"
+#include "../../lib/mem/mem.h"
 #include "../armtimer/armtimer.h"
 
 #define GPIO_OFFSET 0x00200000

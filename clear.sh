@@ -7,7 +7,7 @@ rm lib/str/str.o
 rm lib/calc/calc.o
 rm lib/console/console.o
 rm mailbox/mailbox.o
-rm mem/mem.o
+rm lib/mem/mem.o
 rm hardware/miniuart/miniuart.o
 rm hardware/pl011uart/pl011uart.o
 rm statetoggle/statetoggle.o

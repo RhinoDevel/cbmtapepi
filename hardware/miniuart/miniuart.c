@@ -17,7 +17,7 @@
 
 #include "miniuart.h"
 #include "../auxiliary.h"
-#include "../../mem/mem.h"
+#include "../../lib/mem/mem.h"
 #include "../armtimer/armtimer.h"
 #include "../baregpio/baregpio.h"
 

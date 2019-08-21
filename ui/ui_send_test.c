@@ -25,7 +25,7 @@ void ui_send_test()
         .is_stop_requested = 0,
         //
         // If this is set to 0 (or just ignored), memset() must be available to
-        // the linker (see mem/mem.h)!
+        // the linker (see lib/mem/mem.h)!
 
         .buf = alloc_alloc(len * sizeof (uint8_t)),
         .file_len = len
