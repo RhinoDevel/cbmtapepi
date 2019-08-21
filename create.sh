@@ -130,7 +130,7 @@ $MT_CC lib/calc/calc.c -o lib/calc/calc.o
 $MT_CC lib/alloc/alloc.c -o lib/alloc/alloc.o
 $MT_CC lib/alloc/alloc_mem.c -o lib/alloc/alloc_mem.o
 $MT_CC lib/alloc/nodemem.c -o lib/alloc/nodemem.o
-$MT_CC video/video.c -o video/video.o
+$MT_CC hardware/video/video.c -o hardware/video/video.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
 $MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
 $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
@@ -171,7 +171,7 @@ arm-none-eabi-ld \
     lib/alloc/alloc_mem.o \
     lib/alloc/nodemem.o \
     hardware/watchdog/watchdog.o \
-    video/video.o \
+    hardware/video/video.o \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
     -o kernel.elf

@@ -2,11 +2,11 @@
 // Marcel Timm, RhinoDevel, 2019aug07
 
 #include "video.h"
-#include "../data/rhino.h"
-#include "../data/ascii.h"
-#include "../lib/mem/mem.h"
-#include "../hardware/mailbox/mailbox.h"
-//#include "../lib/assert.h"
+#include "../../data/rhino.h"
+#include "../../data/ascii.h"
+#include "../../lib/mem/mem.h"
+#include "../mailbox/mailbox.h"
+//#include "../../lib/assert.h"
 
 #include <stdint.h>
 

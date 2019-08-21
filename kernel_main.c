@@ -21,7 +21,7 @@
 #include "lib/assert.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
-#include "video/video.h"
+#include "hardware/video/video.h"
 
 extern uint32_t __heap; // See memmap.ld.
 
