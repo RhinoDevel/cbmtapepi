@@ -16,7 +16,7 @@
 #include <stdbool.h>
 
 #include "miniuart.h"
-#include "../auxiliary.h"
+#include "../hardware/auxiliary.h"
 #include "../mem/mem.h"
 #include "../armtimer/armtimer.h"
 #include "../baregpio/baregpio.h"
