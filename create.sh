@@ -131,6 +131,7 @@ $MT_CC lib/alloc/alloc.c -o lib/alloc/alloc.o
 $MT_CC lib/alloc/alloc_mem.c -o lib/alloc/alloc_mem.o
 $MT_CC lib/alloc/nodemem.c -o lib/alloc/nodemem.o
 $MT_CC hardware/video/video.c -o hardware/video/video.o
+$MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
 $MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
 $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
@@ -172,6 +173,7 @@ arm-none-eabi-ld \
     lib/alloc/nodemem.o \
     hardware/watchdog/watchdog.o \
     hardware/video/video.o \
+    hardware/framebuffer/framebuffer.o \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
     -o kernel.elf

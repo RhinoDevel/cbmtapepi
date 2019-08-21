@@ -27,6 +27,7 @@ rm ui/ui.o
 rm lib/alloc/alloc.o
 rm lib/alloc/alloc_mem.o
 rm lib/alloc/nodemem.o
+rm hardware/framebuffer/framebuffer.o
 rm hardware/video/video.o
 rm hardware/watchdog/watchdog.o
 rm lib/xmodem/xmodem.o

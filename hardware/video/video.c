@@ -2,10 +2,10 @@
 // Marcel Timm, RhinoDevel, 2019aug07
 
 #include "video.h"
+#include "../framebuffer/framebuffer.h"
 #include "../../data/rhino.h"
 #include "../../data/ascii.h"
 #include "../../lib/mem/mem.h"
-#include "../mailbox/mailbox.h"
 //#include "../../lib/assert.h"
 
 #include <stdint.h>
@@ -15,19 +15,11 @@
 static uint32_t const s_char_width = 8;
 static uint32_t const s_char_height = 8;
 
-// Framebuffer parameters:
-//
-static uint32_t const s_physical_width = 640;
-static uint32_t const s_physical_height = 480;
-static uint32_t const s_fb_width = s_physical_width;
-static uint32_t const s_fb_height = s_physical_height;
-static uint32_t const s_bit_depth = 32;
-
 static uint32_t const s_color_foreground = 0xFF00FF00;//0xFF6C5EB5;
 static uint32_t const s_color_background = 0xFF000000;//0xFF352879;
 
-static uint32_t const s_char_row_count = s_fb_height / s_char_height;
-static uint32_t const s_char_col_count = s_fb_width / s_char_width;
+static uint32_t const s_char_row_count = s_framebuffer_height / s_char_height;
+static uint32_t const s_char_col_count = s_framebuffer_width / s_char_width;
 
 static uint32_t s_char_cursor_row = 0; // In characters.
 static uint32_t s_char_cursor_col = 0; // In characters.
@@ -45,7 +37,7 @@ static void draw_fill(
 
 static void draw_fill_screen(uint32_t const val)
 {
-    draw_fill(val, s_fb, s_fb_width * s_fb_height);
+    draw_fill(val, s_fb, s_framebuffer_width * s_framebuffer_height);
 }
 
 static void draw_background()
@@ -55,8 +47,9 @@ static void draw_background()
 
 static void scroll_up(uint32_t const fb_row_count)
 {
-    uint32_t const offset = fb_row_count * s_fb_width;
-    uint32_t const * const fb_lim = s_fb + s_fb_height * s_fb_width - offset;
+    uint32_t const offset = fb_row_count * s_framebuffer_width;
+    uint32_t const * const fb_lim =
+        s_fb + s_framebuffer_height * s_framebuffer_width - offset;
     uint32_t* fb;
 
     for(fb = s_fb; fb < fb_lim; ++fb)
@@ -110,7 +103,7 @@ static void draw_visible_char_at_cursor(
 
     for(uint32_t fb_row = fb_row_start; fb_row < fb_row_lim; ++fb_row)
     {
-        uint32_t * const fb_row_ptr = s_fb + fb_row * s_fb_width;
+        uint32_t * const fb_row_ptr = s_fb + fb_row * s_framebuffer_width;
         uint8_t char_row_buf = s_ascii[ascii_index][char_row];
 
         for(uint32_t fb_col = fb_col_start;fb_col < fb_col_lim;++fb_col)
@@ -164,8 +157,8 @@ static void draw_char_at_cursor(uint8_t const ascii_index)
 
 static void draw_rhino()
 {
-    static uint32_t const pos_x = s_fb_width - s_rhino_width;
-    static uint32_t const pos_y = 0/*s_fb_height - s_rhino_height*/;
+    static uint32_t const pos_x = s_framebuffer_width - s_rhino_width;
+    static uint32_t const pos_y = 0/*s_framebuffer_height - s_rhino_height*/;
     static uint32_t const row_lim = pos_y + s_rhino_height;
     static uint32_t const col_lim = pos_x + s_rhino_width;
 
@@ -173,7 +166,7 @@ static void draw_rhino()
 
     for(uint32_t row = pos_y;row < row_lim;++row)
     {
-        uint32_t * const fb_row = s_fb + row * s_fb_width;
+        uint32_t * const fb_row = s_fb + row * s_framebuffer_width;
 
         for(uint32_t col = pos_x;col < col_lim;++col)
         {
@@ -195,42 +188,9 @@ void video_write_byte(uint8_t const byte)
     draw_char_at_cursor(byte);
 }
 
-// TODO: May not work reliably on anything newer than Raspberry Pi 1!
-//
-// TODO: Memory barriers or data cache invalidation/flushing may be required!
-//
 void video_init()
 {
-    static uint32_t const channel_nr = 1; // Of mailbox 0.
-
-    volatile uint32_t msg_buf[10] __attribute__((aligned (16)));
-    //
-    // "__attribute__", etc. seems to be GCC-specific..
-
-    // DEPRECATED mailbox?
-    //
-    // See: https://github.com/raspberrypi/firmware/wiki/Mailbox-framebuffer-interface
-
-    msg_buf[0] = s_physical_width; // Physical width.
-    msg_buf[1] = s_physical_height; // Physical height.
-    msg_buf[2] = s_fb_width; // Virtual width.
-    msg_buf[3] = s_fb_height; // Virtual height.
-    msg_buf[4] = 0; // Pitch.
-    msg_buf[5] = s_bit_depth; // Bit depth.
-    msg_buf[6] = 0; // X offset of virtual framebuffer.
-    msg_buf[7] = 0; // Y offset of virtual framebuffer.
-    msg_buf[8] = 0; // Framebuffer address.
-    msg_buf[9] = 0; // Framebuffer size.
-
-    mailbox_write(
-        channel_nr,
-        (0x40000000 + (uint32_t)msg_buf) // TODO: Replace hard-coded conversion to physical memory address. Assuming L2 cache to be enabled, otherwise 0xC0000000 would be correct!
-            >> 4);
-    mailbox_read(channel_nr);
-
-    //assert(msg_buf[4] == 0); // No support for pitch implemented..
-
-    s_fb = (uint32_t*)msg_buf[8];
+    s_fb = framebuffer_get();
 
     draw_background();
     draw_rhino();

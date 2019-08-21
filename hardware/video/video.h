@@ -6,8 +6,8 @@
 
 #include <stdint.h>
 
-void video_init();
-
 void video_write_byte(uint8_t const byte);
+
+void video_init();
 
 #endif //MT_VIDEO
