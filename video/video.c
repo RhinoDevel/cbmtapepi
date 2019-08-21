@@ -3,7 +3,7 @@
 
 #include "video.h"
 #include "rhino.h"
-#include "../ascii/ascii.h"
+#include "../data/ascii.h"
 #include "../mem/mem.h"
 #include "../mailbox/mailbox.h"
 //#include "../assert.h"
