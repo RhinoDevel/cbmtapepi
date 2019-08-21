@@ -1,6 +1,6 @@
 #!/bin/sh
 
-rm armtimer/armtimer.o
+rm hardware/armtimer/armtimer.o
 rm baregpio/baregpio.o
 rm busywait/busywait.o
 rm str/str.o

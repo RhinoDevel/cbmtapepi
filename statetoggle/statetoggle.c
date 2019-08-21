@@ -5,7 +5,7 @@
 
 #include "../console/console.h"
 #include "../baregpio/baregpio.h"
-#include "../armtimer/armtimer.h"
+#include "../hardware/armtimer/armtimer.h"
 
 #include <stdbool.h>
 #include <stdint.h>

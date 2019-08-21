@@ -8,7 +8,7 @@
 #include "tape_symbol.h"
 #include "../baregpio/baregpio.h"
 #include "../console/console.h"
-#include "../armtimer/armtimer.h"
+#include "../hardware/armtimer/armtimer.h"
 #include "../assert.h"
 
 // TODO: Replace:

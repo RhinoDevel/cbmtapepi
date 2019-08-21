@@ -17,7 +17,7 @@
 
 #include "pl011uart.h"
 #include "../hardware/peribase.h"
-#include "../armtimer/armtimer.h"
+#include "../hardware/armtimer/armtimer.h"
 #include "../mem/mem.h"
 #include "../baregpio/baregpio.h"
 

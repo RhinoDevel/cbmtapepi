@@ -8,8 +8,8 @@
 // together with that document!
 
 #include "armtimer.h"
-#include "../hardware/peribase.h"
-#include "../mem/mem.h"
+#include "../peribase.h"
+#include "../../mem/mem.h"
 
 #include <stdbool.h>
 

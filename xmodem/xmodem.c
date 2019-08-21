@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../armtimer/armtimer.h"
+#include "../hardware/armtimer/armtimer.h"
 //#include "../console/console.h"
 #include "xmodem_receive_params.h"
 #include "xmodem.h"

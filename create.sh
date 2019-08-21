@@ -106,7 +106,7 @@ $MT_CC kernel_main.c -o kernel_main.o
 $MT_CC baregpio/baregpio.c -o baregpio/baregpio.o
 $MT_CC mailbox/mailbox.c -o mailbox/mailbox.o
 $MT_CC mem/mem.c -o mem/mem.o
-$MT_CC armtimer/armtimer.c -o armtimer/armtimer.o
+$MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC miniuart/miniuart.c -o miniuart/miniuart.o
 $MT_CC pl011uart/pl011uart.c -o pl011uart/pl011uart.o
@@ -147,7 +147,7 @@ arm-none-eabi-ld \
     baregpio/baregpio.o \
     mailbox/mailbox.o \
     mem/mem.o \
-    armtimer/armtimer.o \
+    hardware/armtimer/armtimer.o \
     busywait/busywait.o \
     miniuart/miniuart.o \
     pl011uart/pl011uart.o \

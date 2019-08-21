@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../armtimer/armtimer.h"
+#include "../hardware/armtimer/armtimer.h"
 #include "../alloc/alloc.h"
 #include "../calc/calc.h"
 //#include "../assert.h"

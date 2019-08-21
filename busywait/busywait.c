@@ -2,7 +2,7 @@
 // Marcel Timm, RhinoDevel, 2018jan24
 
 #include "busywait.h"
-#include "../armtimer/armtimer.h"
+#include "../hardware/armtimer/armtimer.h"
 
 void busywait_seconds(uint32_t const seconds)
 {
@@ -38,5 +38,5 @@ void busywait_nanoseconds(uint32_t const nanoseconds)
 
 void busywait_clockcycles(uint32_t const clockcycles)
 {
-    busywait_nanoseconds(clockcycles * 4); // (1 / 250) MHz == 4ns. 
+    busywait_nanoseconds(clockcycles * 4); // (1 / 250) MHz == 4ns.
 }
