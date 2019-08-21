@@ -103,7 +103,7 @@ echo Compiling..
 # Compile:
 
 $MT_CC kernel_main.c -o kernel_main.o
-$MT_CC baregpio/baregpio.c -o baregpio/baregpio.o
+$MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC mailbox/mailbox.c -o mailbox/mailbox.o
 $MT_CC mem/mem.c -o mem/mem.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
@@ -144,7 +144,7 @@ arm-none-eabi-ld \
     -T memmap.ld \
     boot.o \
     kernel_main.o \
-    baregpio/baregpio.o \
+    hardware/baregpio/baregpio.o \
     mailbox/mailbox.o \
     mem/mem.o \
     hardware/armtimer/armtimer.o \

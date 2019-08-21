@@ -5,7 +5,7 @@
 
 #include "tape_init.h"
 
-#include "../baregpio/baregpio.h"
+#include "../hardware/baregpio/baregpio.h"
 #include "../console/console.h"
 #include "../config.h"
 

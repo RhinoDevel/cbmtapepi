@@ -44,9 +44,9 @@
 //    BCM 2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27
 
 #include "baregpio.h"
-#include "../hardware/peribase.h"
-#include "../mem/mem.h"
-#include "../hardware/armtimer/armtimer.h"
+#include "../peribase.h"
+#include "../../mem/mem.h"
+#include "../armtimer/armtimer.h"
 
 #define GPIO_OFFSET 0x00200000
 

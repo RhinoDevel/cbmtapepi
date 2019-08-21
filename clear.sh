@@ -1,7 +1,7 @@
 #!/bin/sh
 
 rm hardware/armtimer/armtimer.o
-rm baregpio/baregpio.o
+rm hardware/baregpio/baregpio.o
 rm busywait/busywait.o
 rm str/str.o
 rm calc/calc.o

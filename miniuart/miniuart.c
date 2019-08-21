@@ -19,7 +19,7 @@
 #include "../hardware/auxiliary.h"
 #include "../mem/mem.h"
 #include "../hardware/armtimer/armtimer.h"
-#include "../baregpio/baregpio.h"
+#include "../hardware/baregpio/baregpio.h"
 
 bool miniuart_is_ready_to_read()
 {

@@ -4,7 +4,7 @@
 #include "statetoggle.h"
 
 #include "../console/console.h"
-#include "../baregpio/baregpio.h"
+#include "../hardware/baregpio/baregpio.h"
 #include "../hardware/armtimer/armtimer.h"
 
 #include <stdbool.h>
