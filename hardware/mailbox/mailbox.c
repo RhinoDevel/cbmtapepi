@@ -2,9 +2,9 @@
 // Marcel Timm, RhinoDevel, 2019aug08
 
 #include "mailbox.h"
-#include "../lib/mem/mem.h"
-#include "../hardware/peribase.h"
-//#include "../lib/assert.h"
+#include "../../lib/mem/mem.h"
+#include "../peribase.h"
+//#include "../../lib/assert.h"
 
 #include <stdint.h>
 
