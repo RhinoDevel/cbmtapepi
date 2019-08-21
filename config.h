@@ -19,12 +19,12 @@
 // (it makes a lot of sense to also define NDEBUG, if MT_INTERACTIVE is
 // defined):
 //
-//#define MT_INTERACTIVE
+#define MT_INTERACTIVE
 
 // Set this additionally (for 32 bit):
 //
 // ./alloc/allocconf.h: #define MT_ALLOC_BITS MT_ALLOC_BITS_32
 
-// Also see ./peribase.h
+// Also see ./hardware/peribase.h
 
 #endif //MT_CONFIG

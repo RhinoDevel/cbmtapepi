@@ -16,7 +16,7 @@
 #include <stdbool.h>
 
 #include "pl011uart.h"
-#include "../peribase.h"
+#include "../hardware/peribase.h"
 #include "../armtimer/armtimer.h"
 #include "../mem/mem.h"
 #include "../baregpio/baregpio.h"

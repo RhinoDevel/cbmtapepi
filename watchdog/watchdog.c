@@ -5,7 +5,7 @@
 
 #include "watchdog.h"
 #include "../mem/mem.h"
-#include "../peribase.h"
+#include "../hardware/peribase.h"
 
 // Power management, reset controller and watchdog registers:
 //

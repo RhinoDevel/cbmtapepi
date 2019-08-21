@@ -3,7 +3,7 @@
 
 #include "mailbox.h"
 #include "../mem/mem.h"
-#include "../peribase.h"
+#include "../hardware/peribase.h"
 //#include "../assert.h"
 
 #include <stdint.h>

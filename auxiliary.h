@@ -10,7 +10,7 @@
 #ifndef MT_AUXILIARY
 #define MT_AUXILIARY
 
-#include "peribase.h"
+#include "hardware/peribase.h"
 
 // Auxiliary peripherals register map (see page 8):
 //
