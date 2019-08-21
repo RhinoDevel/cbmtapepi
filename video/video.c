@@ -111,7 +111,7 @@ static void draw_visible_char_at_cursor(
     for(uint32_t fb_row = fb_row_start; fb_row < fb_row_lim; ++fb_row)
     {
         uint32_t * const fb_row_ptr = s_fb + fb_row * s_fb_width;
-        uint8_t char_row_buf = ascii[ascii_index][char_row];
+        uint8_t char_row_buf = s_ascii[ascii_index][char_row];
 
         for(uint32_t fb_col = fb_col_start;fb_col < fb_col_lim;++fb_col)
         {
