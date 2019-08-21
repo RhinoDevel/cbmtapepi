@@ -10,6 +10,7 @@
 #include "../xmodem/xmodem.h"
 #include "../xmodem/xmodem_receive_params.h"
 #include "../hardware/miniuart/miniuart.h"
+#include "../hardware/armtimer/armtimer.h"
 
 void ui_receive_test()
 {
@@ -18,6 +19,8 @@ void ui_receive_test()
     struct xmodem_receive_params p;
     uint32_t count = 0;
 
+    p.timer_start_one_mhz = armtimer_start_one_mhz;
+    p.timer_get_tick = armtimer_get_tick;
     p.write_byte = miniuart_write_byte;
     p.read_byte = miniuart_read_byte;
     p.is_ready_to_read = miniuart_is_ready_to_read;

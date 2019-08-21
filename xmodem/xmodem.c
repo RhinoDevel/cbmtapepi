@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../hardware/armtimer/armtimer.h"
 //#include "../lib/console/console.h"
 #include "xmodem_receive_params.h"
 #include "xmodem.h"
@@ -50,17 +49,17 @@ bool xmodem_receive(
 
     //console_writeline("xmodem_receive: Starting timer with 1 MHz..");
 
-    armtimer_start_one_mhz();
+    p->timer_start_one_mhz();
 
     //console_writeline("xmodem_receive: Starting initial NAK writes..");
 
     // (not going to deal with timeouts other than here)
     //
     p->write_byte(NAK);
-    rx = armtimer_get_tick();
+    rx = p->timer_get_tick();
     do
     {
-        if(armtimer_get_tick() - rx >= NAKSOH_TIMEOUT)
+        if(p->timer_get_tick() - rx >= NAKSOH_TIMEOUT)
         {
             p->write_byte(NAK);
             rx += NAKSOH_TIMEOUT;
@@ -98,8 +97,8 @@ bool xmodem_receive(
 
                         p->write_byte(ACK);
 
-                        rx = armtimer_get_tick();
-                        while(armtimer_get_tick() - rx < WAIT_AFTER_EOT_TIMEOUT)
+                        rx = p->timer_get_tick();
+                        while(p->timer_get_tick() - rx < WAIT_AFTER_EOT_TIMEOUT)
                         {
                             // (do nothing)
                         }
@@ -223,8 +222,8 @@ bool xmodem_receive(
     p->write_byte(CAN);
     p->write_byte(CAN);
 
-    rx = armtimer_get_tick();
-    while(armtimer_get_tick() - rx < WAIT_AFTER_CAN_TIMEOUT)
+    rx = p->timer_get_tick();
+    while(p->timer_get_tick() - rx < WAIT_AFTER_CAN_TIMEOUT)
     {
         // (do nothing)
     }
