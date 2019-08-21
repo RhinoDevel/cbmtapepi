@@ -2,7 +2,7 @@
 // Marcel Timm, RhinoDevel, 2019aug07
 
 #include "video.h"
-#include "rhino.h"
+#include "../data/rhino.h"
 #include "../data/ascii.h"
 #include "../mem/mem.h"
 #include "../mailbox/mailbox.h"
