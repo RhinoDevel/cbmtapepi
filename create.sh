@@ -125,7 +125,7 @@ $MT_CC ui/ui_send_test.c -o ui/ui_send_test.o
 $MT_CC ui/ui_terminal_to_commodore.c -o ui/ui_terminal_to_commodore.o
 $MT_CC ui/ui_commodore_to_terminal.c -o ui/ui_commodore_to_terminal.o
 $MT_CC ui/ui.c -o ui/ui.o
-$MT_CC console/console.c -o console/console.o
+$MT_CC lib/console/console.c -o lib/console/console.o
 $MT_CC lib/str/str.c -o lib/str/str.o
 $MT_CC lib/calc/calc.c -o lib/calc/calc.o
 $MT_CC lib/alloc/alloc.c -o lib/alloc/alloc.o
@@ -166,7 +166,7 @@ arm-none-eabi-ld \
     ui/ui_terminal_to_commodore.o \
     ui/ui_commodore_to_terminal.o \
     ui/ui.o \
-    console/console.o \
+    lib/console/console.o \
     lib/str/str.o \
     lib/calc/calc.o \
     lib/alloc/alloc.o \

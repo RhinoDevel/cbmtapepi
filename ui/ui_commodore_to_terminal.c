@@ -7,7 +7,7 @@
 
 #include "../lib/alloc/alloc.h"
 #include "../config.h"
-#include "../console/console.h"
+#include "../lib/console/console.h"
 #include "../tape/tape_receive.h"
 #include "../tape/tape_input.h"
 #include "../tape/tape_receive_params.h"

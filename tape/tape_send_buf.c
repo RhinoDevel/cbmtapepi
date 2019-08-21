@@ -8,7 +8,7 @@
 #include "tape_symbol.h"
 #include "../hardware/armtimer/armtimer.h"
 #include "../hardware/baregpio/baregpio.h"
-#include "../console/console.h"
+#include "../lib/console/console.h"
 
 // Short: 2840 Hz
 //

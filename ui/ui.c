@@ -9,7 +9,7 @@
 #include "ui_send_test.h"
 #include "ui_terminal_to_commodore.h"
 #include "ui_commodore_to_terminal.h"
-#include "../console/console.h"
+#include "../lib/console/console.h"
 #include "../hardware/watchdog/watchdog.h"
 
 static void reset()

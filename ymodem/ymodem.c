@@ -17,7 +17,7 @@
 #include "ymodem.h"
 
 // #ifndef NDEBUG
-//     #include "../console/console.h"
+//     #include "../lib/console/console.h"
 // #endif //NDEBUG
 
 // YMODEM documentation at: http://pauillac.inria.fr/~doligez/zmodem/ymodem.txt

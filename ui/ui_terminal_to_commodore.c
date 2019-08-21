@@ -6,7 +6,7 @@
 #include "ui_terminal_to_commodore.h"
 
 #include "../config.h"
-#include "../console/console.h"
+#include "../lib/console/console.h"
 #include "../lib/alloc/alloc.h"
 #include "../ymodem/ymodem.h"
 #include "../ymodem/ymodem_receive_params.h"

@@ -3,7 +3,7 @@
 
 #include "statetoggle.h"
 
-#include "../console/console.h"
+#include "../lib/console/console.h"
 #include "../hardware/baregpio/baregpio.h"
 #include "../hardware/armtimer/armtimer.h"
 

@@ -5,7 +5,7 @@
 
 #include "ui_receive_test.h"
 
-#include "../console/console.h"
+#include "../lib/console/console.h"
 #include "../lib/alloc/alloc.h"
 #include "../xmodem/xmodem.h"
 #include "../xmodem/xmodem_receive_params.h"

@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "../hardware/baregpio/baregpio.h"
-#include "../console/console.h"
+#include "../lib/console/console.h"
 
 #include "tape_fill_buf.h"
 #include "tape_send_buf.h"

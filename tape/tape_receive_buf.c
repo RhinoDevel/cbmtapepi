@@ -7,7 +7,7 @@
 #include "tape_receive_buf.h"
 #include "tape_symbol.h"
 #include "../hardware/baregpio/baregpio.h"
-#include "../console/console.h"
+#include "../lib/console/console.h"
 #include "../hardware/armtimer/armtimer.h"
 #include "../lib/assert.h"
 
