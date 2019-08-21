@@ -3,7 +3,7 @@
 rm hardware/armtimer/armtimer.o
 rm hardware/baregpio/baregpio.o
 rm busywait/busywait.o
-rm str/str.o
+rm lib/str/str.o
 rm calc/calc.o
 rm console/console.o
 rm mailbox/mailbox.o
