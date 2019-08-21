@@ -7,8 +7,8 @@
 
 #include "../lib/console/console.h"
 #include "../lib/alloc/alloc.h"
-#include "../xmodem/xmodem.h"
-#include "../xmodem/xmodem_receive_params.h"
+#include "../lib/xmodem/xmodem.h"
+#include "../lib/xmodem/xmodem_receive_params.h"
 #include "../hardware/miniuart/miniuart.h"
 #include "../hardware/armtimer/armtimer.h"
 

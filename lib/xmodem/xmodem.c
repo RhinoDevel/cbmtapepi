@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//#include "../lib/console/console.h"
+//#include "../console/console.h"
 #include "xmodem_receive_params.h"
 #include "xmodem.h"
 

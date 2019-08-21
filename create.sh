@@ -133,8 +133,8 @@ $MT_CC lib/alloc/alloc_mem.c -o lib/alloc/alloc_mem.o
 $MT_CC lib/alloc/nodemem.c -o lib/alloc/nodemem.o
 $MT_CC video/video.c -o video/video.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
-$MT_CC xmodem/xmodem.c -o xmodem/xmodem.o
-$MT_CC ymodem/ymodem.c -o ymodem/ymodem.o
+$MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
+$MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
 
 echo Linking..
 
@@ -174,8 +174,8 @@ arm-none-eabi-ld \
     lib/alloc/nodemem.o \
     hardware/watchdog/watchdog.o \
     video/video.o \
-    xmodem/xmodem.o \
-    ymodem/ymodem.o \
+    lib/xmodem/xmodem.o \
+    lib/ymodem/ymodem.o \
     -o kernel.elf
 
 echo Extracting..

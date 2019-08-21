@@ -11,9 +11,9 @@
 #include "../tape/tape_receive.h"
 #include "../tape/tape_input.h"
 #include "../tape/tape_receive_params.h"
-#include "../ymodem/ymodem_send_params.h"
-#include "../ymodem/ymodem_send_err.h"
-#include "../ymodem/ymodem.h"
+#include "../lib/ymodem/ymodem_send_params.h"
+#include "../lib/ymodem/ymodem_send_err.h"
+#include "../lib/ymodem/ymodem.h"
 #include "../hardware/miniuart/miniuart.h"
 #include "../statetoggle/statetoggle.h"
 

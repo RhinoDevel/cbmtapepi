@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "../lib/alloc/alloc.h"
-#include "../lib/calc/calc.h"
-//#include "../lib/assert.h"
+#include "../alloc/alloc.h"
+#include "../calc/calc.h"
+//#include "../assert.h"
 #include "ymodem_send_params.h"
 #include "ymodem_send_state.h"
 #include "ymodem_send_err.h"
@@ -16,7 +16,7 @@
 #include "ymodem.h"
 
 // #ifndef NDEBUG
-//     #include "../lib/console/console.h"
+//     #include "../console/console.h"
 // #endif //NDEBUG
 
 // YMODEM documentation at: http://pauillac.inria.fr/~doligez/zmodem/ymodem.txt

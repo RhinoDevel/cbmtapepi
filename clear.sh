@@ -30,8 +30,8 @@ rm lib/alloc/alloc_mem.o
 rm lib/alloc/nodemem.o
 rm video/video.o
 rm hardware/watchdog/watchdog.o
-rm xmodem/xmodem.o
-rm ymodem/ymodem.o
+rm lib/xmodem/xmodem.o
+rm lib/ymodem/ymodem.o
 
 rm boot.o
 rm kernel_main.o

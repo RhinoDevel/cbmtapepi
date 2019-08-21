@@ -7,9 +7,9 @@
 
 #include "../lib/console/console.h"
 #include "../lib/alloc/alloc.h"
-#include "../ymodem/ymodem.h"
-#include "../ymodem/ymodem_send_params.h"
-#include "../ymodem/ymodem_send_err.h"
+#include "../lib/ymodem/ymodem.h"
+#include "../lib/ymodem/ymodem_send_params.h"
+#include "../lib/ymodem/ymodem_send_err.h"
 #include "../hardware/miniuart/miniuart.h"
 #include "../statetoggle/statetoggle.h"
 
