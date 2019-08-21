@@ -107,7 +107,6 @@ $MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC mailbox/mailbox.c -o mailbox/mailbox.o
 $MT_CC lib/mem/mem.c -o lib/mem/mem.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
-$MT_CC busywait/busywait.c -o busywait/busywait.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
 $MT_CC statetoggle/statetoggle.c -o statetoggle/statetoggle.o
@@ -148,7 +147,6 @@ arm-none-eabi-ld \
     mailbox/mailbox.o \
     lib/mem/mem.o \
     hardware/armtimer/armtimer.o \
-    busywait/busywait.o \
     hardware/miniuart/miniuart.o \
     hardware/pl011uart/pl011uart.o \
     statetoggle/statetoggle.o \

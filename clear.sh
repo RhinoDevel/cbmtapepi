@@ -2,7 +2,6 @@
 
 rm hardware/armtimer/armtimer.o
 rm hardware/baregpio/baregpio.o
-rm busywait/busywait.o
 rm lib/str/str.o
 rm lib/calc/calc.o
 rm lib/console/console.o
