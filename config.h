@@ -23,7 +23,7 @@
 
 // Set this additionally (for 32 bit):
 //
-// ./alloc/allocconf.h: #define MT_ALLOC_BITS MT_ALLOC_BITS_32
+// ./lib/alloc/allocconf.h: #define MT_ALLOC_BITS MT_ALLOC_BITS_32
 
 // Also see ./hardware/peribase.h
 
