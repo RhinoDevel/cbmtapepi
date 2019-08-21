@@ -29,7 +29,7 @@ rm alloc/alloc.o
 rm alloc/alloc_mem.o
 rm alloc/nodemem.o
 rm video/video.o
-rm watchdog/watchdog.o
+rm hardware/watchdog/watchdog.o
 rm xmodem/xmodem.o
 rm ymodem/ymodem.o
 

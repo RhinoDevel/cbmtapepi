@@ -132,7 +132,7 @@ $MT_CC alloc/alloc.c -o alloc/alloc.o
 $MT_CC alloc/alloc_mem.c -o alloc/alloc_mem.o
 $MT_CC alloc/nodemem.c -o alloc/nodemem.o
 $MT_CC video/video.c -o video/video.o
-$MT_CC watchdog/watchdog.c -o watchdog/watchdog.o
+$MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
 $MT_CC xmodem/xmodem.c -o xmodem/xmodem.o
 $MT_CC ymodem/ymodem.c -o ymodem/ymodem.o
 
@@ -172,7 +172,7 @@ arm-none-eabi-ld \
     alloc/alloc.o \
     alloc/alloc_mem.o \
     alloc/nodemem.o \
-    watchdog/watchdog.o \
+    hardware/watchdog/watchdog.o \
     video/video.o \
     xmodem/xmodem.o \
     ymodem/ymodem.o \

@@ -10,7 +10,7 @@
 #include "ui_terminal_to_commodore.h"
 #include "ui_commodore_to_terminal.h"
 #include "../console/console.h"
-#include "../watchdog/watchdog.h"
+#include "../hardware/watchdog/watchdog.h"
 
 static void reset()
 {
