@@ -141,7 +141,7 @@ echo Linking..
 # Link:
 #
 arm-none-eabi-ld \
-    -T memmap.ld \
+    -T app/memmap.ld \
     app/boot.o \
     kernel_main.o \
     hardware/baregpio/baregpio.o \
