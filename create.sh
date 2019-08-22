@@ -95,8 +95,8 @@ echo Assembling..
 #
 arm-none-eabi-gcc \
     $OPTIONS_GCC_ALL \
-    -c boot.S \
-    -o boot.o
+    -c app/boot.S \
+    -o app/boot.o
 
 echo Compiling..
 
@@ -142,7 +142,7 @@ echo Linking..
 #
 arm-none-eabi-ld \
     -T memmap.ld \
-    boot.o \
+    app/boot.o \
     kernel_main.o \
     hardware/baregpio/baregpio.o \
     hardware/mailbox/mailbox.o \

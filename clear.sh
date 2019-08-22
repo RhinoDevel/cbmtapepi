@@ -33,7 +33,7 @@ rm hardware/watchdog/watchdog.o
 rm lib/xmodem/xmodem.o
 rm lib/ymodem/ymodem.o
 
-rm boot.o
+rm app/boot.o
 rm kernel_main.o
 rm kernel.elf
 rm kernel.img
