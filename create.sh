@@ -95,10 +95,7 @@ echo Assembling..
 
 # Assemble:
 #
-arm-none-eabi-gcc \
-    $OPTIONS_GCC_ALL \
-    -c app/boot.S \
-    -o app/boot.o
+arm-none-eabi-gcc $OPTIONS_GCC_ALL -c app/boot.S -o app/boot.o
 
 echo Compiling..
 
@@ -194,10 +191,7 @@ arm-none-eabi-ld \
 
 echo Extracting..
 
-arm-none-eabi-objcopy \
-    kernel.elf \
-    -O binary \
-    kernel.img
+arm-none-eabi-objcopy kernel.elf -O binary kernel.img
 
 echo Copying..
 
