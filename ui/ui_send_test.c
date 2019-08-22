@@ -11,7 +11,7 @@
 #include "../lib/ymodem/ymodem_send_params.h"
 #include "../lib/ymodem/ymodem_send_err.h"
 #include "../hardware/miniuart/miniuart.h"
-#include "../statetoggle/statetoggle.h"
+#include "../app/statetoggle/statetoggle.h"
 
 void ui_send_test()
 {

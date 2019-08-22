@@ -9,7 +9,7 @@ rm hardware/mailbox/mailbox.o
 rm lib/mem/mem.o
 rm hardware/miniuart/miniuart.o
 rm hardware/pl011uart/pl011uart.o
-rm statetoggle/statetoggle.o
+rm app/statetoggle/statetoggle.o
 rm tape/tape_fill_buf.o
 rm tape/tape_sample.o
 rm tape/tape_send.o

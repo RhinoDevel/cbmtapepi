@@ -17,7 +17,7 @@
 #include "../tape/tape_input.h"
 #include "../tape/tape_send_params.h"
 #include "../lib/str/str.h"
-#include "../statetoggle/statetoggle.h"
+#include "../app/statetoggle/statetoggle.h"
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
 {

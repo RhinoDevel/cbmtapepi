@@ -109,7 +109,7 @@ $MT_CC lib/mem/mem.c -o lib/mem/mem.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
-$MT_CC statetoggle/statetoggle.c -o statetoggle/statetoggle.o
+$MT_CC app/statetoggle/statetoggle.c -o app/statetoggle/statetoggle.o
 $MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
 $MT_CC tape/tape_send_buf.c -o tape/tape_send_buf.o
 $MT_CC tape/tape_sample.c -o tape/tape_sample.o
@@ -150,7 +150,7 @@ arm-none-eabi-ld \
     hardware/armtimer/armtimer.o \
     hardware/miniuart/miniuart.o \
     hardware/pl011uart/pl011uart.o \
-    statetoggle/statetoggle.o \
+    app/statetoggle/statetoggle.o \
     tape/tape_fill_buf.o \
     tape/tape_send_buf.o \
     tape/tape_sample.o \

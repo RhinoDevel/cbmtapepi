@@ -3,9 +3,9 @@
 
 #include "statetoggle.h"
 
-#include "../lib/console/console.h"
-#include "../hardware/baregpio/baregpio.h"
-#include "../hardware/armtimer/armtimer.h"
+#include "../../lib/console/console.h"
+#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/armtimer/armtimer.h"
 
 #include <stdbool.h>
 #include <stdint.h>
