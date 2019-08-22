@@ -9,19 +9,19 @@
 
 #include <stdint.h>
 
-#include "hardware/miniuart/miniuart.h"
-//#include "hardware/pl011uart/pl011uart.h"
+#include "../hardware/miniuart/miniuart.h"
+//#include "../hardware/pl011uart/pl011uart.h"
 
-#include "lib/console/console.h"
-#include "ui/ui_terminal_to_commodore.h"
-#include "ui/ui_commodore_to_terminal.h"
-#include "ui/ui.h"
-#include "app/config.h"
-#include "lib/alloc/alloc.h"
-#include "lib/assert.h"
-#include "tape/tape_init.h"
-#include "statetoggle/statetoggle.h"
-#include "lib/video/video.h"
+#include "../lib/console/console.h"
+#include "../ui/ui_terminal_to_commodore.h"
+#include "../ui/ui_commodore_to_terminal.h"
+#include "../ui/ui.h"
+#include "config.h"
+#include "../lib/alloc/alloc.h"
+#include "../lib/assert.h"
+#include "../tape/tape_init.h"
+#include "../statetoggle/statetoggle.h"
+#include "../lib/video/video.h"
 
 extern uint32_t __heap; // See memmap.ld.
 

@@ -102,7 +102,7 @@ echo Compiling..
 
 # Compile:
 
-$MT_CC kernel_main.c -o kernel_main.o
+$MT_CC app/kernel_main.c -o app/kernel_main.o
 $MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC hardware/mailbox/mailbox.c -o hardware/mailbox/mailbox.o
 $MT_CC lib/mem/mem.c -o lib/mem/mem.o
@@ -143,7 +143,7 @@ echo Linking..
 arm-none-eabi-ld \
     -T app/memmap.ld \
     app/boot.o \
-    kernel_main.o \
+    app/kernel_main.o \
     hardware/baregpio/baregpio.o \
     hardware/mailbox/mailbox.o \
     lib/mem/mem.o \
