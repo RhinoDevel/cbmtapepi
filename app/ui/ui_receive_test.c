@@ -5,12 +5,12 @@
 
 #include "ui_receive_test.h"
 
-#include "../lib/console/console.h"
-#include "../lib/alloc/alloc.h"
-#include "../lib/xmodem/xmodem.h"
-#include "../lib/xmodem/xmodem_receive_params.h"
-#include "../hardware/miniuart/miniuart.h"
-#include "../hardware/armtimer/armtimer.h"
+#include "../../lib/console/console.h"
+#include "../../lib/alloc/alloc.h"
+#include "../../lib/xmodem/xmodem.h"
+#include "../../lib/xmodem/xmodem_receive_params.h"
+#include "../../hardware/miniuart/miniuart.h"
+#include "../../hardware/armtimer/armtimer.h"
 
 void ui_receive_test()
 {

@@ -118,12 +118,12 @@ $MT_CC app/tape/tape_init.c -o app/tape/tape_init.o
 $MT_CC app/tape/tape_receive_buf.c -o app/tape/tape_receive_buf.o
 $MT_CC app/tape/tape_receive.c -o app/tape/tape_receive.o
 $MT_CC app/tape/tape_extract_buf.c -o app/tape/tape_extract_buf.o
-$MT_CC ui/ui_send_sample.c -o ui/ui_send_sample.o
-$MT_CC ui/ui_receive_test.c -o ui/ui_receive_test.o
-$MT_CC ui/ui_send_test.c -o ui/ui_send_test.o
-$MT_CC ui/ui_terminal_to_commodore.c -o ui/ui_terminal_to_commodore.o
-$MT_CC ui/ui_commodore_to_terminal.c -o ui/ui_commodore_to_terminal.o
-$MT_CC ui/ui.c -o ui/ui.o
+$MT_CC app/ui/ui_send_sample.c -o app/ui/ui_send_sample.o
+$MT_CC app/ui/ui_receive_test.c -o app/ui/ui_receive_test.o
+$MT_CC app/ui/ui_send_test.c -o app/ui/ui_send_test.o
+$MT_CC app/ui/ui_terminal_to_commodore.c -o app/ui/ui_terminal_to_commodore.o
+$MT_CC app/ui/ui_commodore_to_terminal.c -o app/ui/ui_commodore_to_terminal.o
+$MT_CC app/ui/ui.c -o app/ui/ui.o
 $MT_CC lib/console/console.c -o lib/console/console.o
 $MT_CC lib/str/str.c -o lib/str/str.o
 $MT_CC lib/calc/calc.c -o lib/calc/calc.o
@@ -159,12 +159,12 @@ arm-none-eabi-ld \
     app/tape/tape_receive_buf.o \
     app/tape/tape_receive.o \
     app/tape/tape_extract_buf.o \
-    ui/ui_send_sample.o \
-    ui/ui_receive_test.o \
-    ui/ui_send_test.o \
-    ui/ui_terminal_to_commodore.o \
-    ui/ui_commodore_to_terminal.o \
-    ui/ui.o \
+    app/ui/ui_send_sample.o \
+    app/ui/ui_receive_test.o \
+    app/ui/ui_send_test.o \
+    app/ui/ui_terminal_to_commodore.o \
+    app/ui/ui_commodore_to_terminal.o \
+    app/ui/ui.o \
     lib/console/console.o \
     lib/str/str.o \
     lib/calc/calc.o \

@@ -5,17 +5,17 @@
 
 #include "ui_commodore_to_terminal.h"
 
-#include "../lib/alloc/alloc.h"
-#include "../app/config.h"
-#include "../lib/console/console.h"
-#include "../app/tape/tape_receive.h"
-#include "../app/tape/tape_input.h"
-#include "../app/tape/tape_receive_params.h"
-#include "../lib/ymodem/ymodem_send_params.h"
-#include "../lib/ymodem/ymodem_send_err.h"
-#include "../lib/ymodem/ymodem.h"
-#include "../hardware/miniuart/miniuart.h"
-#include "../app/statetoggle/statetoggle.h"
+#include "../../lib/alloc/alloc.h"
+#include "../config.h"
+#include "../../lib/console/console.h"
+#include "../tape/tape_receive.h"
+#include "../tape/tape_input.h"
+#include "../tape/tape_receive_params.h"
+#include "../../lib/ymodem/ymodem_send_params.h"
+#include "../../lib/ymodem/ymodem_send_err.h"
+#include "../../lib/ymodem/ymodem.h"
+#include "../../hardware/miniuart/miniuart.h"
+#include "../statetoggle/statetoggle.h"
 
 static void hint()
 {

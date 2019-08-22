@@ -13,9 +13,9 @@
 //#include "../hardware/pl011uart/pl011uart.h"
 
 #include "../lib/console/console.h"
-#include "../ui/ui_terminal_to_commodore.h"
-#include "../ui/ui_commodore_to_terminal.h"
-#include "../ui/ui.h"
+#include "ui/ui_terminal_to_commodore.h"
+#include "ui/ui_commodore_to_terminal.h"
+#include "ui/ui.h"
 #include "config.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/assert.h"

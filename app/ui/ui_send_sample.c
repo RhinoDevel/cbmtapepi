@@ -2,9 +2,9 @@
 // Marcel Timm, RhinoDevel, 2018nov14
 
 #include "ui_send_sample.h"
-#include "../lib/console/console.h"
-#include "../app/tape/tape_sample_type.h"
-#include "../app/tape/tape_sample.h"
+#include "../../lib/console/console.h"
+#include "../tape/tape_sample_type.h"
+#include "../tape/tape_sample.h"
 
 static void load_hint()
 {

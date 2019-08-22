@@ -5,19 +5,19 @@
 
 #include "ui_terminal_to_commodore.h"
 
-#include "../app/config.h"
-#include "../lib/console/console.h"
-#include "../lib/alloc/alloc.h"
-#include "../lib/ymodem/ymodem.h"
-#include "../lib/ymodem/ymodem_receive_params.h"
-#include "../lib/ymodem/ymodem_receive_err.h"
-#include "../hardware/armtimer/armtimer.h"
-#include "../hardware/miniuart/miniuart.h"
-#include "../app/tape/tape_send.h"
-#include "../app/tape/tape_input.h"
-#include "../app/tape/tape_send_params.h"
-#include "../lib/str/str.h"
-#include "../app/statetoggle/statetoggle.h"
+#include "../config.h"
+#include "../../lib/console/console.h"
+#include "../../lib/alloc/alloc.h"
+#include "../../lib/ymodem/ymodem.h"
+#include "../../lib/ymodem/ymodem_receive_params.h"
+#include "../../lib/ymodem/ymodem_receive_err.h"
+#include "../../hardware/armtimer/armtimer.h"
+#include "../../hardware/miniuart/miniuart.h"
+#include "../tape/tape_send.h"
+#include "../tape/tape_input.h"
+#include "../tape/tape_send_params.h"
+#include "../../lib/str/str.h"
+#include "../statetoggle/statetoggle.h"
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
 {
