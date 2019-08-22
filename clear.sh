@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# RhinoDevel, Marcel Timm, 2019aug22
+
 # Hardware driver files:
 
 rm hardware/armtimer/armtimer.o

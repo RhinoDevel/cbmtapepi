@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# RhinoDevel, Marcel Timm, 2019aug22
+
 # Create a cross compiler as described at:
 # http://wiki.osdev.org/GCC_Cross-Compiler
 #
