@@ -102,13 +102,31 @@ echo Compiling..
 
 # Compile:
 
-$MT_CC app/kernel_main.c -o app/kernel_main.o
+# Hardware-independent library:
+#
+$MT_CC lib/mem/mem.c -o lib/mem/mem.o
+$MT_CC lib/console/console.c -o lib/console/console.o
+$MT_CC lib/str/str.c -o lib/str/str.o
+$MT_CC lib/calc/calc.c -o lib/calc/calc.o
+$MT_CC lib/alloc/alloc.c -o lib/alloc/alloc.o
+$MT_CC lib/alloc/alloc_mem.c -o lib/alloc/alloc_mem.o
+$MT_CC lib/alloc/nodemem.c -o lib/alloc/nodemem.o
+$MT_CC lib/video/video.c -o lib/video/video.o
+$MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
+$MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
+
+# Hardware-dependent drivers (may use library compiled above):
+#
 $MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC hardware/mailbox/mailbox.c -o hardware/mailbox/mailbox.o
-$MT_CC lib/mem/mem.c -o lib/mem/mem.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
+$MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
+$MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
+
+# Application-specific files (may use library and driver compiled above):
+#
 $MT_CC app/statetoggle/statetoggle.c -o app/statetoggle/statetoggle.o
 $MT_CC app/tape/tape_fill_buf.c -o app/tape/tape_fill_buf.o
 $MT_CC app/tape/tape_send_buf.c -o app/tape/tape_send_buf.o
@@ -124,17 +142,7 @@ $MT_CC app/ui/ui_send_test.c -o app/ui/ui_send_test.o
 $MT_CC app/ui/ui_terminal_to_commodore.c -o app/ui/ui_terminal_to_commodore.o
 $MT_CC app/ui/ui_commodore_to_terminal.c -o app/ui/ui_commodore_to_terminal.o
 $MT_CC app/ui/ui.c -o app/ui/ui.o
-$MT_CC lib/console/console.c -o lib/console/console.o
-$MT_CC lib/str/str.c -o lib/str/str.o
-$MT_CC lib/calc/calc.c -o lib/calc/calc.o
-$MT_CC lib/alloc/alloc.c -o lib/alloc/alloc.o
-$MT_CC lib/alloc/alloc_mem.c -o lib/alloc/alloc_mem.o
-$MT_CC lib/alloc/nodemem.c -o lib/alloc/nodemem.o
-$MT_CC lib/video/video.c -o lib/video/video.o
-$MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
-$MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
-$MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
-$MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
+$MT_CC app/kernel_main.c -o app/kernel_main.o
 
 echo Linking..
 
@@ -142,14 +150,9 @@ echo Linking..
 #
 arm-none-eabi-ld \
     -T app/memmap.ld \
+    \
     app/boot.o \
     app/kernel_main.o \
-    hardware/baregpio/baregpio.o \
-    hardware/mailbox/mailbox.o \
-    lib/mem/mem.o \
-    hardware/armtimer/armtimer.o \
-    hardware/miniuart/miniuart.o \
-    hardware/pl011uart/pl011uart.o \
     app/statetoggle/statetoggle.o \
     app/tape/tape_fill_buf.o \
     app/tape/tape_send_buf.o \
@@ -165,17 +168,26 @@ arm-none-eabi-ld \
     app/ui/ui_terminal_to_commodore.o \
     app/ui/ui_commodore_to_terminal.o \
     app/ui/ui.o \
+    \
+    lib/mem/mem.o \
     lib/console/console.o \
     lib/str/str.o \
     lib/calc/calc.o \
     lib/alloc/alloc.o \
     lib/alloc/alloc_mem.o \
     lib/alloc/nodemem.o \
-    hardware/watchdog/watchdog.o \
     lib/video/video.o \
-    hardware/framebuffer/framebuffer.o \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
+    \
+    hardware/baregpio/baregpio.o \
+    hardware/mailbox/mailbox.o \
+    hardware/armtimer/armtimer.o \
+    hardware/miniuart/miniuart.o \
+    hardware/pl011uart/pl011uart.o \
+    hardware/watchdog/watchdog.o \
+    hardware/framebuffer/framebuffer.o \
+    \
     -o kernel.elf
 
 echo Extracting..
