@@ -6,7 +6,7 @@
 #include "ui_commodore_to_terminal.h"
 
 #include "../lib/alloc/alloc.h"
-#include "../config.h"
+#include "../app/config.h"
 #include "../lib/console/console.h"
 #include "../tape/tape_receive.h"
 #include "../tape/tape_input.h"
