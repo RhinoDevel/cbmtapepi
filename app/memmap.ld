@@ -1,4 +1,6 @@
 
+/* RhinoDevel, Marcel Timm, 2019aug22 */
+
 /* See: https://sourceware.org/binutils/docs-2.29/ld/Scripts.html#Scripts */
 
 ENTRY(_start) /* Just necessary for intermediately build ELF output file. */
