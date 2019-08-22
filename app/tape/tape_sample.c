@@ -9,8 +9,8 @@
 #include "tape_sample.h"
 #include "tape_sample_type.h"
 #include "tape_send.h"
-#include "../lib/alloc/alloc.h"
-#include "../app/config.h"
+#include "../../lib/alloc/alloc.h"
+#include "../config.h"
 
 // How to get byte array from (PRG) file:
 //

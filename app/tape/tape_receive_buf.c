@@ -6,10 +6,10 @@
 
 #include "tape_receive_buf.h"
 #include "tape_symbol.h"
-#include "../hardware/baregpio/baregpio.h"
-#include "../lib/console/console.h"
-#include "../hardware/armtimer/armtimer.h"
-#include "../lib/assert.h"
+#include "../../hardware/baregpio/baregpio.h"
+#include "../../lib/console/console.h"
+#include "../../hardware/armtimer/armtimer.h"
+#include "../../lib/assert.h"
 
 // TODO: Replace:
 //

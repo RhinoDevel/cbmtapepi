@@ -110,14 +110,14 @@ $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
 $MT_CC app/statetoggle/statetoggle.c -o app/statetoggle/statetoggle.o
-$MT_CC tape/tape_fill_buf.c -o tape/tape_fill_buf.o
-$MT_CC tape/tape_send_buf.c -o tape/tape_send_buf.o
-$MT_CC tape/tape_sample.c -o tape/tape_sample.o
-$MT_CC tape/tape_send.c -o tape/tape_send.o
-$MT_CC tape/tape_init.c -o tape/tape_init.o
-$MT_CC tape/tape_receive_buf.c -o tape/tape_receive_buf.o
-$MT_CC tape/tape_receive.c -o tape/tape_receive.o
-$MT_CC tape/tape_extract_buf.c -o tape/tape_extract_buf.o
+$MT_CC app/tape/tape_fill_buf.c -o app/tape/tape_fill_buf.o
+$MT_CC app/tape/tape_send_buf.c -o app/tape/tape_send_buf.o
+$MT_CC app/tape/tape_sample.c -o app/tape/tape_sample.o
+$MT_CC app/tape/tape_send.c -o app/tape/tape_send.o
+$MT_CC app/tape/tape_init.c -o app/tape/tape_init.o
+$MT_CC app/tape/tape_receive_buf.c -o app/tape/tape_receive_buf.o
+$MT_CC app/tape/tape_receive.c -o app/tape/tape_receive.o
+$MT_CC app/tape/tape_extract_buf.c -o app/tape/tape_extract_buf.o
 $MT_CC ui/ui_send_sample.c -o ui/ui_send_sample.o
 $MT_CC ui/ui_receive_test.c -o ui/ui_receive_test.o
 $MT_CC ui/ui_send_test.c -o ui/ui_send_test.o
@@ -151,14 +151,14 @@ arm-none-eabi-ld \
     hardware/miniuart/miniuart.o \
     hardware/pl011uart/pl011uart.o \
     app/statetoggle/statetoggle.o \
-    tape/tape_fill_buf.o \
-    tape/tape_send_buf.o \
-    tape/tape_sample.o \
-    tape/tape_send.o \
-    tape/tape_init.o \
-    tape/tape_receive_buf.o \
-    tape/tape_receive.o \
-    tape/tape_extract_buf.o \
+    app/tape/tape_fill_buf.o \
+    app/tape/tape_send_buf.o \
+    app/tape/tape_sample.o \
+    app/tape/tape_send.o \
+    app/tape/tape_init.o \
+    app/tape/tape_receive_buf.o \
+    app/tape/tape_receive.o \
+    app/tape/tape_extract_buf.o \
     ui/ui_send_sample.o \
     ui/ui_receive_test.o \
     ui/ui_send_test.o \

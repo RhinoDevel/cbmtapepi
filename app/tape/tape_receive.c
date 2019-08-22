@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../hardware/baregpio/baregpio.h"
-#include "../lib/console/console.h"
-#include "../lib/alloc/alloc.h"
+#include "../../hardware/baregpio/baregpio.h"
+#include "../../lib/console/console.h"
+#include "../../lib/alloc/alloc.h"
 
 #include "tape_receive.h"
 #include "tape_receive_buf.h"

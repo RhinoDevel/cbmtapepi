@@ -13,9 +13,9 @@
 #include "../lib/ymodem/ymodem_receive_err.h"
 #include "../hardware/armtimer/armtimer.h"
 #include "../hardware/miniuart/miniuart.h"
-#include "../tape/tape_send.h"
-#include "../tape/tape_input.h"
-#include "../tape/tape_send_params.h"
+#include "../app/tape/tape_send.h"
+#include "../app/tape/tape_input.h"
+#include "../app/tape/tape_send_params.h"
 #include "../lib/str/str.h"
 #include "../app/statetoggle/statetoggle.h"
 

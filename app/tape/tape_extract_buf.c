@@ -4,10 +4,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../lib/alloc/alloc.h"
-#include "../lib/console/console.h"
-#include "../lib/mem/mem.h"
-#include "../lib/assert.h"
+#include "../../lib/alloc/alloc.h"
+#include "../../lib/console/console.h"
+#include "../../lib/mem/mem.h"
+#include "../../lib/assert.h"
 #include "tape_extract_buf.h"
 #include "tape_input.h"
 #include "tape_symbol.h"

@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../hardware/baregpio/baregpio.h"
-#include "../lib/console/console.h"
+#include "../../hardware/baregpio/baregpio.h"
+#include "../../lib/console/console.h"
 
 #include "tape_fill_buf.h"
 #include "tape_send_buf.h"

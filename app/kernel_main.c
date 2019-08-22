@@ -19,7 +19,7 @@
 #include "config.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/assert.h"
-#include "../tape/tape_init.h"
+#include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
 #include "../lib/video/video.h"
 

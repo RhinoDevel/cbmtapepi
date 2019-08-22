@@ -6,9 +6,9 @@
 
 #include "tape_send_buf.h"
 #include "tape_symbol.h"
-#include "../hardware/armtimer/armtimer.h"
-#include "../hardware/baregpio/baregpio.h"
-#include "../lib/console/console.h"
+#include "../../hardware/armtimer/armtimer.h"
+#include "../../hardware/baregpio/baregpio.h"
+#include "../../lib/console/console.h"
 
 // Short: 2840 Hz
 //
