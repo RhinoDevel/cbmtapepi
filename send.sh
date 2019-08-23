@@ -17,6 +17,9 @@ echo "**************************************************************"
 echo "(2019 by RhinoDevel, Marcel Timm)"
 echo
 
+echo "- Make sure that Raspi is in LOAD move (LED off)."
+echo
+
 read -s -p "Enter LOAD and press return on Commodore, then press enter key (here) to send."
 echo
 echo
