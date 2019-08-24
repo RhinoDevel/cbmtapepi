@@ -43,6 +43,12 @@
 //
 //    BCM 2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27
 
+#ifdef MT_LINUX
+    #include <unistd.h>
+    #include <fcntl.h>
+    #include <sys/mman.h>
+#endif //MT_LINUX
+
 #include "baregpio.h"
 #include "baregpio_params.h"
 
@@ -120,6 +126,53 @@ static uint32_t get_pin_mask(uint32_t const pin_nr)
 {
     return 1 << (pin_nr % 32);
 }
+
+#ifdef MT_LINUX
+/**
+ * - Hard-coded for 32-bit processor/system.
+ * - Returns 0 on error.
+ */
+static uint32_t get_addr_base_for_linux(uint32_t const peri_base)
+{
+    int mem_dev = -1;
+    void* mem_map = 0;
+
+    if(s_addr_base != 0)
+    {
+        //printf("Error: Seems to be already initialized!\n");
+        return 0;
+    }
+
+    mem_dev = open("/dev/mem", O_RDWR|O_SYNC);
+    if(mem_dev == -1)
+    {
+        //printf("Error: Can't open \"/dev/mem\"!\n");
+        return 0;
+    }
+
+    mem_map = mmap(
+        0, // Local mapping start address (NULL means don't care).
+        4 * 1024, // Mapped memory block size.
+        PROT_READ|PROT_WRITE, // Enable read and write.
+        MAP_SHARED, // No exclusive access.
+        mem_dev,
+        peri_base + s_offset_from_peribase); // Offset to GPIO peripheral.
+
+    close(mem_dev);
+    mem_dev = -1;
+
+    if(mem_map == MAP_FAILED)
+    {
+        //printf("Error: Failed to create memory mapping!\n");
+        return 0;
+    }
+
+    return (uint32_t)mem_map;
+
+    // [munmap() call is not necessary later,
+    // because it will automatically unmap on process termination]
+}
+#endif //MT_LINUX
 
 void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const val)
 {
@@ -216,7 +269,12 @@ void baregpio_set_input_pull_down(uint32_t const pin_nr)
 
 void baregpio_init(struct baregpio_params const p)
 {
+#ifdef MT_LINUX
+    s_addr_base = get_addr_base_for_linux(p.peri_base);
+#else //MT_LINUX
     s_addr_base = p.peri_base + s_offset_from_peribase;
+#endif //MT_LINUX
+
     s_wait_microseconds = p.wait_microseconds;
     s_mem_read = p.mem_read;
     s_mem_write = p.mem_write;
