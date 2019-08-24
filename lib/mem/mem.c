@@ -33,14 +33,16 @@ bool mem_cmp_byte(
     return true;
 }
 
-void* memset(void* ptr, int value, size_t num)
-{
-    unsigned char const v = (unsigned char)value;
-    unsigned char * const p = (unsigned char *)ptr;
-
-    for(size_t i = 0;i < num; ++i)
+#ifndef MT_LINUX
+    void* memset(void* ptr, int value, size_t num)
     {
-        p[i] = v;
+        unsigned char const v = (unsigned char)value;
+        unsigned char * const p = (unsigned char *)ptr;
+
+        for(size_t i = 0;i < num; ++i)
+        {
+            p[i] = v;
+        }
+        return ptr;
     }
-    return ptr;
-}
+#endif //MT_LINUX
