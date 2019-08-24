@@ -9,8 +9,14 @@
 
 #include <stdint.h>
 
+#include "../hardware/peribase.h"
+#include "../hardware/armtimer/armtimer.h"
+
 #include "../hardware/miniuart/miniuart.h"
 //#include "../hardware/pl011uart/pl011uart.h"
+
+#include "../hardware/baregpio/baregpio_params.h"
+#include "../hardware/baregpio/baregpio.h"
 
 #include "../lib/console/console.h"
 #include "ui/ui_terminal_to_commodore.h"
@@ -19,6 +25,7 @@
 #include "config.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/assert.h"
+#include "../lib/mem/mem.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
 #include "../lib/video/video.h"
@@ -91,6 +98,17 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     (void)r0;
     (void)r1;
     (void)r2;
+
+    // Initialize bare GPIO singleton:
+    //
+    baregpio_init((struct baregpio_params){
+        .wait_microseconds = armtimer_busywait_microseconds,
+
+        .mem_read = mem_read,
+        .mem_write = mem_write,
+
+        .peri_base = PERI_BASE
+    });
 
     // Initialize console in-/output:
     //

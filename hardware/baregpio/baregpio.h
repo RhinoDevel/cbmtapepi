@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "baregpio_params.h"
+
 // GPIO pin functions:
 //
 enum gpio_func
@@ -43,12 +45,16 @@ void baregpio_wait_for_high(uint32_t const pin_nr);
  */
 void baregpio_set_func(uint32_t const pin_nr, enum gpio_func const func);
 
-void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const pud);
+void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const val);
 
 void baregpio_set_output(uint32_t const pin_nr, bool const high);
 
 void baregpio_set_input_pull_off(uint32_t const pin_nr);
 void baregpio_set_input_pull_up(uint32_t const pin_nr);
 void baregpio_set_input_pull_down(uint32_t const pin_nr);
+
+/** Initialize Bare GPIO singleton before use.
+ */
+void baregpio_init(struct baregpio_params const p);
 
 #endif //MT_BAREGPIO
