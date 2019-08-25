@@ -9,6 +9,7 @@
 #include "../lib/mem/mem.h"
 #include "../hardware/baregpio/baregpio.h"
 #include "../hardware/baregpio/baregpio_params.h"
+#include "../app/config.h"
 
 static void wait_microseconds(uint32_t const microseconds)
 {
@@ -32,6 +33,14 @@ static void init_gpio()
 int main()
 {
     init_gpio();
+
+    baregpio_set_input_pull_down(MT_GPIO_PIN_NR_BUTTON);
+
+    baregpio_set_output(MT_GPIO_PIN_NR_LED, true);
+
+    baregpio_wait_for_high(MT_GPIO_PIN_NR_BUTTON);
+
+    baregpio_set_output(MT_GPIO_PIN_NR_LED, false);
 
     return 0;
 }
