@@ -29,4 +29,7 @@ bool tape_send_buf(
     uint32_t const gpio_pin_nr_read,
     bool (*is_stop_requested)());
 
+void tape_send_buf_init(
+    void (*timer_busywait_microseconds)(uint32_t const microseconds));
+
 #endif //MT_TAPE_SEND_BUF

@@ -8,7 +8,6 @@
 #include "tape_symbol.h"
 #include "../../hardware/baregpio/baregpio.h"
 #include "../../lib/console/console.h"
-#include "../../hardware/armtimer/armtimer.h"
 #include "../../lib/assert.h"
 
 // TODO: Replace:
@@ -21,6 +20,11 @@ static uint32_t const micro_long = 336;
 //
 static uint32_t tick_lim_short_medium;
 static uint32_t tick_lim_medium_long;
+
+// Initialized by tape_receive_buf_init():
+//
+static void (*s_timer_start_one_mhz)() = 0;
+static uint32_t (*s_timer_get_tick)() = 0;
 
 static void set_tick_limits(uint32_t const ticks_short)
 {
@@ -129,7 +133,7 @@ bool tape_receive_buf(
     //
     // => At least 352 ticks for each Commodore pulse, 176 for half a pulse.
     //
-    armtimer_start_one_mhz();
+    s_timer_start_one_mhz();
 
     // *************
     // *** Sync: ***
@@ -167,7 +171,7 @@ bool tape_receive_buf(
 
         // HIGH <=> A SAVE sync pulse has started.
 
-        start_tick = armtimer_get_tick();
+        start_tick = s_timer_get_tick();
 
         while(baregpio_read(gpio_pin_nr_write))
         {
@@ -181,7 +185,7 @@ bool tape_receive_buf(
 
         // HIGH half of sync pulse finished.
 
-        ticks_short += armtimer_get_tick() - start_tick;
+        ticks_short += s_timer_get_tick() - start_tick;
 
         // Not necessary, but for completeness:
         //
@@ -204,14 +208,14 @@ bool tape_receive_buf(
 
         // LOW, wait for start of (next) SAVE pulse:
 
-        start_tick = armtimer_get_tick();
+        start_tick = s_timer_get_tick();
         while(true)
         {
             if(baregpio_read(gpio_pin_nr_write))
             {
                 break; // HIGH
             }
-            if(armtimer_get_tick() - start_tick >= ticks_timeout)
+            if(s_timer_get_tick() - start_tick >= ticks_timeout)
             {
                 timeout_reached = true;
                 break; // Timeout reached.
@@ -224,7 +228,7 @@ bool tape_receive_buf(
 
         // HIGH <=> A SAVE pulse has started.
 
-        start_tick = armtimer_get_tick();
+        start_tick = s_timer_get_tick();
 
         while(baregpio_read(gpio_pin_nr_write))
         {
@@ -239,7 +243,7 @@ bool tape_receive_buf(
         // HIGH half of pulse finished.
 
         pulse_type[pulse_type_index] = get_pulse_type(
-            armtimer_get_tick() - start_tick);
+            s_timer_get_tick() - start_tick);
 
         if(pulse_type_index == 1)
         {
@@ -292,4 +296,14 @@ bool tape_receive_buf(
 #endif //NDEBUG
 
     return true;
+}
+
+void tape_receive_buf_init(
+    void (*timer_start_one_mhz)(), uint32_t (*timer_get_tick)())
+{
+    assert(s_timer_start_one_mhz == 0);
+    assert(s_timer_get_tick == 0);
+
+    s_timer_start_one_mhz = timer_start_one_mhz;
+    s_timer_get_tick = timer_get_tick;
 }

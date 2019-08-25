@@ -4,13 +4,22 @@
 #include <stdbool.h>
 
 #include "tape_init.h"
+#include "tape_receive_buf.h"
+#include "tape_send_buf.h"
 
 #include "../../hardware/baregpio/baregpio.h"
 #include "../../lib/console/console.h"
 #include "../config.h"
 
-void tape_init()
+void tape_init(
+    void (*timer_start_one_mhz)(),
+    uint32_t (*timer_get_tick)(),
+    void (*timer_busywait_microseconds)(uint32_t const microseconds))
 {
+    tape_receive_buf_init(timer_start_one_mhz, timer_get_tick);
+
+    tape_send_buf_init(timer_busywait_microseconds);
+
     console_deb_writeline("tape_init: Setting sense output line to HIGH..");
     baregpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, true);
 

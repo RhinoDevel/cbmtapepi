@@ -6,7 +6,6 @@
 
 #include "tape_send_buf.h"
 #include "tape_symbol.h"
-#include "../../hardware/armtimer/armtimer.h"
 #include "../../hardware/baregpio/baregpio.h"
 #include "../../lib/console/console.h"
 
@@ -34,12 +33,16 @@ static uint32_t const micro_medium = 256;
 //
 static uint32_t const micro_long = 336;
 
+// Initialized by tape_send_buf_init():
+//
+static void (*s_timer_busywait_microseconds)(uint32_t const microseconds) = 0;
+
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
     baregpio_write(gpio_pin_nr, false);
-    armtimer_busywait_microseconds(micro);
+    s_timer_busywait_microseconds(micro);
     baregpio_write(gpio_pin_nr, true);
-    armtimer_busywait_microseconds(micro);
+    s_timer_busywait_microseconds(micro);
 }
 
 static void transfer_symbol(
@@ -157,4 +160,12 @@ bool tape_send_buf(
 
         ++i;
     }
+}
+
+void tape_send_buf_init(
+    void (*timer_busywait_microseconds)(uint32_t const microseconds))
+{
+    // assert(s_timer_busywait_microseconds == 0);
+
+    s_timer_busywait_microseconds = timer_busywait_microseconds;
 }

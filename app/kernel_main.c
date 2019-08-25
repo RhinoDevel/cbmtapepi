@@ -124,7 +124,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // Initialize for tape transfer:
     //
-    tape_init();
+    tape_init(
+        armtimer_start_one_mhz,
+        armtimer_get_tick,
+        armtimer_busywait_microseconds);
 
     statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, false);
 

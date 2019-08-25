@@ -26,4 +26,7 @@ bool tape_receive_buf(
     uint8_t * const buf,
     bool (*is_stop_requested)());
 
+void tape_receive_buf_init(
+    void (*timer_start_one_mhz)(), uint32_t (*timer_get_tick)());
+
 #endif //MT_TAPE_RECEIVE_BUF
