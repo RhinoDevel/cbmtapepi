@@ -8,7 +8,10 @@ CC=gcc
 CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
 
 LDFLAGS=-lm
-SOURCES=main.c ../lib/mem/mem.c ../hardware/baregpio/baregpio.c
+SOURCES=\
+	main.c \
+	../lib/mem/mem.c \
+	../hardware/baregpio/baregpio.c
 
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cbmtapepi
