@@ -11,10 +11,20 @@ LDFLAGS=-lm
 SOURCES=\
 	main.c \
 	../lib/mem/mem.c \
+	../lib/alloc/alloc.c \
+	../lib/alloc/alloc_mem.c \
+	../lib/alloc/nodemem.c \
 	../lib/str/str.c \
 	../lib/calc/calc.c \
 	../lib/console/console.c \
-	../hardware/baregpio/baregpio.c
+	../hardware/baregpio/baregpio.c \
+	../app/tape/tape_extract_buf.c \
+	../app/tape/tape_fill_buf.c \
+	../app/tape/tape_init.c \
+	../app/tape/tape_receive_buf.c \
+	../app/tape/tape_receive.c \
+	../app/tape/tape_send_buf.c \
+	../app/tape/tape_send.c \
 
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cbmtapepi
