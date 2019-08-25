@@ -11,6 +11,9 @@ LDFLAGS=-lm
 SOURCES=\
 	main.c \
 	../lib/mem/mem.c \
+	../lib/str/str.c \
+	../lib/calc/calc.c \
+	../lib/console/console.c \
 	../hardware/baregpio/baregpio.c
 
 OBJECTS=$(SOURCES:.c=.o)
