@@ -47,7 +47,10 @@ static uint32_t timer_get_tick()
 
 static void timer_wait_microseconds(uint32_t const microseconds)
 {
-    usleep(microseconds); // (implicit cast & return value ignored)
+    if(usleep(microseconds) != 0) // (implicit cast)
+    {
+        console_writeline("Error: usleep failed!");
+    }
 }
 
 /**
