@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/time.h>
-//#include <dirent.h>
+#include <time.h>
 #include <sys/stat.h>
 
 #include "../hardware/peribase.h"
@@ -40,16 +40,37 @@ static uint32_t timer_get_tick()
 
     struct timeval tv;
 
-    gettimeofday(&tv, NULL); // (return value assumed to be zero)
+    if(gettimeofday(&tv, NULL) != 0)
+    {
+        console_writeline("Error: gettimeofday failed!");
+        return 0;
+    }
 
     return 1000000 * tv.tv_sec + tv.tv_usec;
 }
 
 static void timer_wait_microseconds(uint32_t const microseconds)
 {
-    if(usleep(microseconds) != 0) // (implicit cast)
+/*
+    struct timespec req, rem;
+
+    req.tv_sec = 0;
+    req.tv_nsec = 1000 * microseconds;
+
+    if(nanosleep(&req, &rem) != 0) // (implicit cast)
     {
-        console_writeline("Error: usleep failed!");
+        console_writeline("Error: nanosleep failed!");
+    }
+*/
+
+    uint32_t const start = timer_get_tick();
+
+    while(true)
+    {
+        if(timer_get_tick() - start >= microseconds)
+        {
+            return;
+        }
     }
 }
 
@@ -87,8 +108,6 @@ static void init_gpio()
 static void init_console()
 {
     struct console_params p;
-
-    // Initialize console via MiniUART to read and video to write:
 
     // No read:
     //
