@@ -17,6 +17,8 @@
 #include "../app/config.h"
 #include "../app/tape/tape_init.h"
 
+static uint8_t * s_mem = NULL; // [see init() and deinit()]
+
 static void timer_start_one_mhz()
 {
     // Nothing to do.
@@ -24,9 +26,15 @@ static void timer_start_one_mhz()
 
 static uint32_t timer_get_tick()
 {
+    // 1 MHz <=> 1,000,000 ticks per second.
+    //
+    // 32 bit wide counter <=> 2^32 values.
+    //
+    // => More than 71 minutes until wrap-around.
+
     struct timeval tv;
 
-    gettimeofday(&tv, 0); // (return value assumed to be zero)
+    gettimeofday(&tv, NULL); // (return value assumed to be zero)
 
     return 1000000 * tv.tv_sec + tv.tv_usec;
 }
@@ -83,38 +91,69 @@ static void init_console()
     console_init(&p);
 }
 
-int main()
+static void deinit()
 {
-    uint8_t * const mem = malloc(MT_HEAP_SIZE * sizeof *mem);
+    free(s_mem);
+    s_mem = NULL;
+}
+
+static void init()
+{
+    init_console();
 
     init_gpio();
 
-    init_console();
-
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
-    alloc_init((void*)mem, MT_HEAP_SIZE);
+    s_mem = malloc(MT_HEAP_SIZE * sizeof *s_mem);
+    alloc_init((void*)s_mem, MT_HEAP_SIZE);
 
     // Initialize for tape transfer:
     //
     tape_init(timer_start_one_mhz, timer_get_tick, timer_wait_microseconds);
+}
 
-    // Console test:
-    //
-    // console_writeline("Hello World!");
-    // console_writeline("");
-    // console_writeline("I am CBM Tape Pi.");
+static bool send(char * const file_name)
+{
+    console_writeline("Send mode is not implemented, yet.");
 
-    // Button and LED test:
-    //
-    // baregpio_set_input_pull_down(MT_GPIO_PIN_NR_BUTTON);
-    //
-    // baregpio_set_output(MT_GPIO_PIN_NR_LED, true);
-    //
-    // baregpio_wait_for_high(MT_GPIO_PIN_NR_BUTTON);
-    //
-    // baregpio_set_output(MT_GPIO_PIN_NR_LED, false);
+    return false;
+}
 
-    free(mem);
-    return 0;
+static bool receive()
+{
+    console_writeline("Receive mode is not implemented, yet.");
+
+    return false;
+}
+
+static bool exec(int const argc, char * const argv[])
+{
+    if(argc != 1 && argc != 2)
+    {
+        console_writeline("Add no parameter to receive or one parameter (the file name) to send.");
+        return false;
+    }
+
+    if(argc == 1)
+    {
+        return receive();
+    }
+
+    //assert(argc == 2);
+
+    return send(argv[1]);
+}
+
+int main(int argc, char* argv[])
+{
+    bool success = false;
+
+    init();
+
+    success = exec(argc, argv);
+
+    deinit();
+
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
