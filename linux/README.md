@@ -12,7 +12,7 @@ because a Linux OS has a scheduler and switches between different processes.
 This leads to pulses being sporadically longer than wanted.
 
 I could not find a (simple) solution for that problem, yet.
-There probably is none (that is 100% reliable).
+There probably is none (which is 100% reliable).
 
 If you would like to investigate, take a look at function
-timer_wait_microseconds() in file linux/main.c.
+```timer_wait_microseconds()``` in file [linux/main.c](https://github.com/RhinoDevel/cbmtapepi/blob/master/linux/main.c).
