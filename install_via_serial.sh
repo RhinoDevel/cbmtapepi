@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RhinoDevel, Marcel Timm, 2019aug12
+# Marcel Timm, RhinoDevel, 2019aug12
 
 # This script does the following:
 # -------------------------------

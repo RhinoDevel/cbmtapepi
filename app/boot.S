@@ -1,5 +1,5 @@
 
-// RhinoDevel, Marcel Timm, 2019aug22
+// Marcel Timm, RhinoDevel, 2019aug22
 
 // See: https://sourceware.org/binutils/docs-2.29/as/index.html
 

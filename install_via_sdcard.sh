@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RhinoDevel, Marcel Timm, 2019aug22
+# Marcel Timm, RhinoDevel, 2019aug22
 
 export CARDPATH=/run/media/marc/BOOT/
 

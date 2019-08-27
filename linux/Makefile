@@ -1,4 +1,4 @@
-# RhinoDevel, Marcel Timm, 2019aug23
+# Marcel Timm, RhinoDevel, 2019aug23
 #
 # - Original source: http://mrbook.org/blog/tutorials/make/
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# RhinoDevel, Marcel Timm, 2019aug22
+# Marcel Timm, RhinoDevel, 2019aug22
 
 # Hardware driver files:
 

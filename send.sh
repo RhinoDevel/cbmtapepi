@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# RhinoDevel, Marcel Timm, 2019aug23
+# Marcel Timm, RhinoDevel, 2019aug23
 
 # Setup some constants:
 # ---------------------
@@ -14,7 +14,7 @@ BAUD_RATE=115200
 echo "**************************************************************"
 echo "*** CBM Tape Pi - Send file via Raspi to Commodore machine ***"
 echo "**************************************************************"
-echo "(2019 by RhinoDevel, Marcel Timm)"
+echo "(2019 by Marcel Timm, RhinoDevel)"
 echo
 
 echo "- Make sure that Raspi is in LOAD move (LED off)."

@@ -1,5 +1,5 @@
 
-// RhinoDevel, Marcel Timm, 2019apr23
+// Marcel Timm, RhinoDevel, 2019apr23
 
 #include <stdio.h>
 #include <unistd.h>
