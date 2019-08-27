@@ -49,19 +49,19 @@ static uint32_t timer_get_tick()
     return 1000000 * tv.tv_sec + tv.tv_usec;
 }
 
+// TODO: This is not reliable, because of user mode and scheduling of OS!
+//
 static void timer_wait_microseconds(uint32_t const microseconds)
 {
-/*
-    struct timespec req, rem;
-
-    req.tv_sec = 0;
-    req.tv_nsec = 1000 * microseconds;
-
-    if(nanosleep(&req, &rem) != 0) // (implicit cast)
-    {
-        console_writeline("Error: nanosleep failed!");
-    }
-*/
+    // struct timespec req, rem;
+    //
+    // req.tv_sec = 0;
+    // req.tv_nsec = 1000 * microseconds;
+    //
+    // if(nanosleep(&req, &rem) != 0) // (implicit cast)
+    // {
+    //     console_writeline("Error: nanosleep failed!");
+    // }
 
     uint32_t const start = timer_get_tick();
 
