@@ -5,7 +5,7 @@ README IS WORK IN PROGRESS, PLEASE COME BACK, SOON!
 
 Use a Raspberry Pi as datassette drive with your Commodore computer!
 
-<img src="./docs/Photo%20of%20connected%20Raspberry%20Pi%201.jpg" alt="Photo" width="400"/>
+<img src="./docs/Photo%20of%20connected%20Raspberry%20Pi%201.jpg" alt="Photo" width="800"/>
 
 CBM Tape Pi is a Commodore datassette/tape drive emulator.
 
