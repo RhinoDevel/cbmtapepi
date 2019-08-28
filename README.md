@@ -17,9 +17,9 @@ It is written in bare-metal C and independent of any OS (like Raspbian).
 
 ### Reached
 
-- Load and save PRG files for "all" Commodore 8-bit machines without the need for extra software on Commodore machine
-- Use simplest way to built such an interface
-- Use cheapest way to built such an interface
+- load and save PRG files for "all" Commodore 8-bit machines without the need for extra software on Commodore machine
+- use simplest way to built such an interface
+- use cheapest way to built such an interface
 - use as few hardware components as possible
 
 ### To-do
