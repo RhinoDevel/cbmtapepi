@@ -9,9 +9,25 @@ Use a Raspberry Pi as datassette drive with your Commodore computer!
 
 CBM Tape Pi is a Commodore datassette/tape drive emulator.
 
-You can transfer PRG files between your modern computer and your Commodore machine via serial connection and a Raspberry Pi.
+You can transfer PRG files between your modern computer and your Commodore machine via serial connection and a Raspberry Pi, just by using built-in LOAD and SAVE datassette commands on your Commodore machine!
 
 It is written in bare-metal C and independent of any OS (like Raspbian).
+
+## Project goals
+
+### Reached
+
+- Load and save PRG files for "all" Commodore 8-bit machines without the need for extra software on Commodore machine
+- Use simplest way to built such an interface
+- Use cheapest way to built such an interface
+- use as few hardware components as possible
+
+### To-do
+
+- read from / write to Raspberry Pi's SD card (make serial interface "obsolete")
+- read from / write to a USB memory stick connected to Raspberry Pi (make serial interface "obsolete")
+- "real"/complete tape drive emulation (e.g. to use fast loaders)
+- MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ## What you need
 
@@ -63,9 +79,3 @@ If you want to use Microsoft Windows OS instead of some Linux OS (or some other 
 - 1
 - 2
 - other Raspberry Pis (not tested, yet)
-
-## Possible future features
-
-- read from / write to Raspberry Pi's SD card
-- read from / write to a USB memory stick connected to Raspberry Pi
-- "real"/complete tape drive emulation (e.g. to use fast loaders)
