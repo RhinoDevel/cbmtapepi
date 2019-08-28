@@ -19,25 +19,25 @@ One goal of this project is to require a minimum of hardware effort. It requires
 
 You need:
 
-- Some cables.
-- A breadboard (if you do not want to solder).
-- One LED.
-- One BJT NPN transistor.
-- One push button.
-- Three 10000 Ohm resistors
-- One 80000 Ohm resistor.
-- One 100000 Ohm resistor.
-- One 1000 Ohm resistor.
+- some cables
+- a breadboard (if you do not want to solder)
+- one LED
+- one BJT NPN transistor
+- one push button
+- three 10000 Ohm resistors
+- one 80000 Ohm resistor
+- one 100000 Ohm resistor
+- one 1000 Ohm resistor
+- a Commodore tape port adapter
+- a Raspberry Pi 1 or 2 (more recent models may work, not tested, yet)
+- a modern computer with a serial interface to connect to Raspberry Pi (another Raspberry Pi is an option)
 
 ## How to use
 
-- Connect some serial interface to Raspberry Pi's GPIO port (see picture below).
-- Connect Commodore tape port to Raspberry Pi's GPIO port (see picture below). There are only two resistors necessary!
-- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file).
-- Enter LOAD on Commodore computer.
-- Send a PRG file to Raspberry Pi via serial connection and YMODEM protocol (see example below).
-- Wait for Commodore computer to load your PRG file from Raspberry Pi!
-- Repeat this as often as you want.
+- setup connections (see photo above and picture below)
+- put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file)
+
+TODO: Add more info!
 
 ## Connections
 Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
@@ -47,14 +47,8 @@ Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
 
 How to use your computer's Linux commandline and a USB to serial interface at /dev/ttyUSB0 to send a PRG to Commodore machine:
 
-Setup serial interface once (115200 baud, 8 data bits, no parity, 1 stop bit):
-```shell
-stty -F /dev/ttyUSB0 115200
-```
-Send PRG file to Raspberry Pi:
-```shell
-sx --ymodem mycbmapp.prg < /dev/ttyUSB0 > /dev/ttyUSB0
-```
+TODO: Add examples using scripts and push button!
+
 ## Supported Commodore machines
 
 - CBM / PET computers (tested with 3032)
@@ -70,7 +64,6 @@ sx --ymodem mycbmapp.prg < /dev/ttyUSB0 > /dev/ttyUSB0
 
 ## Possible future features
 
-- Send files from Commodore machine to your modern computer.
-- Read from / write to Raspberry Pi's SD card.
-- Read from / write to a USB memory stick connected to Raspberry Pi.
-- "Real"/complete tape drive emulation (e.g. to use fast loaders).
+- read from / write to Raspberry Pi's SD card
+- read from / write to a USB memory stick connected to Raspberry Pi
+- "real"/complete tape drive emulation (e.g. to use fast loaders)
