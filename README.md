@@ -49,6 +49,8 @@ How to use your computer's Linux commandline and a USB to serial interface at /d
 
 TODO: Add examples using scripts and push button!
 
+If you want to use Microsoft Windows OS instead of some Linux OS (or some other Unix derivative), you may want to give [TeraTerm](https://ttssh2.osdn.jp/) a try (it has YMODEM send and receive features). 
+
 ## Supported Commodore machines
 
 - CBM / PET computers (tested with 3032)
