@@ -15,14 +15,14 @@ It is written in bare-metal C and independent of any OS (like Raspbian).
 
 ## What you need
 
-The hardware effort is kept as low as possible. There are no ICs required and soldering is optional.
+The hardware effort is kept as low as possible. There are no ICs required and soldering is optional. A beginner can put this together!
 
 You need:
 
 - some cables (not that many, if you want to solder)
 - a breadboard (if you do not want to solder)
 - one LED
-- one BJT NPN transistor
+- one NPN transistor (e.g. a PN2222A)
 - one push button
 - three 10000 Ohm resistors
 - one 80000 Ohm resistor
