@@ -15,11 +15,11 @@ It is written in bare-metal C and independent of any OS (like Raspbian).
 
 ## What you need
 
-One goal of this project is to require a minimum of hardware effort. It requires no ICs and soldering is optional.
+The hardware effort is kept as low as possible. There are no ICs required and soldering is optional.
 
 You need:
 
-- some cables
+- some cables (not that many, if you want to solder)
 - a breadboard (if you do not want to solder)
 - one LED
 - one BJT NPN transistor
@@ -34,7 +34,7 @@ You need:
 
 ## How to use
 
-- setup connections (see photo above and picture below)
+- setup connections (see photo above or picture below)
 - put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file)
 
 TODO: Add more info!
