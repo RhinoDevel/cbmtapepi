@@ -106,3 +106,5 @@ Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
 - 1
 - 2
 - other Raspberry Pis (not tested, yet)
+
+![RhinoDevel](./data/rhino.bmp)
