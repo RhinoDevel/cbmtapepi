@@ -49,7 +49,7 @@ You need:
 
 ## How to use
 
-- setup connections (see photo above or picture below)
+- setup connections (see [photo](./docs/Photo%20of%20connected%20Raspberry%20Pi%201.jpg) above or [picture](./docs/Serial%20to%20CBM%20tape%20via%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below)
 - put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file)
 
 TODO: Add more info!
