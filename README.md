@@ -35,17 +35,18 @@ The hardware effort is kept as low as possible. There are no ICs required and so
 You need:
 
 - some cables (not that many, if you want to solder)
-- a breadboard (if you do not want to solder)
+- a breadboard (if you do not want to solder) or a circuit board
 - one LED
-- one NPN transistor (e.g. a PN2222A)
+- one NPN transistor (e.g. a PN2222A or a BC547)
 - one push button
-- three 10000 Ohm resistors
-- one 80000 Ohm resistor
-- one 100000 Ohm resistor
-- one 1000 Ohm resistor
-- a Commodore tape port adapter
+- three 10k Ohm resistors
+- one 80k Ohm resistor (you can put this together by using multiple resistors)
+- one 100k Ohm resistor
+- one 1k Ohm resistor
+- a Commodore cassette port plug
 - a Raspberry Pi 1 or 2 (more recent models may work, not tested, yet)
-- a modern computer with a serial interface to connect to Raspberry Pi (another Raspberry Pi is an option)
+- an SD card (I am using an old 64MB card)
+- a modern computer with a serial interface to connect to Raspberry Pi (another Raspberry Pi is an option, because a serial port is included)
 
 ## How to use
 
