@@ -64,7 +64,7 @@ You need:
   - enter SAVE on Commodore machine (it is a good idea to add a name for the PRG file, too)
   - wait for your modem computer to retrieve your PRG file from Raspberry Pi
   - repeat this as often as you want
-- if something goes wrong, just press the button twice (wait for the LED to toggle between presses) to reset the Raspberry Pi into the mode you want
+- pressing the button to toggle between LOAD and SAVE mode also cancels a maybe running operation - if something went wrong, just press the button twice (wait for the LED to toggle between presses) to reset the Raspberry Pi into the same mode
 
 ## Connections
 Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
