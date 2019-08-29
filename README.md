@@ -9,9 +9,9 @@ Use a Raspberry Pi as datassette drive with your Commodore computer!
 
 CBM Tape Pi is a Commodore datassette/tape drive emulator.
 
-You can transfer PRG files between your modern computer and your Commodore machine via serial connection and a Raspberry Pi, just by using built-in LOAD and SAVE datassette commands on your Commodore machine!
-
-It is written in bare-metal C and independent of any OS (like Raspbian).
+- you can transfer PRG files between your modern computer and your Commodore machine via serial connection and a Raspberry Pi, just by using built-in LOAD and SAVE datassette commands on your Commodore machine
+- it is written in bare-metal C and independent of any OS on Raspberry Pi (like Raspbian)
+- it works with any OS on your modern computer, if an application is installed that can transfer files via serial connection and YMODEM protocol
 
 ## Project goals
 
@@ -26,7 +26,7 @@ It is written in bare-metal C and independent of any OS (like Raspbian).
 - read from / write to Raspberry Pi's SD card (make serial interface "obsolete")
 - read from / write to a USB memory stick connected to Raspberry Pi (make serial interface "obsolete")
 - "real"/complete tape drive emulation (e.g. to use fast loaders)
-- MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
+- MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md)
 
 ## What you need
 
@@ -52,14 +52,25 @@ You need:
 
 - setup connections (see [photo](./docs/Photo%20of%20connected%20Raspberry%20Pi%201.jpg) above or [picture](./docs/Serial%20to%20CBM%20tape%20via%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below)
 - put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file)
-
-TODO: Add more info!
+- **LOAD** - Sending PRG file to Commodore machine:
+  - if the LED is on, SAVE mode is active and you need to press the button to enable LOAD mode  
+  - enter LOAD on Commodore computer
+  - send a PRG file to Raspberry Pi via serial connection and YMODEM protocol (see example below)
+  - wait for Commodore computer to load your PRG file from Raspberry Pi
+  - repeat this as often as you want
+- **SAVE** - Receiving PRG file from Commodore machine:
+  - if the LED is off, LOAD mode is active and you need to press the button to enabled SAVE mode
+  - start application waiting for file to receive via serial connection and YMODEM protocol (see example below)
+  - enter SAVE on Commodore machine (it is a good idea to add a name for the PRG file, too)
+  - wait for your modem computer to retrieve your PRG file from Raspberry Pi
+  - repeat this as often as you want
+- if something goes wrong, just press the button twice (wait for the LED to toggle between presses) to reset the Raspberry Pi into the mode you want
 
 ## Connections
 Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
 ![Wiring](./docs/Serial%20to%20CBM%20tape%20via%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png)
 
-## Example
+## Examples
 
 How to use your computer's Linux commandline and a USB to serial interface at /dev/ttyUSB0 to send a PRG to Commodore machine:
 
