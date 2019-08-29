@@ -1,5 +1,3 @@
-README IS WORK IN PROGRESS, PLEASE COME BACK, SOON!
-
 # CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
@@ -55,14 +53,14 @@ You need:
 - **LOAD** - Sending PRG file to Commodore machine:
   - if the LED is on, SAVE mode is active and you need to press the button to enable LOAD mode  
   - enter LOAD on Commodore computer
-  - send a PRG file to Raspberry Pi via serial connection and YMODEM protocol (see example below)
+  - send a PRG file to Raspberry Pi via serial connection and YMODEM protocol (see examples below)
   - wait for Commodore computer to load your PRG file from Raspberry Pi
   - repeat this as often as you want
 - **SAVE** - Receiving PRG file from Commodore machine:
   - if the LED is off, LOAD mode is active and you need to press the button to enabled SAVE mode
-  - start application waiting for file to receive via serial connection and YMODEM protocol (see example below)
+  - start application waiting for file to receive via serial connection and YMODEM protocol (see examples below)
   - enter SAVE on Commodore machine (it is a good idea to add a name for the PRG file, too)
-  - wait for your modem computer to retrieve your PRG file from Raspberry Pi
+  - wait for your modern computer to retrieve your PRG file from Raspberry Pi
   - repeat this as often as you want
 - pressing the button to toggle between LOAD and SAVE mode also cancels a maybe running operation - if something went wrong, just press the button twice (wait for the LED to toggle between presses) to reset the Raspberry Pi into the same mode
 
