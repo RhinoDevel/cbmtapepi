@@ -72,11 +72,29 @@ Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
 
 ## Examples
 
-How to use your computer's Linux commandline and a USB to serial interface at /dev/ttyUSB0 to send a PRG to Commodore machine:
+- An easy way is to use a Linux OS and the CBM Tape Pi Bash scripts that are included in the release package, just follow the instructions shown at commandline during execution:
+  - Use [send.sh](./send.sh) to send files to Raspberry Pi / Commodore machine.
+  - Use [retrieve.sh](./retrieve.sh) to receive files from Raspberry Pi / Commodore machine.
+  - You can modify stuff in the script files (e.g. the serial interface device to use).
 
-TODO: Add examples using scripts and push button!
+- How to manually use your computer's Linux commandline and a USB to serial interface at /dev/ttyUSB0:
 
-If you want to use Microsoft Windows OS instead of some Linux OS (or some other Unix derivative), you may want to give [TeraTerm](https://ttssh2.osdn.jp/) a try (it has YMODEM send and receive features). 
+  - Setup serial interface once (115200 baud, 8 data bits, no parity, 1 stop bit):
+      ```shell
+      stty -F /dev/ttyUSB0 115200
+      ```
+  - Send PRG file to Raspberry Pi:
+      ```shell
+      sx --ymodem mycbmapp.prg < /dev/ttyUSB0 > /dev/ttyUSB0
+      ```
+  - Receive PRG file from Raspberry Pi:
+      ```shell
+      rx --ymodem < /dev/ttyUSB0 > /dev/ttyUSB0
+      ```
+
+- If you want to use Microsoft Windows OS instead of some Linux OS (or some other Unix derivative), you may want to give [TeraTerm](https://ttssh2.osdn.jp/) a try (it has YMODEM send and receive features). 
+
+- Using [Minicom](https://salsa.debian.org/minicom-team/minicom) is another option to send and receive via YMODEM protocol. 
 
 ## Supported Commodore machines
 
