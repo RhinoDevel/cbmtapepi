@@ -28,7 +28,7 @@ CBM Tape Pi is a Commodore datassette/tape drive emulator.
 - "real"/complete tape drive emulation (e.g. to use fast loaders)
 - MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md)
 
-## What you need
+## Requirements
 
 The hardware effort is kept as low as possible. There are no ICs required and soldering is optional. A beginner can put this together!
 
