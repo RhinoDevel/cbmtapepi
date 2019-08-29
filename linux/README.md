@@ -1,7 +1,7 @@
 # CBM Tape Pi for Linux OS (e.g. Raspbian)
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
-This is the source code of the Linux OS port of CBM Tape Pi.
+This folder contains the source code of the Linux OS port of CBM Tape Pi.
 
 If it would work reliable, you could use (e.g.) Raspbian running directly on a
 Raspberry Pi and transfer files to and from Commodore machine without the need
@@ -15,4 +15,4 @@ I could not find a (simple) solution for that problem, yet.
 There probably is none (which is 100% reliable).
 
 If you would like to investigate, take a look at function
-```timer_wait_microseconds()``` in file [linux/main.c](https://github.com/RhinoDevel/cbmtapepi/blob/master/linux/main.c).
+```timer_wait_microseconds()``` in file [main.c](./main.c).
