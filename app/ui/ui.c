@@ -36,10 +36,10 @@ void ui_enter()
         switch(c[0])
         {
             case 'f':
-                ui_terminal_to_commodore(true);
+                ui_terminal_to_commodore(true); // (return value ignored)
                 break;
             case 't':
-                ui_commodore_to_terminal(true);
+                ui_commodore_to_terminal(true); // (return value ignored)
                 break;
             case 's':
                 ui_send_sample();
