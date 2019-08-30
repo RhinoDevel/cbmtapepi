@@ -20,7 +20,7 @@ echo
 echo "- Make sure that Raspi is in SAVE move (LED on)."
 echo
 
-read -s -p "Enter SAVE and press return on Commodore, then press enter key (here) to retrieve."
+read -s -p "Press enter key (here) to start waiting for file, then enter SAVE and press return on Commodore."
 echo
 echo
 
