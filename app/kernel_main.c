@@ -28,7 +28,7 @@
 #include "../lib/mem/mem.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
-#include "../lib/video/video.h"
+//#include "../lib/video/video.h"
 
 extern uint32_t __heap; // See memmap.ld.
 
@@ -43,6 +43,11 @@ static uint8_t dummy_read()
     return 0;
 }
 #endif //MT_INTERACTIVE
+
+static void dummy_write(uint8_t const byte)
+{
+    (void)byte; // Doing nothing.
+}
 
 /** Connect console (singleton) to wanted in-/output.
  */
@@ -67,7 +72,7 @@ static void init_console()
     // //
     // p.write_newline_with_cr = true;
     //
-    p.write_byte = video_write_byte;
+    p.write_byte = dummy_write/*video_write_byte*/;
     p.write_newline_with_cr = false;
 
     miniuart_init();
@@ -86,6 +91,31 @@ static void init_console()
     // pl011uart_init(); // (don't do this while using QEMU)
 
     console_init(&p);
+}
+
+static void toggle_gpio(
+    uint32_t const pin_nr,
+    int const count,
+    uint32_t const milliseconds,
+    bool const is_high)
+{
+    uint32_t const microseconds = 1000 * milliseconds;
+    int i = 0;
+
+    while(true)
+    {
+        baregpio_set_output(pin_nr, !is_high);
+        armtimer_busywait_microseconds(microseconds);
+        baregpio_set_output(pin_nr, is_high);
+
+        ++i;
+        if(i == count)
+        {
+            return;
+        }
+
+        armtimer_busywait_microseconds(microseconds);
+    }
 }
 
 /**
@@ -114,9 +144,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     init_console();
 
-    // Initialize video:
+    // Does not work for Raspberry Pi 2, yet:
     //
-    video_init();
+    // // Initialize video:
+    // //
+    // video_init();
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
@@ -140,11 +172,15 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     {
         if(statetoggle_get_state())
         {
-            ui_commodore_to_terminal(false);
+            toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
+
+            ui_commodore_to_terminal(false); // (return value ignored)
         }
         else
         {
-            ui_terminal_to_commodore(false);
+            toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, false); // Hard-coded
+
+            ui_terminal_to_commodore(false); // (return value ignored)
         }
 
         if(statetoggle_is_requested())
