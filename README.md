@@ -1,4 +1,4 @@
-# CBM Tape Pi v1.5.0
+# CBM Tape Pi v1.5.1
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
 Use a Raspberry Pi as datassette drive with your Commodore computer!
@@ -63,6 +63,7 @@ You need:
   - wait for your modern computer to retrieve your PRG file from Raspberry Pi
   - repeat this as often as you want
 - pressing the button to toggle between LOAD and SAVE mode also cancels a maybe running operation - if something went wrong, just press the button twice (wait for the LED to toggle between presses) to reset the Raspberry Pi into the same mode
+- on mode (LOAD or SAVE) initialization (triggered by cancel or mode toggle via button by user or triggered by an error) the status LED will flash some times to indicate entering mode
 
 ## Connections
 Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
