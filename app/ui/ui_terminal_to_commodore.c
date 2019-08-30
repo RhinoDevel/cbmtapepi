@@ -117,7 +117,7 @@ static bool send_to_commodore(
     return ret_val;
 }
 
-void ui_terminal_to_commodore(bool const interactive)
+bool ui_terminal_to_commodore(bool const interactive)
 {
     static uint32_t const len = 64 * 1024; // 64 kB.
 
@@ -150,7 +150,7 @@ void ui_terminal_to_commodore(bool const interactive)
 
         alloc_free(p.buf);
         p.buf = 0;
-        return;
+        return false;
     }
 
 #ifndef NDEBUG
@@ -161,8 +161,10 @@ void ui_terminal_to_commodore(bool const interactive)
     console_writeline(" bytes.");
 #endif //NDEBUG
 
-    send_to_commodore(p.buf, p.name, p.file_len, interactive);
+    bool const send_succeeded = send_to_commodore(
+        p.buf, p.name, p.file_len, interactive);
 
     alloc_free(p.buf);
     p.buf = 0;
+    return send_succeeded;
 }

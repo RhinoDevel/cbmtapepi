@@ -6,6 +6,6 @@
 
 #include <stdbool.h>
 
-void ui_terminal_to_commodore(bool const interactive);
+bool ui_terminal_to_commodore(bool const interactive);
 
 #endif //MT_UI_TERMINAL_TO_COMMODORE
