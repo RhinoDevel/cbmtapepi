@@ -76,24 +76,27 @@ static struct tape_input * receive_from_commodore(bool const interactive)
     return ret_val;
 }
 
-void ui_commodore_to_terminal(bool const interactive)
+bool ui_commodore_to_terminal(bool const interactive)
 {
-    struct tape_input * input = receive_from_commodore(interactive);
-    struct ymodem_send_params p = {
-        .write_byte = miniuart_write_byte,
-        .read_byte = miniuart_read_byte,
-        .is_ready_to_read = miniuart_is_ready_to_read,
-        .is_stop_requested = interactive
-            ? 0
-            : statetoggle_is_requested,
-        //.buf // See below.
-        .file_len = input->len + 2
-        //.name // See below.
-    };
-    uint32_t i = 0;
-#ifndef NDEBUG
+    struct tape_input * const input = receive_from_commodore(interactive);
+    struct ymodem_send_params p;
+    uint32_t i;
     enum ymodem_send_err err;
-#endif //NDEBUG
+
+    if(input == 0)
+    {
+        return false;
+    }
+
+    p.write_byte = miniuart_write_byte;
+    p.read_byte = miniuart_read_byte;
+    p.is_ready_to_read = miniuart_is_ready_to_read;
+    p.is_stop_requested = interactive ? 0 : statetoggle_is_requested;
+    //.buf // See below.
+    p.file_len = input->len + 2;
+    //.name // See below.
+
+    i = 0;
 
     // Address:
     //
@@ -125,17 +128,17 @@ void ui_commodore_to_terminal(bool const interactive)
 
     console_deb_writeline("Please trigger receival, now (via YMODEM).");
 
-#ifndef NDEBUG
     err = ymodem_send(&p);
 
+#ifndef NDEBUG
     console_write("YMODEM send error code was ");
     console_write_dword_dec((uint32_t)err);
     console_writeline(".");
-#else //NDEBUG
-    ymodem_send(&p); // Return value ignored.
 #endif //NDEBUG
 
     alloc_free(p.buf);
     alloc_free(input->bytes);
     alloc_free(input);
+
+    return err == ymodem_send_err_none;
 }
