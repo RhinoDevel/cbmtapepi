@@ -33,3 +33,6 @@ echo "Sending file \"${1}\".."
 echo
 #
 sudo bash -c "sx --ymodem '${1}' < ${SERIAL_DEVICE} > ${SERIAL_DEVICE}"
+echo
+
+echo "Raspberry Pi is now forwarding file to Commodore machine. See Commodore screen."
