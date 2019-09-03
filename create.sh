@@ -119,6 +119,7 @@ $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
 $MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC hardware/mailbox/mailbox.c -o hardware/mailbox/mailbox.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
+$MT_CC hardware/systimer/systimer.c -o hardware/systimer/systimer.o
 $MT_CC hardware/busywait/busywait.c -o hardware/busywait/busywait.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
@@ -184,6 +185,7 @@ arm-none-eabi-ld \
     hardware/baregpio/baregpio.o \
     hardware/mailbox/mailbox.o \
     hardware/armtimer/armtimer.o \
+    hardware/systimer/systimer.o \
     hardware/busywait/busywait.o \
     hardware/miniuart/miniuart.o \
     hardware/pl011uart/pl011uart.o \

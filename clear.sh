@@ -5,6 +5,7 @@
 # Hardware driver files:
 
 rm hardware/armtimer/armtimer.o
+rm hardware/systimer/systimer.o
 rm hardware/busywait/busywait.o
 rm hardware/baregpio/baregpio.o
 rm hardware/mailbox/mailbox.o
