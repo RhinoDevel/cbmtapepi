@@ -1,4 +1,8 @@
-0
+0                   Vector table.
+
+0x00000020 / 32 B   Vector table helper constants.
+
+0x00000040 / 64 B   Unused
 
 0x00000100 / 256 B  ATAGs (created here by boot loader).
 

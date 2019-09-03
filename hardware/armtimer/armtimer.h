@@ -6,23 +6,35 @@
 
 #include <stdint.h>
 
+/**
+ * - Uses free running counter.
+ */
 uint32_t armtimer_get_tick();
 
 /**
- * - Uses (maybe already running) 1 MHz counter.
+ * - Uses free running counter.
  */
 void armtimer_busywait_microseconds(uint32_t const microseconds);
 
-/** Start ARM timer (free running counter) with 1 MHz frequency.
+/** Start free running counter with 1 MHz frequency.
  *
  *  - Will NOT restart, if already running(!).
  *  - Hard-coded for 250 MHz core clock.
  */
 void armtimer_start_one_mhz();
 
+void armtimer_irq_clear();
+
 /**
- * - Disables maybe running free running counter [see armtimer_start_one_mhz()]!
+ * - Does NOT use free running counter, but timer.
  */
 void armtimer_busywait(uint32_t const start_val, uint32_t const divider);
+
+/**
+ * - Does NOT use free running counter, but timer.
+ * - NO busy wait.
+ * - Enables interrupt.
+ */
+void armtimer_start(uint32_t const start_val, uint32_t const divider);
 
 #endif //MT_ARMTIMER

@@ -81,9 +81,9 @@ export OPTIONS_GCC_ALL=" \
     -fpic \
     -ffreestanding"
 
+#    -DNDEBUG \
 export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
     -O2 \
-    -DNDEBUG \
     -std=gnu99 \
     -Wall \
     -Werror \
@@ -119,10 +119,12 @@ $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
 $MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
 $MT_CC hardware/mailbox/mailbox.c -o hardware/mailbox/mailbox.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
+$MT_CC hardware/busywait/busywait.c -o hardware/busywait/busywait.o
 $MT_CC hardware/miniuart/miniuart.c -o hardware/miniuart/miniuart.o
 $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
 $MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
+$MT_CC hardware/irqcontroller/irqcontroller.c -o hardware/irqcontroller/irqcontroller.o
 
 # Application-specific files (may use library and driver compiled above):
 #
@@ -182,10 +184,12 @@ arm-none-eabi-ld \
     hardware/baregpio/baregpio.o \
     hardware/mailbox/mailbox.o \
     hardware/armtimer/armtimer.o \
+    hardware/busywait/busywait.o \
     hardware/miniuart/miniuart.o \
     hardware/pl011uart/pl011uart.o \
     hardware/watchdog/watchdog.o \
     hardware/framebuffer/framebuffer.o \
+    hardware/irqcontroller/irqcontroller.o \
     \
     -o kernel.elf
 

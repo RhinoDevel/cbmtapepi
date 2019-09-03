@@ -5,12 +5,14 @@
 # Hardware driver files:
 
 rm hardware/armtimer/armtimer.o
+rm hardware/busywait/busywait.o
 rm hardware/baregpio/baregpio.o
 rm hardware/mailbox/mailbox.o
 rm hardware/miniuart/miniuart.o
 rm hardware/pl011uart/pl011uart.o
 rm hardware/framebuffer/framebuffer.o
 rm hardware/watchdog/watchdog.o
+rm hardware/irqcontroller/irqcontroller.o
 
 # Hardware-independent library:
 

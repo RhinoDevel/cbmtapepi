@@ -11,6 +11,7 @@
 
 #include "../hardware/peribase.h"
 #include "../hardware/armtimer/armtimer.h"
+#include "../hardware/irqcontroller/irqcontroller.h"
 
 #include "../hardware/miniuart/miniuart.h"
 //#include "../hardware/pl011uart/pl011uart.h"
@@ -28,9 +29,24 @@
 #include "../lib/mem/mem.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
-//#include "../lib/video/video.h"
+#include "../lib/video/video.h"
+
+extern void _enable_interrupts(); // See boot.S.
 
 extern uint32_t __heap; // See memmap.ld.
+
+static bool s_timer_irq_state = false;
+
+/** IRQ interrupt handler.
+ */
+void __attribute__((interrupt("IRQ"))) handler_irq()
+{
+    armtimer_irq_clear();
+
+    s_timer_irq_state = !s_timer_irq_state;
+
+    baregpio_set_output(GPIO_PIN_NR_ACT, s_timer_irq_state);
+}
 
 #ifndef MT_INTERACTIVE
 /**
@@ -44,10 +60,10 @@ static uint8_t dummy_read()
 }
 #endif //MT_INTERACTIVE
 
-static void dummy_write(uint8_t const byte)
-{
-    (void)byte; // Doing nothing.
-}
+// static void dummy_write(uint8_t const byte)
+// {
+//     (void)byte; // Doing nothing.
+// }
 
 /** Connect console (singleton) to wanted in-/output.
  */
@@ -72,7 +88,7 @@ static void init_console()
     // //
     // p.write_newline_with_cr = true;
     //
-    p.write_byte = dummy_write/*video_write_byte*/;
+    p.write_byte =video_write_byte/*dummy_write*/;
     p.write_newline_with_cr = false;
 
     miniuart_init();
@@ -146,9 +162,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // Does not work for Raspberry Pi 2, yet:
     //
-    // // Initialize video:
-    // //
-    // video_init();
+    // Initialize video:
+    //
+    video_init();
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
@@ -162,6 +178,15 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         armtimer_busywait_microseconds);
 
     statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, false);
+
+    irqcontroller_irq_src_enable_armtimer();
+    _enable_interrupts();
+    //
+    // Timer counts down 250.000 times in one second (with 250 kHz):
+    //
+    armtimer_start(250000 * 1, 1000); // 1 Second, hard-coded for 250MHz clock.
+
+    //toggle_gpio(16, 3, 200, false); // Hard-coded (works with Raspi 1, only).
 
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
