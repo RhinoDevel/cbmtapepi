@@ -24,6 +24,8 @@
 
 #if PERI_BASE == PERI_BASE_PI1
     #define GPIO_PIN_NR_ACT 16
+#else //PERI_BASE == PERI_BASE_PI2
+    #define GPIO_PIN_NR_ACT 47
 #endif //PERI_BASE == PERI_BASE_PI1
 
 #endif //MT_PERIBASE

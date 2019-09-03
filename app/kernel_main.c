@@ -45,11 +45,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     s_timer_irq_state = !s_timer_irq_state;
 
-    // For Raspberry Pi 1, only:
-    //
-#ifdef GPIO_PIN_NR_ACT
     baregpio_set_output(GPIO_PIN_NR_ACT, s_timer_irq_state);
-#endif //GPIO_PIN_NR_ACT
 }
 
 #ifndef MT_INTERACTIVE
