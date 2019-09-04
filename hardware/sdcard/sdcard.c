@@ -1340,7 +1340,7 @@ int sdcard_card_init()
   if( cardEjected && sdCard.init )
     {
     sdCard.init = 0;
-    memCopy(oldCID,sdCard.cid,sizeof(int)*4);
+    memcpy(oldCID,sdCard.cid,sizeof(int)*4);
     }
   else if( !sdCard.init )
     memset(oldCID, 0, sizeof int * 4);
