@@ -1050,7 +1050,7 @@ static void sdInitGPIO()
   baregpio_set_pud(GPIO_CLK,gpio_pud_up);
 
 
-  printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
+  //printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
   }
 
 /** Initialize static variable holding EMMC clock rate.
