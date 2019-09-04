@@ -22,13 +22,13 @@
 #define SD_READ_BLOCKS       0
 #define SD_WRITE_BLOCKS      1
 
+int sdcard_blocks_clear( long long address, int num );
+int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, int write );
+
 /** Clear maybe stored SD card infos.
  */
 void sdcard_deinit();
 
 int sdcard_init();
-
-int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, int write );
-int sdcard_blocks_clear( long long address, int num );
 
 #endif //MT_SDCARD

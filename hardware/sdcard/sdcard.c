@@ -1130,134 +1130,6 @@ static void sdParseCSD()
   s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
 }
 
-/* Transfer multiple contiguous blocks between the given address on the card and the buffer.
- */
-int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
-{
-	//	printf("check s_sdcard.init\n"); // TEST
-  if( !s_sdcard.init ) return SD_NO_RESP;
-
-  //	printf("sdWaitForData() .init\n"); // TEST
-  // Ensure that any data operation has completed before doing the transfer.
-  if( sdWaitForData() ) return SD_TIMEOUT;
-
-  // Work out the status, interrupt and command values for the transfer.
-  int readyInt = write ? INT_WRITE_RDY : INT_READ_RDY;
-  //int readyData = write ? SR_WRITE_AVAILABLE : SR_READ_AVAILABLE;
-  int transferCmd = write ? ( numBlocks == 1 ? IX_WRITE_SINGLE : IX_WRITE_MULTI) :
-                            ( numBlocks == 1 ? IX_READ_SINGLE : IX_READ_MULTI);
-
-  // If more than one block to transfer, and the card supports it,
-  // send SET_BLOCK_COUNT command to indicate the number of blocks to transfer.
-  int resp;
-  if( numBlocks > 1 &&
-      (s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
-      (resp = sdSendCommandA(IX_SET_BLOCKCNT,numBlocks)) ) return sdDebugResponse(resp);
-
-  // Address is different depending on the card type.
-  // HC pass address as block # which is just address/512.
-  // SC pass address straight through.
-  int blockAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
-
-  // Set BLKSIZECNT to number of blocks * 512 bytes, send the read or write command.
-  // Once the data transfer has started and the TM_BLKCNT_EN bit in the CMDTM register is
-  // set the EMMC module automatically decreases the BLKCNT value as the data blocks
-  // are transferred and stops the transfer once BLKCNT reaches 0.
-  // TODO: TM_AUTO_CMD12 - is this needed?  What effect does it have?
-  *EMMC_BLKSIZECNT = (numBlocks << 16) | 512;
-  //	printf("sdSendCommandA() .init\n"); // TEST
-  if( (resp = sdSendCommandA(transferCmd,blockAddress)) ) return sdDebugResponse(resp);
-
-  // Transfer all blocks.
-  int blocksDone = 0;
-  while( blocksDone < numBlocks )
-    {
-    // Wait for ready interrupt for the next block.
-    if( (resp = sdWaitForInterrupt(readyInt)) )
-      {
-		  //		  printf("EMMC: Timeout waiting for ready to read\n"); //TEST
-      //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
-      return sdDebugResponse(resp);
-      }
-
-    // Handle non-word-aligned buffers byte-by-byte.
-    // Note: the entire block is sent without looking at status registers.
-    int done = 0;
-    if( (int)buffer & 0x03 )
-      {
-      while( done < 512 )
-        {
-        if( write )
-          {
-          int data = (buffer[done++]      );
-          data +=    (buffer[done++] << 8 );
-          data +=    (buffer[done++] << 16);
-          data +=    (buffer[done++] << 24);
-          *EMMC_DATA = data;
-          }
-        else
-          {
-          int data = *EMMC_DATA;
-          buffer[done++] = (data      ) & 0xff;
-          buffer[done++] = (data >> 8 ) & 0xff;
-          buffer[done++] = (data >> 16) & 0xff;
-          buffer[done++] = (data >> 24) & 0xff;
-          }
-        }
-      }
-
-    // Handle word-aligned buffers more efficiently.
-    else
-      {
-      unsigned int* intbuff = (unsigned int*)buffer;
-      while( done < 128 )
-        {
-        if( write )
-          *EMMC_DATA = intbuff[done++];
-        else
-          intbuff[done++] = *EMMC_DATA;
-        }
-      }
-
-    blocksDone++;
-    buffer += 512;
-    }
-
-  // If not all bytes were read, the operation timed out.
-  if( blocksDone != numBlocks )
-    {
-		//		printf("Error 23\n");
-    //LOG_ERROR("EMMC: Transfer error only done %d/%d blocks\n",blocksDone,numBlocks);
-    //LOG_DEBUG("EMMC: Transfer: %08x %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,*EMMC_BLKSIZECNT);
-
-    // if( !write && numBlocks > 1 && (resp = sdSendCommand(IX_STOP_TRANS)) )
-	// 	//		printf("Error 24\n");
-    //   LOG_DEBUG("EMMC: Error response from stop transmission: %d\n",resp);
-    //
-    if( !write && numBlocks > 1)
-    {
-        resp = sdSendCommand(IX_STOP_TRANS);
-    }
-
-    return SD_TIMEOUT;
-    }
-
-  // For a write operation, ensure DATA_DONE interrupt before we stop transmission.
-  if( write && (resp = sdWaitForInterrupt(INT_DATA_DONE)) )
-    {
-		//		printf("Error 25\n");
-    //LOG_ERROR("EMMC: Timeout waiting for data done\n");
-    return sdDebugResponse(resp);
-    }
-
-  // For a multi-block operation, if SET_BLOCKCNT is not supported, we need to indicate
-  // that there are no more blocks to be transferred.
-  if( numBlocks > 1 && !(s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
-      (resp = sdSendCommand(IX_STOP_TRANS)) ) return sdDebugResponse(resp);
-
-  return SD_OK;
-  }
-
 // ************************
 // *** PUBLIC FUNCTIONS ***
 // ************************
@@ -1302,6 +1174,134 @@ int sdcard_blocks_clear( long long address, int numBlocks )
 
   return SD_OK;
   }
+
+/** Transfer multiple contiguous blocks between the given address on the card and the buffer.
+ */
+int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
+{
+	//	printf("check s_sdcard.init\n"); // TEST
+if( !s_sdcard.init ) return SD_NO_RESP;
+
+//	printf("sdWaitForData() .init\n"); // TEST
+// Ensure that any data operation has completed before doing the transfer.
+if( sdWaitForData() ) return SD_TIMEOUT;
+
+// Work out the status, interrupt and command values for the transfer.
+int readyInt = write ? INT_WRITE_RDY : INT_READ_RDY;
+//int readyData = write ? SR_WRITE_AVAILABLE : SR_READ_AVAILABLE;
+int transferCmd = write ? ( numBlocks == 1 ? IX_WRITE_SINGLE : IX_WRITE_MULTI) :
+                          ( numBlocks == 1 ? IX_READ_SINGLE : IX_READ_MULTI);
+
+// If more than one block to transfer, and the card supports it,
+// send SET_BLOCK_COUNT command to indicate the number of blocks to transfer.
+int resp;
+if( numBlocks > 1 &&
+    (s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
+    (resp = sdSendCommandA(IX_SET_BLOCKCNT,numBlocks)) ) return sdDebugResponse(resp);
+
+// Address is different depending on the card type.
+// HC pass address as block # which is just address/512.
+// SC pass address straight through.
+int blockAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
+
+// Set BLKSIZECNT to number of blocks * 512 bytes, send the read or write command.
+// Once the data transfer has started and the TM_BLKCNT_EN bit in the CMDTM register is
+// set the EMMC module automatically decreases the BLKCNT value as the data blocks
+// are transferred and stops the transfer once BLKCNT reaches 0.
+// TODO: TM_AUTO_CMD12 - is this needed?  What effect does it have?
+*EMMC_BLKSIZECNT = (numBlocks << 16) | 512;
+//	printf("sdSendCommandA() .init\n"); // TEST
+if( (resp = sdSendCommandA(transferCmd,blockAddress)) ) return sdDebugResponse(resp);
+
+// Transfer all blocks.
+int blocksDone = 0;
+while( blocksDone < numBlocks )
+  {
+  // Wait for ready interrupt for the next block.
+  if( (resp = sdWaitForInterrupt(readyInt)) )
+    {
+		  //		  printf("EMMC: Timeout waiting for ready to read\n"); //TEST
+    //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
+    return sdDebugResponse(resp);
+    }
+
+  // Handle non-word-aligned buffers byte-by-byte.
+  // Note: the entire block is sent without looking at status registers.
+  int done = 0;
+  if( (int)buffer & 0x03 )
+    {
+    while( done < 512 )
+      {
+      if( write )
+        {
+        int data = (buffer[done++]      );
+        data +=    (buffer[done++] << 8 );
+        data +=    (buffer[done++] << 16);
+        data +=    (buffer[done++] << 24);
+        *EMMC_DATA = data;
+        }
+      else
+        {
+        int data = *EMMC_DATA;
+        buffer[done++] = (data      ) & 0xff;
+        buffer[done++] = (data >> 8 ) & 0xff;
+        buffer[done++] = (data >> 16) & 0xff;
+        buffer[done++] = (data >> 24) & 0xff;
+        }
+      }
+    }
+
+  // Handle word-aligned buffers more efficiently.
+  else
+    {
+    unsigned int* intbuff = (unsigned int*)buffer;
+    while( done < 128 )
+      {
+      if( write )
+        *EMMC_DATA = intbuff[done++];
+      else
+        intbuff[done++] = *EMMC_DATA;
+      }
+    }
+
+  blocksDone++;
+  buffer += 512;
+  }
+
+// If not all bytes were read, the operation timed out.
+if( blocksDone != numBlocks )
+  {
+		//		printf("Error 23\n");
+  //LOG_ERROR("EMMC: Transfer error only done %d/%d blocks\n",blocksDone,numBlocks);
+  //LOG_DEBUG("EMMC: Transfer: %08x %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,*EMMC_BLKSIZECNT);
+
+  // if( !write && numBlocks > 1 && (resp = sdSendCommand(IX_STOP_TRANS)) )
+	// 	//		printf("Error 24\n");
+  //   LOG_DEBUG("EMMC: Error response from stop transmission: %d\n",resp);
+  //
+  if( !write && numBlocks > 1)
+  {
+      resp = sdSendCommand(IX_STOP_TRANS);
+  }
+
+  return SD_TIMEOUT;
+  }
+
+// For a write operation, ensure DATA_DONE interrupt before we stop transmission.
+if( write && (resp = sdWaitForInterrupt(INT_DATA_DONE)) )
+  {
+		//		printf("Error 25\n");
+  //LOG_ERROR("EMMC: Timeout waiting for data done\n");
+  return sdDebugResponse(resp);
+  }
+
+// For a multi-block operation, if SET_BLOCKCNT is not supported, we need to indicate
+// that there are no more blocks to be transferred.
+if( numBlocks > 1 && !(s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
+    (resp = sdSendCommand(IX_STOP_TRANS)) ) return sdDebugResponse(resp);
+
+return SD_OK;
+}
 
 void sdcard_deinit()
 {
