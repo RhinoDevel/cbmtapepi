@@ -1303,6 +1303,11 @@ int sdcard_blocks_clear( long long address, int numBlocks )
   return SD_OK;
   }
 
+void sdcard_deinit()
+{
+  memset(&s_sdcard, 0, sizeof SDDescriptor);
+}
+
 /* Initialize SD card.
  * Returns zero if initialization was successful, non-zero otherwise.
  */
@@ -1463,9 +1468,4 @@ int sdcard_init()
         return SD_CARD_REINSERTED;
     }
     return SD_CARD_CHANGED;
-}
-
-void sdcard_deinit()
-{
-    memset(&s_sdcard, 0, sizeof SDDescriptor);
 }
