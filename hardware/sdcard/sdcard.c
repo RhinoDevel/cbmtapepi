@@ -22,16 +22,20 @@
 #include "../baregpio/baregpio.h"
 #include "sdcard.h"
 
+// TODO: Hard-coded:
+//
+#define GPEDS1 (0x20200000 + 0x44)
+#define	GPHEN1 (0x20200000 + 0x68)
+
 #define P2V_DEV(X) (X)
 
 // Private functions.
-static void sdParseCID();
 static void sdParseCSD();
 static int sdSendCommand( int index );
 static int fls_long (unsigned long x);
 
 // EMMC registers
-static volatile unsigned int* const EMMC_ARG2        = (unsigned int*)P2V_DEV(0x20300000);
+//static volatile unsigned int* const EMMC_ARG2        = (unsigned int*)P2V_DEV(0x20300000);
 static volatile unsigned int* const EMMC_BLKSIZECNT  = (unsigned int*)P2V_DEV(0x20300004);
 static volatile unsigned int* const EMMC_ARG1        = (unsigned int*)P2V_DEV(0x20300008);
 static volatile unsigned int* const EMMC_CMDTM       = (unsigned int*)P2V_DEV(0x2030000c);
@@ -46,10 +50,10 @@ static volatile unsigned int* const EMMC_CONTROL1    = (unsigned int*)P2V_DEV(0x
 static volatile unsigned int* const EMMC_INTERRUPT   = (unsigned int*)P2V_DEV(0x20300030);
 static volatile unsigned int* const EMMC_IRPT_MASK   = (unsigned int*)P2V_DEV(0x20300034);
 static volatile unsigned int* const EMMC_IRPT_EN     = (unsigned int*)P2V_DEV(0x20300038);
-static volatile unsigned int* const EMMC_CONTROL2    = (unsigned int*)P2V_DEV(0x2030003c);
-static volatile unsigned int* const EMMC_BOOT_TIMEOUT= (unsigned int*)P2V_DEV(0x20300070);
-static volatile unsigned int* const EMMC_EXRDFIFO_EN = (unsigned int*)P2V_DEV(0x20300084);
-static volatile unsigned int* const EMMC_SPI_INT_SPT = (unsigned int*)P2V_DEV(0x203000f0);
+//static volatile unsigned int* const EMMC_CONTROL2    = (unsigned int*)P2V_DEV(0x2030003c);
+//static volatile unsigned int* const EMMC_BOOT_TIMEOUT= (unsigned int*)P2V_DEV(0x20300070);
+//static volatile unsigned int* const EMMC_EXRDFIFO_EN = (unsigned int*)P2V_DEV(0x20300084);
+//static volatile unsigned int* const EMMC_SPI_INT_SPT = (unsigned int*)P2V_DEV(0x203000f0);
 static volatile unsigned int* const EMMC_SLOTISR_VER = (unsigned int*)P2V_DEV(0x203000fc);
 
 // EMMC command flags
@@ -319,8 +323,8 @@ static EMMCCommand sdCommandTable[] =
 #define IX_SET_CLR_DET      37
 #define IX_SEND_SCR         38
 
-static const char* STATUS_NAME[] =
-  { "idle", "ready", "identify", "standby", "transmit", "data", "receive", "prog", "dis" };
+// static const char* STATUS_NAME[] =
+//   { "idle", "ready", "identify", "standby", "transmit", "data", "receive", "prog", "dis" };
 
 // CSD flags
 // Note: all flags are shifted down by 8 bits as the CRC is not included.
@@ -420,10 +424,10 @@ static const char* STATUS_NAME[] =
 #define SD_TYPE_2_SC 3
 #define SD_TYPE_2_HC 4
 
-static const char* SD_TYPE_NAME[] =
-  {
-  "Unknown", "MMC", "Type 1", "Type 2 SC", "Type 2 HC"
-  };
+// static const char* SD_TYPE_NAME[] =
+//   {
+//   "Unknown", "MMC", "Type 1", "Type 2 SC", "Type 2 HC"
+//   };
 
 // SD card functions supported values.
 #define SD_SUPP_SET_BLOCK_COUNT 0x80000000
@@ -461,7 +465,6 @@ typedef struct SDDescriptor
 static SDDescriptor s_sdcard;
 
 static int sdHostVer = 0;
-static int sdDebug = 0;
 static int s_emmc_clock_rate = 0; // Set by init_emmc_clock_rate().
 
 // necessary function
@@ -814,112 +817,84 @@ static int fls_long (unsigned long x) {
 	return r;
 }
 
-static unsigned long roundup_pow_of_two (unsigned long x) {
-	return 1UL << fls_long(x - 1);
-}
-
 /* Get the clock divider for the given requested frequency.
  * This is calculated relative to the SD base clock.
  */
-static uint32_t sdGetClockDivider ( uint32_t freq ) {
-   uint32_t divisor;
-   uint32_t closest = 41666666 / freq;               // Pi SD frequency is always 41.66667Mhz on baremetal
-   uint32_t shiftcount = fls_long(closest - 1);      // Get the raw shiftcount
-   if (shiftcount > 0) shiftcount--;               // Note the offset of shift by 1 (look at the spec)
-   if (shiftcount > 7) shiftcount = 7;               // It's only 8 bits maximum on HOST_SPEC_V2
-   if (sdHostVer > HOST_SPEC_V2) divisor = closest;   // Version 3 take closest
+static uint32_t sdGetClockDivider ( uint32_t freq )
+{
+    uint32_t divisor;
+    uint32_t closest = 41666666 / freq; // Pi SD frequency is always 41.66667Mhz on baremetal
+    uint32_t shiftcount = fls_long(closest - 1);      // Get the raw shiftcount
+    if (shiftcount > 0) shiftcount--;               // Note the offset of shift by 1 (look at the spec)
+    if (shiftcount > 7) shiftcount = 7;               // It's only 8 bits maximum on HOST_SPEC_V2
+    if (sdHostVer > HOST_SPEC_V2) divisor = closest;   // Version 3 take closest
       else divisor = (1 << shiftcount);            // Version 2 take power 2
 
-   if (divisor <= 2) {                           // Too dangerous to go for divisor 1 unless you test
+    if (divisor <= 2) {                           // Too dangerous to go for divisor 1 unless you test
       divisor = 2;                           // You can't take divisor below 2 on slow cards
       shiftcount = 0;                           // Match shift to above just for debug notification
-   }
+    }
 
-   //LOG_DEBUG("Divisor selected = %u, pow 2 shift count = %u\n", divisor, shiftcount);
-   uint32_t hi = 0;
-   if (sdHostVer > HOST_SPEC_V2) hi = (divisor & 0x300) >> 2; // Only 10 bits on Hosts specs above 2
+    //LOG_DEBUG("Divisor selected = %u, pow 2 shift count = %u\n", divisor, shiftcount);
+    uint32_t hi = 0;
+    if (sdHostVer > HOST_SPEC_V2) hi = (divisor & 0x300) >> 2; // Only 10 bits on Hosts specs above 2
     uint32_t lo = (divisor & 0x0ff);               // Low part always valid
     uint32_t cdiv = (lo << 8) + hi;                  // Join and roll to position
-   return cdiv;                              // Return cdiv
+    return cdiv;                              // Return cdiv
 }
-
-/* Get the clock divider for the given requested frequency.
- * This is calculated relative to the SD base clock.
- */
-static int sdGetClockDivider_old( int freq )
-   {
-   // Work out the closest divider which will result in a frequency
-   // equal or less than that requested.
-   // Maximum possible divider is 1024.
-   int closest = 0;
-   if( freq > s_emmc_clock_rate ) closest = 1;
-   else
-     {
-     closest = s_emmc_clock_rate/freq;
-     if( s_emmc_clock_rate%freq ) closest++;
-     }
-   if( closest > 1024 ) closest = 1024;
-   // Now find the nearest valid divider value, again that will result in a
-   // frequency equal to or less than that requested.
-   // For V2, the divider is supposed to be a power of 2
-   // For V3, the divider is a multiple of 2, with a value of 0 indicating 1.
-   // TODO: currently only V2 algorithm appears to work.
-   int div = 1;
-   if( 0 && sdHostVer > HOST_SPEC_V2 )
-     div = closest;
-   else
-     for( div = 1; div < closest; div *= 2 );
-   div >>= 1;
-   // TODO: Don't allow divider > 15 - does not seem to work.
-   if( div > 15 ) div = 15;
-   //  printf("EMMC: Clock divider for freq %d is %d.\n",freq,div);
-   int hi = (div & 0x300) >> 2;
-   int lo = (div & 0x0ff);
-   int cdiv = (lo << 8) + hi;
-   return cdiv;
-   }
 
 /* Set the SD clock to the given frequency.
  */
-static int sdSetClock( int freq )
-  {
-  // Wait for any pending inhibit bits
-  int count = 100000;
-  while( (*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && --count )
-    armtimer_busywait_microseconds(1);
-  if( count <= 0 )
+static int sdSetClock(int freq)
+{
+    // Wait for any pending inhibit bits:
+
+    int count = 100000;
+
+    while((*EMMC_STATUS & (SR_CMD_INHIBIT | SR_DAT_INHIBIT)) && --count)
     {
-    //LOG_ERROR("EMMC: Set clock: timeout waiting for inhibit flags. Status %08x.\n",*EMMC_STATUS);
-    return SD_ERROR_CLOCK;
+        armtimer_busywait_microseconds(1);
+    }
+    if(count <= 0)
+    {
+        //LOG_ERROR("EMMC: Set clock: timeout waiting for inhibit flags. Status %08x.\n",*EMMC_STATUS);
+        return SD_ERROR_CLOCK;
     }
 
-  // Switch clock off.
-  *EMMC_CONTROL1 &= ~C1_CLK_EN;
-  armtimer_busywait_microseconds(10);
+    // Switch clock off:
 
-  // Request the new clock setting and enable the clock
-  int cdiv = sdGetClockDivider(freq);
-  *EMMC_CONTROL1 = (*EMMC_CONTROL1 & 0xffff003f) | cdiv;
-  armtimer_busywait_microseconds(10);
-
-  // Enable the clock.
-  *EMMC_CONTROL1 |= C1_CLK_EN;
-  armtimer_busywait_microseconds(10);
-
-  // Wait for clock to be stable.
-  count = 10000;
-  while( !(*EMMC_CONTROL1 & C1_CLK_STABLE) && count-- )
+    *EMMC_CONTROL1 &= ~C1_CLK_EN;
     armtimer_busywait_microseconds(10);
-  if( count <= 0 )
+
+    // Request the new clock setting and enable the clock:
+
+    int const cdiv = sdGetClockDivider(freq);
+
+    *EMMC_CONTROL1 = (*EMMC_CONTROL1 & 0xFFFF003F) | cdiv;
+    armtimer_busywait_microseconds(10);
+
+    // Enable the clock:
+
+    *EMMC_CONTROL1 |= C1_CLK_EN;
+    armtimer_busywait_microseconds(10);
+
+    // Wait for clock to be stable:
+
+    count = 10000;
+    while(!(*EMMC_CONTROL1 & C1_CLK_STABLE) && count--)
     {
-    //LOG_ERROR("EMMC: ERROR: failed to get stable clock.\n");
-    return SD_ERROR_CLOCK;
+        armtimer_busywait_microseconds(10);
+    }
+    if(count <= 0)
+    {
+        //LOG_ERROR("EMMC: ERROR: failed to get stable clock.\n");
+        return SD_ERROR_CLOCK;
     }
 
-  //  printf("EMMC: Set clock, status %08x CONTROL1: %08x\n",*EMMC_STATUS,*EMMC_CONTROL1);
+    //printf("EMMC: Set clock, status %08x CONTROL1: %08x\n",*EMMC_STATUS,*EMMC_CONTROL1);
 
-  return SD_OK;
-  }
+    return SD_OK;
+}
 
 /* Reset card.
  */
@@ -1071,38 +1046,38 @@ static int init_emmc_clock_rate()
     return SD_OK;
 }
 
-/* Parse CID
- */
-static void sdParseCID()
-  {
-  // For some reason cards I have looked at seem to have everything
-  // shifted 8 bits down.
-  int manId = (s_sdcard.cid[0]&0x00ff0000) >> 16;
-  char appId[3];
-  appId[0] = (s_sdcard.cid[0]&0x0000ff00) >> 8;
-  appId[1] = (s_sdcard.cid[0]&0x000000ff);
-  appId[2] = 0;
-  char name[6];
-  name[0] = (s_sdcard.cid[1]&0xff000000) >> 24;
-  name[1] = (s_sdcard.cid[1]&0x00ff0000) >> 16;
-  name[2] = (s_sdcard.cid[1]&0x0000ff00) >> 8;
-  name[3] = (s_sdcard.cid[1]&0x000000ff);
-  name[4] = (s_sdcard.cid[2]&0xff000000) >> 24;
-  name[5] = 0;
-  int revH = (s_sdcard.cid[2]&0x00f00000) >> 20;
-  int revL = (s_sdcard.cid[2]&0x000f0000) >> 16;
-  int serial = ((s_sdcard.cid[2]&0x0000ffff) << 16) +
-               ((s_sdcard.cid[3]&0xffff0000) >> 16);
-
-  // For some reason cards I have looked at seem to have the Y/M in
-  // bits 11:0 whereas the spec says they should be in bits 19:8
-  int dateY = ((s_sdcard.cid[3]&0x00000ff0) >> 4) + 2000;
-  int dateM = (s_sdcard.cid[3]&0x0000000f);
-
-  // LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
-  //           SD_TYPE_NAME[s_sdcard.type], (int)(s_sdcard.capacity>>20),s_sdcard.uhsi,
-  //           manId, appId, name, revH, revL, dateM, dateY, serial, s_sdcard.rca>>16);
-  }
+// /* Parse CID
+//  */
+// static void sdParseCID()
+//   {
+//   // For some reason cards I have looked at seem to have everything
+//   // shifted 8 bits down.
+//   int manId = (s_sdcard.cid[0]&0x00ff0000) >> 16;
+//   char appId[3];
+//   appId[0] = (s_sdcard.cid[0]&0x0000ff00) >> 8;
+//   appId[1] = (s_sdcard.cid[0]&0x000000ff);
+//   appId[2] = 0;
+//   char name[6];
+//   name[0] = (s_sdcard.cid[1]&0xff000000) >> 24;
+//   name[1] = (s_sdcard.cid[1]&0x00ff0000) >> 16;
+//   name[2] = (s_sdcard.cid[1]&0x0000ff00) >> 8;
+//   name[3] = (s_sdcard.cid[1]&0x000000ff);
+//   name[4] = (s_sdcard.cid[2]&0xff000000) >> 24;
+//   name[5] = 0;
+//   int revH = (s_sdcard.cid[2]&0x00f00000) >> 20;
+//   int revL = (s_sdcard.cid[2]&0x000f0000) >> 16;
+//   int serial = ((s_sdcard.cid[2]&0x0000ffff) << 16) +
+//                ((s_sdcard.cid[3]&0xffff0000) >> 16);
+//
+//   // For some reason cards I have looked at seem to have the Y/M in
+//   // bits 11:0 whereas the spec says they should be in bits 19:8
+//   int dateY = ((s_sdcard.cid[3]&0x00000ff0) >> 4) + 2000;
+//   int dateM = (s_sdcard.cid[3]&0x0000000f);
+//
+//   LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
+//             SD_TYPE_NAME[s_sdcard.type], (int)(s_sdcard.capacity>>20),s_sdcard.uhsi,
+//             manId, appId, name, revH, revL, dateM, dateY, serial, s_sdcard.rca>>16);
+//   }
 
 /* Parse CSD
  */
@@ -1307,7 +1282,7 @@ return SD_OK;
 
 void sdcard_deinit()
 {
-  memset(&s_sdcard, 0, sizeof SDDescriptor);
+  memset(&s_sdcard, 0, sizeof (SDDescriptor));
 }
 
 /* Initialize SD card.
@@ -1332,7 +1307,7 @@ int sdcard_init()
   if( cardAbsent )
     {
     s_sdcard.init = 0;
-    int wasAbsent = s_sdcard.absent;
+    //int wasAbsent = s_sdcard.absent;
     s_sdcard.absent = 1;
     //if( !wasAbsent ) LOG_ERROR("EMMC: no SD card detected");
     return SD_CARD_ABSENT;
@@ -1458,14 +1433,14 @@ int sdcard_init()
   if( (resp = sdSendCommandA(IX_SET_BLOCKLEN,512)) ) return sdDebugResponse(resp);
 
   // Print out the CID having got this far.
-  sdParseCID();
+  //sdParseCID();
 
   // Initialisation complete.
   s_sdcard.init = 1;
 
     // Return value indicates, whether the card was reinserted or replaced:
     //
-    if(mem_cmp_byte(oldCID, s_sdcard.cid, sizeof (int) * 4))
+    if(mem_cmp_byte((uint8_t const * const)oldCID, (uint8_t const * const)s_sdcard.cid, sizeof (int) * 4))
     {
         return SD_CARD_REINSERTED;
     }
