@@ -1306,7 +1306,7 @@ int sdcard_blocks_clear( long long address, int numBlocks )
 /* Initialize SD card.
  * Returns zero if initialization was successful, non-zero otherwise.
  */
-int sdcard_card_init()
+int sdcard_init()
   {
   // Ensure we've initialized GPIO.
   if( !s_sdcard.init ) sdInitGPIO();
