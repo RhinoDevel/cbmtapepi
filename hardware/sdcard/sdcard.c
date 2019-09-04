@@ -19,15 +19,7 @@
 #include "mmio.h"
 #include "mailbox.h"
 #include "sdcard.h"
-//#include "log.h"
-//#include "memory.h"
-//#include "hardware/sdcard.h"
-//#include "hardware/timer.h"
-//#include "hardware/gpio.h"
-//#include "hardware/dma.h"
-//#include "hardware/mailbox.h"
-//#include "hardware/virtualmemory.h"
-//#include "devices/console.h"
+
 #define P2V_DEV(X) (X)
 #define LOG_DEBUG printf
 #define LOG_ERROR printf
@@ -59,9 +51,6 @@ static volatile unsigned int* const EMMC_BOOT_TIMEOUT= (unsigned int*)P2V_DEV(0x
 static volatile unsigned int* const EMMC_EXRDFIFO_EN = (unsigned int*)P2V_DEV(0x20300084);
 static volatile unsigned int* const EMMC_SPI_INT_SPT = (unsigned int*)P2V_DEV(0x203000f0);
 static volatile unsigned int* const EMMC_SLOTISR_VER = (unsigned int*)P2V_DEV(0x203000fc);
-
-// This register is not available on the Pi.
-//static volatile unsigned int* const EMMC_HOST_CAPS   = (unsigned int*)P2V_DEV(0x20300040);
 
 // EMMC command flags
 #define CMD_TYPE_NORMAL  0x00000000
@@ -424,25 +413,6 @@ static const char* STATUS_NAME[] =
 #define SCR_CMD_SUPPORT            0x03000000
 #define SCR_CMD_SUPP_SET_BLKCNT    0x02000000
 #define SCR_CMD_SUPP_SPEED_CLASS   0x01000000
-
-// Capabilities registers.  Not supported by the Pi.
-/*
-#define EMMC_HC_V18_SUPPORTED      0x04000000
-#define EMMC_HC_V30_SUPPORTED      0x02000000
-#define EMMC_HC_V33_SUPPORTED      0x01000000
-#define EMMC_HC_SUSPEND            0x00800000
-#define EMMC_HC_SDMA               0x00400000
-#define EMMC_HC_HIGH_SPEED         0x00200000
-#define EMMC_HC_ADMA2              0x00080000
-#define EMMC_HC_MAX_BLOCK          0x00030000
-#define EMMC_HC_MAX_BLOCK_SHIFT    16
-#define EMMC_HC_BASE_CLOCK_FREQ    0x00003f00  // base clock frequency in units of 1MHz, range 10-63Mhz.
-#define EMMC_HC_BASE_CLOCK_FREQ_V3 0x0000ff00  // base clock frequency in units of 1MHz, range 10-255Mhz.
-#define EMMC_HC_BASE_CLOCK_SHIFT   8
-#define EMMC_HC_TOCLOCK_MHZ        0x00000080
-#define EMMC_HC_TOCLOCK_FREQ       0x0000003f  // timeout clock frequency in MHz or KHz, range 1-63
-#define EMMC_HC_TOCLOCK_SHIFT      0
-*/
 
 // SD card types
 #define SD_TYPE_MMC  1
