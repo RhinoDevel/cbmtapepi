@@ -17,7 +17,7 @@
 #include "bootpack.h" // MT: A lot..
 #include "mylib.h" // MT: More or less default C stuff.
 #include "../../lib/mem.h"
-#include "mailbox.h"
+#include "../mailbox/mailbox.h"
 #include "sdcard.h"
 
 #define P2V_DEV(X) (X)
@@ -462,7 +462,7 @@ static SDDescriptor sdCard;
 
 static int sdHostVer = 0;
 static int sdDebug = 0;
-static int sdBaseClock;
+static int s_emmc_clock_rate = 0; // Set by init_emmc_clock_rate().
 
 // necessary function
 #define MBX_PROP_CLOCK_EMMC 1
@@ -852,11 +852,11 @@ static int sdGetClockDivider_old( int freq )
    // equal or less than that requested.
    // Maximum possible divider is 1024.
    int closest = 0;
-   if( freq > sdBaseClock ) closest = 1;
+   if( freq > s_emmc_clock_rate ) closest = 1;
    else
      {
-     closest = sdBaseClock/freq;
-     if( sdBaseClock%freq ) closest++;
+     closest = s_emmc_clock_rate/freq;
+     if( s_emmc_clock_rate%freq ) closest++;
      }
    if( closest > 1024 ) closest = 1024;
    // Now find the nearest valid divider value, again that will result in a
@@ -1053,19 +1053,23 @@ static void sdInitGPIO()
   printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
   }
 
-/* Get the base clock speed.
+/** Initialize static variable holding EMMC clock rate.
+ *
+ *  - Returns, if successful or not.
  */
-static int sdGetBaseClock()
-  {
-  sdBaseClock = mailbox_getClockRate(MBX_PROP_CLOCK_EMMC);
-  if( sdBaseClock == -1 )
+static int init_emmc_clock_rate()
+{
+    uint32_t const r = mailbox_read_clockrate(mailbox_id_clockrate_emmc);
+
+    if(r == UINT32_MAX)
     {
-    LOG_ERROR("EMMC: Error, failed to get base clock from mailbox\n");
-    return SD_ERROR;
+        return SD_ERROR;
     }
 
-  return SD_OK;
-  }
+    s_emmc_clock_rate = (int)r;
+
+    return SD_OK;
+}
 
 /* Parse CID
  */
@@ -1346,7 +1350,7 @@ int sdcard_card_init()
   // Get base clock speed.
   //  sdDebug = 0;
   int resp;
-  if( (resp = sdGetBaseClock()) ) return resp;
+  if( (resp = init_emmc_clock_rate()) ) return resp;
 
   // Reset the card.
   //  printf("Reset the card\n"); // TEST
