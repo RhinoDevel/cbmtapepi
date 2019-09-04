@@ -24,8 +24,7 @@
 
 int sdcard_init();
 int sdcard_card_init();
-//int sdReadSingleBlock( long long address, unsigned char* buffer );
-//int sdWriteSingleBlock( long long address, unsigned char* buffer );
+
 int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, int write );
 int sdcard_blocks_clear( long long address, int num );
 
