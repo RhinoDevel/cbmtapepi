@@ -14,9 +14,9 @@
 // 0x80  Extension FIFO config - what's that?
 // This register allows fine tuning the dma_req generation for paced DMA transfers when reading from the card.
 
-#include "bootpack.h"
-#include "mylib.h"
-#include "mmio.h"
+#include "bootpack.h" // MT: A lot..
+#include "mylib.h" // MT: More or less default C stuff.
+#include "../../lib/mem.h"
 #include "mailbox.h"
 #include "sdcard.h"
 
@@ -1036,9 +1036,9 @@ static void sdInitGPIO()
    gpioSetFunction(GPIO_CD,GPIO_FUNC_INPUT);
    gpioSetPull(GPIO_CD,GPIO_PULL_UP);
   //  gpioSetDetectHighEvent(GPIO_CD,1);
-  reg = mmio_read(GPHEN1);
+  reg = mem_read(GPHEN1);
   reg = reg | 1<<(47-32);
-  mmio_write(GPHEN1, reg);
+  mem_write(GPHEN1, reg);
 
 
   gpioSetFunction(GPIO_DAT3,GPIO_FUNC_ALT3);
@@ -1310,10 +1310,10 @@ int sdcard_card_init()
 
   // Check GPIO 47 status
   //  int cardAbsent = gpioGetPinLevel(GPIO_CD);
-  //  int cardAbsent = mmio_read(GPLEV1) & (1 << (47-32)); // TEST
+  //  int cardAbsent = mem_read(GPLEV1) & (1 << (47-32)); // TEST
   int cardAbsent = 0;
   //  int cardEjected = gpioGetEventDetected(GPIO_CD);
-  int cardEjected = mmio_read(GPEDS1) & (1 << (47-32));
+  int cardEjected = mem_read(GPEDS1) & (1 << (47-32));
   int oldCID[4];
   //  printf("In SD init card, status %08x interrupt %08x card absent %d ejected %d\n",*EMMC_STATUS,*EMMC_INTERRUPT,cardAbsent,cardEjected);
 
