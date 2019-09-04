@@ -29,6 +29,11 @@ bool mem_cmp_byte(
      * - Returns ptr.
      */
     void* memset(void* ptr, int value, size_t num);
+
+    /**
+     * - Returns ptr.
+     */
+    void* memcpy(void* ptr, void const * src, size_t num);
 #endif //MT_LINUX
 
 #endif //MT_MEM

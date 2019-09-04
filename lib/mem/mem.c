@@ -45,4 +45,16 @@ bool mem_cmp_byte(
         }
         return ptr;
     }
+
+    void* memcpy(void* ptr, void const * src, size_t num)
+    {
+        unsigned char const * const s = (unsigned char const *)src;
+        unsigned char * const p = (unsigned char *)ptr;
+
+        for(size_t i = 0;i < num; ++i)
+        {
+            p[i] = s[i];
+        }
+        return ptr;
+    }
 #endif //MT_LINUX
