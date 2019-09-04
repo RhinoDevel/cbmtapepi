@@ -14,10 +14,11 @@
 // 0x80  Extension FIFO config - what's that?
 // This register allows fine tuning the dma_req generation for paced DMA transfers when reading from the card.
 
-#include "bootpack.h" // MT: A lot..
-#include "mylib.h" // MT: More or less default C stuff.
-#include "../../lib/mem.h"
+// #include "bootpack.h" // MT: A lot..
+// #include "mylib.h" // MT: More or less default C stuff.
+#include "../../lib/mem/mem.h"
 #include "../mailbox/mailbox.h"
+#include "../armtimer/armtimer.h"
 #include "sdcard.h"
 
 #define P2V_DEV(X) (X)
@@ -505,7 +506,7 @@ static int sdWaitForInterrupt( unsigned int mask )
 
   // Wait for the specified interrupt or any error.
   while( !(*EMMC_INTERRUPT & waitMask) && count-- )
-    waitMicro(1);
+    armtimer_busywait_microseconds(1);
   ival = *EMMC_INTERRUPT;
 
   // Check for success.
@@ -544,7 +545,7 @@ static int sdWaitForCommand()
   // Check for status indicating a command in progress.
   int count = 1000000;
   while( (*EMMC_STATUS & SR_CMD_INHIBIT) && !(*EMMC_INTERRUPT & INT_ERROR_MASK) && count-- )
-    waitMicro(1);
+    armtimer_busywait_microseconds(1);
   if( count <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
     {
     //LOG_ERROR("EMMC: Wait for command aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
@@ -565,7 +566,7 @@ static int sdWaitForData()
 	  //  printf("EMMC: Wait for data started: %08x %08x %08x; dat: %d\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,datSet);
   int count = 0;
   while( (*EMMC_STATUS & SR_DAT_INHIBIT) && !(*EMMC_INTERRUPT & INT_ERROR_MASK) && ++count < 500000 )
-    waitMicro(1);
+    armtimer_busywait_microseconds(1);
   if( count >= 500000 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
     {
     //LOG_ERROR("EMMC: Wait for data aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
@@ -602,7 +603,7 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
   //  printf("ARG: %08x, CODE: %08x\n", arg, cmd->code);
   *EMMC_ARG1 = arg;
   *EMMC_CMDTM = cmd->code;
-  if( cmd->delay ) waitMicro(cmd->delay);
+  if( cmd->delay ) armtimer_busywait_microseconds(cmd->delay);
 
   // Wait until command complete interrupt.
   if( (result = sdWaitForInterrupt(INT_CMD_DONE)) ) return result;
@@ -764,7 +765,7 @@ static int sdReadSCR()
       s_sdcard.scr[numRead++] = *EMMC_DATA;
     else
       {
-      waitMicro(1);
+      armtimer_busywait_microseconds(1);
       if( --count == 0 ) break;
       }
     }
@@ -884,7 +885,7 @@ static int sdSetClock( int freq )
   // Wait for any pending inhibit bits
   int count = 100000;
   while( (*EMMC_STATUS & (SR_CMD_INHIBIT|SR_DAT_INHIBIT)) && --count )
-    waitMicro(1);
+    armtimer_busywait_microseconds(1);
   if( count <= 0 )
     {
     //LOG_ERROR("EMMC: Set clock: timeout waiting for inhibit flags. Status %08x.\n",*EMMC_STATUS);
@@ -893,21 +894,21 @@ static int sdSetClock( int freq )
 
   // Switch clock off.
   *EMMC_CONTROL1 &= ~C1_CLK_EN;
-  waitMicro(10);
+  armtimer_busywait_microseconds(10);
 
   // Request the new clock setting and enable the clock
   int cdiv = sdGetClockDivider(freq);
   *EMMC_CONTROL1 = (*EMMC_CONTROL1 & 0xffff003f) | cdiv;
-  waitMicro(10);
+  armtimer_busywait_microseconds(10);
 
   // Enable the clock.
   *EMMC_CONTROL1 |= C1_CLK_EN;
-  waitMicro(10);
+  armtimer_busywait_microseconds(10);
 
   // Wait for clock to be stable.
   count = 10000;
   while( !(*EMMC_CONTROL1 & C1_CLK_STABLE) && count-- )
-    waitMicro(10);
+    armtimer_busywait_microseconds(10);
   if( count <= 0 )
     {
     //LOG_ERROR("EMMC: ERROR: failed to get stable clock.\n");
@@ -930,10 +931,10 @@ static int sdResetCard( int resetType )
   //  *EMMC_CONTROL2 = 0;
   *EMMC_CONTROL1 |= resetType;
   //*EMMC_CONTROL1 &= ~(C1_CLK_EN|C1_CLK_INTLEN);
-  waitMicro(10);
+  armtimer_busywait_microseconds(10);
   count = 10000;
   while( (*EMMC_CONTROL1 & resetType) && count-- )
-    waitMicro(10);
+    armtimer_busywait_microseconds(10);
   if( count <= 0 )
     {
     //LOG_ERROR("EMMC: ERROR: failed to reset.\n");
@@ -943,7 +944,7 @@ static int sdResetCard( int resetType )
   // Enable internal clock and set data timeout.
   // TODO: Correct value for timeout?
   *EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
-  waitMicro(10);
+  armtimer_busywait_microseconds(10);
 
   // Set clock to setup frequency.
   if( (resp = sdSetClock(FREQ_SETUP)) ) return resp;
@@ -1167,7 +1168,7 @@ int sdcard_blocks_clear( long long address, int numBlocks )
       return SD_TIMEOUT;
       }
 
-    waitMicro(10);
+    armtimer_busywait_microseconds(10);
     }
 
   //  printf("EMMC: completed erase command int %08x\n",*EMMC_INTERRUPT);
@@ -1348,7 +1349,7 @@ int sdcard_init()
     memcpy(oldCID,s_sdcard.cid,sizeof(int)*4);
     }
   else if( !s_sdcard.init )
-    memset(oldCID, 0, sizeof int * 4);
+    memset(oldCID, 0, sizeof (int) * 4);
 
   // If already initialized and card not replaced, nothing to do.
   if( s_sdcard.init ) return SD_OK;
@@ -1463,7 +1464,7 @@ int sdcard_init()
 
     // Return value indicates, whether the card was reinserted or replaced:
     //
-    if(mem_cmp_byte(oldCID, s_sdcard.cid, sizeof int * 4))
+    if(mem_cmp_byte(oldCID, s_sdcard.cid, sizeof (int) * 4))
     {
         return SD_CARD_REINSERTED;
     }
