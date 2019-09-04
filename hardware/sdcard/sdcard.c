@@ -19,6 +19,7 @@
 #include "../../lib/mem/mem.h"
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
+#include "../baregpio/baregpio.h"
 #include "sdcard.h"
 
 #define P2V_DEV(X) (X)
@@ -1027,26 +1028,26 @@ static void sdInitGPIO()
 	  //  printf("EMMC: Init. Entry state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
 
   // Card detect GPIO
-   gpioSetFunction(GPIO_CD,GPIO_FUNC_INPUT);
-   gpioSetPull(GPIO_CD,GPIO_PULL_UP);
+   baregpio_set_func(GPIO_CD,gpio_func_input);
+   baregpio_set_pud(GPIO_CD,gpio_pud_up);
   //  gpioSetDetectHighEvent(GPIO_CD,1);
   reg = mem_read(GPHEN1);
   reg = reg | 1<<(47-32);
   mem_write(GPHEN1, reg);
 
 
-  gpioSetFunction(GPIO_DAT3,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT3,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_DAT2,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT2,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_DAT1,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT1,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_DAT0,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT0,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_CMD,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_CMD,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_CLK,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_CLK,GPIO_PULL_UP);
+  baregpio_set_func(GPIO_DAT3,gpio_func_alt3);
+  baregpio_set_pud(GPIO_DAT3,gpio_pud_up);
+  baregpio_set_func(GPIO_DAT2,gpio_func_alt3);
+  baregpio_set_pud(GPIO_DAT2,gpio_pud_up);
+  baregpio_set_func(GPIO_DAT1,gpio_func_alt3);
+  baregpio_set_pud(GPIO_DAT1,gpio_pud_up);
+  baregpio_set_func(GPIO_DAT0,gpio_func_alt3);
+  baregpio_set_pud(GPIO_DAT0,gpio_pud_up);
+  baregpio_set_func(GPIO_CMD,gpio_func_alt3);
+  baregpio_set_pud(GPIO_CMD,gpio_pud_up);
+  baregpio_set_func(GPIO_CLK,gpio_func_alt3);
+  baregpio_set_pud(GPIO_CLK,gpio_pud_up);
 
 
   printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
