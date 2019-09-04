@@ -487,11 +487,6 @@ static void waitCycle(int32_t count)
 	wait(count);
 }
 
-static int mbxGetClockRate(int id)
-{
-	return mailbox_getClockRate(id);
-}
-
 /*
  */
 static int sdDebugResponse( int resp )
@@ -1062,7 +1057,7 @@ static void sdInitGPIO()
  */
 static int sdGetBaseClock()
   {
-  sdBaseClock = mbxGetClockRate(MBX_PROP_CLOCK_EMMC);
+  sdBaseClock = mailbox_getClockRate(MBX_PROP_CLOCK_EMMC);
   if( sdBaseClock == -1 )
     {
     LOG_ERROR("EMMC: Error, failed to get base clock from mailbox\n");
