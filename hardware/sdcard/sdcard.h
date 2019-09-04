@@ -24,7 +24,7 @@
 
 /** Clear SD card infos.
  */
-void sdcard_init();
+void sdcard_deinit();
 
 int sdcard_card_init();
 

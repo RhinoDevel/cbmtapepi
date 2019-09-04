@@ -1465,7 +1465,7 @@ int sdcard_card_init()
     return SD_CARD_CHANGED;
 }
 
-void sdcard_init()
+void sdcard_deinit()
 {
     memset(&s_sdcard, 0, sizeof SDDescriptor);
 }
