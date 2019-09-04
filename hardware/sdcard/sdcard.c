@@ -517,7 +517,7 @@ int mbxGetClockRate(int id)
 // SD Card PUBLIC functions.
 //**************************************************************************
 
-int sdInit()
+int sdcard_init()
   {
   // Ensure SD information is zeroed.
   memSet(&sdCard,0,sizeof(SDDescriptor));
@@ -1060,7 +1060,7 @@ static int sdSwitchVoltage()
 
 /* Transfer multiple contiguous blocks between the given address on the card and the buffer.
  */
-int sdTransferBlocks( long long address, int numBlocks, unsigned char* buffer, int write )
+int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
 {
 	//	printf("check sdCard.init\n"); // TEST
   if( !sdCard.init ) return SD_NO_RESP;
@@ -1183,7 +1183,7 @@ int sdTransferBlocks( long long address, int numBlocks, unsigned char* buffer, i
 /* Clear multiple contiguous blocks.
  * Assumes that the erase operation writes zeros to the file.
  */
-int sdClearBlocks( long long address, int numBlocks )
+int sdcard_blocks_clear( long long address, int numBlocks )
   {
   if( !sdCard.init ) return SD_NO_RESP;
 
@@ -1280,7 +1280,7 @@ int sdGetBaseClock()
 /* Initialize SD card.
  * Returns zero if initialization was successful, non-zero otherwise.
  */
-int sdInitCard()
+int sdcard_card_init()
   {
   // Ensure we've initialized GPIO.
   if( !sdCard.init ) sdInitGPIO();

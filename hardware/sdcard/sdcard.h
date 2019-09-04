@@ -3,8 +3,8 @@
 
 // Originally taken from: https://raw.githubusercontent.com/moizumi99/RPiHaribote/master/haribote/sdcard.h
 
-#ifndef SDCARD_H
-#define SDCARD_H
+#ifndef MT_SDCARD
+#define MT_SDCARD
 
 #define SD_OK                0
 #define SD_ERROR             1
@@ -22,11 +22,11 @@
 #define SD_READ_BLOCKS       0
 #define SD_WRITE_BLOCKS      1
 
-int sdInit();
-int sdInitCard();
+int sdcard_init();
+int sdcard_card_init();
 //int sdReadSingleBlock( long long address, unsigned char* buffer );
 //int sdWriteSingleBlock( long long address, unsigned char* buffer );
-int sdTransferBlocks( long long address, int num, unsigned char* buffer, int write );
-int sdClearBlocks( long long address, int num );
+int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, int write );
+int sdcard_blocks_clear( long long address, int num );
 
-#endif // SDCARD_H
+#endif //MT_SDCARD
