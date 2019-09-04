@@ -467,33 +467,30 @@ static int sdBaseClock;
 // necessary function
 #define MBX_PROP_CLOCK_EMMC 1
 
+// GPIO pins used for EMMC.
+#define GPIO_DAT3  53
+#define GPIO_DAT2  52
+#define GPIO_DAT1  51
+#define GPIO_DAT0  50
+#define GPIO_CMD   49
+#define GPIO_CLK   48
+#define GPIO_CD    47
+
 static inline void wait(int32_t count)
 {
 	asm volatile("__delay_%=: subs %[count], %[count], #1; bne __delay_%=\n"
 		 : "=r"(count): [count]"0"(count) : "cc");
 }
 
-void waitCycle(int32_t count)
+static void waitCycle(int32_t count)
 {
 	wait(count);
 }
 
-int mbxGetClockRate(int id)
+static int mbxGetClockRate(int id)
 {
 	return mailbox_getClockRate(id);
 }
-
-//**************************************************************************
-// SD Card PUBLIC functions.
-//**************************************************************************
-
-int sdcard_init()
-  {
-  // Ensure SD information is zeroed.
-  memSet(&sdCard,0,sizeof(SDDescriptor));
-
-  return 0;
-  }
 
 /*
  */
@@ -796,7 +793,7 @@ static int sdReadSCR()
   return SD_OK;
   }
 
-int fls_long (unsigned long x) {
+static int fls_long (unsigned long x) {
 	int r = 32;
 	if (!x)  return 0;
 	if (!(x & 0xffff0000u)) {
@@ -822,7 +819,7 @@ int fls_long (unsigned long x) {
 	return r;
 }
 
-unsigned long roundup_pow_of_two (unsigned long x) {
+static unsigned long roundup_pow_of_two (unsigned long x) {
 	return 1UL << fls_long(x - 1);
 }
 
@@ -1028,6 +1025,114 @@ static int sdSwitchVoltage()
   return SD_OK;
 }
 
+/* Routine to initialize GPIO registers.
+ */
+static void sdInitGPIO()
+  {
+	  unsigned int reg;
+	  //  printf("EMMC: Init. Entry state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
+
+  // Card detect GPIO
+   gpioSetFunction(GPIO_CD,GPIO_FUNC_INPUT);
+   gpioSetPull(GPIO_CD,GPIO_PULL_UP);
+  //  gpioSetDetectHighEvent(GPIO_CD,1);
+  reg = mmio_read(GPHEN1);
+  reg = reg | 1<<(47-32);
+  mmio_write(GPHEN1, reg);
+
+
+  gpioSetFunction(GPIO_DAT3,GPIO_FUNC_ALT3);
+  gpioSetPull(GPIO_DAT3,GPIO_PULL_UP);
+  gpioSetFunction(GPIO_DAT2,GPIO_FUNC_ALT3);
+  gpioSetPull(GPIO_DAT2,GPIO_PULL_UP);
+  gpioSetFunction(GPIO_DAT1,GPIO_FUNC_ALT3);
+  gpioSetPull(GPIO_DAT1,GPIO_PULL_UP);
+  gpioSetFunction(GPIO_DAT0,GPIO_FUNC_ALT3);
+  gpioSetPull(GPIO_DAT0,GPIO_PULL_UP);
+  gpioSetFunction(GPIO_CMD,GPIO_FUNC_ALT3);
+  gpioSetPull(GPIO_CMD,GPIO_PULL_UP);
+  gpioSetFunction(GPIO_CLK,GPIO_FUNC_ALT3);
+  gpioSetPull(GPIO_CLK,GPIO_PULL_UP);
+
+
+  printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
+  }
+
+/* Get the base clock speed.
+ */
+static int sdGetBaseClock()
+  {
+  sdBaseClock = mbxGetClockRate(MBX_PROP_CLOCK_EMMC);
+  if( sdBaseClock == -1 )
+    {
+    LOG_ERROR("EMMC: Error, failed to get base clock from mailbox\n");
+    return SD_ERROR;
+    }
+
+  return SD_OK;
+  }
+
+/* Parse CID
+ */
+static void sdParseCID()
+  {
+  // For some reason cards I have looked at seem to have everything
+  // shifted 8 bits down.
+  int manId = (sdCard.cid[0]&0x00ff0000) >> 16;
+  char appId[3];
+  appId[0] = (sdCard.cid[0]&0x0000ff00) >> 8;
+  appId[1] = (sdCard.cid[0]&0x000000ff);
+  appId[2] = 0;
+  char name[6];
+  name[0] = (sdCard.cid[1]&0xff000000) >> 24;
+  name[1] = (sdCard.cid[1]&0x00ff0000) >> 16;
+  name[2] = (sdCard.cid[1]&0x0000ff00) >> 8;
+  name[3] = (sdCard.cid[1]&0x000000ff);
+  name[4] = (sdCard.cid[2]&0xff000000) >> 24;
+  name[5] = 0;
+  int revH = (sdCard.cid[2]&0x00f00000) >> 20;
+  int revL = (sdCard.cid[2]&0x000f0000) >> 16;
+  int serial = ((sdCard.cid[2]&0x0000ffff) << 16) +
+               ((sdCard.cid[3]&0xffff0000) >> 16);
+
+  // For some reason cards I have looked at seem to have the Y/M in
+  // bits 11:0 whereas the spec says they should be in bits 19:8
+  int dateY = ((sdCard.cid[3]&0x00000ff0) >> 4) + 2000;
+  int dateM = (sdCard.cid[3]&0x0000000f);
+
+  LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
+            SD_TYPE_NAME[sdCard.type], (int)(sdCard.capacity>>20),sdCard.uhsi,
+            manId, appId, name, revH, revL, dateM, dateY, serial, sdCard.rca>>16);
+  }
+
+/* Parse CSD
+ */
+static void sdParseCSD()
+{
+  int csdVersion = sdCard.csd[0] & CSD0_VERSION;
+
+  // For now just work out the size.
+  if( csdVersion == CSD0_V1 )
+	  {
+		  int csize = ((sdCard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
+                ((sdCard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
+		  int mult = 1 << (((sdCard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
+		  long long blockSize = 1 << ((sdCard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
+		  long long numBlocks = (csize+1LL)*mult;
+
+		  sdCard.capacity = numBlocks * blockSize;
+	  }
+  else // if( csdVersion == CSD0_V2 )
+	  {
+		  long long csize = (sdCard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
+
+		  sdCard.capacity = (csize+1LL)*512LL*1024LL;
+	  }
+
+  // Get other attributes of the card.
+  sdCard.fileFormat = sdCard.csd[3] & CSD3VN_FILE_FORMAT;
+}
+
 /* Transfer multiple contiguous blocks between the given address on the card and the buffer.
  */
 int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
@@ -1150,6 +1255,10 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
   return SD_OK;
   }
 
+// ************************
+// *** PUBLIC FUNCTIONS ***
+// ************************
+
 /* Clear multiple contiguous blocks.
  * Assumes that the erase operation writes zeros to the file.
  */
@@ -1187,62 +1296,6 @@ int sdcard_blocks_clear( long long address, int numBlocks )
     }
 
   //  printf("EMMC: completed erase command int %08x\n",*EMMC_INTERRUPT);
-
-  return SD_OK;
-  }
-
-// GPIO pins used for EMMC.
-#define GPIO_DAT3  53
-#define GPIO_DAT2  52
-#define GPIO_DAT1  51
-#define GPIO_DAT0  50
-#define GPIO_CMD   49
-#define GPIO_CLK   48
-#define GPIO_CD    47
-
-/* Routine to initialize GPIO registers.
- */
-static void sdInitGPIO()
-  {
-	  unsigned int reg;
-	  //  printf("EMMC: Init. Entry state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
-
-  // Card detect GPIO
-   gpioSetFunction(GPIO_CD,GPIO_FUNC_INPUT);
-   gpioSetPull(GPIO_CD,GPIO_PULL_UP);
-  //  gpioSetDetectHighEvent(GPIO_CD,1);
-  reg = mmio_read(GPHEN1);
-  reg = reg | 1<<(47-32);
-  mmio_write(GPHEN1, reg);
-
-
-  gpioSetFunction(GPIO_DAT3,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT3,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_DAT2,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT2,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_DAT1,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT1,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_DAT0,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_DAT0,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_CMD,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_CMD,GPIO_PULL_UP);
-  gpioSetFunction(GPIO_CLK,GPIO_FUNC_ALT3);
-  gpioSetPull(GPIO_CLK,GPIO_PULL_UP);
-
-
-  printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
-  }
-
-/* Get the base clock speed.
- */
-int sdGetBaseClock()
-  {
-  sdBaseClock = mbxGetClockRate(MBX_PROP_CLOCK_EMMC);
-  if( sdBaseClock == -1 )
-    {
-    LOG_ERROR("EMMC: Error, failed to get base clock from mailbox\n");
-    return SD_ERROR;
-    }
 
   return SD_OK;
   }
@@ -1407,63 +1460,10 @@ int sdcard_card_init()
   return SD_CARD_CHANGED;
   }
 
-/* Parse CID
- */
-static void sdParseCID()
+int sdcard_init()
   {
-  // For some reason cards I have looked at seem to have everything
-  // shifted 8 bits down.
-  int manId = (sdCard.cid[0]&0x00ff0000) >> 16;
-  char appId[3];
-  appId[0] = (sdCard.cid[0]&0x0000ff00) >> 8;
-  appId[1] = (sdCard.cid[0]&0x000000ff);
-  appId[2] = 0;
-  char name[6];
-  name[0] = (sdCard.cid[1]&0xff000000) >> 24;
-  name[1] = (sdCard.cid[1]&0x00ff0000) >> 16;
-  name[2] = (sdCard.cid[1]&0x0000ff00) >> 8;
-  name[3] = (sdCard.cid[1]&0x000000ff);
-  name[4] = (sdCard.cid[2]&0xff000000) >> 24;
-  name[5] = 0;
-  int revH = (sdCard.cid[2]&0x00f00000) >> 20;
-  int revL = (sdCard.cid[2]&0x000f0000) >> 16;
-  int serial = ((sdCard.cid[2]&0x0000ffff) << 16) +
-               ((sdCard.cid[3]&0xffff0000) >> 16);
+  // Ensure SD information is zeroed.
+  memSet(&sdCard,0,sizeof(SDDescriptor));
 
-  // For some reason cards I have looked at seem to have the Y/M in
-  // bits 11:0 whereas the spec says they should be in bits 19:8
-  int dateY = ((sdCard.cid[3]&0x00000ff0) >> 4) + 2000;
-  int dateM = (sdCard.cid[3]&0x0000000f);
-
-  LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
-            SD_TYPE_NAME[sdCard.type], (int)(sdCard.capacity>>20),sdCard.uhsi,
-            manId, appId, name, revH, revL, dateM, dateY, serial, sdCard.rca>>16);
+  return 0;
   }
-
-/* Parse CSD
- */
-static void sdParseCSD()
-{
-  int csdVersion = sdCard.csd[0] & CSD0_VERSION;
-
-  // For now just work out the size.
-  if( csdVersion == CSD0_V1 )
-	  {
-		  int csize = ((sdCard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
-                ((sdCard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
-		  int mult = 1 << (((sdCard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
-		  long long blockSize = 1 << ((sdCard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
-		  long long numBlocks = (csize+1LL)*mult;
-
-		  sdCard.capacity = numBlocks * blockSize;
-	  }
-  else // if( csdVersion == CSD0_V2 )
-	  {
-		  long long csize = (sdCard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
-
-		  sdCard.capacity = (csize+1LL)*512LL*1024LL;
-	  }
-
-  // Get other attributes of the card.
-  sdCard.fileFormat = sdCard.csd[3] & CSD3VN_FILE_FORMAT;
-}
