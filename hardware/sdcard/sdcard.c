@@ -21,8 +21,6 @@
 #include "sdcard.h"
 
 #define P2V_DEV(X) (X)
-#define LOG_DEBUG printf
-#define LOG_ERROR printf
 
 // Private functions.
 static void sdParseCID();
@@ -491,8 +489,8 @@ static void waitCycle(int32_t count)
  */
 static int sdDebugResponse( int resp )
   {
-  LOG_DEBUG("EMMC: Command %s resp %08x: %08x %08x %08x %08x\n",sdCard.lastCmd->name,resp,*EMMC_RESP3,*EMMC_RESP2,*EMMC_RESP1,*EMMC_RESP0);
-  LOG_DEBUG("EMMC: Status: %08x, control1: %08x, interrupt: %08x\n",*EMMC_STATUS,*EMMC_CONTROL1,*EMMC_INTERRUPT);
+  //LOG_DEBUG("EMMC: Command %s resp %08x: %08x %08x %08x %08x\n",sdCard.lastCmd->name,resp,*EMMC_RESP3,*EMMC_RESP2,*EMMC_RESP1,*EMMC_RESP0);
+  //LOG_DEBUG("EMMC: Status: %08x, control1: %08x, interrupt: %08x\n",*EMMC_STATUS,*EMMC_CONTROL1,*EMMC_INTERRUPT);
   return resp;
   }
 
@@ -525,7 +523,7 @@ static int sdWaitForInterrupt( unsigned int mask )
     }
   else if( ival & INT_ERROR_MASK )
     {
-    LOG_ERROR("EMMC: Error waiting for interrupt: %08x %08x %08x\n",*EMMC_STATUS,ival,*EMMC_RESP0);
+    //LOG_ERROR("EMMC: Error waiting for interrupt: %08x %08x %08x\n",*EMMC_STATUS,ival,*EMMC_RESP0);
 
     // Clear the interrupt register completely.
     *EMMC_INTERRUPT = ival;
@@ -549,7 +547,7 @@ static int sdWaitForCommand()
     waitMicro(1);
   if( count <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
     {
-    LOG_ERROR("EMMC: Wait for command aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
+    //LOG_ERROR("EMMC: Wait for command aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
     return SD_BUSY;
     }
 
@@ -570,7 +568,7 @@ static int sdWaitForData()
     waitMicro(1);
   if( count >= 500000 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
     {
-    LOG_ERROR("EMMC: Wait for data aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
+    //LOG_ERROR("EMMC: Wait for data aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
     return SD_BUSY;
     }
   //  printf("EMMC: Wait for data OK: count = %d: %08x %08x %08x\n",count,*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
@@ -586,7 +584,7 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
   if( sdWaitForCommand() != 0 )
     return SD_BUSY;
 
-  if( sdDebug ) LOG_DEBUG("EMMC: Sending command %s code %08x arg %08x\n",cmd->name,cmd->code,arg);
+  //if( sdDebug ) LOG_DEBUG("EMMC: Sending command %s code %08x arg %08x\n",cmd->name,cmd->code,arg);
   sdCard.lastCmd = cmd;
   sdCard.lastArg = arg;
 
@@ -754,7 +752,7 @@ static int sdReadSCR()
   // Wait for READ_RDY interrupt.
   if( (resp = sdWaitForInterrupt(INT_READ_RDY)) )
     {
-    LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
+    //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
     return sdDebugResponse(resp);
     }
 
@@ -774,8 +772,8 @@ static int sdReadSCR()
   // If SCR not fully read, the operation timed out.
   if( numRead != 2 )
     {
-    LOG_ERROR("EMMC: SEND_SCR ERR: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
-    LOG_ERROR("EMMC: Reading SCR, only read %d words\n",numRead);
+    //LOG_ERROR("EMMC: SEND_SCR ERR: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
+    //LOG_ERROR("EMMC: Reading SCR, only read %d words\n",numRead);
     return SD_TIMEOUT;
     }
 
@@ -835,7 +833,7 @@ static uint32_t sdGetClockDivider ( uint32_t freq ) {
       shiftcount = 0;                           // Match shift to above just for debug notification
    }
 
-   LOG_DEBUG("Divisor selected = %u, pow 2 shift count = %u\n", divisor, shiftcount);
+   //LOG_DEBUG("Divisor selected = %u, pow 2 shift count = %u\n", divisor, shiftcount);
    uint32_t hi = 0;
    if (sdHostVer > HOST_SPEC_V2) hi = (divisor & 0x300) >> 2; // Only 10 bits on Hosts specs above 2
     uint32_t lo = (divisor & 0x0ff);               // Low part always valid
@@ -889,7 +887,7 @@ static int sdSetClock( int freq )
     waitMicro(1);
   if( count <= 0 )
     {
-    LOG_ERROR("EMMC: Set clock: timeout waiting for inhibit flags. Status %08x.\n",*EMMC_STATUS);
+    //LOG_ERROR("EMMC: Set clock: timeout waiting for inhibit flags. Status %08x.\n",*EMMC_STATUS);
     return SD_ERROR_CLOCK;
     }
 
@@ -912,7 +910,7 @@ static int sdSetClock( int freq )
     waitMicro(10);
   if( count <= 0 )
     {
-    LOG_ERROR("EMMC: ERROR: failed to get stable clock.\n");
+    //LOG_ERROR("EMMC: ERROR: failed to get stable clock.\n");
     return SD_ERROR_CLOCK;
     }
 
@@ -938,7 +936,7 @@ static int sdResetCard( int resetType )
     waitMicro(10);
   if( count <= 0 )
     {
-    LOG_ERROR("EMMC: ERROR: failed to reset.\n");
+    //LOG_ERROR("EMMC: ERROR: failed to reset.\n");
     return SD_ERROR_RESET;
     }
 
@@ -986,7 +984,7 @@ static int sdAppSendOpCond( int arg )
   int resp, count;
   if( (resp = sdSendCommandA(IX_APP_SEND_OP_COND,arg)) && resp != SD_TIMEOUT )
     {
-    LOG_ERROR("EMMC: ACMD41 returned non-timeout error %d\n",resp);
+    //LOG_ERROR("EMMC: ACMD41 returned non-timeout error %d\n",resp);
     return resp;
     }
   count = 6;
@@ -996,7 +994,7 @@ static int sdAppSendOpCond( int arg )
     waitCycle(400);
     if( (resp = sdSendCommandA(IX_APP_SEND_OP_COND,arg)) && resp != SD_TIMEOUT )
       {
-      LOG_ERROR("EMMC: ACMD41 returned non-timeout error %d\n",resp);
+      //LOG_ERROR("EMMC: ACMD41 returned non-timeout error %d\n",resp);
       return resp;
       }
     }
@@ -1016,7 +1014,7 @@ static int sdAppSendOpCond( int arg )
  */
 static int sdSwitchVoltage()
 {
-  LOG_DEBUG("EMMC: Pi does not support switch voltage, fixed at 3.3volt\n");
+  //LOG_DEBUG("EMMC: Pi does not support switch voltage, fixed at 3.3volt\n");
   return SD_OK;
 }
 
@@ -1099,9 +1097,9 @@ static void sdParseCID()
   int dateY = ((sdCard.cid[3]&0x00000ff0) >> 4) + 2000;
   int dateM = (sdCard.cid[3]&0x0000000f);
 
-  LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
-            SD_TYPE_NAME[sdCard.type], (int)(sdCard.capacity>>20),sdCard.uhsi,
-            manId, appId, name, revH, revL, dateM, dateY, serial, sdCard.rca>>16);
+  // LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
+  //           SD_TYPE_NAME[sdCard.type], (int)(sdCard.capacity>>20),sdCard.uhsi,
+  //           manId, appId, name, revH, revL, dateM, dateY, serial, sdCard.rca>>16);
   }
 
 /* Parse CSD
@@ -1178,7 +1176,7 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
     if( (resp = sdWaitForInterrupt(readyInt)) )
       {
 		  //		  printf("EMMC: Timeout waiting for ready to read\n"); //TEST
-      LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
+      //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
       return sdDebugResponse(resp);
       }
 
@@ -1229,11 +1227,17 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
   if( blocksDone != numBlocks )
     {
 		//		printf("Error 23\n");
-    LOG_ERROR("EMMC: Transfer error only done %d/%d blocks\n",blocksDone,numBlocks);
-    LOG_DEBUG("EMMC: Transfer: %08x %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,*EMMC_BLKSIZECNT);
-    if( !write && numBlocks > 1 && (resp = sdSendCommand(IX_STOP_TRANS)) )
-		//		printf("Error 24\n");
-      LOG_DEBUG("EMMC: Error response from stop transmission: %d\n",resp);
+    //LOG_ERROR("EMMC: Transfer error only done %d/%d blocks\n",blocksDone,numBlocks);
+    //LOG_DEBUG("EMMC: Transfer: %08x %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,*EMMC_BLKSIZECNT);
+
+    // if( !write && numBlocks > 1 && (resp = sdSendCommand(IX_STOP_TRANS)) )
+	// 	//		printf("Error 24\n");
+    //   LOG_DEBUG("EMMC: Error response from stop transmission: %d\n",resp);
+    //
+    if( !write && numBlocks > 1)
+    {
+        resp = sdSendCommand(IX_STOP_TRANS);
+    }
 
     return SD_TIMEOUT;
     }
@@ -1242,7 +1246,7 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
   if( write && (resp = sdWaitForInterrupt(INT_DATA_DONE)) )
     {
 		//		printf("Error 25\n");
-    LOG_ERROR("EMMC: Timeout waiting for data done\n");
+    //LOG_ERROR("EMMC: Timeout waiting for data done\n");
     return sdDebugResponse(resp);
     }
 
@@ -1287,7 +1291,7 @@ int sdcard_blocks_clear( long long address, int numBlocks )
     {
     if( --count == 0 )
       {
-      LOG_ERROR("EMMC: Timeout waiting for erase: %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT);
+      //LOG_ERROR("EMMC: Timeout waiting for erase: %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT);
       return SD_TIMEOUT;
       }
 
@@ -1323,7 +1327,7 @@ int sdcard_card_init()
     sdCard.init = 0;
     int wasAbsent = sdCard.absent;
     sdCard.absent = 1;
-    if( !wasAbsent ) LOG_ERROR("EMMC: no SD card detected");
+    //if( !wasAbsent ) LOG_ERROR("EMMC: no SD card detected");
     return SD_CARD_ABSENT;
     }
 
@@ -1416,7 +1420,7 @@ int sdcard_card_init()
   if( sdCard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT &&
       sdCard.fileFormat != CSD3VN_FILE_FORMAT_HDD )
     {
-    LOG_ERROR("EMMC: Error, unrecognised file format %02x\n",sdCard.fileFormat);
+    //LOG_ERROR("EMMC: Error, unrecognised file format %02x\n",sdCard.fileFormat);
     return SD_ERROR;
     }
 
