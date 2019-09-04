@@ -26,7 +26,7 @@
 static void sdParseCID();
 static void sdParseCSD();
 static int sdSendCommand( int index );
-int fls_long (unsigned long x);
+static int fls_long (unsigned long x);
 
 // EMMC registers
 static volatile unsigned int* const EMMC_ARG2        = (unsigned int*)P2V_DEV(0x20300000);
@@ -1343,7 +1343,7 @@ int sdcard_card_init()
     memCopy(oldCID,sdCard.cid,sizeof(int)*4);
     }
   else if( !sdCard.init )
-    memSet(oldCID,0,sizeof(int)*4);
+    memset(oldCID, 0, sizeof int * 4);
 
   // If already initialized and card not replaced, nothing to do.
   if( sdCard.init ) return SD_OK;
@@ -1466,7 +1466,7 @@ int sdcard_card_init()
 int sdcard_init()
   {
   // Ensure SD information is zeroed.
-  memSet(&sdCard,0,sizeof(SDDescriptor));
+  memset(&sdCard, 0, sizeof SDDescriptor);
 
   return 0;
   }
