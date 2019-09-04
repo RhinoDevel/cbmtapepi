@@ -1456,12 +1456,14 @@ int sdcard_card_init()
   // Initialisation complete.
   sdCard.init = 1;
 
-  // Return value indicates whether the card was reinserted or replaced.
-  if( memCompare(oldCID,sdCard.cid,sizeof(int)*4) == 0 )
-    return SD_CARD_REINSERTED;
-
-  return SD_CARD_CHANGED;
-  }
+    // Return value indicates, whether the card was reinserted or replaced:
+    //
+    if(mem_cmp_byte(oldCID, sdCard.cid, sizeof int * 4))
+    {
+        return SD_CARD_REINSERTED;
+    }
+    return SD_CARD_CHANGED;
+}
 
 int sdcard_init()
   {
