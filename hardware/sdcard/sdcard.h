@@ -22,7 +22,10 @@
 #define SD_READ_BLOCKS       0
 #define SD_WRITE_BLOCKS      1
 
-int sdcard_init();
+/** Clear SD card infos.
+ */
+void sdcard_init();
+
 int sdcard_card_init();
 
 int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, int write );

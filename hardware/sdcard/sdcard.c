@@ -456,7 +456,7 @@ typedef struct SDDescriptor
   } SDDescriptor;
 
 // The SD card descriptor.
-static SDDescriptor sdCard;
+static SDDescriptor s_sdcard;
 
 static int sdHostVer = 0;
 static int sdDebug = 0;
@@ -489,7 +489,7 @@ static void waitCycle(int32_t count)
  */
 static int sdDebugResponse( int resp )
   {
-  //LOG_DEBUG("EMMC: Command %s resp %08x: %08x %08x %08x %08x\n",sdCard.lastCmd->name,resp,*EMMC_RESP3,*EMMC_RESP2,*EMMC_RESP1,*EMMC_RESP0);
+  //LOG_DEBUG("EMMC: Command %s resp %08x: %08x %08x %08x %08x\n",s_sdcard.lastCmd->name,resp,*EMMC_RESP3,*EMMC_RESP2,*EMMC_RESP1,*EMMC_RESP0);
   //LOG_DEBUG("EMMC: Status: %08x, control1: %08x, interrupt: %08x\n",*EMMC_STATUS,*EMMC_CONTROL1,*EMMC_INTERRUPT);
   return resp;
   }
@@ -585,8 +585,8 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
     return SD_BUSY;
 
   //if( sdDebug ) LOG_DEBUG("EMMC: Sending command %s code %08x arg %08x\n",cmd->name,cmd->code,arg);
-  sdCard.lastCmd = cmd;
-  sdCard.lastArg = arg;
+  s_sdcard.lastCmd = cmd;
+  s_sdcard.lastArg = arg;
 
   //  printf("EMMC: Sending command %08x:%s arg %d\n",cmd->code,cmd->name,arg);
 
@@ -622,18 +622,18 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
     // Return value non-zero if any error flag in the status value.
     case RESP_R1:
     case RESP_R1b:
-      sdCard.status = resp0;
+      s_sdcard.status = resp0;
       // Store the card state.  Note that this is the state the card was in before the
       // command was accepted, not the new state.
-      sdCard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
+      s_sdcard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
       return resp0 & R1_ERRORS_MASK;
 
     // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC
     // Note: highest bits are in RESP3.
     case RESP_R2I:
     case RESP_R2S:
-      sdCard.status = 0;
-      unsigned int* data = cmd->resp == RESP_R2I ? sdCard.cid : sdCard.csd;
+      s_sdcard.status = 0;
+      unsigned int* data = cmd->resp == RESP_R2I ? s_sdcard.cid : s_sdcard.csd;
       data[0] = *EMMC_RESP3;
       data[1] = *EMMC_RESP2;
       data[2] = *EMMC_RESP1;
@@ -643,26 +643,26 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
     // RESP0 contains OCR register
     // TODO: What is the correct time to wait for this?
     case RESP_R3:
-      sdCard.status = 0;
-      sdCard.ocr = resp0;
+      s_sdcard.status = 0;
+      s_sdcard.ocr = resp0;
       return SD_OK;
 
     // RESP0 contains RCA and status bits 23,22,19,12:0
     case RESP_R6:
-      sdCard.rca = resp0 & R6_RCA_MASK;
-      sdCard.status = ((resp0 & 0x00001fff)     ) |   // 12:0 map directly to status 12:0
+      s_sdcard.rca = resp0 & R6_RCA_MASK;
+      s_sdcard.status = ((resp0 & 0x00001fff)     ) |   // 12:0 map directly to status 12:0
                       ((resp0 & 0x00002000) << 6) |   // 13 maps to status 19 ERROR
                       ((resp0 & 0x00004000) << 8) |   // 14 maps to status 22 ILLEGAL_COMMAND
                       ((resp0 & 0x00008000) << 8);    // 15 maps to status 23 COM_CRC_ERROR
       // Store the card state.  Note that this is the state the card was in before the
       // command was accepted, not the new state.
-      sdCard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
-      return sdCard.status & R1_ERRORS_MASK;
+      s_sdcard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
+      return s_sdcard.status & R1_ERRORS_MASK;
 
     // RESP0 contains voltage acceptance and check pattern, which should match
     // the argument.
     case RESP_R7:
-      sdCard.status = 0;
+      s_sdcard.status = 0;
       return resp0 == arg ? SD_OK : SD_ERROR;
     }
 
@@ -675,15 +675,15 @@ static int sdSendAppCommand()
   {
   int resp;
   // If no RCA, send the APP_CMD and don't look for a response.
-  if( !sdCard.rca )
+  if( !s_sdcard.rca )
     sdSendCommandP(&sdCommandTable[IX_APP_CMD],0x00000000);
 
   // If there is an RCA, include that in APP_CMD and check card accepted it.
   else
     {
-    if( (resp = sdSendCommandP(&sdCommandTable[IX_APP_CMD_RCA],sdCard.rca)) ) return sdDebugResponse(resp);
+    if( (resp = sdSendCommandP(&sdCommandTable[IX_APP_CMD_RCA],s_sdcard.rca)) ) return sdDebugResponse(resp);
     // Debug - check that status indicates APP_CMD accepted.
-    if( !(sdCard.status & ST_APP_CMD) )
+    if( !(s_sdcard.status & ST_APP_CMD) )
       return SD_ERROR;
     }
 
@@ -705,12 +705,12 @@ static int sdSendCommand( int index )
   EMMCCommand* cmd = &sdCommandTable[index];
   int arg = 0;
   if( cmd->rca == RCA_YES )
-    arg = sdCard.rca;
+    arg = s_sdcard.rca;
 
   if( (resp = sdSendCommandP(cmd,arg)) ) return resp;
 
   // Check that APP_CMD was correctly interpreted.
-  if( index >= IX_APP_CMD_START && sdCard.rca && !(sdCard.status & ST_APP_CMD) )
+  if( index >= IX_APP_CMD_START && s_sdcard.rca && !(s_sdcard.status & ST_APP_CMD) )
     return SD_ERROR_APP_CMD;
 
   return resp;
@@ -730,7 +730,7 @@ static int sdSendCommandA( int index, int arg )
   if( (resp = sdSendCommandP(&sdCommandTable[index],arg)) ) return resp;
 
   // Check that APP_CMD was correctly interpreted.
-  if( index >= IX_APP_CMD_START && sdCard.rca && !(sdCard.status & ST_APP_CMD) )
+  if( index >= IX_APP_CMD_START && s_sdcard.rca && !(s_sdcard.status & ST_APP_CMD) )
     return SD_ERROR_APP_CMD;
 
   return resp;
@@ -761,7 +761,7 @@ static int sdReadSCR()
   while( numRead < 2 )
     {
     if( *EMMC_STATUS & SR_READ_AVAILABLE )
-      sdCard.scr[numRead++] = *EMMC_DATA;
+      s_sdcard.scr[numRead++] = *EMMC_DATA;
     else
       {
       waitMicro(1);
@@ -778,10 +778,10 @@ static int sdReadSCR()
     }
 
   // Parse out the SCR.  Only interested in values in scr[0], scr[1] is mfr specific.
-  if( sdCard.scr[0] & SCR_SD_BUS_WIDTH_4 ) sdCard.support |= SD_SUPP_BUS_WIDTH_4;
-  if( sdCard.scr[0] & SCR_SD_BUS_WIDTH_1 ) sdCard.support |= SD_SUPP_BUS_WIDTH_1;
-  if( sdCard.scr[0] & SCR_CMD_SUPP_SET_BLKCNT ) sdCard.support |= SD_SUPP_SET_BLOCK_COUNT;
-  if( sdCard.scr[0] & SCR_CMD_SUPP_SPEED_CLASS ) sdCard.support |= SD_SUPP_SPEED_CLASS;
+  if( s_sdcard.scr[0] & SCR_SD_BUS_WIDTH_4 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_4;
+  if( s_sdcard.scr[0] & SCR_SD_BUS_WIDTH_1 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_1;
+  if( s_sdcard.scr[0] & SCR_CMD_SUPP_SET_BLKCNT ) s_sdcard.support |= SD_SUPP_SET_BLOCK_COUNT;
+  if( s_sdcard.scr[0] & SCR_CMD_SUPP_SPEED_CLASS ) s_sdcard.support |= SD_SUPP_SPEED_CLASS;
 
   return SD_OK;
   }
@@ -957,13 +957,13 @@ static int sdResetCard( int resetType )
   //  printf("EMMC: Status: %08x, control: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_CONTROL0,*EMMC_CONTROL1,*EMMC_CONTROL2);
 
   // Reset card registers.
-  sdCard.rca = 0;
-  sdCard.ocr = 0;
-  sdCard.lastArg = 0;
-  sdCard.lastCmd = 0;
-  sdCard.status = 0;
-  sdCard.type = 0;
-  sdCard.uhsi = 0;
+  s_sdcard.rca = 0;
+  s_sdcard.ocr = 0;
+  s_sdcard.lastArg = 0;
+  s_sdcard.lastCmd = 0;
+  s_sdcard.status = 0;
+  s_sdcard.type = 0;
+  s_sdcard.uhsi = 0;
 
   // Send GO_IDLE_STATE
   //  printf("---- Send IX_GO_IDLE_STATE command\n");
@@ -988,7 +988,7 @@ static int sdAppSendOpCond( int arg )
     return resp;
     }
   count = 6;
-  while( !(sdCard.ocr & R3_COMPLETE) && count-- )
+  while( !(s_sdcard.ocr & R3_COMPLETE) && count-- )
     {
 		//    printf("EMMC: Retrying ACMD SEND_OP_COND status %08x\n",*EMMC_STATUS);
     waitCycle(400);
@@ -1000,11 +1000,11 @@ static int sdAppSendOpCond( int arg )
     }
 
   // Return timeout error if still not busy.
-  if( !(sdCard.ocr & R3_COMPLETE) )
+  if( !(s_sdcard.ocr & R3_COMPLETE) )
     return SD_TIMEOUT;
 
   // Check that at least one voltage value was returned.
-  if( !(sdCard.ocr & ACMD41_VOLTAGE) )
+  if( !(s_sdcard.ocr & ACMD41_VOLTAGE) )
     return SD_ERROR_VOLTAGE;
 
   return SD_OK;
@@ -1075,67 +1075,67 @@ static void sdParseCID()
   {
   // For some reason cards I have looked at seem to have everything
   // shifted 8 bits down.
-  int manId = (sdCard.cid[0]&0x00ff0000) >> 16;
+  int manId = (s_sdcard.cid[0]&0x00ff0000) >> 16;
   char appId[3];
-  appId[0] = (sdCard.cid[0]&0x0000ff00) >> 8;
-  appId[1] = (sdCard.cid[0]&0x000000ff);
+  appId[0] = (s_sdcard.cid[0]&0x0000ff00) >> 8;
+  appId[1] = (s_sdcard.cid[0]&0x000000ff);
   appId[2] = 0;
   char name[6];
-  name[0] = (sdCard.cid[1]&0xff000000) >> 24;
-  name[1] = (sdCard.cid[1]&0x00ff0000) >> 16;
-  name[2] = (sdCard.cid[1]&0x0000ff00) >> 8;
-  name[3] = (sdCard.cid[1]&0x000000ff);
-  name[4] = (sdCard.cid[2]&0xff000000) >> 24;
+  name[0] = (s_sdcard.cid[1]&0xff000000) >> 24;
+  name[1] = (s_sdcard.cid[1]&0x00ff0000) >> 16;
+  name[2] = (s_sdcard.cid[1]&0x0000ff00) >> 8;
+  name[3] = (s_sdcard.cid[1]&0x000000ff);
+  name[4] = (s_sdcard.cid[2]&0xff000000) >> 24;
   name[5] = 0;
-  int revH = (sdCard.cid[2]&0x00f00000) >> 20;
-  int revL = (sdCard.cid[2]&0x000f0000) >> 16;
-  int serial = ((sdCard.cid[2]&0x0000ffff) << 16) +
-               ((sdCard.cid[3]&0xffff0000) >> 16);
+  int revH = (s_sdcard.cid[2]&0x00f00000) >> 20;
+  int revL = (s_sdcard.cid[2]&0x000f0000) >> 16;
+  int serial = ((s_sdcard.cid[2]&0x0000ffff) << 16) +
+               ((s_sdcard.cid[3]&0xffff0000) >> 16);
 
   // For some reason cards I have looked at seem to have the Y/M in
   // bits 11:0 whereas the spec says they should be in bits 19:8
-  int dateY = ((sdCard.cid[3]&0x00000ff0) >> 4) + 2000;
-  int dateM = (sdCard.cid[3]&0x0000000f);
+  int dateY = ((s_sdcard.cid[3]&0x00000ff0) >> 4) + 2000;
+  int dateM = (s_sdcard.cid[3]&0x0000000f);
 
   // LOG_DEBUG("EMMC: SD Card %s %dMb UHS-I %d mfr %d '%s:%s' r%d.%d %d/%d, #%08x RCA %04x",
-  //           SD_TYPE_NAME[sdCard.type], (int)(sdCard.capacity>>20),sdCard.uhsi,
-  //           manId, appId, name, revH, revL, dateM, dateY, serial, sdCard.rca>>16);
+  //           SD_TYPE_NAME[s_sdcard.type], (int)(s_sdcard.capacity>>20),s_sdcard.uhsi,
+  //           manId, appId, name, revH, revL, dateM, dateY, serial, s_sdcard.rca>>16);
   }
 
 /* Parse CSD
  */
 static void sdParseCSD()
 {
-  int csdVersion = sdCard.csd[0] & CSD0_VERSION;
+  int csdVersion = s_sdcard.csd[0] & CSD0_VERSION;
 
   // For now just work out the size.
   if( csdVersion == CSD0_V1 )
 	  {
-		  int csize = ((sdCard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
-                ((sdCard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
-		  int mult = 1 << (((sdCard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
-		  long long blockSize = 1 << ((sdCard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
+		  int csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
+                ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
+		  int mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
+		  long long blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
 		  long long numBlocks = (csize+1LL)*mult;
 
-		  sdCard.capacity = numBlocks * blockSize;
+		  s_sdcard.capacity = numBlocks * blockSize;
 	  }
   else // if( csdVersion == CSD0_V2 )
 	  {
-		  long long csize = (sdCard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
+		  long long csize = (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
 
-		  sdCard.capacity = (csize+1LL)*512LL*1024LL;
+		  s_sdcard.capacity = (csize+1LL)*512LL*1024LL;
 	  }
 
   // Get other attributes of the card.
-  sdCard.fileFormat = sdCard.csd[3] & CSD3VN_FILE_FORMAT;
+  s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
 }
 
 /* Transfer multiple contiguous blocks between the given address on the card and the buffer.
  */
 int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
 {
-	//	printf("check sdCard.init\n"); // TEST
-  if( !sdCard.init ) return SD_NO_RESP;
+	//	printf("check s_sdcard.init\n"); // TEST
+  if( !s_sdcard.init ) return SD_NO_RESP;
 
   //	printf("sdWaitForData() .init\n"); // TEST
   // Ensure that any data operation has completed before doing the transfer.
@@ -1151,13 +1151,13 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
   // send SET_BLOCK_COUNT command to indicate the number of blocks to transfer.
   int resp;
   if( numBlocks > 1 &&
-      (sdCard.support & SD_SUPP_SET_BLOCK_COUNT) &&
+      (s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
       (resp = sdSendCommandA(IX_SET_BLOCKCNT,numBlocks)) ) return sdDebugResponse(resp);
 
   // Address is different depending on the card type.
   // HC pass address as block # which is just address/512.
   // SC pass address straight through.
-  int blockAddress = sdCard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
+  int blockAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
 
   // Set BLKSIZECNT to number of blocks * 512 bytes, send the read or write command.
   // Once the data transfer has started and the TM_BLKCNT_EN bit in the CMDTM register is
@@ -1252,7 +1252,7 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
 
   // For a multi-block operation, if SET_BLOCKCNT is not supported, we need to indicate
   // that there are no more blocks to be transferred.
-  if( numBlocks > 1 && !(sdCard.support & SD_SUPP_SET_BLOCK_COUNT) &&
+  if( numBlocks > 1 && !(s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
       (resp = sdSendCommand(IX_STOP_TRANS)) ) return sdDebugResponse(resp);
 
   return SD_OK;
@@ -1267,7 +1267,7 @@ int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buf
  */
 int sdcard_blocks_clear( long long address, int numBlocks )
   {
-  if( !sdCard.init ) return SD_NO_RESP;
+  if( !s_sdcard.init ) return SD_NO_RESP;
 
   // Ensure that any data operation has completed before doing the transfer.
   if( sdWaitForData() ) return SD_TIMEOUT;
@@ -1275,8 +1275,8 @@ int sdcard_blocks_clear( long long address, int numBlocks )
   // Address is different depending on the card type.
   // HC pass address as block # which is just address/512.
   // SC pass address straight through.
-  int startAddress = sdCard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
-  int endAddress = startAddress + (sdCard.type == SD_TYPE_2_HC ? (numBlocks - 1) : ((numBlocks-1)*512));
+  int startAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
+  int endAddress = startAddress + (s_sdcard.type == SD_TYPE_2_HC ? (numBlocks - 1) : ((numBlocks-1)*512));
 
   int resp;
   //  printf("EMMC: erasing blocks from %d to %d\n",startAddress,endAddress);
@@ -1309,7 +1309,7 @@ int sdcard_blocks_clear( long long address, int numBlocks )
 int sdcard_card_init()
   {
   // Ensure we've initialized GPIO.
-  if( !sdCard.init ) sdInitGPIO();
+  if( !s_sdcard.init ) sdInitGPIO();
 
   // Check GPIO 47 status
   //  int cardAbsent = gpioGetPinLevel(GPIO_CD);
@@ -1324,9 +1324,9 @@ int sdcard_card_init()
   // Only log the fact that the card is absent the first time we discover it.
   if( cardAbsent )
     {
-    sdCard.init = 0;
-    int wasAbsent = sdCard.absent;
-    sdCard.absent = 1;
+    s_sdcard.init = 0;
+    int wasAbsent = s_sdcard.absent;
+    s_sdcard.absent = 1;
     //if( !wasAbsent ) LOG_ERROR("EMMC: no SD card detected");
     return SD_CARD_ABSENT;
     }
@@ -1336,17 +1336,17 @@ int sdcard_card_init()
   // go back through init, and indicate that in the return value.
   // In this case we would expect INT_CARD_INSERT to be set.
   // Clear the insert and remove interrupts
-  sdCard.absent = 0;
-  if( cardEjected && sdCard.init )
+  s_sdcard.absent = 0;
+  if( cardEjected && s_sdcard.init )
     {
-    sdCard.init = 0;
-    memcpy(oldCID,sdCard.cid,sizeof(int)*4);
+    s_sdcard.init = 0;
+    memcpy(oldCID,s_sdcard.cid,sizeof(int)*4);
     }
-  else if( !sdCard.init )
+  else if( !s_sdcard.init )
     memset(oldCID, 0, sizeof int * 4);
 
   // If already initialized and card not replaced, nothing to do.
-  if( sdCard.init ) return SD_OK;
+  if( s_sdcard.init ) return SD_OK;
 
   // TODO: check version >= 1 and <= 3?
   sdHostVer = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
@@ -1371,10 +1371,10 @@ int sdcard_card_init()
     if( (resp = sdAppSendOpCond(ACMD41_ARG_HC)) ) return sdDebugResponse(resp);
 
     // Check for high or standard capacity.
-    if( sdCard.ocr & R3_CCS )
-      sdCard.type = SD_TYPE_2_HC;
+    if( s_sdcard.ocr & R3_CCS )
+      s_sdcard.type = SD_TYPE_2_HC;
     else
-      sdCard.type = SD_TYPE_2_SC;
+      s_sdcard.type = SD_TYPE_2_SC;
     }
 
   else if( resp == SD_BUSY ) return resp;
@@ -1391,14 +1391,14 @@ int sdcard_card_init()
     // Resolve voltage.
     if( (resp = sdAppSendOpCond(ACMD41_ARG_SC)) ) return sdDebugResponse(resp);
 
-    sdCard.type = SD_TYPE_1;
+    s_sdcard.type = SD_TYPE_1;
     }
 
   // If the switch to 1.8A is accepted, then we need to send a CMD11.
   // CMD11: Completion of voltage switch sequence is checked by high level of DAT[3:0].
   // Any bit of DAT[3:0] can be checked depends on ability of the host.
   // Appears for PI its any/all bits.
-  if( (sdCard.ocr & R3_S18A) &&
+  if( (s_sdcard.ocr & R3_S18A) &&
       (resp = sdSwitchVoltage()) ) return resp;
 
   // Send ALL_SEND_CID (CMD2)
@@ -1412,15 +1412,15 @@ int sdcard_card_init()
   // Actually cards seem to respond in identify state at this point.
   // Check this with a SEND_STATUS (CMD13)
   //if( (resp = sdSendCommand(IX_SEND_STATUS)) ) return sdDebugResponse(resp);
-  //  printf("Card current state: %08x %s\n",sdCard.status,STATUS_NAME[sdCard.cardState]);
+  //  printf("Card current state: %08x %s\n",s_sdcard.status,STATUS_NAME[s_sdcard.cardState]);
 
   // Send SEND_CSD (CMD9) and parse the result.
   if( (resp = sdSendCommand(IX_SEND_CSD)) ) return sdDebugResponse(resp);
   sdParseCSD();
-  if( sdCard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT &&
-      sdCard.fileFormat != CSD3VN_FILE_FORMAT_HDD )
+  if( s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT &&
+      s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_HDD )
     {
-    //LOG_ERROR("EMMC: Error, unrecognised file format %02x\n",sdCard.fileFormat);
+    //LOG_ERROR("EMMC: Error, unrecognised file format %02x\n",s_sdcard.fileFormat);
     return SD_ERROR;
     }
 
@@ -1439,9 +1439,9 @@ int sdcard_card_init()
 
   // Send APP_SET_BUS_WIDTH (ACMD6)
   // If supported, set 4 bit bus width and update the CONTROL0 register.
-  if( sdCard.support & SD_SUPP_BUS_WIDTH_4 )
+  if( s_sdcard.support & SD_SUPP_BUS_WIDTH_4 )
     {
-    if( (resp = sdSendCommandA(IX_SET_BUS_WIDTH,sdCard.rca|2)) ) return sdDebugResponse(resp);
+    if( (resp = sdSendCommandA(IX_SET_BUS_WIDTH,s_sdcard.rca|2)) ) return sdDebugResponse(resp);
     *EMMC_CONTROL0 |= C0_HCTL_DWITDH;
     }
 
@@ -1454,21 +1454,18 @@ int sdcard_card_init()
   sdParseCID();
 
   // Initialisation complete.
-  sdCard.init = 1;
+  s_sdcard.init = 1;
 
     // Return value indicates, whether the card was reinserted or replaced:
     //
-    if(mem_cmp_byte(oldCID, sdCard.cid, sizeof int * 4))
+    if(mem_cmp_byte(oldCID, s_sdcard.cid, sizeof int * 4))
     {
         return SD_CARD_REINSERTED;
     }
     return SD_CARD_CHANGED;
 }
 
-int sdcard_init()
-  {
-  // Ensure SD information is zeroed.
-  memset(&sdCard, 0, sizeof SDDescriptor);
-
-  return 0;
-  }
+void sdcard_init()
+{
+    memset(&s_sdcard, 0, sizeof SDDescriptor);
+}
