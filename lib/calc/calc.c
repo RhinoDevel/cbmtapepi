@@ -154,3 +154,20 @@ void calc_dword_to_hex(uint32_t const dword, char * const out_eight)
     calc_word_to_hex(high, out_eight);
     calc_word_to_hex(low, out_eight + 4);
 }
+
+// TODO: Check, if correct and check, if a better/faster way is possible:
+//
+#ifndef MT_LINUX
+    unsigned int __aeabi_uidiv(unsigned int numerator, unsigned int denominator)
+    {
+        unsigned int result = 0;
+
+        while(numerator - denominator > denominator)
+        {
+            ++result;
+
+            numerator -= denominator;
+        }
+        return result;
+    }
+#endif //MT_LINUX
