@@ -29,6 +29,12 @@ int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, i
  */
 void sdcard_deinit();
 
+/** Initialize SD card.
+ *
+ *  - Returns non-zero value on error.
+ *  - Assumes SD card to be present!
+ *  - Assumes SD card NEVER getting removed/reinserted!
+ */
 int sdcard_init();
 
 #endif //MT_SDCARD
