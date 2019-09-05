@@ -519,21 +519,13 @@ static int sdWaitForInterrupt( unsigned int mask )
       (ival & INT_CMD_TIMEOUT) ||
       (ival & INT_DATA_TIMEOUT) )
     {
-        #ifndef NDEBUG
-            console_write("sdWaitForInterrupt: Status = 0x");
-            console_write_dword(*EMMC_STATUS);
-            console_write(", interrupt = 0x");
-            console_write_dword(*EMMC_INTERRUPT);
-            console_writeline(".");
-        #endif //NDEBUG
-
 		//    printf("EMMC: Wait for interrupt %08x timeout: %08x %08x %08x\n",mask,*EMMC_STATUS,ival,*EMMC_RESP0);
 		//	printf("EMMC_STATUS:%08x\nEMMC_INTERRUPT: %08x\nEMMC_RESP0 : %08x\nn", *EMMC_STATUS, *EMMC_INTERRUPT, *EMMC_RESP0);
 
     // Clear the interrupt register completely.
     *EMMC_INTERRUPT = ival;
 
-    console_deb_writeline("sdWaitForInterrupt : Timeout.");
+    //console_deb_writeline("sdWaitForInterrupt : Timeout.");
     return SD_TIMEOUT;
     }
   else if( ival & INT_ERROR_MASK )
@@ -622,7 +614,7 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
   // Wait until command complete interrupt.
   if( (result = sdWaitForInterrupt(INT_CMD_DONE)) )
   {
-      console_deb_writeline("sdcard : Waiting for interrupt failed (1)!");
+      //console_deb_writeline("sdcard : Waiting for interrupt failed (1)!");
       return result;
   }
 
@@ -725,7 +717,7 @@ static int sdSendCommand( int index )
   int resp;
   if( index >= IX_APP_CMD_START)
   {
-      console_deb_writeline("sdSendCommand: Calling sdSendAppCommand()..");
+      //console_deb_writeline("sdSendCommand: Calling sdSendAppCommand()..");
       if((resp = sdSendAppCommand()))
       {
           return sdDebugResponse(resp);
@@ -760,7 +752,6 @@ static int sdSendCommandA( int index, int arg )
   int resp;
     if( index >= IX_APP_CMD_START)
     {
-        console_deb_writeline("sdSendCommandA: Calling sdSendAppCommand()..");
         if((resp = sdSendAppCommand()) )
         {
             return sdDebugResponse(resp);
@@ -770,7 +761,7 @@ static int sdSendCommandA( int index, int arg )
   // Get the command and pass the argument through.
   if( (resp = sdSendCommandP(&sdCommandTable[index],arg)) )
   {
-      console_deb_writeline("sdcard : Error: Sending command failed (3)!");
+      //console_deb_writeline("sdcard : Error: Sending command failed (3)!");
       return resp;
   }
 
@@ -1419,7 +1410,7 @@ int sdcard_init()
         return resp;
     }
 
-    console_deb_writeline("sdcard_init: Calling sdSendCommandA()..");
+    //console_deb_writeline("sdcard_init: Calling sdSendCommandA()..");
 
     // Send SEND_IF_COND,0x000001AA (CMD8) voltage range 0x1 check pattern 0xAA
     // If voltage range and check pattern don't match, look for older card.
@@ -1469,8 +1460,6 @@ int sdcard_init()
             s_sdcard.type = SD_TYPE_1;
         }
     }
-
-    console_deb_writeline("sdcard_init: *** <<<DEBUG>>> ***");
 
     // If the switch to 1.8A is accepted, then we need to send a CMD11.
     // CMD11: Completion of voltage switch sequence is checked by high level of DAT[3:0].
