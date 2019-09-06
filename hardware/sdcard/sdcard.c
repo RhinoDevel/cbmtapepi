@@ -28,23 +28,18 @@
 
 #include "sdcard.h"
 
-// GPIO pins used for EMMC.
+// GPIO pins used:
+//
 #define GPIO_DAT3  53
 #define GPIO_DAT2  52
 #define GPIO_DAT1  51
 #define GPIO_DAT0  50
 #define GPIO_CMD   49
 #define GPIO_CLK   48
-#define GPIO_CD    47
 
-// EMMC command flags
-#define CMD_TYPE_NORMAL  0x00000000
-#define CMD_TYPE_SUSPEND 0x00400000
-#define CMD_TYPE_RESUME  0x00800000
-#define CMD_TYPE_ABORT   0x00c00000
+// EMMC command flags used:
+//
 #define CMD_IS_DATA      0x00200000
-#define CMD_IXCHK_EN     0x00100000
-#define CMD_CRCCHK_EN    0x00080000
 #define CMD_RSPNS_NO     0x00000000
 #define CMD_RSPNS_136    0x00010000
 #define CMD_RSPNS_48     0x00020000
@@ -52,12 +47,12 @@
 #define TM_MULTI_BLOCK   0x00000020
 #define TM_DAT_DIR_HC    0x00000000
 #define TM_DAT_DIR_CH    0x00000010
-#define TM_AUTO_CMD23    0x00000008
 #define TM_AUTO_CMD12    0x00000004
 #define TM_BLKCNT_EN     0x00000002
-#define TM_MULTI_DATA    (CMD_IS_DATA|TM_MULTI_BLOCK|TM_BLKCNT_EN)
+#define TM_MULTI_DATA    (CMD_IS_DATA | TM_MULTI_BLOCK | TM_BLKCNT_EN)
 
-// INTERRUPT register settings
+// Interrupt register settings used:
+//
 #define INT_AUTO_ERROR   0x01000000
 #define INT_DATA_END_ERR 0x00400000
 #define INT_DATA_CRC_ERR 0x00200000
@@ -67,13 +62,8 @@
 #define INT_CRC_ERROR    0x00020000
 #define INT_CMD_TIMEOUT  0x00010000
 #define INT_ERR          0x00008000
-#define INT_ENDBOOT      0x00004000
-#define INT_BOOTACK      0x00002000
-#define INT_RETUNE       0x00001000
-#define INT_CARD         0x00000100
 #define INT_READ_RDY     0x00000020
 #define INT_WRITE_RDY    0x00000010
-#define INT_BLOCK_GAP    0x00000004
 #define INT_DATA_DONE    0x00000002
 #define INT_CMD_DONE     0x00000001
 #define INT_ERROR_MASK   (INT_CRC_ERROR|INT_END_ERROR|INT_INDEX_ERROR| \
@@ -81,7 +71,8 @@
                           INT_ERR|INT_AUTO_ERROR)
 #define INT_ALL_MASK     (INT_CMD_DONE|INT_DATA_DONE|INT_READ_RDY|INT_WRITE_RDY|INT_ERROR_MASK)
 
-// CONTROL register settings
+// CONTROL register settings:
+
 #define C0_SPI_MODE_EN   0x00100000
 #define C0_HCTL_HS_EN    0x00000004
 #define C0_HCTL_DWITDH   0x00000002
@@ -923,49 +914,55 @@ static int sdSetClock(int freq)
 
 /* Reset card.
  */
-static int sdResetCard()
+static int reset_card()
 {
-    static int const resetType = C1_SRST_HC;
+    static int const reset_type = C1_SRST_HC;
+    static int const max_iter = 10000;
 
-    int resp, count = 10000;
+    int resp, i = 0;
 
-    // Send reset host controller and wait for complete.
-    *EMMC_CONTROL0 = 0; // C0_SPI_MODE_EN;
-    //  *EMMC_CONTROL2 = 0;
-    *EMMC_CONTROL1 |= resetType;
-    //*EMMC_CONTROL1 &= ~(C1_CLK_EN|C1_CLK_INTLEN);
+    // Send reset command to host controller and wait for completion:
 
-    armtimer_busywait_microseconds(10);
+    *EMMC_CONTROL0 = 0;
+    *EMMC_CONTROL1 |= reset_type;
 
-    while((*EMMC_CONTROL1 & resetType) && count--)
+    while(i < max_iter)
     {
         armtimer_busywait_microseconds(10);
+
+        if((*EMMC_CONTROL1 & reset_type) == 0)
+        {
+            break;
+        }
+
+        ++i;
     }
-    if( count <= 0 )
+    if(i == max_iter)
     {
         return SD_ERROR_RESET;
     }
 
-    // Enable internal clock and set data timeout.
+    // Enable internal clock and set data timeout:
+
     // TODO: Correct value for timeout?
+
     *EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
     armtimer_busywait_microseconds(10);
 
-    // Set clock to setup frequency.
+    // Set clock to setup frequency:
+    //
     if((resp = sdSetClock(FREQ_SETUP)))
     {
         return resp;
     }
 
-    // Enable interrupts for command completion values.
-    //*EMMC_IRPT_EN   = INT_ALL_MASK;
-    //*EMMC_IRPT_MASK = INT_ALL_MASK;
-    *EMMC_IRPT_EN   = 0xffffffff;
-    *EMMC_IRPT_MASK = 0xffffffff;
-    //  printf("EMMC: Interrupt enable/mask registers: %08x %08x\n",*EMMC_IRPT_EN,*EMMC_IRPT_MASK);
-    //  printf("EMMC: Status: %08x, control: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_CONTROL0,*EMMC_CONTROL1,*EMMC_CONTROL2);
+    // Enable interrupts for command completion values:
+    //
+    *EMMC_IRPT_EN   = 0xFFFFFFFF;//INT_ALL_MASK;
+    *EMMC_IRPT_MASK = 0xFFFFFFFF;//INT_ALL_MASK;
 
-    // Reset card registers.
+    // Reset card registers:
+    //
     s_sdcard.rca = 0;
     s_sdcard.ocr = 0;
     s_sdcard.lastArg = 0;
@@ -974,8 +971,6 @@ static int sdResetCard()
     s_sdcard.type = 0;
     s_sdcard.uhsi = 0;
 
-    // Send GO_IDLE_STATE
-    //  printf("---- Send IX_GO_IDLE_STATE command\n");
     return sdSendCommand(IX_GO_IDLE_STATE);
 }
 
@@ -1339,14 +1334,6 @@ int sdcard_init()
 {
     int resp;
 
-// #ifndef NDEBUG
-//     console_write("sdcard_init: Status: 0x");
-//     console_write_dword(*EMMC_STATUS);
-//     console_write(", interrupt: 0x");
-//     console_write_dword(*EMMC_INTERRUPT);
-//     console_writeline(".");
-// #endif //NDEBUG
-
     if(s_sdcard.init)
     {
         return SD_OK;
@@ -1354,11 +1341,12 @@ int sdcard_init()
 
     sd_init_gpio();
 
-    // TODO: check version >= 1 and <= 3?
+    // TODO: Check version >= 1 and <= 3?
+    //
     s_host_ver = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
 
-    // Get base clock speed.
-
+    // Get base clock speed:
+    //
     if((resp = init_emmc_clock_rate()))
     {
         console_deb_writeline(
@@ -1367,18 +1355,16 @@ int sdcard_init()
     }
 
     // Reset the card:
-
-    if((resp = sdResetCard()))
+    //
+    if((resp = reset_card()))
     {
         console_deb_writeline("sdcard_init: Error: Card reset failed!");
         return resp;
     }
 
-    //console_deb_writeline("sdcard_init: Calling sdSendCommandA()..");
-
     // Send SEND_IF_COND,0x000001AA (CMD8) voltage range 0x1 check pattern 0xAA
     // If voltage range and check pattern don't match, look for older card.
-    resp = sdSendCommandA(IX_SEND_IF_COND,0x000001AA);
+    resp = sdSendCommandA(IX_SEND_IF_COND, 0x000001AA);
     if(resp == SD_OK)
     {
         // Card responded with voltage and check pattern.
@@ -1404,7 +1390,7 @@ int sdcard_init()
             //
             if(*EMMC_STATUS & SR_CMD_INHIBIT)
             {
-                if((resp = sdResetCard()))
+                if((resp = reset_card()))
                 {
                     console_deb_writeline(
                         "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
@@ -1476,19 +1462,14 @@ int sdcard_init()
     *EMMC_CONTROL0 |= C0_HCTL_DWITDH;
     }
 
-    // Send SET_BLOCKLEN (CMD16)
-    // TODO: only needs to be sent for SDSC cards.  For SDHC and SDXC cards block length is fixed
-    // at 512 anyway.
-    if( (resp = sdSendCommandA(IX_SET_BLOCKLEN, 512)) )
+    // Only needs to be set for SDSC cards.
+    // For SDHC and SDXC cards block length is fixed at 512 anyway:
+    //
+    if((resp = sdSendCommandA(IX_SET_BLOCKLEN, 512)))
     {
         return resp;
     }
 
-    // Print out the CID having got this far.
-    //sdParseCID();
-
-    // Initialisation complete.
     s_sdcard.init = 1;
-
     return SD_OK;
 }
