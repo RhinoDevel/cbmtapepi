@@ -129,7 +129,7 @@ static struct EMMCCommand sdCommandTable[] =
 };
 
 static bool s_is_initialized = false; // Set by sdcard_init().
-static struct SDDescriptor s_sdcard;
+static struct SDDescriptor s_sdcard; // Prepared by sdcard_init().
 static int s_host_ver = 0; // Set by sdcard_init().
 static int s_emmc_clock_rate = 0; // Set by init_emmc_clock_rate().
 
