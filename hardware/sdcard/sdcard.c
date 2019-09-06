@@ -53,17 +53,12 @@ struct SDDescriptor
     unsigned int support;
     unsigned int fileFormat;
     unsigned char type;
-    unsigned char uhsi;
     unsigned char init;
-    unsigned char absent;
 
     // Dynamic information.
     unsigned int rca;
     unsigned int cardState;
     unsigned int status;
-
-    struct EMMCCommand * lastCmd;
-    unsigned int lastArg;
 };
 
 // EMMC registers used:
@@ -244,8 +239,6 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
     return SD_BUSY;
 
   //if( sdDebug ) LOG_DEBUG("EMMC: Sending command %s code %08x arg %08x\n",cmd->name,cmd->code,arg);
-  s_sdcard.lastCmd = cmd;
-  s_sdcard.lastArg = arg;
 
   //  printf("EMMC: Sending command %08x:%s arg %d\n",cmd->code,cmd->name,arg);
 
@@ -636,11 +629,8 @@ static int reset_card()
     //
     s_sdcard.rca = 0;
     s_sdcard.ocr = 0;
-    s_sdcard.lastArg = 0;
-    s_sdcard.lastCmd = 0;
     s_sdcard.status = 0;
     s_sdcard.type = 0;
-    s_sdcard.uhsi = 0;
 
     return sdSendCommand(IX_GO_IDLE_STATE);
 }
