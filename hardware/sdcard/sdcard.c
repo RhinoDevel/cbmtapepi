@@ -45,10 +45,8 @@ struct SDDescriptor
 {
     // Static informations:
 
-    unsigned long long capacity;
     unsigned int cid[4];
     unsigned int csd[4];
-    unsigned int scr[2];
     unsigned int ocr;
     unsigned int support;
     unsigned int fileFormat;
@@ -417,7 +415,9 @@ static int sdSendCommandA( int index, int arg )
 /* Read card's SCR
  */
 static int sdReadSCR()
-  {
+{
+    unsigned int scr[2];
+
   // SEND_SCR command is like a READ_SINGLE but for a block of 8 bytes.
   // Ensure that any data operation has completed before reading the block.
   if( sdWaitForData() )
@@ -444,7 +444,7 @@ static int sdReadSCR()
   while( numRead < 2 )
     {
     if( *EMMC_STATUS & SR_READ_AVAILABLE )
-      s_sdcard.scr[numRead++] = *EMMC_DATA;
+      scr[numRead++] = *EMMC_DATA;
     else
       {
       armtimer_busywait_microseconds(1);
@@ -462,10 +462,10 @@ static int sdReadSCR()
     }
 
   // Parse out the SCR.  Only interested in values in scr[0], scr[1] is mfr specific.
-  if( s_sdcard.scr[0] & SCR_SD_BUS_WIDTH_4 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_4;
-  if( s_sdcard.scr[0] & SCR_SD_BUS_WIDTH_1 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_1;
-  if( s_sdcard.scr[0] & SCR_CMD_SUPP_SET_BLKCNT ) s_sdcard.support |= SD_SUPP_SET_BLOCK_COUNT;
-  if( s_sdcard.scr[0] & SCR_CMD_SUPP_SPEED_CLASS ) s_sdcard.support |= SD_SUPP_SPEED_CLASS;
+  if( scr[0] & SCR_SD_BUS_WIDTH_4 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_4;
+  if( scr[0] & SCR_SD_BUS_WIDTH_1 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_1;
+  if( scr[0] & SCR_CMD_SUPP_SET_BLKCNT ) s_sdcard.support |= SD_SUPP_SET_BLOCK_COUNT;
+  if( scr[0] & SCR_CMD_SUPP_SPEED_CLASS ) s_sdcard.support |= SD_SUPP_SPEED_CLASS;
 
   return SD_OK;
   }
@@ -739,32 +739,45 @@ static int init_emmc_clock_rate()
     return SD_OK;
 }
 
-/* Parse CSD
- */
-static void sdParseCSD()
+static void parse_csd()
 {
-  int csdVersion = s_sdcard.csd[0] & CSD0_VERSION;
+#ifndef NDEBUG
+    int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
+    unsigned long long capacity;
 
-  // For now just work out the size.
-  if( csdVersion == CSD0_V1 )
-	  {
-		  int csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
-                ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
-		  int mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
-		  long long blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
-		  long long numBlocks = (csize+1LL)*mult;
+    if(csd_ver == CSD0_V1)
+    {
+        int const csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
+            ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
+        int const mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
+        long long const blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
+        long long const numBlocks = (csize+1LL)*mult;
 
-		  s_sdcard.capacity = numBlocks * blockSize;
-	  }
-  else // if( csdVersion == CSD0_V2 )
-	  {
-		  long long csize = (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
+        capacity = numBlocks * blockSize;
+    }
+    else
+    {
+        //assert(csd_ver == CSD0_V2);
 
-		  s_sdcard.capacity = (csize+1LL)*512LL*1024LL;
-	  }
+        long long const csize =
+            (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
 
-  // Get other attributes of the card.
-  s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
+        capacity = (csize+1LL)*512LL*1024LL;
+    }
+
+    console_write("parse_csd : Capacity = 0x");
+    console_write_dword((uint32_t)(capacity >> 32));
+    console_write_dword((uint32_t)(0x00000000FFFFFFFF & capacity));
+    console_writeline(".");
+#endif //NDEBUG
+
+    s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
+
+#ifndef NDEBUG
+    console_write("parse_csd : File format = 0x");
+    console_write_dword((uint32_t)(s_sdcard.fileFormat));
+    console_writeline(".");
+#endif //NDEBUG
 }
 
 // ************************
@@ -1062,7 +1075,7 @@ int sdcard_init()
 
     // Send SEND_CSD (CMD9) and parse the result.
     if( (resp = sdSendCommand(IX_SEND_CSD)) ) return resp;
-    sdParseCSD();
+    parse_csd();
     if( s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT &&
       s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_HDD )
     {
