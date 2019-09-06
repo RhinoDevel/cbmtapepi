@@ -53,7 +53,6 @@ struct SDDescriptor
     unsigned int support;
     unsigned int fileFormat;
     unsigned char type;
-    unsigned char init;
 
     // Dynamic informations:
 
@@ -129,9 +128,8 @@ static struct EMMCCommand sdCommandTable[] =
     { "SEND_SCR"     , 0x33000000|CMD_RSPNS_48|CMD_IS_DATA|TM_DAT_DIR_CH   , RESP_R1 , RCA_NO  ,0},
 };
 
-// The SD card descriptor.
+static bool s_is_initialized = false; // Set by sdcard_init().
 static struct SDDescriptor s_sdcard;
-
 static int s_host_ver = 0; // Set by sdcard_init().
 static int s_emmc_clock_rate = 0; // Set by init_emmc_clock_rate().
 
@@ -778,7 +776,7 @@ static void sdParseCSD()
  */
 int sdcard_blocks_clear( long long address, int numBlocks )
   {
-  if( !s_sdcard.init ) return SD_NO_RESP;
+  if( !s_is_initialized ) return SD_NO_RESP;
 
   // Ensure that any data operation has completed before doing the transfer.
   if( sdWaitForData() )
@@ -824,7 +822,7 @@ int sdcard_blocks_clear( long long address, int numBlocks )
 int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
 {
 	//	printf("check s_sdcard.init\n"); // TEST
-if( !s_sdcard.init ) return SD_NO_RESP;
+if( !s_is_initialized ) return SD_NO_RESP;
 
 //	printf("sdWaitForData() .init\n"); // TEST
 // Ensure that any data operation has completed before doing the transfer.
@@ -954,19 +952,16 @@ if( numBlocks > 1 && !(s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
 return SD_OK;
 }
 
-void sdcard_deinit()
-{
-    memset(&s_sdcard, 0, sizeof (struct SDDescriptor));
-}
-
 int sdcard_init()
 {
     int resp;
 
-    if(s_sdcard.init)
+    if(s_is_initialized)
     {
-        return SD_OK;
+        return SD_ALREADY_INITIALIZED;
     }
+
+    memset(&s_sdcard, 0, sizeof (struct SDDescriptor)); // Necessary?
 
     sd_init_gpio();
 
@@ -1099,6 +1094,6 @@ int sdcard_init()
         return resp;
     }
 
-    s_sdcard.init = 1;
+    s_is_initialized = true;
     return SD_OK;
 }
