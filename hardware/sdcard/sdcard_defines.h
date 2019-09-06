@@ -5,6 +5,9 @@
 // Originally taken from:
 //
 // https://raw.githubusercontent.com/moizumi99/RPiHaribote/master/haribote/sdcard.c
+//
+// Includes comments by other authors, too.
+//
 // *****************************************************************************
 
 #ifndef MT_SDCARD_DEFINES
