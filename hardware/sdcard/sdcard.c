@@ -230,17 +230,17 @@
 #define SD_SUPP_BUS_WIDTH_4     0x20000000
 #define SD_SUPP_BUS_WIDTH_1     0x10000000
 
-typedef struct EMMCCommand
+struct EMMCCommand
 {
     char const * name;
     unsigned int code;
     unsigned char resp;
     unsigned char rca;
     int delay;
-} EMMCCommand;
+};
 
 // SD card descriptor
-typedef struct SDDescriptor
+struct SDDescriptor
 {
     // Static information about the SD Card.
     unsigned long long capacity;
@@ -260,9 +260,9 @@ typedef struct SDDescriptor
     unsigned int cardState;
     unsigned int status;
 
-    EMMCCommand* lastCmd;
+    struct EMMCCommand * lastCmd;
     unsigned int lastArg;
-} SDDescriptor;
+};
 
 // EMMC registers used:
 //
@@ -286,7 +286,7 @@ static volatile unsigned int* const EMMC_SLOTISR_VER = (unsigned int*)(0x203000f
 //
 // - TODO: TM_DAT_DIR_CH required in any of these?
 //
-static EMMCCommand sdCommandTable[] =
+static struct EMMCCommand sdCommandTable[] =
 {
     { "GO_IDLE_STATE", 0x00000000|CMD_RSPNS_NO                             , RESP_NO , RCA_NO  ,0},
     { "ALL_SEND_CID" , 0x02000000|CMD_RSPNS_136                            , RESP_R2I, RCA_NO  ,0},
@@ -332,7 +332,7 @@ static EMMCCommand sdCommandTable[] =
 };
 
 // The SD card descriptor.
-static SDDescriptor s_sdcard;
+static struct SDDescriptor s_sdcard;
 
 static int s_host_ver = 0; // Set by sdcard_init().
 static int s_emmc_clock_rate = 0; // Set by init_emmc_clock_rate().
@@ -435,7 +435,7 @@ static int sdWaitForData()
 
 /* Send command and handle response.
  */
-static int sdSendCommandP( EMMCCommand* cmd, int arg )
+static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
   {
   // Check for command in progress
   if( sdWaitForCommand() != 0 )
@@ -573,7 +573,7 @@ static int sdSendCommand( int index )
   }
 
   // Get the command and set RCA if required.
-  EMMCCommand* cmd = &sdCommandTable[index];
+  struct EMMCCommand * cmd = &sdCommandTable[index];
   int arg = 0;
   if( cmd->rca == RCA_YES )
   {
@@ -1163,7 +1163,7 @@ return SD_OK;
 
 void sdcard_deinit()
 {
-    memset(&s_sdcard, 0, sizeof (SDDescriptor));
+    memset(&s_sdcard, 0, sizeof (struct SDDescriptor));
 }
 
 int sdcard_init()
