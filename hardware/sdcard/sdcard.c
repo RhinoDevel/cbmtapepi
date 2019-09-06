@@ -28,11 +28,6 @@
 
 #include "sdcard.h"
 
-// TODO: Hard-coded:
-//
-#define GPEDS1 (0x20200000 + 0x44)
-#define	GPHEN1 (0x20200000 + 0x68)
-//
 // GPIO pins used for EMMC.
 #define GPIO_DAT3  53
 #define GPIO_DAT2  52
@@ -1053,36 +1048,23 @@ static int sdSwitchVoltage()
   return SD_OK;
 }
 
-/* Routine to initialize GPIO registers.
+/** Initialize GPIO.
  */
-static void sdInitGPIO()
-  {
-	  unsigned int reg;
-	  //  printf("EMMC: Init. Entry state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
-
-  // Card detect GPIO
-   baregpio_set_func(GPIO_CD,gpio_func_input);
-   baregpio_set_pud(GPIO_CD,gpio_pud_up);
-  //  gpioSetDetectHighEvent(GPIO_CD,1);
-  reg = mem_read(GPHEN1);
-  reg = reg | 1<<(47-32);
-  mem_write(GPHEN1, reg);
-
-  baregpio_set_func(GPIO_DAT3,gpio_func_alt3);
-  baregpio_set_pud(GPIO_DAT3,gpio_pud_up);
-  baregpio_set_func(GPIO_DAT2,gpio_func_alt3);
-  baregpio_set_pud(GPIO_DAT2,gpio_pud_up);
-  baregpio_set_func(GPIO_DAT1,gpio_func_alt3);
-  baregpio_set_pud(GPIO_DAT1,gpio_pud_up);
-  baregpio_set_func(GPIO_DAT0,gpio_func_alt3);
-  baregpio_set_pud(GPIO_DAT0,gpio_pud_up);
-  baregpio_set_func(GPIO_CMD,gpio_func_alt3);
-  baregpio_set_pud(GPIO_CMD,gpio_pud_up);
-  baregpio_set_func(GPIO_CLK,gpio_func_alt3);
-  baregpio_set_pud(GPIO_CLK,gpio_pud_up);
-
-  //printf("EMMC: Init. Complete state of GPFSEL4,5: %08x %08x\n",*(unsigned int*)0x20200010,*(unsigned int*)0x20200014);
-  }
+static void sd_init_gpio()
+{
+    baregpio_set_func(GPIO_DAT3,gpio_func_alt3);
+    baregpio_set_pud(GPIO_DAT3,gpio_pud_up);
+    baregpio_set_func(GPIO_DAT2,gpio_func_alt3);
+    baregpio_set_pud(GPIO_DAT2,gpio_pud_up);
+    baregpio_set_func(GPIO_DAT1,gpio_func_alt3);
+    baregpio_set_pud(GPIO_DAT1,gpio_pud_up);
+    baregpio_set_func(GPIO_DAT0,gpio_func_alt3);
+    baregpio_set_pud(GPIO_DAT0,gpio_pud_up);
+    baregpio_set_func(GPIO_CMD,gpio_func_alt3);
+    baregpio_set_pud(GPIO_CMD,gpio_pud_up);
+    baregpio_set_func(GPIO_CLK,gpio_func_alt3);
+    baregpio_set_pud(GPIO_CLK,gpio_pud_up);
+}
 
 /** Initialize static variable holding EMMC clock rate.
  *
@@ -1357,13 +1339,6 @@ int sdcard_init()
 {
     int resp;
 
-    // Ensure we've initialized GPIO:
-
-    if(!s_sdcard.init)
-    {
-        sdInitGPIO();
-    }
-
 // #ifndef NDEBUG
 //     console_write("sdcard_init: Status: 0x");
 //     console_write_dword(*EMMC_STATUS);
@@ -1372,16 +1347,12 @@ int sdcard_init()
 //     console_writeline(".");
 // #endif //NDEBUG
 
-    // Assuming that card is NOT absent and was NEVER removed/reinserted!
-
-    s_sdcard.absent = 0;
-
     if(s_sdcard.init)
     {
-        console_deb_writeline(
-            "sdcard_init: Already initialized. Doing nothing.");
         return SD_OK;
     }
+
+    sd_init_gpio();
 
     // TODO: check version >= 1 and <= 3?
     s_host_ver = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
