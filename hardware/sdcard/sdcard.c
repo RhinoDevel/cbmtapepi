@@ -14,8 +14,6 @@
 // https://www.raspberrypi.org/forums/viewtopic.php?f=72&t=94133
 // Update: Control2 is removed according the the advice from LdB. Thanks a lot.
 //
-// Notes:
-// VOLTAGE_SWITCH: Haven't yet got this to work.  Command appears to work but dat0-3 go low and stay there.
 // Data transfer notes:
 // The EMMC module restricts the maximum block size to the size of the internal data FIFO which is 1k bytes
 // 0x80  Extension FIFO config - what's that?
@@ -980,17 +978,6 @@ int sdcard_init()
 
         s_sdcard.type = SD_TYPE_1;
     }
-
-    // Switching voltage to 1.8V is not implemented:
-    //
-    // If the switch to 1.8V is accepted, then we need to send a CMD11.
-    // CMD11: Completion of voltage switch sequence is checked by high level of DAT[3:0].
-    // Any bit of DAT[3:0] can be checked depends on ability of the host.
-    // Appears for PI its any/all bits.
-    // if( (s_sdcard.ocr & R3_S18A) && (resp = sdSwitchVoltage()) )
-    // {
-    //     return resp;
-    // }
 
     // Send ALL_SEND_CID (CMD2)
     if( (resp = sdSendCommand(IX_ALL_SEND_CID)) ) return resp;
