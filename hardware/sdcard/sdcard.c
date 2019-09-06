@@ -993,7 +993,10 @@ int sdcard_init()
     {
         // Card responded with voltage and check pattern.
         // Resolve voltage and check for high capacity card.
-        if( (resp = sdAppSendOpCond(ACMD41_ARG_HC)) ) return resp;
+        if( (resp = sdAppSendOpCond(ACMD41_ARG_HC)) )
+        {
+            return resp;
+        }
 
         // Check for high or standard capacity.
         if( s_sdcard.ocr & R3_CCS )
@@ -1008,39 +1011,41 @@ int sdcard_init()
             console_deb_writeline("sdcard_init: Error: SD card is busy!");
             return resp;
         }
-        else // No response to SEND_IF_COND, treat as an old card:
-        {
-            // If there appears to be a command in progress, reset the card:
-            //
-            if(*EMMC_STATUS & SR_CMD_INHIBIT)
-            {
-                if((resp = reset_card()))
-                {
-                    console_deb_writeline(
-                        "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
-                    return resp;
-                }
-            }
-            // wait(50);
 
-            // Resolve voltage.
-            if((resp = sdAppSendOpCond(ACMD41_ARG_SC)))
+        // No response to SEND_IF_COND, treat as an old card:
+
+        // If there appears to be a command in progress, reset the card:
+        //
+        if(*EMMC_STATUS & SR_CMD_INHIBIT)
+        {
+            if((resp = reset_card()))
             {
                 console_deb_writeline(
-                    "sdcard_init: Error: Resolving voltage failed!");
+                    "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
                 return resp;
             }
-
-            s_sdcard.type = SD_TYPE_1;
         }
+        // wait(50);
+
+        // Resolve voltage.
+        if((resp = sdAppSendOpCond(ACMD41_ARG_SC)))
+        {
+            console_deb_writeline(
+                "sdcard_init: Error: Resolving voltage failed!");
+            return resp;
+        }
+
+        s_sdcard.type = SD_TYPE_1;
     }
 
     // If the switch to 1.8A is accepted, then we need to send a CMD11.
     // CMD11: Completion of voltage switch sequence is checked by high level of DAT[3:0].
     // Any bit of DAT[3:0] can be checked depends on ability of the host.
     // Appears for PI its any/all bits.
-    if( (s_sdcard.ocr & R3_S18A) &&
-      (resp = sdSwitchVoltage()) ) return resp;
+    if( (s_sdcard.ocr & R3_S18A) && (resp = sdSwitchVoltage()) )
+    {
+        return resp;
+    }
 
     // Send ALL_SEND_CID (CMD2)
     if( (resp = sdSendCommand(IX_ALL_SEND_CID)) ) return resp;
