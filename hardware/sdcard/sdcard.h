@@ -1,7 +1,11 @@
 
 // Marcel Timm, RhinoDevel, 2019sep04
 
-// Originally taken from: https://raw.githubusercontent.com/moizumi99/RPiHaribote/master/haribote/sdcard.h
+// *****************************************************************************
+// Originally taken from:
+//
+// https://raw.githubusercontent.com/moizumi99/RPiHaribote/master/haribote/sdcard.h
+// *****************************************************************************
 
 #ifndef MT_SDCARD
 #define MT_SDCARD
