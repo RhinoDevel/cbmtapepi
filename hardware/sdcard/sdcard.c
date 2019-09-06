@@ -480,51 +480,62 @@ static int s_emmc_clock_rate = 0; // Set by init_emmc_clock_rate().
 // 		 : "=r"(count): [count]"0"(count) : "cc");
 // }
 
+/** Completely clear the interrupt register.
+ */
+static void clear_interrupt_reg()
+{
+    *EMMC_INTERRUPT = *EMMC_INTERRUPT; // Write the bits set to 1 to clear.
+}
+
 /* Wait for interrupt.
  *
+ * - Waits up to one second for the interrupt.
  * - Returns non-zero value on error.
  */
-static int sdWaitForInterrupt( unsigned int mask )
-  {
-  // Wait up to 1 second for the interrupt.
-  int count = 1000000;
-  int waitMask = mask | INT_ERROR_MASK;
-  int ival;
+static int wait_for_interrupt(unsigned int const mask)
+{
+    static uint32_t const max_ticks = 1000000; // 1 second, using a 1 MHz clock.
+    int const waitMask = mask | INT_ERROR_MASK;
+    bool wait_timeout = true;
 
-  // Wait for the specified interrupt or any error.
-  while( !(*EMMC_INTERRUPT & waitMask) && count-- )
-    armtimer_busywait_microseconds(1);
-  ival = *EMMC_INTERRUPT;
+    uint32_t const start_tick = armtimer_get_tick();
 
-  // Check for success.
-  if( count <= 0 ||
-      (ival & INT_CMD_TIMEOUT) ||
-      (ival & INT_DATA_TIMEOUT) )
+    // Wait for the specified interrupt or some error:
+    //
+    while(armtimer_get_tick() - start_tick < max_ticks)
     {
-		//    printf("EMMC: Wait for interrupt %08x timeout: %08x %08x %08x\n",mask,*EMMC_STATUS,ival,*EMMC_RESP0);
-		//	printf("EMMC_STATUS:%08x\nEMMC_INTERRUPT: %08x\nEMMC_RESP0 : %08x\nn", *EMMC_STATUS, *EMMC_INTERRUPT, *EMMC_RESP0);
-
-    // Clear the interrupt register completely.
-    *EMMC_INTERRUPT = ival;
-
-    //console_deb_writeline("sdWaitForInterrupt : Timeout.");
-    return SD_TIMEOUT;
-    }
-  else if( ival & INT_ERROR_MASK )
-    {
-    //LOG_ERROR("EMMC: Error waiting for interrupt: %08x %08x %08x\n",*EMMC_STATUS,ival,*EMMC_RESP0);
-
-    // Clear the interrupt register completely.
-    *EMMC_INTERRUPT = ival;
-
-    return SD_ERROR;
+        if(*EMMC_INTERRUPT & waitMask)
+        {
+            wait_timeout = false;
+            break;
+        }
     }
 
-  // Clear the interrupt we were waiting for, leaving any other (non-error) interrupts.
-  *EMMC_INTERRUPT = mask;
+    int const irq_val = *EMMC_INTERRUPT;
 
-  return SD_OK;
-  }
+    if(wait_timeout
+        || (irq_val & INT_CMD_TIMEOUT)
+        || (irq_val & INT_DATA_TIMEOUT))
+    {
+        clear_interrupt_reg();
+
+        return SD_TIMEOUT;
+    }
+
+    if(irq_val & INT_ERROR_MASK)
+    {
+        clear_interrupt_reg();
+
+        return SD_ERROR;
+    }
+
+    // Clear the interrupt we were waiting for,
+    // leaving all other (non-error) interrupts:
+    //
+    *EMMC_INTERRUPT = mask;
+
+    return SD_OK;
+}
 
 /* Wait for any command that may be in progress.
  */
@@ -594,7 +605,7 @@ static int sdSendCommandP( EMMCCommand* cmd, int arg )
   if( cmd->delay ) armtimer_busywait_microseconds(cmd->delay);
 
   // Wait until command complete interrupt.
-  if( (result = sdWaitForInterrupt(INT_CMD_DONE)) )
+  if( (result = wait_for_interrupt(INT_CMD_DONE)) )
   {
       //console_deb_writeline("sdcard : Waiting for interrupt failed (1)!");
       return result;
@@ -772,7 +783,7 @@ static int sdReadSCR()
   if( (resp = sdSendCommand(IX_SEND_SCR)) ) return resp;
 
   // Wait for READ_RDY interrupt.
-  if( (resp = sdWaitForInterrupt(INT_READ_RDY)) )
+  if( (resp = wait_for_interrupt(INT_READ_RDY)) )
     {
     //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
     //console_deb_writeline("sdcard : Waiting for interrupt failed (2)!");
@@ -1249,7 +1260,7 @@ int blocksDone = 0;
 while( blocksDone < numBlocks )
   {
   // Wait for ready interrupt for the next block.
-  if( (resp = sdWaitForInterrupt(readyInt)) )
+  if( (resp = wait_for_interrupt(readyInt)) )
     {
 		  //		  printf("EMMC: Timeout waiting for ready to read\n"); //TEST
     //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
@@ -1321,7 +1332,7 @@ if( blocksDone != numBlocks )
  }
 
 // For a write operation, ensure DATA_DONE interrupt before we stop transmission.
-if( write && (resp = sdWaitForInterrupt(INT_DATA_DONE)) )
+if( write && (resp = wait_for_interrupt(INT_DATA_DONE)) )
   {
 		//		printf("Error 25\n");
   //LOG_ERROR("EMMC: Timeout waiting for data done\n");
