@@ -198,7 +198,6 @@ static int sdWaitForCommand()
     armtimer_busywait_microseconds(1);
   if( count <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
     {
-    //LOG_ERROR("EMMC: Wait for command aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
     return SD_BUSY;
     }
 
@@ -213,16 +212,14 @@ static int sdWaitForData()
   // Spec indicates a maximum wait of 500ms.
   // For now this is done by waiting for the DAT_INHIBIT flag to go from the status register,
   // or until an error is flagged in the interrupt register.
-	  //  printf("EMMC: Wait for data started: %08x %08x %08x; dat: %d\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,datSet);
+
   int count = 0;
   while( (*EMMC_STATUS & SR_DAT_INHIBIT) && !(*EMMC_INTERRUPT & INT_ERROR_MASK) && ++count < 500000 )
     armtimer_busywait_microseconds(1);
   if( count >= 500000 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
     {
-    //LOG_ERROR("EMMC: Wait for data aborted: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
     return SD_BUSY;
     }
-  //  printf("EMMC: Wait for data OK: count = %d: %08x %08x %08x\n",count,*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
 
   return SD_OK;
   }
@@ -235,18 +232,13 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
   if( sdWaitForCommand() != 0 )
     return SD_BUSY;
 
-  //if( sdDebug ) LOG_DEBUG("EMMC: Sending command %s code %08x arg %08x\n",cmd->name,cmd->code,arg);
-
-  //  printf("EMMC: Sending command %08x:%s arg %d\n",cmd->code,cmd->name,arg);
-
   int result;
 
   clear_interrupt_reg();
 
   // Set the argument and the command code.
   // Some commands require a delay before reading the response.
-  //  printf("EMMC_STATUS:%08x\nEMMC_INTERRUPT: %08x\nEMMC_RESP0 : %08x\n", *EMMC_STATUS, *EMMC_INTERRUPT, *EMMC_RESP0);
-  //  printf("ARG: %08x, CODE: %08x\n", arg, cmd->code);
+
   *EMMC_ARG1 = arg;
   *EMMC_CMDTM = cmd->code;
   if( cmd->delay ) armtimer_busywait_microseconds(cmd->delay);
@@ -254,13 +246,11 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
   // Wait until command complete interrupt.
   if( (result = wait_for_interrupt(INT_CMD_DONE)) )
   {
-      //console_deb_writeline("sdcard : Waiting for interrupt failed (1)!");
       return result;
   }
 
   // Get response from RESP0.
   int resp0 = *EMMC_RESP0;
-  //  printf("EMMC: Sent command %08x:%s arg %d resp %08x\n",cmd->code,cmd->name,arg,resp0);
 
   // Handle response types.
   switch( cmd->resp )
@@ -324,8 +314,6 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
  */
 static int sdSendAppCommand()
   {
-      //console_deb_writeline("sdSendAppCommand: Entered function..");
-
   int resp;
   // If no RCA, send the APP_CMD and don't look for a response.
   if( !s_sdcard.rca )
@@ -336,7 +324,6 @@ static int sdSendAppCommand()
     {
     if( (resp = sdSendCommandP(&sdCommandTable[IX_APP_CMD_RCA],s_sdcard.rca)) )
     {
-        //console_deb_writeline("sdcard : Error: Sending command failed (1)!");
         return resp;
     }
     // Debug - check that status indicates APP_CMD accepted.
@@ -357,7 +344,6 @@ static int sdSendCommand( int index )
   int resp;
   if( index >= IX_APP_CMD_START)
   {
-      //console_deb_writeline("sdSendCommand: Calling sdSendAppCommand()..");
       if((resp = sdSendAppCommand()))
       {
           return resp;
@@ -373,7 +359,6 @@ static int sdSendCommand( int index )
   }
     if( (resp = sdSendCommandP(cmd,arg)) )
     {
-        //console_deb_writeline("sdcard : Error: Sending command failed (2)!");
         return resp;
     }
   // Check that APP_CMD was correctly interpreted.
@@ -401,7 +386,6 @@ static int sdSendCommandA( int index, int arg )
   // Get the command and pass the argument through.
   if( (resp = sdSendCommandP(&sdCommandTable[index],arg)) )
   {
-      //console_deb_writeline("sdcard : Error: Sending command failed (3)!");
       return resp;
   }
 
@@ -422,7 +406,6 @@ static int sdReadSCR()
   // Ensure that any data operation has completed before reading the block.
   if( sdWaitForData() )
   {
-      //console_deb_writeline("sdcard : Timeout 2.");
       return SD_TIMEOUT;
   }
 
@@ -434,8 +417,6 @@ static int sdReadSCR()
   // Wait for READ_RDY interrupt.
   if( (resp = wait_for_interrupt(INT_READ_RDY)) )
     {
-    //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
-    //console_deb_writeline("sdcard : Waiting for interrupt failed (2)!");
     return resp;
     }
 
@@ -455,9 +436,6 @@ static int sdReadSCR()
   // If SCR not fully read, the operation timed out.
   if( numRead != 2 )
     {
-    //LOG_ERROR("EMMC: SEND_SCR ERR: %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0);
-    //LOG_ERROR("EMMC: Reading SCR, only read %d words\n",numRead);
-    //console_deb_writeline("sdcard : Timeout 3.");
     return SD_TIMEOUT;
     }
 
@@ -514,7 +492,6 @@ static uint32_t sdGetClockDivider ( uint32_t freq )
       shiftcount = 0;                           // Match shift to above just for debug notification
     }
 
-    //LOG_DEBUG("Divisor selected = %u, pow 2 shift count = %u\n", divisor, shiftcount);
     uint32_t hi = 0;
     if (s_host_ver > HOST_SPEC_V2) hi = (divisor & 0x300) >> 2; // Only 10 bits on Hosts specs above 2
     uint32_t lo = (divisor & 0x0ff);               // Low part always valid
@@ -536,7 +513,6 @@ static int sdSetClock(int freq)
     }
     if(count <= 0)
     {
-        //LOG_ERROR("EMMC: Set clock: timeout waiting for inhibit flags. Status %08x.\n",*EMMC_STATUS);
         return SD_ERROR_CLOCK;
     }
 
@@ -566,11 +542,8 @@ static int sdSetClock(int freq)
     }
     if(count <= 0)
     {
-        //LOG_ERROR("EMMC: ERROR: failed to get stable clock.\n");
         return SD_ERROR_CLOCK;
     }
-
-    //printf("EMMC: Set clock, status %08x CONTROL1: %08x\n",*EMMC_STATUS,*EMMC_CONTROL1);
 
     return SD_OK;
 }
@@ -641,8 +614,6 @@ static int sdAppSendOpCond( int arg )
 {
     // Send APP_SEND_OP_COND with the given argument (for SC or HC cards).
 
-    //  printf("EMMC: Sending ACMD41 SEND_OP_COND status %08x\n",*EMMC_STATUS);
-
     int resp;
 
     // Note: The host shall set ACMD41 timeout more than 1 second to abort
@@ -655,8 +626,6 @@ static int sdAppSendOpCond( int arg )
     {
         if(resp != SD_TIMEOUT )
         {
-            console_deb_writeline(
-                "sdAppSendOpCond : Error: ACMD41 returned a non-timeout error (1)!");
             return resp;
         }
     }
@@ -665,14 +634,10 @@ static int sdAppSendOpCond( int arg )
         !(s_sdcard.ocr & R3_COMPLETE)
         && (armtimer_get_tick() - start_tick < max_tick))
     {
-    	//    printf("EMMC: Retrying ACMD SEND_OP_COND status %08x\n",*EMMC_STATUS);
-
         if((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)))
         {
             if(resp != SD_TIMEOUT )
             {
-                console_deb_writeline(
-                    "sdAppSendOpCond : Error: ACMD41 returned a non-timeout error (2)!");
                 return resp;
             }
         }
@@ -681,26 +646,16 @@ static int sdAppSendOpCond( int arg )
     // Return timeout error if still not busy.
     if(!(s_sdcard.ocr & R3_COMPLETE))
     {
-        console_deb_writeline("sdAppSendOpCond : Error: Timeout error!");
         return SD_TIMEOUT;
     }
 
     // Check that at least one voltage value was returned.
     if(!(s_sdcard.ocr & ACMD41_VOLTAGE))
     {
-        console_deb_writeline("sdAppSendOpCond : Error: No voltage returned!");
         return SD_ERROR_VOLTAGE;
     }
 
     return SD_OK;
-}
-
-/* Switch voltage to 1.8v where the card supports it.
- */
-static int sdSwitchVoltage()
-{
-  //LOG_DEBUG("EMMC: Pi does not support switch voltage, fixed at 3.3volt\n");
-  return SD_OK;
 }
 
 /** Initialize GPIO.
@@ -741,43 +696,43 @@ static int init_emmc_clock_rate()
 
 static void parse_csd()
 {
-#ifndef NDEBUG
-    int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
-    unsigned long long capacity;
-
-    if(csd_ver == CSD0_V1)
-    {
-        int const csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
-            ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
-        int const mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
-        long long const blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
-        long long const numBlocks = (csize+1LL)*mult;
-
-        capacity = numBlocks * blockSize;
-    }
-    else
-    {
-        //assert(csd_ver == CSD0_V2);
-
-        long long const csize =
-            (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
-
-        capacity = (csize+1LL)*512LL*1024LL;
-    }
-
-    console_write("parse_csd : Capacity = 0x");
-    console_write_dword((uint32_t)(capacity >> 32));
-    console_write_dword((uint32_t)(0x00000000FFFFFFFF & capacity));
-    console_writeline(".");
-#endif //NDEBUG
+// #ifndef NDEBUG
+//     int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
+//     unsigned long long capacity;
+//
+//     if(csd_ver == CSD0_V1)
+//     {
+//         int const csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
+//             ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
+//         int const mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
+//         long long const blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
+//         long long const numBlocks = (csize+1LL)*mult;
+//
+//         capacity = numBlocks * blockSize;
+//     }
+//     else
+//     {
+//         //assert(csd_ver == CSD0_V2);
+//
+//         long long const csize =
+//             (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
+//
+//         capacity = (csize+1LL)*512LL*1024LL;
+//     }
+//
+//     console_write("parse_csd : Capacity = 0x");
+//     console_write_dword((uint32_t)(capacity >> 32));
+//     console_write_dword((uint32_t)(0x00000000FFFFFFFF & capacity));
+//     console_writeline(".");
+// #endif //NDEBUG
 
     s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
 
-#ifndef NDEBUG
-    console_write("parse_csd : File format = 0x");
-    console_write_dword((uint32_t)(s_sdcard.fileFormat));
-    console_writeline(".");
-#endif //NDEBUG
+// #ifndef NDEBUG
+//     console_write("parse_csd : File format = 0x");
+//     console_write_dword((uint32_t)(s_sdcard.fileFormat));
+//     console_writeline(".");
+// #endif //NDEBUG
 }
 
 // ************************
@@ -794,7 +749,6 @@ int sdcard_blocks_clear( long long address, int numBlocks )
   // Ensure that any data operation has completed before doing the transfer.
   if( sdWaitForData() )
   {
-      //console_deb_writeline("sdcard : Timeout 5.");
       return SD_TIMEOUT;
   }
 
@@ -805,11 +759,9 @@ int sdcard_blocks_clear( long long address, int numBlocks )
   int endAddress = startAddress + (s_sdcard.type == SD_TYPE_2_HC ? (numBlocks - 1) : ((numBlocks-1)*512));
 
   int resp;
-  //  printf("EMMC: erasing blocks from %d to %d\n",startAddress,endAddress);
   if( (resp = sdSendCommandA(IX_ERASE_WR_ST,startAddress)) ) return resp;
   if( (resp = sdSendCommandA(IX_ERASE_WR_END,endAddress)) ) return resp;
   if( (resp = sdSendCommand(IX_ERASE)) ) return resp;
-  //  printf("EMMC: sent erase command, status %08x int %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT);
 
   // Wait for data inhibit status to drop.
   int count = 1000000;
@@ -817,15 +769,11 @@ int sdcard_blocks_clear( long long address, int numBlocks )
     {
     if( --count == 0 )
       {
-      //LOG_ERROR("EMMC: Timeout waiting for erase: %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT);
-      //console_deb_writeline("sdcard : Timeout 6.");
       return SD_TIMEOUT;
       }
 
     armtimer_busywait_microseconds(10);
     }
-
-  //  printf("EMMC: completed erase command int %08x\n",*EMMC_INTERRUPT);
 
   return SD_OK;
   }
@@ -834,14 +782,11 @@ int sdcard_blocks_clear( long long address, int numBlocks )
  */
 int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )
 {
-	//	printf("check s_sdcard.init\n"); // TEST
 if( !s_is_initialized ) return SD_NO_RESP;
 
-//	printf("sdWaitForData() .init\n"); // TEST
 // Ensure that any data operation has completed before doing the transfer.
 if( sdWaitForData() )
 {
-    //console_deb_writeline("sdcard : Timeout 7.");
     return SD_TIMEOUT;
 }
 
@@ -869,7 +814,7 @@ int blockAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)addr
 // are transferred and stops the transfer once BLKCNT reaches 0.
 // TODO: TM_AUTO_CMD12 - is this needed?  What effect does it have?
 *EMMC_BLKSIZECNT = (numBlocks << 16) | 512;
-//	printf("sdSendCommandA() .init\n"); // TEST
+
 if( (resp = sdSendCommandA(transferCmd,blockAddress)) ) return resp;
 
 // Transfer all blocks.
@@ -879,9 +824,6 @@ while( blocksDone < numBlocks )
   // Wait for ready interrupt for the next block.
   if( (resp = wait_for_interrupt(readyInt)) )
     {
-		  //		  printf("EMMC: Timeout waiting for ready to read\n"); //TEST
-    //LOG_ERROR("EMMC: Timeout waiting for ready to read\n");
-    //console_deb_writeline("sdcard : Waiting for interrupt failed (3)!");
     return resp;
     }
 
@@ -931,29 +873,17 @@ while( blocksDone < numBlocks )
 // If not all bytes were read, the operation timed out.
 if( blocksDone != numBlocks )
   {
-		//		printf("Error 23\n");
-  //LOG_ERROR("EMMC: Transfer error only done %d/%d blocks\n",blocksDone,numBlocks);
-  //LOG_DEBUG("EMMC: Transfer: %08x %08x %08x %08x\n",*EMMC_STATUS,*EMMC_INTERRUPT,*EMMC_RESP0,*EMMC_BLKSIZECNT);
+      if( !write && numBlocks > 1)
+      {
+          resp = sdSendCommand(IX_STOP_TRANS);
+      }
 
-  // if( !write && numBlocks > 1 && (resp = sdSendCommand(IX_STOP_TRANS)) )
-	// 	//		printf("Error 24\n");
-  //   LOG_DEBUG("EMMC: Error response from stop transmission: %d\n",resp);
-  //
-  if( !write && numBlocks > 1)
-  {
-      resp = sdSendCommand(IX_STOP_TRANS);
-  }
-
-  //console_deb_writeline("sdcard : Timeout 8.");
   return SD_TIMEOUT;
  }
 
 // For a write operation, ensure DATA_DONE interrupt before we stop transmission.
 if( write && (resp = wait_for_interrupt(INT_DATA_DONE)) )
   {
-		//		printf("Error 25\n");
-  //LOG_ERROR("EMMC: Timeout waiting for data done\n");
-  //console_deb_writeline("sdcard : Waiting for interrupt failed (4)!");
   return resp;
   }
 
@@ -1051,14 +981,16 @@ int sdcard_init()
         s_sdcard.type = SD_TYPE_1;
     }
 
-    // If the switch to 1.8A is accepted, then we need to send a CMD11.
+    // Switching voltage to 1.8V is not implemented:
+    //
+    // If the switch to 1.8V is accepted, then we need to send a CMD11.
     // CMD11: Completion of voltage switch sequence is checked by high level of DAT[3:0].
     // Any bit of DAT[3:0] can be checked depends on ability of the host.
     // Appears for PI its any/all bits.
-    if( (s_sdcard.ocr & R3_S18A) && (resp = sdSwitchVoltage()) )
-    {
-        return resp;
-    }
+    // if( (s_sdcard.ocr & R3_S18A) && (resp = sdSwitchVoltage()) )
+    // {
+    //     return resp;
+    // }
 
     // Send ALL_SEND_CID (CMD2)
     if( (resp = sdSendCommand(IX_ALL_SEND_CID)) ) return resp;
@@ -1070,8 +1002,6 @@ int sdcard_init()
     // From now on the card should be in standby state.
     // Actually cards seem to respond in identify state at this point.
     // Check this with a SEND_STATUS (CMD13)
-    //if( (resp = sdSendCommand(IX_SEND_STATUS)) ) return resp;
-    //  printf("Card current state: %08x %s\n",s_sdcard.status,STATUS_NAME[s_sdcard.cardState]);
 
     // Send SEND_CSD (CMD9) and parse the result.
     if( (resp = sdSendCommand(IX_SEND_CSD)) ) return resp;
@@ -1079,7 +1009,6 @@ int sdcard_init()
     if( s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT &&
       s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_HDD )
     {
-    //LOG_ERROR("EMMC: Error, unrecognised file format %02x\n",s_sdcard.fileFormat);
     return SD_ERROR;
     }
 
