@@ -41,10 +41,10 @@ struct EMMCCommand
     int delay;
 };
 
-// SD card descriptor
 struct SDDescriptor
 {
-    // Static information about the SD Card.
+    // Static informations:
+
     unsigned long long capacity;
     unsigned int cid[4];
     unsigned int csd[4];
@@ -55,7 +55,8 @@ struct SDDescriptor
     unsigned char type;
     unsigned char init;
 
-    // Dynamic information.
+    // Dynamic informations:
+
     unsigned int rca;
     unsigned int cardState;
     unsigned int status;
