@@ -11,7 +11,7 @@
 
 DSTATUS disk_initialize (void)
 {
-	DSTATUS stat;
+	DSTATUS stat = STA_NOINIT;
 
 	// Put your code here
 
@@ -31,7 +31,12 @@ DRESULT disk_readp (
 	UINT count		/* Byte count (bit15:destination) */
 )
 {
-	DRESULT res;
+    (void)buff;
+    (void)sector;
+    (void)offset;
+    (void)count;
+
+	DRESULT res = RES_ERROR;
 
 	// Put your code here
 
@@ -45,11 +50,11 @@ DRESULT disk_readp (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_writep (
-	BYTE* buff,		/* Pointer to the data to be written, NULL:Initiate/Finalize write operation */
+	const BYTE* buff,		/* Pointer to the data to be written, NULL:Initiate/Finalize write operation */
 	DWORD sc		/* Sector number (LBA) or Number of bytes to send */
 )
 {
-	DRESULT res;
+	DRESULT res = RES_ERROR;
 
 
 	if (!buff) {
@@ -70,4 +75,3 @@ DRESULT disk_writep (
 
 	return res;
 }
-

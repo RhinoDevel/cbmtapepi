@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 
-#include "ff.h"
+#include "pff.h"
 
 
 /* Status of Disk Functions */
@@ -29,7 +29,7 @@ typedef enum {
 /* Prototypes for disk control functions */
 
 DSTATUS disk_initialize (void);
-DRESULT disk_readp (BYTE* buff, DWORD sector, UINT offser, UINT count);
+DRESULT disk_readp (BYTE* buff, DWORD sector, UINT offset, UINT count);
 DRESULT disk_writep (const BYTE* buff, DWORD sc);
 
 #define STA_NOINIT		0x01	/* Drive not initialized */

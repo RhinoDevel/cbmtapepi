@@ -127,6 +127,8 @@ $MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
 $MT_CC hardware/irqcontroller/irqcontroller.c -o hardware/irqcontroller/irqcontroller.o
 $MT_CC hardware/sdcard/sdcard.c -o hardware/sdcard/sdcard.o
+$MT_CC hardware/pff3a/source/diskio.c -o hardware/pff3a/source/diskio.o
+$MT_CC hardware/pff3a/source/pff.c -o hardware/pff3a/source/pff.o
 
 # Application-specific files (may use library and driver compiled above):
 #
@@ -194,6 +196,8 @@ arm-none-eabi-ld \
     hardware/framebuffer/framebuffer.o \
     hardware/irqcontroller/irqcontroller.o \
     hardware/sdcard/sdcard.o \
+    hardware/pff3a/source/diskio.o \
+    hardware/pff3a/source/pff.o \
     \
     -o kernel.elf
 
