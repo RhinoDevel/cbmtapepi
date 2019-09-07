@@ -5,6 +5,7 @@
 #include "diskio.h"
 #include "../../sdcard/sdcard.h"
 
+static BYTE s_buf[512];
 
 /*-----------------------------------------------------------------------*/
 /* Initialize Disk Drive                                                 */
@@ -35,16 +36,42 @@ DRESULT disk_readp (
 	UINT count		/* Byte count (bit15:destination) */
 )
 {
-    (void)buff;
-    (void)sector;
-    (void)offset;
-    (void)count;
+    if(buff == 0/*NULL*/)
+    {
+        return RES_PARERR; // No support for outgoing stream.
+    }
+    if(offset > 511)
+    {
+        return RES_PARERR;
+    }
+    if(count > 512)
+    {
+        return RES_PARERR;
+    }
+    if(offset + count > 512)
+    {
+        return RES_PARERR;
+    }
 
-	DRESULT res = RES_ERROR;
+    if(count == 0)
+    {
+        return RES_OK; // Nothing to do.
+    }
 
-	// Put your code here
+    // TODO: Some buffering to speed-up transfers:
 
-	return res;
+    long long const addr = (long long)512 * (long long)sector;
+
+    if(sdcard_blocks_transfer(addr, 1, s_buf, 0) != SD_OK)
+    {
+        return RES_ERROR;
+    }
+
+    for(UINT i = 0;i < count;++i)
+    {
+        buff[i] = s_buf[offset + i];
+    }
+    return RES_OK;
 }
 
 
