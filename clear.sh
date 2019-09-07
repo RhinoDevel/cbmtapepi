@@ -14,6 +14,7 @@ rm hardware/pl011uart/pl011uart.o
 rm hardware/framebuffer/framebuffer.o
 rm hardware/watchdog/watchdog.o
 rm hardware/irqcontroller/irqcontroller.o
+rm hardware/sdcard/sdcard.o
 
 # Hardware-independent library:
 

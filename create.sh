@@ -126,6 +126,7 @@ $MT_CC hardware/pl011uart/pl011uart.c -o hardware/pl011uart/pl011uart.o
 $MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
 $MT_CC hardware/irqcontroller/irqcontroller.c -o hardware/irqcontroller/irqcontroller.o
+$MT_CC hardware/sdcard/sdcard.c -o hardware/sdcard/sdcard.o
 
 # Application-specific files (may use library and driver compiled above):
 #
@@ -192,6 +193,7 @@ arm-none-eabi-ld \
     hardware/watchdog/watchdog.o \
     hardware/framebuffer/framebuffer.o \
     hardware/irqcontroller/irqcontroller.o \
+    hardware/sdcard/sdcard.o \
     \
     -o kernel.elf
 
