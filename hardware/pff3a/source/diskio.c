@@ -3,6 +3,7 @@
 /*-----------------------------------------------------------------------*/
 
 #include "diskio.h"
+#include "../../sdcard/sdcard.h"
 
 
 /*-----------------------------------------------------------------------*/
@@ -11,11 +12,14 @@
 
 DSTATUS disk_initialize (void)
 {
-	DSTATUS stat = STA_NOINIT;
+	int const sdcard_init_result = sdcard_init();
 
-	// Put your code here
-
-	return stat;
+    if(sdcard_init_result == SD_OK
+        || sdcard_init_result == SD_ALREADY_INITIALIZED)
+    {
+        return 0;
+    }
+	return STA_NOINIT;
 }
 
 
