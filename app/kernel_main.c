@@ -398,7 +398,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     // Timer counts down 250.000 times in one second (with 250 kHz):
     //
-    armtimer_start(250000 * 1, 1000); // 1 Second, hard-coded for 250MHz clock.
+    armtimer_start(250000 * 1, 500); // 0.5 seconds, hard-coded for 250MHz clock.
 
 #ifndef NDEBUG
     pff_test();
