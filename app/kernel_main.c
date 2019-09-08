@@ -391,8 +391,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         armtimer_get_tick,
         armtimer_busywait_microseconds);
 
-    statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, false);
-
     irqcontroller_irq_src_enable_armtimer();
     _enable_interrupts();
     //
@@ -417,6 +415,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     ui_enter();
 #else //MT_INTERACTIVE
+    // "YMODEM plus toggle button" mode:
+    //
+    statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, false);
     while(true)
     {
         if(statetoggle_get_state())
