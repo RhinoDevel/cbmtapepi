@@ -15,8 +15,8 @@
 #include "../lib/alloc/alloc.h"
 #include "../lib/console/console_params.h"
 #include "../lib/console/console.h"
-#include "../hardware/baregpio/baregpio.h"
-#include "../hardware/baregpio/baregpio_params.h"
+#include "../hardware/gpio/gpio.h"
+#include "../hardware/gpio/gpio_params.h"
 #include "../app/config.h"
 #include "../app/tape/tape_init.h"
 #include "../app/tape/tape_send_params.h"
@@ -93,7 +93,7 @@ static void init_gpio()
 {
     // Initialize bare GPIO singleton:
     //
-    baregpio_init((struct baregpio_params){
+    gpio_init((struct gpio_params){
         .wait_microseconds = timer_wait_microseconds,
 
         .mem_read = mem_read,

@@ -22,7 +22,7 @@
 #include "../../lib/mem/mem.h"
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
-#include "../baregpio/baregpio.h"
+#include "../gpio/gpio.h"
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
 #endif //NDEBUG
@@ -660,18 +660,18 @@ static int sdAppSendOpCond( int arg )
  */
 static void sd_init_gpio()
 {
-    baregpio_set_func(GPIO_DAT3,gpio_func_alt3);
-    baregpio_set_pud(GPIO_DAT3,gpio_pud_up);
-    baregpio_set_func(GPIO_DAT2,gpio_func_alt3);
-    baregpio_set_pud(GPIO_DAT2,gpio_pud_up);
-    baregpio_set_func(GPIO_DAT1,gpio_func_alt3);
-    baregpio_set_pud(GPIO_DAT1,gpio_pud_up);
-    baregpio_set_func(GPIO_DAT0,gpio_func_alt3);
-    baregpio_set_pud(GPIO_DAT0,gpio_pud_up);
-    baregpio_set_func(GPIO_CMD,gpio_func_alt3);
-    baregpio_set_pud(GPIO_CMD,gpio_pud_up);
-    baregpio_set_func(GPIO_CLK,gpio_func_alt3);
-    baregpio_set_pud(GPIO_CLK,gpio_pud_up);
+    gpio_set_func(GPIO_DAT3,gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT3,gpio_pud_up);
+    gpio_set_func(GPIO_DAT2,gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT2,gpio_pud_up);
+    gpio_set_func(GPIO_DAT1,gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT1,gpio_pud_up);
+    gpio_set_func(GPIO_DAT0,gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT0,gpio_pud_up);
+    gpio_set_func(GPIO_CMD,gpio_func_alt3);
+    gpio_set_pud(GPIO_CMD,gpio_pud_up);
+    gpio_set_func(GPIO_CLK,gpio_func_alt3);
+    gpio_set_pud(GPIO_CLK,gpio_pud_up);
 }
 
 /** Initialize static variable holding EMMC clock rate.

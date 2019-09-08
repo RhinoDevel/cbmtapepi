@@ -6,7 +6,7 @@
 
 #include "tape_send_buf.h"
 #include "tape_symbol.h"
-#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/gpio/gpio.h"
 #include "../../lib/console/console.h"
 
 // Short: 2840 Hz
@@ -39,9 +39,9 @@ static void (*s_timer_busywait_microseconds)(uint32_t const microseconds) = 0;
 
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
-    baregpio_write(gpio_pin_nr, false);
+    gpio_write(gpio_pin_nr, false);
     s_timer_busywait_microseconds(micro);
-    baregpio_write(gpio_pin_nr, true);
+    gpio_write(gpio_pin_nr, true);
     s_timer_busywait_microseconds(micro);
 }
 
@@ -75,13 +75,13 @@ bool tape_send_buf(
             return false;
         }
 
-        if(!baregpio_read(gpio_pin_nr_motor))
+        if(!gpio_read(gpio_pin_nr_motor))
         {
             if(motor_wait)
             {
                 console_deb_writeline("tape_send_buf: Motor is OFF, waiting..");
 
-                while(!baregpio_read(gpio_pin_nr_motor))
+                while(!gpio_read(gpio_pin_nr_motor))
                 {
                     // Pause, as long as motor signal from Commodore computer is
                     // LOW.

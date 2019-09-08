@@ -17,7 +17,7 @@ SOURCES=\
 	../lib/str/str.c \
 	../lib/calc/calc.c \
 	../lib/console/console.c \
-	../hardware/baregpio/baregpio.c \
+	../hardware/gpio/gpio.c \
 	../app/tape/tape_extract_buf.c \
 	../app/tape/tape_fill_buf.c \
 	../app/tape/tape_init.c \

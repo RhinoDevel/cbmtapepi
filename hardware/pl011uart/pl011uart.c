@@ -19,7 +19,7 @@
 #include "../peribase.h"
 #include "../armtimer/armtimer.h"
 #include "../../lib/mem/mem.h"
-#include "../baregpio/baregpio.h"
+#include "../gpio/gpio.h"
 
 // UART0 (PL011) register map (see page 177):
 //
@@ -92,13 +92,13 @@ void pl011uart_init()
     // Set GPIO pin 14 and 15 to alternate function 0 (page 92 and page 102),
     // which is using UART0:
     //
-    baregpio_set_func(14, gpio_func_alt0); // TXD0
-    baregpio_set_func(15, gpio_func_alt0); // RXD0
+    gpio_set_func(14, gpio_func_alt0); // TXD0
+    gpio_set_func(15, gpio_func_alt0); // RXD0
 
     // Enable pull-down resistors (page 101):
     //
-    baregpio_set_pud(14, gpio_pud_down);
-    baregpio_set_pud(15, gpio_pud_down);
+    gpio_set_pud(14, gpio_pud_down);
+    gpio_set_pud(15, gpio_pud_down);
 
     mem_write(PL011_ICR, 0x7FF); // Clears pending interrupts.
 

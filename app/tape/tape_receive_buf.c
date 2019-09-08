@@ -6,7 +6,7 @@
 
 #include "tape_receive_buf.h"
 #include "tape_symbol.h"
-#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/gpio/gpio.h"
 #include "../../lib/console/console.h"
 #include "../../lib/assert.h"
 
@@ -105,11 +105,11 @@ bool tape_receive_buf(
         pulse_type_index = 0,
         sync_workaround_count = 0;
 
-    if(!baregpio_read(gpio_pin_nr_motor))
+    if(!gpio_read(gpio_pin_nr_motor))
     {
         console_deb_writeline("tape_receive_buf: Motor is OFF, waiting..");
 
-        while(!baregpio_read(gpio_pin_nr_motor))
+        while(!gpio_read(gpio_pin_nr_motor))
         {
             // Pause, as long as motor signal from Commodore computer is
             // LOW.
@@ -141,7 +141,7 @@ bool tape_receive_buf(
 
     // Wait for low:
     //
-    while(baregpio_read(gpio_pin_nr_write))
+    while(gpio_read(gpio_pin_nr_write))
     {
         // Pin is HIGH.
 
@@ -159,7 +159,7 @@ bool tape_receive_buf(
     {
         // LOW, wait for start of (next) SAVE sync pulse:
 
-        while(!baregpio_read(gpio_pin_nr_write))
+        while(!gpio_read(gpio_pin_nr_write))
         {
             // Pin is LOW.
 
@@ -173,7 +173,7 @@ bool tape_receive_buf(
 
         start_tick = s_timer_get_tick();
 
-        while(baregpio_read(gpio_pin_nr_write))
+        while(gpio_read(gpio_pin_nr_write))
         {
             // Pin is HIGH.
 
@@ -211,7 +211,7 @@ bool tape_receive_buf(
         start_tick = s_timer_get_tick();
         while(true)
         {
-            if(baregpio_read(gpio_pin_nr_write))
+            if(gpio_read(gpio_pin_nr_write))
             {
                 break; // HIGH
             }
@@ -230,7 +230,7 @@ bool tape_receive_buf(
 
         start_tick = s_timer_get_tick();
 
-        while(baregpio_read(gpio_pin_nr_write))
+        while(gpio_read(gpio_pin_nr_write))
         {
             // Pin is HIGH.
 

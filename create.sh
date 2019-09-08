@@ -116,7 +116,7 @@ $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
 
 # Hardware-dependent drivers (may use library compiled above):
 #
-$MT_CC hardware/baregpio/baregpio.c -o hardware/baregpio/baregpio.o
+$MT_CC hardware/gpio/gpio.c -o hardware/gpio/gpio.o
 $MT_CC hardware/mailbox/mailbox.c -o hardware/mailbox/mailbox.o
 $MT_CC hardware/armtimer/armtimer.c -o hardware/armtimer/armtimer.o
 $MT_CC hardware/systimer/systimer.c -o hardware/systimer/systimer.o
@@ -185,7 +185,7 @@ arm-none-eabi-ld \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
     \
-    hardware/baregpio/baregpio.o \
+    hardware/gpio/gpio.o \
     hardware/mailbox/mailbox.o \
     hardware/armtimer/armtimer.o \
     hardware/systimer/systimer.o \

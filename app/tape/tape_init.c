@@ -7,7 +7,7 @@
 #include "tape_receive_buf.h"
 #include "tape_send_buf.h"
 
-#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/gpio/gpio.h"
 #include "../../lib/console/console.h"
 #include "../config.h"
 
@@ -21,15 +21,15 @@ void tape_init(
     tape_send_buf_init(timer_busywait_microseconds);
 
     console_deb_writeline("tape_init: Setting sense output line to HIGH..");
-    baregpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, true);
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, true);
 
     console_deb_writeline("tape_init: Setting motor line to input with pull-down..");
-    baregpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_MOTOR);
+    gpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_MOTOR);
 
     console_deb_writeline("tape_init: Setting tape read output line to HIGH..");
-    baregpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, true);
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, true);
 
     console_deb_writeline(
         "tape_init: Setting tape write line to input with pull-down..");
-    baregpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_WRITE);
+    gpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_WRITE);
 }

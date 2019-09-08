@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/gpio/gpio.h"
 #include "../../lib/console/console.h"
 
 #include "tape_fill_buf.h"
@@ -27,7 +27,7 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
     // Send data via GPIO pin with given nr:
 
     console_deb_writeline("tape_send: Setting sense line to LOW..");
-    baregpio_set_output(p->gpio_pin_nr_sense, false);
+    gpio_set_output(p->gpio_pin_nr_sense, false);
 
     console_deb_writeline("tape_send: Sending buffer content..");
     if(tape_send_buf(
@@ -35,13 +35,13 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
     {
         console_deb_writeline(
             "tape_send: Success. Setting tape read line and sense line to HIGH..");
-        baregpio_set_output(p->gpio_pin_nr_read, true);
-        baregpio_set_output(p->gpio_pin_nr_sense, true);
+        gpio_set_output(p->gpio_pin_nr_read, true);
+        gpio_set_output(p->gpio_pin_nr_sense, true);
         return true;
     }
     console_deb_writeline(
         "tape_send: Failure! Setting tape read line and sense line to HIGH..");
-    baregpio_set_output(p->gpio_pin_nr_read, true);
-    baregpio_set_output(p->gpio_pin_nr_sense, true);
+    gpio_set_output(p->gpio_pin_nr_read, true);
+    gpio_set_output(p->gpio_pin_nr_sense, true);
     return false;
 }

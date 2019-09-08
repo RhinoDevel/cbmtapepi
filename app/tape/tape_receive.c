@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/gpio/gpio.h"
 #include "../../lib/console/console.h"
 #include "../../lib/alloc/alloc.h"
 
@@ -26,7 +26,7 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
     // Receive data via GPIO pin with given nr:
 
     console_deb_writeline("tape_receive: Setting sense line to LOW..");
-    baregpio_set_output(p->gpio_pin_nr_sense, false);
+    gpio_set_output(p->gpio_pin_nr_sense, false);
 
     console_deb_writeline("tape_receive: Receiving data..");
     if(tape_receive_buf(
@@ -36,7 +36,7 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
 
         console_deb_writeline(
             "tape_receive: Success. Setting sense line to HIGH..");
-        baregpio_set_output(p->gpio_pin_nr_sense, true);
+        gpio_set_output(p->gpio_pin_nr_sense, true);
 
         input = tape_extract_buf(buf);
         alloc_free(buf);
@@ -44,7 +44,7 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
     }
     console_deb_writeline(
         "tape_receive: Failure! Setting sense line to HIGH..");
-    baregpio_set_output(p->gpio_pin_nr_sense, true);
+    gpio_set_output(p->gpio_pin_nr_sense, true);
     alloc_free(buf);
     return 0;
 }

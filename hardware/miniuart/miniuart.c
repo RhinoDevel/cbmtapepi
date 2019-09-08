@@ -19,7 +19,7 @@
 #include "../auxiliary.h"
 #include "../../lib/mem/mem.h"
 #include "../armtimer/armtimer.h"
-#include "../baregpio/baregpio.h"
+#include "../gpio/gpio.h"
 
 bool miniuart_is_ready_to_read()
 {
@@ -64,14 +64,14 @@ void miniuart_init()
 {
     // Enable pull-down resistors (page 101):
     //
-    baregpio_set_pud(14, gpio_pud_down);
-    baregpio_set_pud(15, gpio_pud_down);
+    gpio_set_pud(14, gpio_pud_down);
+    gpio_set_pud(15, gpio_pud_down);
 
     // Set GPIO pin 14 and 15 to alternate function 5 (page 92 and page 102),
     // which is using UART1:
     //
-    baregpio_set_func(14, gpio_func_alt5); // TXD1
-    baregpio_set_func(15, gpio_func_alt5); // RXD1
+    gpio_set_func(14, gpio_func_alt5); // TXD1
+    gpio_set_func(15, gpio_func_alt5); // RXD1
 
     // Enable Mini UART (disables SPI1 & SPI2, page 9):
     //

@@ -17,8 +17,8 @@
 #include "../hardware/miniuart/miniuart.h"
 //#include "../hardware/pl011uart/pl011uart.h"
 
-#include "../hardware/baregpio/baregpio_params.h"
-#include "../hardware/baregpio/baregpio.h"
+#include "../hardware/gpio/gpio_params.h"
+#include "../hardware/gpio/gpio.h"
 
 #include "../lib/console/console.h"
 #include "ui/ui_terminal_to_commodore.h"
@@ -46,7 +46,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     s_timer_irq_state = !s_timer_irq_state;
 
-    baregpio_set_output(GPIO_PIN_NR_ACT, s_timer_irq_state);
+    gpio_set_output(GPIO_PIN_NR_ACT, s_timer_irq_state);
 }
 
 #ifndef MT_INTERACTIVE
@@ -121,9 +121,9 @@ static void toggle_gpio(
 
     while(true)
     {
-        baregpio_set_output(pin_nr, !is_high);
+        gpio_set_output(pin_nr, !is_high);
         armtimer_busywait_microseconds(microseconds);
-        baregpio_set_output(pin_nr, is_high);
+        gpio_set_output(pin_nr, is_high);
 
         ++i;
         if(i == count)
@@ -361,7 +361,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // Initialize bare GPIO singleton:
     //
-    baregpio_init((struct baregpio_params){
+    gpio_init((struct gpio_params){
         .wait_microseconds = armtimer_busywait_microseconds,
 
         .mem_read = mem_read,

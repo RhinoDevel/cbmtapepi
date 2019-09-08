@@ -4,7 +4,7 @@
 #include "statetoggle.h"
 
 #include "../../lib/console/console.h"
-#include "../../hardware/baregpio/baregpio.h"
+#include "../../hardware/gpio/gpio.h"
 #include "../../hardware/armtimer/armtimer.h"
 
 #include <stdbool.h>
@@ -17,7 +17,7 @@ static uint32_t s_gpio_pin_nr_led = 0;
 
 static void update_led()
 {
-    baregpio_set_output(s_gpio_pin_nr_led, s_state);
+    gpio_set_output(s_gpio_pin_nr_led, s_state);
 }
 
 void statetoggle_init(
@@ -32,7 +32,7 @@ void statetoggle_init(
 
     console_deb_writeline(
         "statetoggle_init: Setting button line to input with pull-down..");
-    baregpio_set_input_pull_down(s_gpio_pin_nr_button);
+    gpio_set_input_pull_down(s_gpio_pin_nr_button);
 
     console_deb_writeline(
         "statetoggle_init: Setting LED output line to reflect state..");
@@ -44,7 +44,7 @@ void statetoggle_init(
 bool statetoggle_is_requested()
 {
     s_toggle_requested = s_toggle_requested
-                            || baregpio_read(s_gpio_pin_nr_button);
+                            || gpio_read(s_gpio_pin_nr_button);
 
     return s_toggle_requested;
 }
@@ -61,7 +61,7 @@ void statetoggle_toggle()
     {
         armtimer_busywait_microseconds(1);
 
-        if(baregpio_read(s_gpio_pin_nr_button))
+        if(gpio_read(s_gpio_pin_nr_button))
         {
             i = 0;
         }

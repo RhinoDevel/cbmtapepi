@@ -49,8 +49,8 @@
     #include <sys/mman.h>
 #endif //MT_LINUX
 
-#include "baregpio.h"
-#include "baregpio_params.h"
+#include "gpio.h"
+#include "gpio_params.h"
 
 static uint32_t const s_offset_from_peribase = 0x00200000;
 
@@ -78,7 +78,7 @@ static uint32_t const s_offset_pudclk0 = 0x98;
 //
 // [pudclk1 will dyn. be used with the help of function get_pudclk()]
 
-// Will be set in baregpio_init():
+// Will be set in gpio_init():
 //
 static uint32_t s_addr_base = 0;
 static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
@@ -174,7 +174,7 @@ static uint32_t get_addr_base_for_linux(uint32_t const peri_base)
 }
 #endif //MT_LINUX
 
-void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const val)
+void gpio_set_pud(uint32_t const pin_nr, enum gpio_pud const val)
 {
     uint32_t const pud = s_addr_base + s_offset_pud,
         pudclk = get_pudclk(pin_nr);
@@ -193,7 +193,7 @@ void baregpio_set_pud(uint32_t const pin_nr, enum gpio_pud const val)
     s_mem_write(pudclk, 0);
 }
 
-void baregpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
+void gpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
 {
     uint32_t const fsel = get_fsel(pin_nr),
         shift = (pin_nr % 10) * 3,
@@ -206,7 +206,7 @@ void baregpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
     s_mem_write(fsel, val);
 }
 
-void baregpio_write(uint32_t const pin_nr, bool const high)
+void gpio_write(uint32_t const pin_nr, bool const high)
 {
     uint32_t const pin_mask = get_pin_mask(pin_nr);
 
@@ -218,14 +218,14 @@ void baregpio_write(uint32_t const pin_nr, bool const high)
     s_mem_write(get_clr(pin_nr), pin_mask);
 }
 
-bool baregpio_read(uint32_t const pin_nr)
+bool gpio_read(uint32_t const pin_nr)
 {
     return (s_mem_read(get_lev(pin_nr)) & get_pin_mask(pin_nr)) != 0;
 }
 
-void baregpio_wait_for_low(uint32_t const pin_nr)
+void gpio_wait_for_low(uint32_t const pin_nr)
 {
-    while(baregpio_read(pin_nr))
+    while(gpio_read(pin_nr))
     {
         // Pin is HIGH.
     }
@@ -233,9 +233,9 @@ void baregpio_wait_for_low(uint32_t const pin_nr)
     // Pin is LOW.
 }
 
-void baregpio_wait_for_high(uint32_t const pin_nr)
+void gpio_wait_for_high(uint32_t const pin_nr)
 {
-    while(!baregpio_read(pin_nr))
+    while(!gpio_read(pin_nr))
     {
         // Pin is LOW.
     }
@@ -243,31 +243,31 @@ void baregpio_wait_for_high(uint32_t const pin_nr)
     // Pin is HIGH.
 }
 
-void baregpio_set_output(uint32_t const pin_nr, bool const high)
+void gpio_set_output(uint32_t const pin_nr, bool const high)
 {
-    baregpio_set_func(pin_nr, gpio_func_output);
-    baregpio_write(pin_nr, high);
+    gpio_set_func(pin_nr, gpio_func_output);
+    gpio_write(pin_nr, high);
 }
 
-void baregpio_set_input_pull_off(uint32_t const pin_nr)
+void gpio_set_input_pull_off(uint32_t const pin_nr)
 {
-    baregpio_set_func(pin_nr, gpio_func_input);
-    baregpio_set_pud(pin_nr, gpio_pud_off);
+    gpio_set_func(pin_nr, gpio_func_input);
+    gpio_set_pud(pin_nr, gpio_pud_off);
 }
 
-void baregpio_set_input_pull_up(uint32_t const pin_nr)
+void gpio_set_input_pull_up(uint32_t const pin_nr)
 {
-    baregpio_set_func(pin_nr, gpio_func_input);
-    baregpio_set_pud(pin_nr, gpio_pud_up);
+    gpio_set_func(pin_nr, gpio_func_input);
+    gpio_set_pud(pin_nr, gpio_pud_up);
 }
 
-void baregpio_set_input_pull_down(uint32_t const pin_nr)
+void gpio_set_input_pull_down(uint32_t const pin_nr)
 {
-    baregpio_set_func(pin_nr, gpio_func_input);
-    baregpio_set_pud(pin_nr, gpio_pud_down);
+    gpio_set_func(pin_nr, gpio_func_input);
+    gpio_set_pud(pin_nr, gpio_pud_down);
 }
 
-void baregpio_init(struct baregpio_params const p)
+void gpio_init(struct gpio_params const p)
 {
 #ifdef MT_LINUX
     s_addr_base = get_addr_base_for_linux(p.peri_base);

@@ -7,7 +7,7 @@
 rm hardware/armtimer/armtimer.o
 rm hardware/systimer/systimer.o
 rm hardware/busywait/busywait.o
-rm hardware/baregpio/baregpio.o
+rm hardware/gpio/gpio.o
 rm hardware/mailbox/mailbox.o
 rm hardware/miniuart/miniuart.o
 rm hardware/pl011uart/pl011uart.o

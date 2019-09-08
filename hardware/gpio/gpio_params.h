@@ -1,13 +1,13 @@
 
 // Marcel Timm, RhinoDevel, 2019aug24
 
-#ifndef MT_BAREGPIO_PARAMS
-#define MT_BAREGPIO_PARAMS
+#ifndef MT_GPIO_PARAMS
+#define MT_GPIO_PARAMS
 
 #include <stdint.h>
 #include <stdbool.h>
 
-struct baregpio_params
+struct gpio_params
 {
     void (*wait_microseconds)(uint32_t const microseconds);
 
@@ -17,4 +17,4 @@ struct baregpio_params
     uint32_t peri_base; // Peripheral base address.
 };
 
-#endif //MT_BAREGPIO_PARAMS
+#endif //MT_GPIO_PARAMS
