@@ -51,6 +51,7 @@ rm app/ui/ui_terminal_to_commodore.o
 rm app/ui/ui_commodore_to_terminal.o
 rm app/ui/ui.o
 rm app/cbm/cbm_receive.o
+rm app/cbm/cbm_send.o
 
 # Resulting kernel files:
 

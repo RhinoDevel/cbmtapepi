@@ -5,7 +5,6 @@
 
 #include "ui_terminal_to_commodore.h"
 
-#include "../config.h"
 #include "../../lib/console/console.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/ymodem/ymodem.h"
@@ -13,47 +12,8 @@
 #include "../../lib/ymodem/ymodem_receive_err.h"
 #include "../../hardware/armtimer/armtimer.h"
 #include "../../hardware/miniuart/miniuart.h"
-#include "../tape/tape_send.h"
-#include "../tape/tape_input.h"
-#include "../tape/tape_send_params.h"
-#include "../../lib/str/str.h"
 #include "../statetoggle/statetoggle.h"
-
-static void fill_name(uint8_t * const name_out, char const * const name_in)
-{
-    // static uint8_t const sample_name[] = {
-    //     'R', 'H', 'I', 'N', 'O', 'D', 'E', 'V', 'E', 'L',
-    //     0x20, 0x20, 0x20, 0x20, 0x20, 0x20
-    // };
-
-    int i = 0;
-    char * const buf = alloc_alloc(str_get_len(name_in) + 1);
-
-    str_to_upper(buf, name_in);
-
-    while(i < MT_TAPE_INPUT_NAME_LEN && buf[i] != '\0')
-    {
-        name_out[i] = (uint8_t)buf[i]; // TODO: Implement real conversion to PETSCII.
-        ++i;
-    }
-    while(i < MT_TAPE_INPUT_NAME_LEN)
-    {
-        name_out[i] = 0x20;
-        ++i;
-    }
-
-    alloc_free(buf);
-}
-
-static void fill_add_bytes(uint8_t * const add_bytes)
-{
-    // Additional bytes (to be stored in header):
-    //
-    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
-    {
-        add_bytes[i] = 0x20;
-    }
-}
+#include "../cbm/cbm_send.h"
 
 static void hint()
 {
@@ -63,58 +23,6 @@ static void hint()
         "Prepare Commodore, now (e.g. enter LOAD and press Return key). Then press anykey (here)..");
     console_read(c, 2);
     console_writeline("");
-}
-
-static bool send_to_commodore(
-    uint8_t /*const*/ * const bytes,
-    char const * const name,
-    uint32_t const count,
-    bool const interactive)
-{
-    bool ret_val = false;
-    struct tape_send_params p;
-    uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
-
-    p.is_stop_requested = interactive
-        ? 0
-        : statetoggle_is_requested;
-    p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
-    p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
-    p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
-    p.data = alloc_alloc(sizeof *(p.data));
-
-    fill_name(p.data->name, name);
-
-    p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
-    //
-    // Hard-coded - maybe not always correct, but works for C64 and PET,
-    // both with machine language and BASIC PRG files.
-
-    // First two bytes hold the start address:
-    //
-    p.data->addr = *((uint16_t const *)bytes);
-    p.data->bytes = bytes + 2;
-    p.data->len = count - 2;
-
-    fill_add_bytes(p.data->add_bytes);
-
-#ifndef NDEBUG
-    console_write("Start address is 0x");
-    console_write_word(p.data->addr);
-    console_write(" (");
-    console_write_word_dec(p.data->addr);
-    console_writeline(").");
-#endif //NDEBUG
-
-    if(interactive)
-    {
-        hint();
-    }
-    ret_val = tape_send(&p, mem_addr);
-
-    alloc_free(mem_addr);
-    alloc_free(p.data);
-    return ret_val;
 }
 
 bool ui_terminal_to_commodore(bool const interactive)
@@ -137,13 +45,16 @@ bool ui_terminal_to_commodore(bool const interactive)
     p.file_len = 0;
     p.name[0] = '\0';
 
-    console_deb_writeline("Please send your file, now (via YMODEM).");
+    if(interactive)
+    {
+        console_writeline("Please send your file, now (via YMODEM).");
+    }
 
     e = ymodem_receive(&p);
     if(e != ymodem_receive_err_none)
     {
 #ifndef NDEBUG
-        console_write("Failed to receive file (error ");
+        console_write("ui_terminal_to_commodore : Failed to receive file (error ");
         console_write_dword_dec((uint32_t)e);
         console_writeline(")!");
 #endif //NDEBUG
@@ -154,15 +65,20 @@ bool ui_terminal_to_commodore(bool const interactive)
     }
 
 #ifndef NDEBUG
-    console_write("Received file \"");
+    console_write("ui_terminal_to_commodore : Received file \"");
     console_write(p.name);
     console_write("\" with a length of ");
     console_write_dword_dec(p.file_len);
     console_writeline(" bytes.");
 #endif //NDEBUG
 
-    bool const send_succeeded = send_to_commodore(
-        p.buf, p.name, p.file_len, interactive);
+    if(interactive)
+    {
+        hint();
+    }
+
+    bool const send_succeeded = cbm_send(
+        p.buf, p.name, p.file_len, p.is_stop_requested);
 
     alloc_free(p.buf);
     p.buf = 0;
