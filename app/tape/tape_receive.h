@@ -17,6 +17,7 @@
  *                 down resistor usage.
  *
  * - Caller takes ownership of return value.
+ * - Returns NULL on error.
  *
  * <=> Call tape_init() before calling this function!
  */
