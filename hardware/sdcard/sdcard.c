@@ -23,9 +23,7 @@
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
 #include "../gpio/gpio.h"
-#ifndef NDEBUG
-    #include "../../lib/console/console.h"
-#endif //NDEBUG
+#include "../../lib/console/console.h"
 
 #include "sdcard.h"
 #include "sdcard_defines.h"
