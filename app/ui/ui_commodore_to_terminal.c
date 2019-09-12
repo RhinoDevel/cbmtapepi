@@ -6,11 +6,9 @@
 #include "ui_commodore_to_terminal.h"
 
 #include "../../lib/alloc/alloc.h"
-#include "../config.h"
 #include "../../lib/console/console.h"
-#include "../tape/tape_receive.h"
 #include "../tape/tape_input.h"
-#include "../tape/tape_receive_params.h"
+#include "../cbm/cbm_receive.h"
 #include "../../lib/ymodem/ymodem_send_params.h"
 #include "../../lib/ymodem/ymodem_send_err.h"
 #include "../../lib/ymodem/ymodem.h"
@@ -27,61 +25,21 @@ static void hint()
     console_writeline("");
 }
 
-/**
- * - Caller takes ownership of return value.
- */
-static struct tape_input * receive_from_commodore(bool const interactive)
+bool ui_commodore_to_terminal(bool const interactive)
 {
-    struct tape_input * ret_val;
-    struct tape_receive_params const p = {
-        .is_stop_requested = interactive
-            ? 0
-            : statetoggle_is_requested,
-        .gpio_pin_nr_write = MT_TAPE_GPIO_PIN_NR_WRITE,
-        .gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE,
-        .gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR
-    };
+    struct ymodem_send_params p;
+    uint32_t i;
+    enum ymodem_send_err err;
 
     if(interactive)
     {
         hint();
     }
 
-    ret_val = tape_receive(&p);
-
-#ifndef NDEBUG
-    if(ret_val != 0)
-    {
-        console_write("receive_from_commodore : Name: \"");
-        for(int i = 0;i < 16;++i) // Hard-coded
-        {
-            console_write_key((char)ret_val->name[i]);
-        }
-        console_writeline("\".");
-
-        console_write("receive_from_commodore : Type: ");
-        console_write_byte_dec((uint8_t)ret_val->type);
-        console_writeline(".");
-
-        console_write("receive_from_commodore : Address: ");
-        console_write_word_dec(ret_val->addr);
-        console_writeline(".");
-
-        console_write("receive_from_commodore : Length: ");
-        console_write_word_dec(ret_val->len);
-        console_writeline(".");
-    }
-#endif //NDEBUG
-
-    return ret_val;
-}
-
-bool ui_commodore_to_terminal(bool const interactive)
-{
-    struct tape_input * const input = receive_from_commodore(interactive);
-    struct ymodem_send_params p;
-    uint32_t i;
-    enum ymodem_send_err err;
+    struct tape_input * const input = cbm_receive(
+        interactive
+            ? 0
+            : statetoggle_is_requested);
 
     if(input == 0)
     {
@@ -126,12 +84,15 @@ bool ui_commodore_to_terminal(bool const interactive)
         ++i;
     }
 
-    console_deb_writeline("Please trigger receival, now (via YMODEM).");
+    if(interactive)
+    {
+        console_writeline("Please trigger receival, now (via YMODEM).");
+    }
 
     err = ymodem_send(&p);
 
 #ifndef NDEBUG
-    console_write("YMODEM send error code was ");
+    console_write("ui_commodore_to_terminal : YMODEM send error code was ");
     console_write_dword_dec((uint32_t)err);
     console_writeline(".");
 #endif //NDEBUG

@@ -6,6 +6,8 @@
 
 #include <stdbool.h>
 
+#include "../tape/tape_input.h"
+
 bool ui_commodore_to_terminal(bool const interactive);
 
 #endif //MT_UI_COMMODORE_TO_TERMINAL

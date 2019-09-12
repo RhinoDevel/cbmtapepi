@@ -147,6 +147,7 @@ $MT_CC app/ui/ui_send_test.c -o app/ui/ui_send_test.o
 $MT_CC app/ui/ui_terminal_to_commodore.c -o app/ui/ui_terminal_to_commodore.o
 $MT_CC app/ui/ui_commodore_to_terminal.c -o app/ui/ui_commodore_to_terminal.o
 $MT_CC app/ui/ui.c -o app/ui/ui.o
+$MT_CC app/cbm/cbm_receive.c -o app/cbm/cbm_receive.o
 $MT_CC app/kernel_main.c -o app/kernel_main.o
 
 echo Linking..
@@ -173,6 +174,7 @@ arm-none-eabi-ld \
     app/ui/ui_terminal_to_commodore.o \
     app/ui/ui_commodore_to_terminal.o \
     app/ui/ui.o \
+    app/cbm/cbm_receive.o \
     \
     lib/mem/mem.o \
     lib/console/console.o \
