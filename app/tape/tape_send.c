@@ -9,7 +9,7 @@
 
 #include "tape_fill_buf.h"
 #include "tape_send_buf.h"
-
+#include "tape_input.h"
 #include "tape_send.h"
 
 bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
@@ -17,6 +17,12 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
     // Use memory at given position for data to send:
 
     uint8_t * const buf = (uint8_t *)mem;
+
+#ifndef NDEBUG
+    console_writeline("tape_send : Given tape_input content:");
+    tape_input_console_write(p->data);
+    console_writeline("");
+#endif //NDEBUG
 
     // Create data to send from given:
 
