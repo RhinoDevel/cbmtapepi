@@ -201,7 +201,7 @@ static bool send_to_commodore(
 
     // First two bytes hold the start address:
     //
-    p.data->addr = *((uint16_t const *)bytes);
+    p.data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
     p.data->bytes = bytes + 2;
     p.data->len = count - 2;
 

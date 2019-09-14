@@ -72,6 +72,9 @@ bool cbm_send(
 
     fill_name(p.data->name, name);
 
+    // BUG: TODO: Does NOT seem to work for (all) machine language files,
+    //       at least not on the C64! Fix:
+    //
     p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
     //
     // Hard-coded - maybe not always correct, but works for C64 and PET,
@@ -79,19 +82,11 @@ bool cbm_send(
 
     // First two bytes hold the start address:
     //
-    p.data->addr = *((uint16_t const *)bytes);
+    p.data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
     p.data->bytes = bytes + 2;
     p.data->len = count - 2;
 
     fill_add_bytes(p.data->add_bytes);
-
-#ifndef NDEBUG
-    console_write("cbm_send: Start address is 0x");
-    console_write_word(p.data->addr);
-    console_write(" (");
-    console_write_word_dec(p.data->addr);
-    console_writeline(").");
-#endif //NDEBUG
 
     ret_val = tape_send(&p, mem_addr);
 
