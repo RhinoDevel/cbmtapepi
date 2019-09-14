@@ -138,6 +138,7 @@ $MT_CC app/tape/tape_send_buf.c -o app/tape/tape_send_buf.o
 $MT_CC app/tape/tape_sample.c -o app/tape/tape_sample.o
 $MT_CC app/tape/tape_send.c -o app/tape/tape_send.o
 $MT_CC app/tape/tape_init.c -o app/tape/tape_init.o
+$MT_CC app/tape/tape_input.c -o app/tape/tape_input.o
 $MT_CC app/tape/tape_receive_buf.c -o app/tape/tape_receive_buf.o
 $MT_CC app/tape/tape_receive.c -o app/tape/tape_receive.o
 $MT_CC app/tape/tape_extract_buf.c -o app/tape/tape_extract_buf.o
@@ -166,6 +167,7 @@ arm-none-eabi-ld \
     app/tape/tape_sample.o \
     app/tape/tape_send.o \
     app/tape/tape_init.o \
+    app/tape/tape_input.o \
     app/tape/tape_receive_buf.o \
     app/tape/tape_receive.o \
     app/tape/tape_extract_buf.o \

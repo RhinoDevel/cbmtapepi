@@ -21,4 +21,6 @@ struct tape_input
     uint8_t add_bytes[MT_TAPE_INPUT_ADD_BYTES_LEN]; // Additional bytes (to be stored in header).
 };
 
+void tape_input_console_write(struct tape_input const * const d);
+
 #endif //MT_TAPE_INPUT

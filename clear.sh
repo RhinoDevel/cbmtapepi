@@ -41,6 +41,7 @@ rm app/tape/tape_sample.o
 rm app/tape/tape_send.o
 rm app/tape/tape_send_buf.o
 rm app/tape/tape_init.o
+rm app/tape/tape_input.o
 rm app/tape/tape_receive_buf.o
 rm app/tape/tape_receive.o
 rm app/tape/tape_extract_buf.o
