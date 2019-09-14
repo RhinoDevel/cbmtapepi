@@ -29,6 +29,9 @@
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
 
+#include "cbm/cbm_receive.h"
+#include "cbm/cbm_send.h"
+
 #if PERI_BASE == PERI_BASE_PI1
     #define VIDEO_SUPPORT 1
 #else //PERI_BASE == PERI_BASE_PI1
@@ -459,5 +462,83 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
             statetoggle_toggle();
         }
     }
+
+    // TODO: Implement correctly:
+    //
+    // "File system and SAVE control" mode:
+    //
+    // // TODO: Fit state toggle (and cancel by user) stuff to this mode!
+    // //
+    // statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, true);
+    // while(true)
+    // {
+    //     // Wait for SAVE (either as control command, or to really save):
+    //
+    //     struct tape_input * const ti = cbm_receive(0);
+    //
+    //     if(ti == 0)
+    //     {
+    //         console_deb_writeline("kernel_main : Error: Receive from commodore failed!");
+    //         continue; // Try again..
+    //     }
+    //
+    //     // Decide, what to do, based on name given:
+    //
+    //     static uint8_t const cmd_dir[] = "$               "; // List current directory content.
+    //     //static uint8_t const cmd_dir_up[] = "$..             "; // Go to upper directory and list content.
+    //     ////static uint8_t const cmd_dir_pwd[] = "$.              "; // Print current directory.
+    //     // '$', followed by some subdirectory name. => Go to subdirectory and list content.
+    //     // '$', followed by some file name. => LOAD that file next.
+    //
+    //     if(mem_cmp_byte(ti->name, cmd_dir, MT_TAPE_INPUT_NAME_LEN))
+    //     {
+    //         // Send directory list by expected following LOAD command:
+    //
+    //         uint32_t count = 2 + 6;
+    //         uint8_t * bytes = alloc_alloc(count);
+    //         char* name = "dummylistdir";
+    //
+    //         bytes[0] = 0xE8;
+    //         bytes[1] = 0x07;
+    //         bytes[2] = 169; // Immediate LDA.
+    //         bytes[3] = 83; // Heart symbol (yes, it is romantic).
+    //         bytes[4] = 141; // Absolute STA.
+    //         bytes[5] = 0; // Lower byte of 1024 (0x0400 - C64 video RAM start).
+    //         bytes[6] = 4; // Higher byte of 1024.
+    //         bytes[7] = 96; // RTS.
+    //
+    //         // TODO: Prepare current directory list as next LOAD result.
+    //
+    //         // TODO: If this does not work, let user toggle mode by button
+    //         //       to indicate that LOAD and return were entered.
+    //
+    //         statetoggle_toggle();
+    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, false); // Hard-coded
+    //
+    //         cbm_send(bytes, name, count, 0);// Return value ignored.
+    //
+    //         alloc_free(bytes);
+    //         bytes = 0;
+    //
+    //         // TODO: Free bytes and name memory.
+    //
+    //         statetoggle_toggle();
+    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
+    //     }
+    //     //
+    //     // TODO: Add more commands, here.
+    //     //
+    //     else
+    //     {
+    //         // Really save to file:
+    //
+    //         // TODO: Save to file.
+    //
+    //         console_deb_writeline("kernel_main : Should save to file, now..");
+    //     }
+    //
+    //     alloc_free(ti->bytes);
+    //     alloc_free(ti);
+    // }
 #endif //MT_INTERACTIVE
 }
