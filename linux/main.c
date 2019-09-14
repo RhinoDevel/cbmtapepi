@@ -194,6 +194,9 @@ static bool send_to_commodore(
 
     fill_name(p.data->name, name);
 
+    // BUG: TODO: Does NOT seem to work for (all) machine language files,
+    //       at least not on the C64! Fix:
+    //
     p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
     //
     // Hard-coded - maybe not always correct, but works for C64 and PET,
