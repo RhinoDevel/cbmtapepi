@@ -26,6 +26,8 @@
 #include "../lib/alloc/alloc.h"
 #include "../lib/assert.h"
 #include "../lib/mem/mem.h"
+#include "../lib/basic/basic.h"
+#include "../lib/basic/basic_addr.h"
 #include "tape/tape_init.h"
 #include "statetoggle/statetoggle.h"
 
@@ -485,7 +487,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     // Decide, what to do, based on name given:
     //
     //     static uint8_t const cmd_dir[] = "$               "; // List current directory content.
-    //     //static uint8_t const cmd_dir_up[] = "$..             "; // Go to upper directory and list content.
+    //     static uint8_t const cmd_dir_up[] = "$..             "; // Go to upper directory and list content.
     //     ////static uint8_t const cmd_dir_pwd[] = "$.              "; // Print current directory.
     //     // '$', followed by some subdirectory name. => Go to subdirectory and list content.
     //     // '$', followed by some file name. => LOAD that file next.
@@ -520,7 +522,24 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         alloc_free(bytes);
     //         bytes = 0;
     //
-    //         // TODO: Free bytes and name memory.
+    //         // TODO: Free name memory.
+    //
+    //         statetoggle_toggle();
+    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
+    //     }
+    //     else if(mem_cmp_byte(ti->name, cmd_dir_up, MT_TAPE_INPUT_NAME_LEN))
+    //     {
+    //         char* name = "dummydirup";
+    //         uint32_t len = 0;
+    //         uint8_t * bytes = basic_get_sample(MT_BASIC_ADDR_C64, &len);
+    //
+    //         statetoggle_toggle();
+    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, false); // Hard-coded
+    //
+    //         cbm_send(bytes, name, len, 0); // Return value ignored.
+    //
+    //         alloc_free(bytes);
+    //         bytes = 0;
     //
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
