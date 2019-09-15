@@ -101,6 +101,24 @@ enum basic_token
 
     basic_token_go = 0xcb, // Included since v2.0!
 
+    // Included since v4.0 (for CBM/PET):
+    //
+    basic_token_concat = 0xcc,
+    basic_token_dopen = 0xcd,
+    basic_token_dclose = 0xce,
+    basic_token_record = 0xcf,
+    basic_token_header = 0xd0,
+    basic_token_collect = 0xd1,
+    basic_token_backup = 0xd2,
+    basic_token_copy = 0xd3,
+    basic_token_append = 0xd4,
+    basic_token_dsave = 0xd5,
+    basic_token_dload = 0xd6,
+    basic_token_catalog = 0xd7,
+    basic_token_rename = 0xd8,
+    basic_token_scratch = 0xd9,
+    basic_token_directory = 0xda,
+
     basic_token_pi = 0xff
 };
 
