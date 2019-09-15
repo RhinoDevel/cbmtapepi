@@ -27,6 +27,7 @@ rm lib/mem/mem.o
 rm lib/alloc/alloc.o
 rm lib/alloc/alloc_mem.o
 rm lib/alloc/nodemem.o
+rm lib/basic/basic.o
 rm lib/video/video.o
 rm lib/xmodem/xmodem.o
 rm lib/ymodem/ymodem.o

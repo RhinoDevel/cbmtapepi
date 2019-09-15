@@ -12,8 +12,8 @@ enum basic_token
 
     basic_token_end = 0x80,
     basic_token_for = 0x81,
-    basic_token_next = 0x82
-    basic_token_data = 0x83
+    basic_token_next = 0x82,
+    basic_token_data = 0x83,
     basic_token_input_ = 0x84, // INPUT#
     basic_token_input = 0x85,
     basic_token_dim = 0x86,
@@ -39,7 +39,7 @@ enum basic_token
 
     basic_token_print_ = 0x98, // PRINT#
     basic_token_print = 0x99,
-    basic_token_cont = 0x9a
+    basic_token_cont = 0x9a,
     basic_token_list = 0x9b,
     basic_token_clr = 0x9c,
     basic_token_cmd = 0x9d,
