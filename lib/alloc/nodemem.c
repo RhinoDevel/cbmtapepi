@@ -314,6 +314,11 @@ void nodemem_limit_free_nodes()
 #endif //NDEBUG
 }
 
+bool nodemem_is_initialized()
+{
+    return s_mem_len != 0;
+}
+
 void nodemem_init(void * const mem, MT_USIGN const mem_len)
 {
     assert(s_max_node_count == 0);
@@ -322,6 +327,25 @@ void nodemem_init(void * const mem, MT_USIGN const mem_len)
 
     assert(mem != 0);
     assert(mem_len != 0);
+
+    if(mem_len % MT_ALLOC_GRANULARITY != 0)
+    {
+        s_mem_len = 0; // => nodemem_is_initialized() returns false.
+        s_max_node_count = 0;
+        s_first_node_addr = 0;
+
+        return;
+    }
+#ifdef MT_ALLOC_ALIGN_TO_GRANULARITY
+    if(((MT_USIGN)mem) % MT_ALLOC_GRANULARITY != 0)
+    {
+        s_mem_len = 0; // => nodemem_is_initialized() returns false.
+        s_max_node_count = 0;
+        s_first_node_addr = 0;
+
+        return;
+    }
+#endif //MT_ALLOC_ALIGN_TO_GRANULARITY
 
     s_mem_len = mem_len;
     s_max_node_count = 1;

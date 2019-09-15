@@ -32,6 +32,8 @@ void nodemem_merge_unallocated_with_next_if_possible(
 
 void nodemem_limit_free_nodes();
 
+bool nodemem_is_initialized();
+
 /** Occupy heap space with one node object that reserves the whole rest
  *  of heap space as one single unallocated node.
  */

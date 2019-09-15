@@ -25,6 +25,11 @@
 //
 // ./lib/alloc/allocconf.h: #define MT_ALLOC_BITS MT_ALLOC_BITS_32
 
+// Set this additionally (at least for Raspberry Pi 1):
+//
+// ./lib/alloc/allocconf.h: #define MT_ALLOC_GRANULARITY 4
+// ./lib/alloc/allocconf.h: #define MT_ALLOC_ALIGN_TO_GRANULARITY
+
 // Also see ./hardware/peribase.h
 
 #endif //MT_CONFIG

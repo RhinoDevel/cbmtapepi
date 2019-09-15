@@ -20,6 +20,8 @@
 // ***************************
 //
 #define MT_ALLOC_BITS MT_ALLOC_BITS_32
+#define MT_ALLOC_GRANULARITY 4 // Set to 1, if not wanted.
+#define MT_ALLOC_ALIGN_TO_GRANULARITY // Disable, if not wanted.
 
 #if MT_ALLOC_BITS == MT_ALLOC_BITS_32
     #define MT_USIGN uint32_t

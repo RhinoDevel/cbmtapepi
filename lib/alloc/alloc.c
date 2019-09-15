@@ -11,6 +11,17 @@
 #include "alloc.h"
 #include "allocconf.h"
 
+static MT_USIGN get_granularized_wanted_len(MT_USIGN const wanted_len)
+{
+    MT_USIGN ret_val = wanted_len;
+
+    while(ret_val % MT_ALLOC_GRANULARITY != 0)
+    {
+        ++ret_val;
+    }
+    return ret_val;
+}
+
 void alloc_free(void * const block_addr)
 {
     struct node * n = 0;
@@ -63,10 +74,17 @@ void* alloc_alloc(MT_USIGN const wanted_len)
         * node_addr = 0,
         new_node;
 
+    if(!nodemem_is_initialized())
+    {
+        return 0;
+    }
+
     if(wanted_len == 0)
     {
         return 0;
     }
+
+    MT_USIGN const gran_wanted_len = get_granularized_wanted_len(wanted_len);
 
     // Make sure that there is a node space available, first
     // (and maybe frees space from first node, which must
@@ -78,7 +96,7 @@ void* alloc_alloc(MT_USIGN const wanted_len)
         return 0; // No more space for another node available.
     }
 
-    node_addr = nodemem_get_alloc_node_addr(wanted_len);
+    node_addr = nodemem_get_alloc_node_addr(gran_wanted_len);
     if(node_addr == 0)
     {
         return 0;
@@ -86,18 +104,19 @@ void* alloc_alloc(MT_USIGN const wanted_len)
 
     assert(node_addr->is_allocated == 0);
 
-    if(node_addr->block_len == wanted_len)
+    if(node_addr->block_len == gran_wanted_len)
     {
         node_addr->is_allocated = 1;
 
         return node_addr->block_addr;
     }
 
-    new_node.block_len = wanted_len;
+    new_node.block_len = gran_wanted_len;
     new_node.is_allocated = 1;
     new_node.last_node_addr = node_addr;
     new_node.next_node_addr = node_addr->next_node_addr;
-    new_node.block_addr = node_addr->block_addr + node_addr->block_len - wanted_len;
+    new_node.block_addr =
+        node_addr->block_addr + node_addr->block_len - gran_wanted_len;
 
     new_node_addr = nodemem_store(&new_node);
     if(new_node_addr == 0)
