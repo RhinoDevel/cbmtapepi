@@ -6,6 +6,8 @@
 
 enum tape_filetype
 {
+    tape_filetype_unknown = 0,
+    
     tape_filetype_relocatable = 1, // == BASIC prg.
     //tape_filetype_seq_data_block = 2,
     tape_filetype_non_relocatable = 3, // == Machine language prg.
