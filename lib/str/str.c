@@ -46,6 +46,35 @@ uint32_t str_get_len(char const * const s)
     return ret_val;
 }
 
+uint32_t str_get_len_sum(
+    char const * const * const s_arr, uint32_t const s_count)
+{
+    uint32_t ret_val = 0;
+
+    for(uint32_t i = 0;i < s_count;++i)
+    {
+        ret_val += str_get_len(s_arr[i]);
+    }
+    return ret_val;
+}
+
+uint32_t str_get_len_max(
+    char const * const * const s_arr, uint32_t const s_count)
+{
+    uint32_t ret_val = 0;
+
+    for(uint32_t i = 0;i < s_count;++i)
+    {
+        uint32_t const len = str_get_len(s_arr[i]);
+
+        if(len > ret_val)
+        {
+            ret_val = len;
+        }
+    }
+    return ret_val;
+}
+
 void str_to_upper(char * const s_out, char const * const s_in)
 {
     int i = 0;

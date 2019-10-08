@@ -8,6 +8,20 @@
 
 uint32_t str_get_len(char const * const s);
 
+/** Return character count of all strings in given string array.
+ *
+ *  Returns 0, if given count is 0.
+ */
+uint32_t str_get_len_sum(
+    char const * const * const s_arr, uint32_t const s_count);
+
+/** Return character count of longest string in given string array.
+ *
+ *  Returns 0, if given count is 0.
+ */
+uint32_t str_get_len_max(
+    char const * const * const s_arr, uint32_t const s_count);
+
 /**
  * - In and output strings may be equal.
  */
