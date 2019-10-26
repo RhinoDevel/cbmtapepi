@@ -93,6 +93,7 @@ bool tape_receive_buf(
     uint8_t * const buf,
     bool (*is_stop_requested)())
 {
+    static int const skip_count = 64; //
     static int const sync_count = 32; // (there are more than 1000 sync pulses)
     static uint32_t const ticks_timeout = 3000000; // 3 seconds.
 
@@ -150,7 +151,39 @@ bool tape_receive_buf(
         }
     }
     //
-    // => Next high will be the start of a pulse.
+    // => Next high should be the start of a pulse.
+
+    // Skip some initial level changes (because sometimes there is a preceding
+    // level change that is NOT a sync pulse, because it is too long):
+    //
+    for(int i = 0;i < skip_count;++i)
+    {
+        // LOW, wait for start of (next) SAVE sync pulse:
+
+        while(!gpio_read(gpio_pin_nr_write))
+        {
+            // Pin is LOW.
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
+
+        // HIGH <=> A SAVE sync pulse has started.
+
+        while(gpio_read(gpio_pin_nr_write))
+        {
+            // Pin is HIGH.
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
+
+        // HIGH half of sync pulse finished.
+    }
 
     // Sum up the tick lengths of some half sync pulses:
     //
@@ -194,7 +227,6 @@ bool tape_receive_buf(
             ++pos;
         }
     }
-
     assert(pos == 16);
 
     ticks_short = ticks_short / sync_count; // Calculate average value.
