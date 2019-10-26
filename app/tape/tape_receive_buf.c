@@ -111,8 +111,7 @@ bool tape_receive_buf(
 
         while(!gpio_read(gpio_pin_nr_motor))
         {
-            // Pause, as long as motor signal from Commodore computer is
-            // LOW.
+            // Pause, as long as motor signal from Commodore computer is LOW.
 
             if(is_stop_requested != 0 && is_stop_requested())
             {
