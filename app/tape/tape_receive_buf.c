@@ -21,6 +21,11 @@ static uint32_t const micro_long = 336;
 static uint32_t tick_lim_short_medium;
 static uint32_t tick_lim_medium_long;
 
+#ifndef NDEBUG
+    static uint32_t tick_short_min;
+    static uint32_t tick_long_max;
+#endif //NDEBUG
+
 // Initialized by tape_receive_buf_init():
 //
 static void (*s_timer_start_one_mhz)() = 0;
@@ -39,12 +44,27 @@ static uint32_t get_pulse_type(uint32_t const tick_count)
 {
     if(tick_count <= tick_lim_short_medium)
     {
+#ifndef NDEBUG
+        if(tick_count < tick_short_min)
+        {
+            tick_short_min = tick_count;
+        }
+#endif //NDEBUG
+
         return micro_short; // Short pulse detected.
     }
     if(tick_count <= tick_lim_medium_long)
     {
         return micro_medium; // Medium pulse detected.
     }
+
+#ifndef NDEBUG
+    if(tick_count > tick_long_max)
+    {
+        tick_long_max = tick_count;
+    }
+#endif //NDEBUG
+
     return micro_long; // Long pulse detected.
 }
 
@@ -105,6 +125,11 @@ bool tape_receive_buf(
     int pos = 0,
         pulse_type_index = 0,
         sync_workaround_count = 0;
+
+#ifndef NDEBUG
+    tick_short_min = UINT32_MAX;
+    tick_long_max = 0;
+#endif //NDEBUG
 
     if(!gpio_read(gpio_pin_nr_motor))
     {
@@ -312,6 +337,13 @@ bool tape_receive_buf(
     console_writeline("");
     console_write("tape_receive_buf: Medium/long limit: ");
     console_write_dword_dec(tick_lim_medium_long);
+    console_writeline("");
+
+    console_write("tape_receive_buf: Min. tick count that was interpreted as short pulse: ");
+    console_write_dword_dec(tick_short_min);
+    console_writeline("");
+    console_write("tape_receive_buf: Max. tick count that was interpreted as long pulse: ");
+    console_write_dword_dec(tick_long_max);
     console_writeline("");
 
     console_write("tape_receive_buf: Symbols read: ");
