@@ -21,8 +21,8 @@
 #define SD_ERROR_APP_CMD       9
 #define SD_ALREADY_INITIALIZED 10
 
-int sdcard_blocks_clear( long long address, int num );
-int sdcard_blocks_transfer( long long address, int num, unsigned char* buffer, int write );
+int sdcard_blocks_clear(long long address, int num);
+int sdcard_blocks_transfer(long long address, int num, unsigned char * buffer, int write);
 
 /** Initialize SD card.
  *
