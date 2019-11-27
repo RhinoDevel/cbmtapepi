@@ -15,8 +15,8 @@ rm hardware/framebuffer/framebuffer.o
 rm hardware/watchdog/watchdog.o
 rm hardware/irqcontroller/irqcontroller.o
 rm hardware/sdcard/sdcard.o
-rm hardware/pff3a/source/diskio.o
-rm hardware/pff3a/source/pff.o
+rm hardware/ff14/source/diskio.o
+rm hardware/ff14/source/ff.o
 
 # Hardware-independent library:
 

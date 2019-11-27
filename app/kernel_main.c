@@ -45,7 +45,7 @@
 #endif //VIDEO_SUPPORT
 
 #ifndef NDEBUG
-    #include "../hardware/pff3a/source/pff.h"
+    #include "../hardware/ff14/source/ff.h"
 #endif //NDEBUG
 
 extern void _enable_interrupts(); // See boot.S.
@@ -160,69 +160,116 @@ static void init_console()
 }
 
 #ifndef NDEBUG
-    static void pff_test()
+    static void ff_test()
     {
         FATFS fatfs;
         DIR dir;
         FILINFO filinfo;
+        FIL f;
+        UINT buf_uint;
+        FRESULT res;
 
-        if(pf_mount(&fatfs) != FR_OK)
+        if(f_mount(&fatfs, "", 0) != FR_OK)
         {
-            console_writeline("pff_test : Error: Mount failed!");
+            console_writeline("ff_test : Error: Mount failed!");
             return;
         }
 
-        if(pf_opendir (&dir, "/") != FR_OK)
+        if(f_opendir (&dir, "/") != FR_OK)
         {
-            console_writeline("pff_test : Error: Opening directory failed!");
+            console_writeline("ff_test : Error: Opening directory failed!");
             return;
         }
 
         while(true)
         {
-            if(pf_readdir(&dir, &filinfo) != FR_OK)
+            if(f_readdir(&dir, &filinfo) != FR_OK)
             {
-                console_writeline("pff_test : Error: Reading directory failed!");
+                console_writeline("ff_test : Error: Reading directory failed!");
                 return;
             }
             if(filinfo.fname[0] == '\0')
             {
                 break; // Done
             }
-            console_write("pff_test : Directory entry name: \"");
+            console_write("ff_test : Directory entry name: \"");
             console_write(filinfo.fname);
             console_writeline("\".");
 
-            if(mem_cmp_byte((uint8_t const *)filinfo.fname, (uint8_t const *)"CMDLINE.TXT", 11 + 1))
+            if(mem_cmp_byte(
+                (uint8_t const *)filinfo.fname,
+                (uint8_t const *)"CMDLINE.TXT",
+                11 + 1))
             {
                 char stupid_buf[1024];
                 UINT bytes_read;
-                if(pf_open("/CMDLINE.TXT") != FR_OK)
+                if(f_open(&f, "/CMDLINE.TXT", FA_READ) != FR_OK)
                 {
-                    console_writeline("pff_test : Error: Opening file failed!");
+                    console_writeline("ff_test : Error: Opening file failed!");
                     return;
                 }
 
-                if(pf_read(stupid_buf, 1024, &bytes_read) != FR_OK)
+                res = f_read(&f, stupid_buf, 1024, &bytes_read);
+                if(res!= FR_OK)
                 {
-                    console_writeline("pff_test : Error: Reading from file failed!");
+                    console_write(
+                        "ff_test : Error: Reading from file failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    return;
+                }
+                if(f_close(&f) != FR_OK)
+                {
+                    console_writeline(
+                        "ff_test : Error: Closing file failed (1)!");
                     return;
                 }
 
                 stupid_buf[bytes_read] = '\0';
 
-                console_write("pff_test : File content: \"");
+                console_write("ff_test : File content: \"");
                 console_write(stupid_buf);
                 console_writeline("\".");
             }
         };
 
-        console_write("pff_test : fs_type = 0x");
+        res = f_open(&f, "/RHINODEV.TXT", FA_CREATE_NEW | FA_WRITE);
+        if(res!= FR_OK)
+        {
+            console_write("ff_test : Error: Creating file failed (");
+            console_write_dword_dec((uint32_t)res);
+            console_writeline(")!");
+            return;
+        }
+
+        res = f_write(&f, "RhinoDevel was here.", 20, &buf_uint);
+        if(res!= FR_OK)
+        {
+            console_write(
+                "ff_test : Error: Writing to file failed (");
+            console_write_dword_dec((uint32_t)res);
+            console_writeline(")!");
+            return;
+        }
+
+        if(f_close(&f) != FR_OK)
+        {
+            console_writeline("ff_test : Error: Closing file failed (2)!");
+            return;
+        }
+
+        console_write("ff_test : fs_type = 0x");
         console_write_byte(fatfs.fs_type);
         console_writeline(".");
-        console_write("pff_test : n_rootdir = 0x");
+        console_write("ff_test : n_rootdir = 0x");
         console_write_word(fatfs.n_rootdir);
         console_writeline(".");
+
+        if(f_mount(0, "", 0) != FR_OK)
+        {
+            console_writeline("ff_test : Error: Unmounting failed!");
+            return;
+        }
     }
 
     // static void sdcard_test()
@@ -425,7 +472,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     armtimer_start(250000 * 1, 500); // 0.5 seconds, hard-coded for 250MHz clock.
 
 #ifndef NDEBUG
-    pff_test();
+    ff_test();
 
     // uint32_t const sdcard_init_result = (uint32_t)sdcard_init();
     //
@@ -467,8 +514,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // TODO: Implement correctly:
     //
-    // "File system and SAVE control" mode:
-    //
+    // // "File system and SAVE control" mode:
+    // //
     // // TODO: Fit state toggle (and cancel by user) stuff to this mode!
     // //
     // statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, true);
@@ -492,6 +539,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     // '$', followed by some subdirectory name. => Go to subdirectory and list content.
     //     // '$', followed by some file name. => LOAD that file next.
     //
+    //     // Toggle mode and wait for 3 seconds:
+    //     //
+    //     statetoggle_toggle();
+    //     toggle_gpio(MT_GPIO_PIN_NR_LED, 6, 500, false); // Hard-coded
+    //
     //     if(mem_cmp_byte(ti->name, cmd_dir, MT_TAPE_INPUT_NAME_LEN))
     //     {
     //         // Send directory list by expected following LOAD command:
@@ -502,6 +554,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     //         bytes[0] = 0xE8;
     //         bytes[1] = 0x07;
+    //         // bytes[0] = 0x34;
+    //         // bytes[1] = 0x03;
     //         bytes[2] = 169; // Immediate LDA.
     //         bytes[3] = 83; // Heart symbol (yes, it is romantic).
     //         bytes[4] = 141; // Absolute STA.
@@ -514,32 +568,42 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         // TODO: If this does not work, let user toggle mode by button
     //         //       to indicate that LOAD and return were entered.
     //
-    //         statetoggle_toggle();
-    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, false); // Hard-coded
-    //
     //         cbm_send(bytes, name, count, 0);// Return value ignored.
     //
     //         alloc_free(bytes);
     //         bytes = 0;
-    //
-    //         // TODO: Free name memory.
     //
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
     //     }
     //     else if(mem_cmp_byte(ti->name, cmd_dir_up, MT_TAPE_INPUT_NAME_LEN))
     //     {
+    //         char* a = "12345678";
+    //         char* b = "ABCDEFGH";
+    //         char* c = "IJKLMNOPQRSTUVWXYZ";
+    //         char* d = "THIS IS A DUMMY DIRECTORY OUTPUT";
+    //         char* e = "11111111112222222222333333333344444444445555555555666666666677777777778888888888";
+    //         uint32_t const dummy_arr_len = 5;
+    //         char const * * const dummy_arr = alloc_alloc(dummy_arr_len * 4 /* byte */);
+    //
     //         char* name = "dummydirup";
     //         uint32_t len = 0;
-    //         uint8_t * bytes = basic_get_sample(MT_BASIC_ADDR_C64, &len);
     //
-    //         statetoggle_toggle();
-    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, false); // Hard-coded
+    //         dummy_arr[0] = a;
+    //         dummy_arr[1] = b;
+    //         dummy_arr[2] = c;
+    //         dummy_arr[3] = d;
+    //         dummy_arr[4] = e;
+    //
+    //         //uint8_t * const bytes = basic_get_sample(MT_BASIC_ADDR_C64, &len);
+    //         //
+    //         uint8_t * const bytes = basic_get_prints(
+    //             MT_BASIC_ADDR_C64, dummy_arr, dummy_arr_len, &len);
     //
     //         cbm_send(bytes, name, len, 0); // Return value ignored.
     //
+    //         alloc_free(dummy_arr);
     //         alloc_free(bytes);
-    //         bytes = 0;
     //
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
