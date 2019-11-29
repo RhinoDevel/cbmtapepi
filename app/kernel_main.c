@@ -180,6 +180,10 @@ static void init_console()
             return;
         }
 
+        console_write("ff_test : Folder name   : \"");
+        console_write(director_get_dir_path());
+        console_writeline("\".");
+
         while(true)
         {
             bool is_dir = false;
