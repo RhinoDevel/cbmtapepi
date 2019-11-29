@@ -197,7 +197,9 @@ static void init_console()
                 name = 0;
                 break; // Done
             }
-            console_write("ff_test : Directory entry name: \"");
+            console_write(is_dir
+                ? "ff_test : Subfolder name: \""
+                : "ff_test : File name     : \"");
             console_write(name);
             console_writeline("\".");
 
