@@ -40,19 +40,9 @@ char* director_create_name_of_next_entry(bool * const is_dir)
         return 0;
     }
 
-    uint32_t const len = str_get_len(info.fname);
-    char * const ret_val = alloc_alloc((len + 1) * sizeof *ret_val);
-
-    if(ret_val == 0)
-    {
-        return 0;
-    }
-
-    str_copy(ret_val, info.fname);
-
     *is_dir = (info.fattrib & AM_DIR) != 0;
 
-    return ret_val;
+    return str_create_copy(info.fname);
 }
 
 /**
