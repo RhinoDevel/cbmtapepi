@@ -183,8 +183,7 @@ static void init_console()
         while(true)
         {
             bool is_dir = false;
-            char* name = director_create_name_of_next_entry(
-                &is_dir);
+            char* name = director_create_name_of_next_entry(&is_dir);
 
             if(name == 0)
             {
@@ -237,6 +236,9 @@ static void init_console()
                 console_write(stupid_buf);
                 console_writeline("\".");
             }
+
+            alloc_free(name);
+            name = 0;
         };
 
         if(!director_deinit())
