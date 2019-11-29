@@ -37,4 +37,9 @@ void str_to_lower(char * const s_out, char const * const s_in);
  */
 void str_copy(char * const s_out, char const * const s_in);
 
+/**
+ * - Caller takes ownership of returned object.
+ */
+char* str_create_copy(char const * const s);
+
 #endif //MT_STR

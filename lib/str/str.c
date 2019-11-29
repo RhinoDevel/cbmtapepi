@@ -1,10 +1,11 @@
 
 // Marcel Timm, RhinoDevel, 2019jan05
 
+#include "str.h"
+#include "../alloc/alloc.h"
+
 #include <stdint.h>
 #include <stdbool.h>
-
-#include "str.h"
 
 static bool is_upper_case_letter(char const c)
 {
@@ -116,4 +117,14 @@ void str_copy(char * const s_out, char const * const s_in)
         s_out[i] = s_in[i];
     }
     s_out[i] = '\0';//s_in[i];
+}
+
+char* str_create_copy(char const * const s)
+{
+    uint32_t const len = str_get_len(s);
+    char * const ret_val = alloc_alloc((len + 1) * sizeof *ret_val);
+
+    str_copy(ret_val, s);
+
+    return ret_val;
 }
