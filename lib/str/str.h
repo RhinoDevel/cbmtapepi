@@ -32,4 +32,9 @@ void str_to_upper(char * const s_out, char const * const s_in);
  */
 void str_to_lower(char * const s_out, char const * const s_in);
 
+/**
+ * - In and output strings may be equal.
+ */
+void str_copy(char * const s_out, char const * const s_in);
+
 #endif //MT_STR

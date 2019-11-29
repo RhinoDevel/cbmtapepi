@@ -106,3 +106,14 @@ void str_to_lower(char * const s_out, char const * const s_in)
     }
     s_out[i] = '\0';//s_in[i];
 }
+
+void str_copy(char * const s_out, char const * const s_in)
+{
+    int i = 0;
+
+    for(;s_in[i] != '\0';++i)
+    {
+        s_out[i] = s_in[i];
+    }
+    s_out[i] = '\0';//s_in[i];
+}
