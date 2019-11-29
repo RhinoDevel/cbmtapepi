@@ -114,6 +114,7 @@ $MT_CC lib/basic/basic.c -o lib/basic/basic.o
 $MT_CC lib/video/video.c -o lib/video/video.o
 $MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
 $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
+$MT_CC lib/director/director.c -o lib/director/director.o
 $MT_CC lib/ff14/source/diskio.c -o lib/ff14/source/diskio.o
 $MT_CC lib/ff14/source/ff.c -o lib/ff14/source/ff.o
 
@@ -192,6 +193,7 @@ arm-none-eabi-ld \
     lib/video/video.o \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
+    lib/director/director.o \
     lib/ff14/source/diskio.o \
     lib/ff14/source/ff.o \
     \

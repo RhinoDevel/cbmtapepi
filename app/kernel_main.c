@@ -46,6 +46,7 @@
 
 #ifndef NDEBUG
     #include "../lib/ff14/source/ff.h"
+    #include "../lib/director/director.h"
 #endif //NDEBUG
 
 extern void _enable_interrupts(); // See boot.S.
@@ -163,8 +164,6 @@ static void init_console()
     static void ff_test()
     {
         FATFS fatfs;
-        DIR dir;
-        FILINFO filinfo;
         FIL f;
         UINT buf_uint;
         FRESULT res;
@@ -175,29 +174,36 @@ static void init_console()
             return;
         }
 
-        if(f_opendir (&dir, "/") != FR_OK)
+        if(!director_reinit("/"))
         {
-            console_writeline("ff_test : Error: Opening directory failed!");
+            console_writeline("ff_test : Error: Director init failed!");
             return;
         }
 
         while(true)
         {
-            if(f_readdir(&dir, &filinfo) != FR_OK)
+            bool is_dir = false;
+            char* name = director_create_name_of_next_entry(
+                &is_dir);
+
+            if(name == 0)
             {
-                console_writeline("ff_test : Error: Reading directory failed!");
+                console_writeline(
+                    "ff_test : Error: Reading dir. entry name failed!");
                 return;
             }
-            if(filinfo.fname[0] == '\0')
+            if(name[0] == '\0')
             {
+                alloc_free(name);
+                name = 0;
                 break; // Done
             }
             console_write("ff_test : Directory entry name: \"");
-            console_write(filinfo.fname);
+            console_write(name);
             console_writeline("\".");
 
             if(mem_cmp_byte(
-                (uint8_t const *)filinfo.fname,
+                (uint8_t const *)name,
                 (uint8_t const *)"CMDLINE.TXT",
                 11 + 1))
             {
@@ -232,6 +238,12 @@ static void init_console()
                 console_writeline("\".");
             }
         };
+
+        if(!director_deinit())
+        {
+            console_writeline("ff_test : Error: Director deinit. failed!");
+            return;
+        }
 
         res = f_open(&f, "/RHINODEV.TXT", FA_CREATE_NEW | FA_WRITE);
         if(res!= FR_OK)
