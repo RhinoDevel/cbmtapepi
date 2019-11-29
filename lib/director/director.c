@@ -10,12 +10,22 @@
 #include <stdint.h>
 
 static DIR * s_dir = 0;
+static char * s_dir_path = 0;
+
+char const * director_get_dir_path()
+{
+    return s_dir_path;
+}
 
 char* director_create_name_of_next_entry(bool * const is_dir)
 {
     FILINFO info;
 
     if(s_dir == 0)
+    {
+        return 0;
+    }
+    if(s_dir_path == 0)
     {
         return 0;
     }
@@ -46,11 +56,15 @@ char* director_create_name_of_next_entry(bool * const is_dir)
 }
 
 /**
- * - Also returns false, if s_dir is not 0.
+ * - Also returns false, if s_dir or s_dir_path is not 0.
  */
 static bool init(char const * const dir_path)
 {
     if(s_dir != 0)
+    {
+        return false;
+    }
+    if(s_dir_path != 0)
     {
         return false;
     }
@@ -65,6 +79,9 @@ static bool init(char const * const dir_path)
     {
         return false;
     }
+
+    s_dir_path = str_create_copy(dir_path);
+
     return true;
 }
 
@@ -72,7 +89,16 @@ bool director_deinit()
 {
     if(s_dir == 0)
     {
+        if(s_dir_path != 0)
+        {
+            return false;
+        }
         return true;
+    }
+
+    if(s_dir_path == 0)
+    {
+        return false;
     }
 
     if(f_closedir(s_dir) != FR_OK)
@@ -82,6 +108,9 @@ bool director_deinit()
 
     alloc_free(s_dir);
     s_dir = 0;
+
+    alloc_free(s_dir_path);
+    s_dir_path = 0;
     return true;
 }
 

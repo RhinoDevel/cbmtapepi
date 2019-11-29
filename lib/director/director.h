@@ -6,6 +6,8 @@
 
 #include <stdbool.h>
 
+char const * director_get_dir_path();
+
 /** Return '\0' escaped string with the name of the next entry in directory.
  *
  * - Caller takes ownership of returned object.
