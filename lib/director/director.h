@@ -1,6 +1,8 @@
 
 // Marcel Timm, RhinoDevel, 2019nov29
 
+// Singleton to get names of subfolders and files in a directory.
+
 #ifndef MT_DIRECTOR
 #define MT_DIRECTOR
 
