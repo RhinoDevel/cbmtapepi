@@ -45,7 +45,7 @@
 #endif //VIDEO_SUPPORT
 
 #ifndef NDEBUG
-    #include "../hardware/ff14/source/ff.h"
+    #include "../lib/ff14/source/ff.h"
 #endif //NDEBUG
 
 extern void _enable_interrupts(); // See boot.S.
@@ -514,8 +514,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // TODO: Implement correctly:
     //
-    // // "File system and SAVE control" mode:
-    // //
+    // "File system and SAVE control" mode:
+    //
     // // TODO: Fit state toggle (and cancel by user) stuff to this mode!
     // //
     // statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, true);

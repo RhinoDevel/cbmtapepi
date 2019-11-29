@@ -114,6 +114,8 @@ $MT_CC lib/basic/basic.c -o lib/basic/basic.o
 $MT_CC lib/video/video.c -o lib/video/video.o
 $MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
 $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
+$MT_CC lib/ff14/source/diskio.c -o lib/ff14/source/diskio.o
+$MT_CC lib/ff14/source/ff.c -o lib/ff14/source/ff.o
 
 # Hardware-dependent drivers (may use library compiled above):
 #
@@ -128,8 +130,6 @@ $MT_CC hardware/framebuffer/framebuffer.c -o hardware/framebuffer/framebuffer.o
 $MT_CC hardware/watchdog/watchdog.c -o hardware/watchdog/watchdog.o
 $MT_CC hardware/irqcontroller/irqcontroller.c -o hardware/irqcontroller/irqcontroller.o
 $MT_CC hardware/sdcard/sdcard.c -o hardware/sdcard/sdcard.o
-$MT_CC hardware/ff14/source/diskio.c -o hardware/ff14/source/diskio.o
-$MT_CC hardware/ff14/source/ff.c -o hardware/ff14/source/ff.o
 
 # Application-specific files (may use library and driver compiled above):
 #
@@ -192,6 +192,8 @@ arm-none-eabi-ld \
     lib/video/video.o \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
+    lib/ff14/source/diskio.o \
+    lib/ff14/source/ff.o \
     \
     hardware/gpio/gpio.o \
     hardware/mailbox/mailbox.o \
@@ -204,8 +206,6 @@ arm-none-eabi-ld \
     hardware/framebuffer/framebuffer.o \
     hardware/irqcontroller/irqcontroller.o \
     hardware/sdcard/sdcard.o \
-    hardware/ff14/source/diskio.o \
-    hardware/ff14/source/ff.o \
     \
     -o kernel.elf
 

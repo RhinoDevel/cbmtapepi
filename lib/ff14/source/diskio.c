@@ -11,7 +11,7 @@
 #include "ff.h"			/* Obtains integer types */
 #include "diskio.h"		/* Declarations of disk functions */
 
-#include "../../sdcard/sdcard.h"
+#include "../../../hardware/sdcard/sdcard.h"
 
 #include <stdbool.h>
 
