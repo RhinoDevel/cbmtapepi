@@ -167,6 +167,8 @@ static void init_console()
         FIL f;
         UINT buf_uint;
         FRESULT res;
+        struct dir_entry * * entry_arr = 0;
+        int entry_count = -1;
 
         if(f_mount(&fatfs, "", 0) != FR_OK)
         {
@@ -184,68 +186,80 @@ static void init_console()
         console_write(dir_get_dir_path());
         console_writeline("\".");
 
-        while(true)
+        entry_arr = dir_create_entry_arr(&entry_count);
+        if(entry_count == -1)
         {
-            bool is_dir = false;
-            char* name = dir_create_name_of_next_entry(&is_dir);
+            console_writeline("ff_test : Error: Entry array creation failed!");
+            return;
+        }
 
-            if(name == 0)
+        if(entry_count == 0)
+        {
+            console_writeline("ff_test : No entries found.");
+        }
+        else
+        {
+            for(int i = 0;i < entry_count; ++i)
             {
-                console_writeline(
-                    "ff_test : Error: Reading dir. entry name failed!");
-                return;
-            }
-            if(name[0] == '\0')
-            {
-                alloc_free(name);
-                name = 0;
-                break; // Done
-            }
-            console_write(is_dir
-                ? "ff_test : Subfolder name: \""
-                : "ff_test : File name     : \"");
-            console_write(name);
-            console_writeline("\".");
-
-            if(mem_cmp_byte(
-                (uint8_t const *)name,
-                (uint8_t const *)"CMDLINE.TXT",
-                11 + 1))
-            {
-                char stupid_buf[1024];
-                UINT bytes_read;
-                if(f_open(&f, "/CMDLINE.TXT", FA_READ) != FR_OK)
-                {
-                    console_writeline("ff_test : Error: Opening file failed!");
-                    return;
-                }
-
-                res = f_read(&f, stupid_buf, 1024, &bytes_read);
-                if(res!= FR_OK)
-                {
-                    console_write(
-                        "ff_test : Error: Reading from file failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    return;
-                }
-                if(f_close(&f) != FR_OK)
-                {
-                    console_writeline(
-                        "ff_test : Error: Closing file failed (1)!");
-                    return;
-                }
-
-                stupid_buf[bytes_read] = '\0';
-
-                console_write("ff_test : File content: \"");
-                console_write(stupid_buf);
+                console_write(entry_arr[i]->is_dir
+                    ? "ff_test : Subfolder name: \""
+                    : "ff_test : File name     : \"");
+                console_write(entry_arr[i]->name);
                 console_writeline("\".");
+
+                if(mem_cmp_byte(
+                    (uint8_t const *)entry_arr[i]->name,
+                    (uint8_t const *)"RHINODEV.TXT",
+                    11 + 1))
+                {
+                    if(f_unlink("/RHINODEV.TXT") != FR_OK)
+                    {
+                        console_writeline(
+                            "ff_test : Error: Failed to remove file!");
+                        return;
+                    }
+                }
+                else if(mem_cmp_byte(
+                    (uint8_t const *)entry_arr[i]->name,
+                    (uint8_t const *)"CMDLINE.TXT",
+                    11 + 1))
+                {
+                    char stupid_buf[1024];
+                    UINT bytes_read;
+                    if(f_open(&f, "/CMDLINE.TXT", FA_READ) != FR_OK)
+                    {
+                        console_writeline("ff_test : Error: Opening file failed!");
+                        return;
+                    }
+
+                    res = f_read(&f, stupid_buf, 1024, &bytes_read);
+                    if(res!= FR_OK)
+                    {
+                        console_write(
+                            "ff_test : Error: Reading from file failed (");
+                        console_write_dword_dec((uint32_t)res);
+                        console_writeline(")!");
+                        return;
+                    }
+                    if(f_close(&f) != FR_OK)
+                    {
+                        console_writeline(
+                            "ff_test : Error: Closing file failed (1)!");
+                        return;
+                    }
+
+                    stupid_buf[bytes_read] = '\0';
+
+                    console_write("ff_test : File content: \"");
+                    console_write(stupid_buf);
+                    console_writeline("\".");
+                }
             }
 
-            alloc_free(name);
-            name = 0;
-        };
+            dir_free_entry_arr(entry_arr, entry_count);
+            entry_arr = 0;
+            entry_count = -1;
+        }
 
         if(!dir_deinit())
         {
