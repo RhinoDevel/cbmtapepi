@@ -42,4 +42,9 @@ void str_copy(char * const s_out, char const * const s_in);
  */
 char* str_create_copy(char const * const s);
 
+/**
+ * - Returns true, if both strings are empty.
+ */
+bool str_starts_with(char const * const s, char const * const start);
+
 #endif //MT_STR

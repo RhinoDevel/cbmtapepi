@@ -128,3 +128,22 @@ char* str_create_copy(char const * const s)
 
     return ret_val;
 }
+
+bool str_starts_with(char const * const s, char const * const start)
+{
+    uint32_t const start_len = str_get_len(start);
+
+    if(start_len == 0)
+    {
+        return s[0] == '\0';
+    }
+
+    for(uint32_t i = 0;i < start_len;++i)
+    {
+        if(s[i] != start[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
