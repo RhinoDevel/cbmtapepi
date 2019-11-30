@@ -142,7 +142,10 @@ static int get_entry_count()
         return -1;
     }
 
-    rewind();
+    if(!rewind())
+    {
+        return -1;
+    }
 
     do
     {
@@ -158,7 +161,10 @@ static int get_entry_count()
         ++count;
     }while(true);
 
-    rewind();
+    if(!rewind())
+    {
+        return -1;
+    }
 
     return count;
 }
@@ -176,7 +182,7 @@ struct dir_entry * * dir_create_entry_arr(int * const count)
 {
     struct dir_entry * * arr = 0;
 
-    *count = get_entry_count();
+    *count = get_entry_count(); // (rewinds)
     if(*count <= 0) // -1 <=> error, 0 <=> no entries.
     {
         return 0;
@@ -199,6 +205,14 @@ struct dir_entry * * dir_create_entry_arr(int * const count)
             return 0;
         }
     }
+
+    if(!rewind())
+    {
+        dir_free_entry_arr(arr, *count);
+        *count = -1;
+        return 0;
+    }
+
     return arr;
 }
 

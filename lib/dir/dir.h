@@ -34,6 +34,7 @@ char* dir_create_name_of_next_entry(bool * const is_dir);
  * - Returns 0 on error (count == -1)
  *   or count of entries being zero (count == 0).
  * - Assumes given pointer not to be set to 0 (no error check).
+ * - Rewinds (before array creation and after, if no error occurred).
  */
 struct dir_entry * * dir_create_entry_arr(int * const count);
 
