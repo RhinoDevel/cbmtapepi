@@ -548,8 +548,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // TODO: Implement correctly:
     //
-    // "File system and SAVE control" mode:
-    //
+    // // "File system and SAVE control" mode:
+    // //
     // // TODO: Fit state toggle (and cancel by user) stuff to this mode!
     // //
     // statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, true);
@@ -578,7 +578,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     statetoggle_toggle();
     //     toggle_gpio(MT_GPIO_PIN_NR_LED, 6, 500, false); // Hard-coded
     //
-    //     if(mem_cmp_byte(ti->name, cmd_dir, MT_TAPE_INPUT_NAME_LEN))
+    //     if(mem_cmp_byte(ti->name, cmd_dir_up, MT_TAPE_INPUT_NAME_LEN))
     //     {
     //         // Send directory list by expected following LOAD command:
     //
@@ -610,34 +610,38 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
     //     }
-    //     else if(mem_cmp_byte(ti->name, cmd_dir_up, MT_TAPE_INPUT_NAME_LEN))
+    //     else if(mem_cmp_byte(ti->name, cmd_dir, MT_TAPE_INPUT_NAME_LEN))
     //     {
-    //         char* a = "12345678";
-    //         char* b = "ABCDEFGH";
-    //         char* c = "IJKLMNOPQRSTUVWXYZ";
-    //         char* d = "THIS IS A DUMMY DIRECTORY OUTPUT";
-    //         char* e = "11111111112222222222333333333344444444445555555555666666666677777777778888888888";
-    //         uint32_t const dummy_arr_len = 5;
-    //         char const * * const dummy_arr = alloc_alloc(dummy_arr_len * 4 /* byte */);
+    //         FATFS fatfs;
     //
-    //         char* name = "dummydirup";
+    //         f_mount(&fatfs, "", 0);
+    //         dir_reinit("/");
+    //
+    //         char* name = "/";
+    //         int entry_count = -1;
     //         uint32_t len = 0;
+    //         struct dir_entry * * const entry_arr =
+    //             dir_create_entry_arr(&entry_count);
     //
-    //         dummy_arr[0] = a;
-    //         dummy_arr[1] = b;
-    //         dummy_arr[2] = c;
-    //         dummy_arr[3] = d;
-    //         dummy_arr[4] = e;
+    //         dir_deinit();
+    //         f_mount(0, "", 0);
     //
-    //         //uint8_t * const bytes = basic_get_sample(MT_BASIC_ADDR_C64, &len);
-    //         //
+    //         char const * * const name_arr = alloc_alloc(
+    //                                     entry_count * sizeof *name_arr);
+    //
+    //         for(int i = 0;i < entry_count;++i)
+    //         {
+    //             name_arr[i] = entry_arr[i]->name;
+    //             console_writeline(name_arr[i]); // Debugging.
+    //         }
+    //
     //         uint8_t * const bytes = basic_get_prints(
-    //             MT_BASIC_ADDR_C64, dummy_arr, dummy_arr_len, &len);
+    //             MT_BASIC_ADDR_C64, name_arr, entry_count, &len);
     //
     //         cbm_send(bytes, name, len, 0); // Return value ignored.
     //
-    //         alloc_free(dummy_arr);
-    //         alloc_free(bytes);
+    //         alloc_free(name_arr);
+    //         dir_free_entry_arr(entry_arr, entry_count);
     //
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
@@ -656,6 +660,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     //     alloc_free(ti->bytes);
     //     alloc_free(ti);
-    // }
+    //}
 #endif //MT_INTERACTIVE
 }
