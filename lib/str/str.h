@@ -5,6 +5,7 @@
 #define MT_STR
 
 #include <stdint.h>
+#include <stdbool.h>
 
 uint32_t str_get_len(char const * const s);
 
