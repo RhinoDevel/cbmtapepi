@@ -178,7 +178,7 @@ static void init_console()
 
         if(!dir_reinit("/"))
         {
-            console_writeline("ff_test : Error: Director init failed!");
+            console_writeline("ff_test : Error: dir singleton init failed!");
             return;
         }
 
@@ -263,7 +263,7 @@ static void init_console()
 
         if(!dir_deinit())
         {
-            console_writeline("ff_test : Error: Director deinit. failed!");
+            console_writeline("ff_test : Error: dir singleton deinit. failed!");
             return;
         }
 
