@@ -1,7 +1,7 @@
 
 // Marcel Timm, RhinoDevel, 2019nov29
 
-#include "director.h"
+#include "dir.h"
 #include "../alloc/alloc.h"
 #include "../str/str.h"
 #include "../ff14/source/ff.h"
@@ -11,39 +11,6 @@
 
 static DIR * s_dir = 0;
 static char * s_dir_path = 0;
-
-char const * director_get_dir_path()
-{
-    return s_dir_path;
-}
-
-char* director_create_name_of_next_entry(bool * const is_dir)
-{
-    FILINFO info;
-
-    if(s_dir == 0)
-    {
-        return 0;
-    }
-    if(s_dir_path == 0)
-    {
-        return 0;
-    }
-
-    if(is_dir == 0)
-    {
-        return 0;
-    }
-
-    if(f_readdir(s_dir, &info) != FR_OK)
-    {
-        return 0;
-    }
-
-    *is_dir = (info.fattrib & AM_DIR) != 0;
-
-    return str_create_copy(info.fname);
-}
 
 /**
  * - Also returns false, if s_dir or s_dir_path is not 0.
@@ -75,7 +42,40 @@ static bool init(char const * const dir_path)
     return true;
 }
 
-bool director_deinit()
+char const * dir_get_dir_path()
+{
+    return s_dir_path;
+}
+
+char* dir_create_name_of_next_entry(bool * const is_dir)
+{
+    FILINFO info;
+
+    if(s_dir == 0)
+    {
+        return 0;
+    }
+    if(s_dir_path == 0)
+    {
+        return 0;
+    }
+
+    if(is_dir == 0)
+    {
+        return 0;
+    }
+
+    if(f_readdir(s_dir, &info) != FR_OK)
+    {
+        return 0;
+    }
+
+    *is_dir = (info.fattrib & AM_DIR) != 0;
+
+    return str_create_copy(info.fname);
+}
+
+bool dir_deinit()
 {
     if(s_dir == 0)
     {
@@ -104,11 +104,11 @@ bool director_deinit()
     return true;
 }
 
-bool director_reinit(char const * const dir_path)
+bool dir_reinit(char const * const dir_path)
 {
     if(s_dir != 0)
     {
-        if(!director_deinit())
+        if(!dir_deinit())
         {
             return false;
         }

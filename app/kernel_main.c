@@ -46,7 +46,7 @@
 
 #ifndef NDEBUG
     #include "../lib/ff14/source/ff.h"
-    #include "../lib/director/director.h"
+    #include "../lib/dir/dir.h"
 #endif //NDEBUG
 
 extern void _enable_interrupts(); // See boot.S.
@@ -174,20 +174,20 @@ static void init_console()
             return;
         }
 
-        if(!director_reinit("/"))
+        if(!dir_reinit("/"))
         {
             console_writeline("ff_test : Error: Director init failed!");
             return;
         }
 
         console_write("ff_test : Folder name   : \"");
-        console_write(director_get_dir_path());
+        console_write(dir_get_dir_path());
         console_writeline("\".");
 
         while(true)
         {
             bool is_dir = false;
-            char* name = director_create_name_of_next_entry(&is_dir);
+            char* name = dir_create_name_of_next_entry(&is_dir);
 
             if(name == 0)
             {
@@ -247,7 +247,7 @@ static void init_console()
             name = 0;
         };
 
-        if(!director_deinit())
+        if(!dir_deinit())
         {
             console_writeline("ff_test : Error: Director deinit. failed!");
             return;

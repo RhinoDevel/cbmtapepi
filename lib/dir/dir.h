@@ -3,12 +3,12 @@
 
 // Singleton to get names of subfolders and files in a directory.
 
-#ifndef MT_DIRECTOR
-#define MT_DIRECTOR
+#ifndef MT_DIR
+#define MT_DIR
 
 #include <stdbool.h>
 
-char const * director_get_dir_path();
+char const * dir_get_dir_path();
 
 /** Return '\0' escaped string with the name of the next entry in directory.
  *
@@ -16,16 +16,16 @@ char const * director_get_dir_path();
  * - Returns "\0", if no next entry exists.
  * - Returns 0 on error.
  */
-char* director_create_name_of_next_entry(bool * const is_dir);
+char* dir_create_name_of_next_entry(bool * const is_dir);
 
 /**
  * - OK to be called, if already deinitialized (returns true).
  */
-bool director_deinit();
+bool dir_deinit();
 
 /**
  * - Filesystem object must already have been mounted [f_mount()].
  */
-bool director_reinit(char const * const dir_path);
+bool dir_reinit(char const * const dir_path);
 
-#endif //MT_DIRECTOR
+#endif //MT_DIR
