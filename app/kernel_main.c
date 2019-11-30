@@ -210,7 +210,7 @@ static void init_console()
                 if(mem_cmp_byte(
                     (uint8_t const *)entry_arr[i]->name,
                     (uint8_t const *)"RHINODEV.TXT",
-                    11 + 1))
+                    12 + 1))
                 {
                     if(f_unlink("/RHINODEV.TXT") != FR_OK)
                     {
