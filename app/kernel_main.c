@@ -47,6 +47,7 @@
 #ifndef NDEBUG
     #include "../lib/ff14/source/ff.h"
     #include "../lib/dir/dir.h"
+    #include "../lib/str/str.h"
 #endif //NDEBUG
 
 extern void _enable_interrupts(); // See boot.S.
@@ -548,8 +549,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
     // TODO: Implement correctly:
     //
-    // // "File system and SAVE control" mode:
-    // //
+    // "File system and SAVE control" mode:
+    //
     // // TODO: Fit state toggle (and cancel by user) stuff to this mode!
     // //
     // statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, true);
@@ -558,6 +559,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     // Wait for SAVE (either as control command, or to really save):
     //
     //     struct tape_input * const ti = cbm_receive(0);
+    //     char* name = 0;
     //
     //     if(ti == 0)
     //     {
@@ -565,52 +567,33 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         continue; // Try again..
     //     }
     //
+    //     name = tape_input_create_str_from_name(ti);
+    //
+    //     console_write("kernel_main : name = \"");
+    //     console_write(name);
+    //     console_writeline("\".");
+    //
     //     // Decide, what to do, based on name given:
     //
-    //     static uint8_t const cmd_dir[] = "$               "; // List current directory content.
-    //     static uint8_t const cmd_dir_up[] = "$..             "; // Go to upper directory and list content.
-    //     ////static uint8_t const cmd_dir_pwd[] = "$.              "; // Print current directory.
-    //     // '$', followed by some subdirectory name. => Go to subdirectory and list content.
-    //     // '$', followed by some file name. => LOAD that file next.
+    //     // - 16 characters available
+    //     // - File system support (by choice) limited to 8.3 format.
+    //     // => 16 - 8 - 1 - 3 = 4 characters available for commands.
+    //     //
+    //     //                                      "   THEGREAT.PRG "
+    //     static char const * const cmd_ls   =    "LS              ";
+    //     // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
+    //     // static char const * const cmd_rm   =    "rm ";
+    //     // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
+    //     // static char const * const cmd_mv   =    "mv "; // New file name by Pi.
+    //     static char const * const cmd_exec =    "./"; // (no space)
+    //     // Anything else. => Really save file.
     //
     //     // Toggle mode and wait for 3 seconds:
     //     //
     //     statetoggle_toggle();
     //     toggle_gpio(MT_GPIO_PIN_NR_LED, 6, 500, false); // Hard-coded
     //
-    //     if(mem_cmp_byte(ti->name, cmd_dir_up, MT_TAPE_INPUT_NAME_LEN))
-    //     {
-    //         // Send directory list by expected following LOAD command:
-    //
-    //         uint32_t count = 2 + 6;
-    //         uint8_t * bytes = alloc_alloc(count);
-    //         char* name = "dummylistdir";
-    //
-    //         bytes[0] = 0xE8;
-    //         bytes[1] = 0x07;
-    //         // bytes[0] = 0x34;
-    //         // bytes[1] = 0x03;
-    //         bytes[2] = 169; // Immediate LDA.
-    //         bytes[3] = 83; // Heart symbol (yes, it is romantic).
-    //         bytes[4] = 141; // Absolute STA.
-    //         bytes[5] = 0; // Lower byte of 1024 (0x0400 - C64 video RAM start).
-    //         bytes[6] = 4; // Higher byte of 1024.
-    //         bytes[7] = 96; // RTS.
-    //
-    //         // TODO: Prepare current directory list as next LOAD result.
-    //
-    //         // TODO: If this does not work, let user toggle mode by button
-    //         //       to indicate that LOAD and return were entered.
-    //
-    //         cbm_send(bytes, name, count, 0);// Return value ignored.
-    //
-    //         alloc_free(bytes);
-    //         bytes = 0;
-    //
-    //         statetoggle_toggle();
-    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-    //     }
-    //     else if(mem_cmp_byte(ti->name, cmd_dir, MT_TAPE_INPUT_NAME_LEN))
+    //     if(str_starts_with(name, cmd_ls))
     //     {
     //         FATFS fatfs;
     //
@@ -627,12 +610,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         f_mount(0, "", 0);
     //
     //         char const * * const name_arr = alloc_alloc(
-    //                                     entry_count * sizeof *name_arr);
+    //             entry_count * sizeof *name_arr);
     //
     //         for(int i = 0;i < entry_count;++i)
     //         {
     //             name_arr[i] = entry_arr[i]->name;
-    //             console_writeline(name_arr[i]); // Debugging.
     //         }
     //
     //         uint8_t * const bytes = basic_get_prints(
@@ -641,10 +623,41 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         cbm_send(bytes, name, len, 0); // Return value ignored.
     //
     //         alloc_free(name_arr);
+    //         alloc_free(bytes);
     //         dir_free_entry_arr(entry_arr, entry_count);
     //
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
+    //     }
+    //     else if(str_starts_with(name, cmd_exec))
+    //     {
+    //         FATFS fatfs;
+    //         FIL fil;
+    //
+    //         f_mount(&fatfs, "", 0);
+    //
+    //         char const * const name_only = name + str_get_len(cmd_exec); // TODO: Remove trailing spaces!
+    //
+    //         if(f_open(&fil, name_only, FA_READ) == FR_OK)
+    //         {
+    //             uint32_t const len = (uint32_t)f_size(&fil);
+    //             uint8_t * bytes = alloc_alloc(len * sizeof *bytes);
+    //             UINT read_len = 0;
+    //
+    //             f_read(&fil, bytes, (UINT)len, &read_len); // No error check!
+    //             f_close(&fil); // No error check.
+    //
+    //             cbm_send(bytes, name_only, len, 0); // Return value ignored.
+    //
+    //             alloc_free(bytes);
+    //
+    //             statetoggle_toggle();
+    //             toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
+    //         }
+    //         //
+    //         // Otherwise: TODO: Error handling (message?).
+    //
+    //         f_mount(0, "", 0);
     //     }
     //     //
     //     // TODO: Add more commands, here.
@@ -658,8 +671,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         console_deb_writeline("kernel_main : Should save to file, now..");
     //     }
     //
+    //     alloc_free(name);
     //     alloc_free(ti->bytes);
     //     alloc_free(ti);
-    //}
+    // }
 #endif //MT_INTERACTIVE
 }
