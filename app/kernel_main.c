@@ -569,9 +569,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     //     name = tape_input_create_str_from_name(ti);
     //
-    //     console_write("kernel_main : name = \"");
+    //     console_write("kernel_main : Name from tape input = \"");
     //     console_write(name);
-    //     console_writeline("\".");
+    //     console_write("\" / ");
+    //     console_write_bytes((uint8_t const *)name, str_get_len(name));
+    //     console_writeline(".");
     //
     //     // Decide, what to do, based on name given:
     //
@@ -580,7 +582,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     // => 16 - 8 - 1 - 3 = 4 characters available for commands.
     //     //
     //     //                                      "   THEGREAT.PRG "
-    //     static char const * const cmd_ls   =    "LS              ";
+    //     static char const * const cmd_ls   =    "LS"; // (no parameters)
     //     // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
     //     // static char const * const cmd_rm   =    "rm ";
     //     // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
@@ -636,7 +638,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     //         f_mount(&fatfs, "", 0);
     //
-    //         char const * const name_only = name + str_get_len(cmd_exec); // TODO: Remove trailing spaces!
+    //         char const * const name_only = name + str_get_len(cmd_exec);
     //
     //         if(f_open(&fil, name_only, FA_READ) == FR_OK)
     //         {
@@ -664,11 +666,36 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     //
     //     else
     //     {
+    //         // TODO: FIX, not working, yet:
+    //
     //         // Really save to file:
     //
-    //         // TODO: Save to file.
+    //         FATFS fatfs;
+    //         FIL fil;
+    //         UINT write_count = 0;
+    //         uint8_t buf = 0;
     //
-    //         console_deb_writeline("kernel_main : Should save to file, now..");
+    //         f_mount(&fatfs, "", 0);
+    //
+    //         if(f_open(&fil, name, FA_CREATE_NEW) == FR_OK) // No overwrite.
+    //         {
+    //             buf = (uint8_t)(ti->addr & 0xFF);
+    //             f_write(&fil, &buf, 1, &write_count); // No error check.
+    //
+    //             buf = (uint8_t)(ti->addr >> 8);
+    //             f_write(&fil, &buf, 1, &write_count); // No error check.
+    //
+    //             f_write(&fil, ti->bytes, ti->len, &write_count);
+    //
+    //             f_close(&fil); // No error check.
+    //
+    //             statetoggle_toggle();
+    //             toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
+    //         }
+    //         //
+    //         // Otherwise: TODO: Error handling (message?).
+    //
+    //         f_mount(0, "", 0);
     //     }
     //
     //     alloc_free(name);
