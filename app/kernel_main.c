@@ -670,32 +670,113 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     //         // Really save to file:
     //
-    //         FATFS fatfs;
-    //         FIL fil;
-    //         UINT write_count = 0;
-    //         uint8_t buf = 0;
-    //
-    //         f_mount(&fatfs, "", 0);
-    //
-    //         if(f_open(&fil, name, FA_CREATE_NEW) == FR_OK) // No overwrite.
+    //         do
     //         {
-    //             buf = (uint8_t)(ti->addr & 0xFF);
-    //             f_write(&fil, &buf, 1, &write_count); // No error check.
+    //             FRESULT res;
+    //             FATFS fatfs;
+    //             FIL fil;
+    //             UINT write_count;
+    //             uint8_t buf;
+    //
+    //             res = f_mount(&fatfs, "", 1);
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: Mounting failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
+    //
+    //             res = f_open(
+    //                 &fil, name, FA_CREATE_NEW | FA_WRITE); // No overwrite.
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: Creating failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
+    //
+    //             console_write("SAVE: Address = 0x");
+    //             console_write_word(ti->addr);
+    //             console_writeline(".");
+    //
+    //             buf = (uint8_t)(ti->addr & 0x00FF);
+    //
+    //             console_write("SAVE: 1. address part = 0x");
+    //             console_write_byte(buf);
+    //             console_writeline(".");
+    //
+    //             res = f_write(&fil, &buf, 1, &write_count);
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: 1. writing failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
+    //
+    //             console_write("SAVE: 1. write wrote ");
+    //             console_write_dword_dec(write_count);
+    //             console_writeline(" bytes.");
     //
     //             buf = (uint8_t)(ti->addr >> 8);
-    //             f_write(&fil, &buf, 1, &write_count); // No error check.
     //
-    //             f_write(&fil, ti->bytes, ti->len, &write_count);
+    //             console_write("SAVE: 2. address part = 0x");
+    //             console_write_byte(buf);
+    //             console_writeline(".");
     //
-    //             f_close(&fil); // No error check.
+    //             res = f_write(&fil, &buf, 1, &write_count);
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: 2. writing failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
+    //
+    //             console_write("SAVE: 2. write wrote ");
+    //             console_write_dword_dec(write_count);
+    //             console_writeline(" bytes.");
+    //
+    //             console_write("SAVE: Length = ");
+    //             console_write_word_dec(ti->len);
+    //             console_writeline(".");
+    //
+    //             res = f_write(&fil, ti->bytes, ti->len, &write_count);
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: 3. writing failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
+    //
+    //             console_write("SAVE: 3. write wrote ");
+    //             console_write_dword_dec(write_count);
+    //             console_writeline(" bytes.");
+    //
+    //             res = f_close(&fil);
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: Closing failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
+    //
+    //             res = f_mount(0, "", 0);
+    //             if(res != FR_OK)
+    //             {
+    //                 console_write("SAVE: Unmounting failed (");
+    //                 console_write_dword_dec((uint32_t)res);
+    //                 console_writeline(")!");
+    //                 break;
+    //             }
     //
     //             statetoggle_toggle();
     //             toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-    //         }
-    //         //
-    //         // Otherwise: TODO: Error handling (message?).
-    //
-    //         f_mount(0, "", 0);
+    //         }while(false);
     //     }
     //
     //     alloc_free(name);
