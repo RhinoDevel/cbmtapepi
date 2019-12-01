@@ -20,7 +20,7 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
 
 #ifndef NDEBUG
     console_writeline("tape_send : Given tape_input content:");
-    tape_input_console_write(p->data, true);
+    tape_input_console_write(p->data, false);
     console_writeline("");
 #endif //NDEBUG
 
