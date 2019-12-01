@@ -135,6 +135,14 @@ void console_write_dword(uint32_t const dword)
     }
 }
 
+void console_write_bytes(uint8_t const * const bytes, int const len)
+{
+    for(int i = 0;i < len;++i)
+    {
+        console_write_byte(bytes[i]);
+    }
+}
+
 void console_write(char const * const buf)
 {
     int i = 0;

@@ -36,6 +36,8 @@ void console_write_byte_dec(uint8_t const byte);
 void console_write_word_dec(uint16_t const word);
 void console_write_dword_dec(uint32_t const dword);
 
+void console_write_bytes(uint8_t const * const bytes, int const len);
+
 /* Write characters from buffer, until '\0' was read.
  * '\0' will not be written.
  */
