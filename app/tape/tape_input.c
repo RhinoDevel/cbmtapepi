@@ -6,7 +6,8 @@
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
 
-void tape_input_console_write(struct tape_input const * const d)
+void tape_input_console_write(
+    struct tape_input const * const d, bool const write_bytes)
 {
     uint16_t i;
 
@@ -26,22 +27,36 @@ void tape_input_console_write(struct tape_input const * const d)
     console_writeline("");
 
     console_write("bytes = ");
-    for(i = 0;i < d->len;++i)
+    if(write_bytes)
     {
-        console_write_byte(d->bytes[i]);
+        for(i = 0;i < d->len;++i)
+        {
+            console_write_byte(d->bytes[i]);
+        }
+        console_writeline("");
     }
-    console_writeline("");
+    else
+    {
+        console_writeline("...");
+    }
 
     console_write("len = ");
     console_write_word_dec(d->len);
     console_writeline("");
 
     console_write("add_bytes = ");
-    for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
+    if(write_bytes)
     {
-        console_write_byte(d->add_bytes[i]);
+        for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
+        {
+            console_write_byte(d->add_bytes[i]);
+        }
+        console_writeline("");
     }
-    console_writeline("");
+    else
+    {
+        console_writeline("...");
+    }
 }
 
 char* tape_input_create_str_from_name(struct tape_input const * const d)
