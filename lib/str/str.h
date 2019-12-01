@@ -55,4 +55,10 @@ bool str_starts_with(char const * const s, char const * const start);
  */
 int str_get_index_of_trailing(char const * const s, char const c);
 
+/** Concatenate both strings into new string to-be-returned.
+ *
+ *  - Caller takes ownership of returned object.
+ */
+char* str_create_concat(char const * const first, char const * const last);
+
 #endif //MT_STR

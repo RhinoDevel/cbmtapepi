@@ -168,3 +168,27 @@ int str_get_index_of_trailing(char const * const s, char const c)
     }
     return ret_val;
 }
+
+char* str_create_concat(char const * const first, char const * const last)
+{
+    uint32_t const len_first = str_get_len(first);
+
+    if(len_first == 0)
+    {
+        return str_create_copy(last);
+    }
+
+    uint32_t const len_last = str_get_len(last);
+
+    if(len_last == 0)
+    {
+        return str_create_copy(first);
+    }
+
+    char* const s = alloc_alloc((len_first + len_last + 1) * sizeof *s);
+
+    str_copy(s, first);
+    str_copy(s + len_first, last);
+
+    return s;
+}
