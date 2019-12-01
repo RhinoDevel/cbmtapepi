@@ -24,7 +24,8 @@ struct tape_input
 void tape_input_console_write(struct tape_input const * const d);
 
 /**
- * - Keeps trailing spaces and appends '\0' character.
+ * - Removes trailing spaces.
+ * - Appends '\0' character.
  * - Caller takes ownership of returned object.
  */
 char* tape_input_create_str_from_name(struct tape_input const * const d);

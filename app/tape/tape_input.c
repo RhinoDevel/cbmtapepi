@@ -4,6 +4,7 @@
 #include "tape_input.h"
 #include "../../lib/console/console.h"
 #include "../../lib/alloc/alloc.h"
+#include "../../lib/str/str.h"
 
 void tape_input_console_write(struct tape_input const * const d)
 {
@@ -53,6 +54,15 @@ char* tape_input_create_str_from_name(struct tape_input const * const d)
         ret_val[i] = (char)d->name[i];// TODO: PETSCII to ASCII conversion?
     }
     ret_val[MT_TAPE_INPUT_NAME_LEN] = '\0';
+
+    // (this wastes some memory, but not really a problem)
+    //
+    int const trim_index = str_get_index_of_trailing(ret_val, ' ');
+    //
+    if(trim_index >= 0)
+    {
+        ret_val[trim_index] = '\0';
+    }
 
     return ret_val;
 }
