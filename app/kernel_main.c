@@ -558,6 +558,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // {
     //     // Wait for SAVE (either as control command, or to really save):
     //
+    //     static char const * const pwd = "/"; // TODO: Make dynamic via "cd"!
+    //
     //     struct tape_input * const ti = cbm_receive(0);
     //     char* name = 0;
     //
@@ -584,10 +586,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //     //                                      "   THEGREAT.PRG "
     //     static char const * const cmd_ls   =    "LS"; // (no parameters)
     //     // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
-    //     // static char const * const cmd_rm   =    "rm ";
+    //     static char const * const cmd_rm   =    "RM ";
     //     // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
     //     // static char const * const cmd_mv   =    "mv "; // New file name by Pi.
-    //     static char const * const cmd_exec =    "./"; // (no space)
+    //     static char const * const cmd_load =    "./"; // (no space)
     //     // Anything else. => Really save file.
     //
     //     // Toggle mode and wait for 3 seconds:
@@ -631,14 +633,14 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         statetoggle_toggle();
     //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
     //     }
-    //     else if(str_starts_with(name, cmd_exec))
+    //     else if(str_starts_with(name, cmd_load))
     //     {
     //         FATFS fatfs;
     //         FIL fil;
     //
     //         f_mount(&fatfs, "", 0);
     //
-    //         char const * const name_only = name + str_get_len(cmd_exec);
+    //         char const * const name_only = name + str_get_len(cmd_load);
     //
     //         if(f_open(&fil, name_only, FA_READ) == FR_OK)
     //         {
@@ -658,6 +660,24 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //         }
     //         //
     //         // Otherwise: TODO: Error handling (message?).
+    //
+    //         f_mount(0, "", 0);
+    //     }
+    //     else if(str_starts_with(name, cmd_rm))
+    //     {
+    //         FATFS fatfs;
+    //         char const * const name_only = name + str_get_len(cmd_rm);
+    //         char* full_path = str_create_concat(pwd, name_only);
+    //
+    //         f_mount(&fatfs, "", 1);
+    //
+    //         f_unlink(full_path);
+    //
+    //         alloc_free(full_path);
+    //         full_path = 0;
+    //
+    //         statetoggle_toggle();
+    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
     //
     //         f_mount(0, "", 0);
     //     }
