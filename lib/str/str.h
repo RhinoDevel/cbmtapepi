@@ -48,4 +48,11 @@ char* str_create_copy(char const * const s);
  */
 bool str_starts_with(char const * const s, char const * const start);
 
+/** Return first index of given character in given string that is at most
+ *  followed by the same character until the '\0'.
+ *
+ +  Returns -1, if character is not found at end of string.
+ */
+int str_get_index_of_trailing(char const * const s, char const c);
+
 #endif //MT_STR

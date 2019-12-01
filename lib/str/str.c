@@ -147,3 +147,24 @@ bool str_starts_with(char const * const s, char const * const start)
     }
     return true;
 }
+
+int str_get_index_of_trailing(char const * const s, char const c)
+{
+    int ret_val = -1,
+        i = 0;
+
+    for(;s[i] != '\0';++i)
+    {
+        if(s[i] != c)
+        {
+            ret_val = -1;
+            continue;
+        }
+        if(ret_val > -1)
+        {
+            continue;
+        }
+        ret_val = i;
+    }
+    return ret_val;
+}
