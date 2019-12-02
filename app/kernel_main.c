@@ -227,15 +227,15 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         // => 16 - 8 - 1 - 3 = 4 characters available for commands.
         //
         //                                      "   THEGREAT.PRG "
-        static char const * const cmd_ls   =    "LS"; // (no parameters)
+        static char const * const cmd_dir   =    "$"; // (no parameters)
         // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
         static char const * const cmd_rm   =    "RM ";
         // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
         // static char const * const cmd_mv   =    "mv "; // New file name by Pi.
-        static char const * const cmd_load =    "./"; // (no space)
+        static char const * const cmd_load =    "*"; // (no space)
         // Anything else. => Really save file.
 
-        if(str_starts_with(name, cmd_ls))
+        if(str_starts_with(name, cmd_dir))
         {
             FATFS fatfs;
 
