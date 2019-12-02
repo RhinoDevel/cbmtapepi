@@ -132,11 +132,6 @@ static void init_console()
     console_init(&p);
 }
 
-static void set_led(bool const enable)
-{
-    gpio_set_output(MT_GPIO_PIN_NR_LED, enable);
-}
-
 /**
  * - Entry point (see boot.S).
  */
@@ -204,7 +199,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         char* name = 0;
 
-        set_led(true); // SAVE mode.
+        gpio_set_output(MT_GPIO_PIN_NR_LED, true); // SAVE mode.
         //
         struct tape_input * const ti = cbm_receive(0);
 
@@ -217,11 +212,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         name = tape_input_create_str_from_name(ti);
 
+#ifndef NDEBUG
         console_write("kernel_main : Name from tape input = \"");
         console_write(name);
         console_write("\" / ");
         console_write_bytes((uint8_t const *)name, str_get_len(name));
         console_writeline(".");
+#endif //NDEBUG
 
         // Decide, what to do, based on name given:
 
@@ -266,7 +263,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                 MT_BASIC_ADDR_C64, name_arr, entry_count, &len);
 
             armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-            set_led(false); // LOAD mode.
+            gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
             cbm_send(bytes, name, len, 0); // Return value ignored.
 
             alloc_free(name_arr);
@@ -292,7 +289,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                 f_close(&fil); // No error check.
 
                 armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-                set_led(false); // LOAD mode.
+                gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
                 cbm_send(bytes, name_only, len, 0); // Return value ignored.
 
                 alloc_free(bytes);
