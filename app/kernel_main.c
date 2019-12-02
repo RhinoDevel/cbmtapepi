@@ -14,22 +14,24 @@
 #include "../hardware/irqcontroller/irqcontroller.h"
 #include "../hardware/miniuart/miniuart.h"
 //#include "../hardware/pl011uart/pl011uart.h"
-
 #include "../hardware/gpio/gpio_params.h"
 #include "../hardware/gpio/gpio.h"
 
-#include "../lib/console/console.h"
-#include "ui/ui_terminal_to_commodore.h"
-#include "ui/ui_commodore_to_terminal.h"
 #include "ui/ui.h"
+
 #include "config.h"
+
+#include "../lib/console/console.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/assert.h"
 #include "../lib/mem/mem.h"
 #include "../lib/basic/basic.h"
 #include "../lib/basic/basic_addr.h"
+#include "../lib/ff14/source/ff.h"
+#include "../lib/dir/dir.h"
+#include "../lib/str/str.h"
+
 #include "tape/tape_init.h"
-#include "statetoggle/statetoggle.h"
 
 #include "cbm/cbm_receive.h"
 #include "cbm/cbm_send.h"
@@ -43,12 +45,6 @@
 #if VIDEO_SUPPORT
     #include "../lib/video/video.h"
 #endif //VIDEO_SUPPORT
-
-#ifndef NDEBUG
-    #include "../lib/ff14/source/ff.h"
-    #include "../lib/dir/dir.h"
-    #include "../lib/str/str.h"
-#endif //NDEBUG
 
 extern void _enable_interrupts(); // See boot.S.
 
@@ -76,31 +72,6 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         assert(false);
 
         return 0;
-    }
-
-    static void toggle_gpio(
-        uint32_t const pin_nr,
-        int const count,
-        uint32_t const milliseconds,
-        bool const is_high)
-    {
-        uint32_t const microseconds = 1000 * milliseconds;
-        int i = 0;
-
-        while(true)
-        {
-            gpio_set_output(pin_nr, !is_high);
-            armtimer_busywait_microseconds(microseconds);
-            gpio_set_output(pin_nr, is_high);
-
-            ++i;
-            if(i == count)
-            {
-                return;
-            }
-
-            armtimer_busywait_microseconds(microseconds);
-        }
     }
 #endif //MT_INTERACTIVE
 
@@ -140,7 +111,7 @@ static void init_console()
 #else //VIDEO_SUPPORT
     p.write_byte = dummy_write;
 #endif //VIDEO_SUPPORT
-
+    //
     p.write_newline_with_cr = false;
 
     miniuart_init();
@@ -159,6 +130,11 @@ static void init_console()
     // pl011uart_init(); // (don't do this while using QEMU)
 
     console_init(&p);
+}
+
+static void set_led(bool const enable)
+{
+    gpio_set_output(MT_GPIO_PIN_NR_LED, enable);
 }
 
 /**
@@ -218,285 +194,247 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     ui_enter();
 #else //MT_INTERACTIVE
-    // "YMODEM plus toggle button" mode:
-    //
-    statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, false);
-    while(true)
-    {
-        if(statetoggle_get_state())
-        {
-            toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-
-            ui_commodore_to_terminal(false); // (return value ignored)
-        }
-        else
-        {
-            toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, false); // Hard-coded
-
-            ui_terminal_to_commodore(false); // (return value ignored)
-        }
-
-        if(statetoggle_is_requested())
-        {
-            statetoggle_toggle();
-        }
-    }
-
-    // TODO: Implement correctly:
-    //
     // "File system and SAVE control" mode:
     //
-    // // TODO: Fit state toggle (and cancel by user) stuff to this mode!
-    // //
-    // statetoggle_init(MT_GPIO_PIN_NR_BUTTON, MT_GPIO_PIN_NR_LED, true);
-    // while(true)
-    // {
-    //     // Wait for SAVE (either as control command, or to really save):
-    //
-    //     static char const * const cur_dir_path = "/"; // TODO: Make dynamic via "cd"!
-    //
-    //     struct tape_input * const ti = cbm_receive(0);
-    //     char* name = 0;
-    //
-    //     if(ti == 0)
-    //     {
-    //         console_deb_writeline("kernel_main : Error: Receive from commodore failed!");
-    //         continue; // Try again..
-    //     }
-    //
-    //     name = tape_input_create_str_from_name(ti);
-    //
-    //     console_write("kernel_main : Name from tape input = \"");
-    //     console_write(name);
-    //     console_write("\" / ");
-    //     console_write_bytes((uint8_t const *)name, str_get_len(name));
-    //     console_writeline(".");
-    //
-    //     // Decide, what to do, based on name given:
-    //
-    //     // - 16 characters available
-    //     // - File system support (by choice) limited to 8.3 format.
-    //     // => 16 - 8 - 1 - 3 = 4 characters available for commands.
-    //     //
-    //     //                                      "   THEGREAT.PRG "
-    //     static char const * const cmd_ls   =    "LS"; // (no parameters)
-    //     // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
-    //     static char const * const cmd_rm   =    "RM ";
-    //     // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
-    //     // static char const * const cmd_mv   =    "mv "; // New file name by Pi.
-    //     static char const * const cmd_load =    "./"; // (no space)
-    //     // Anything else. => Really save file.
-    //
-    //     // Toggle mode and wait for 3 seconds:
-    //     //
-    //     statetoggle_toggle();
-    //     toggle_gpio(MT_GPIO_PIN_NR_LED, 6, 500, false); // Hard-coded
-    //
-    //     if(str_starts_with(name, cmd_ls))
-    //     {
-    //         FATFS fatfs;
-    //
-    //         f_mount(&fatfs, "", 0);
-    //         dir_reinit("/");
-    //
-    //         char* name = "/";
-    //         int entry_count = -1;
-    //         uint32_t len = 0;
-    //         struct dir_entry * * const entry_arr =
-    //             dir_create_entry_arr(&entry_count);
-    //
-    //         dir_deinit();
-    //         f_mount(0, "", 0);
-    //
-    //         char const * * const name_arr = alloc_alloc(
-    //             entry_count * sizeof *name_arr);
-    //
-    //         for(int i = 0;i < entry_count;++i)
-    //         {
-    //             name_arr[i] = entry_arr[i]->name;
-    //         }
-    //
-    //         uint8_t * const bytes = basic_get_prints(
-    //             MT_BASIC_ADDR_C64, name_arr, entry_count, &len);
-    //
-    //         cbm_send(bytes, name, len, 0); // Return value ignored.
-    //
-    //         alloc_free(name_arr);
-    //         alloc_free(bytes);
-    //         dir_free_entry_arr(entry_arr, entry_count);
-    //
-    //         statetoggle_toggle();
-    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-    //     }
-    //     else if(str_starts_with(name, cmd_load))
-    //     {
-    //         FATFS fatfs;
-    //         FIL fil;
-    //
-    //         f_mount(&fatfs, "", 0);
-    //
-    //         char const * const name_only = name + str_get_len(cmd_load);
-    //
-    //         if(f_open(&fil, name_only, FA_READ) == FR_OK)
-    //         {
-    //             uint32_t const len = (uint32_t)f_size(&fil);
-    //             uint8_t * bytes = alloc_alloc(len * sizeof *bytes);
-    //             UINT read_len = 0;
-    //
-    //             f_read(&fil, bytes, (UINT)len, &read_len); // No error check!
-    //             f_close(&fil); // No error check.
-    //
-    //             cbm_send(bytes, name_only, len, 0); // Return value ignored.
-    //
-    //             alloc_free(bytes);
-    //
-    //             statetoggle_toggle();
-    //             toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-    //         }
-    //         //
-    //         // Otherwise: TODO: Error handling (message?).
-    //
-    //         f_mount(0, "", 0);
-    //     }
-    //     else if(str_starts_with(name, cmd_rm))
-    //     {
-    //         FATFS fatfs;
-    //         char const * const name_only = name + str_get_len(cmd_rm);
-    //         char* full_path = str_create_concat(cur_dir_path, name_only);
-    //
-    //         f_mount(&fatfs, "", 1);
-    //
-    //         f_unlink(full_path);
-    //
-    //         alloc_free(full_path);
-    //         full_path = 0;
-    //
-    //         statetoggle_toggle();
-    //         toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-    //
-    //         f_mount(0, "", 0);
-    //     }
-    //     //
-    //     // TODO: Add more commands, here.
-    //     //
-    //     else
-    //     {
-    //         // TODO: FIX, not working, yet:
-    //
-    //         // Really save to file:
-    //
-    //         do
-    //         {
-    //             FRESULT res;
-    //             FATFS fatfs;
-    //             FIL fil;
-    //             UINT write_count;
-    //             uint8_t buf;
-    //
-    //             res = f_mount(&fatfs, "", 1);
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: Mounting failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             res = f_open(
-    //                 &fil, name, FA_CREATE_NEW | FA_WRITE); // No overwrite.
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: Creating failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             console_write("SAVE: Address = 0x");
-    //             console_write_word(ti->addr);
-    //             console_writeline(".");
-    //
-    //             buf = (uint8_t)(ti->addr & 0x00FF);
-    //
-    //             console_write("SAVE: 1. address part = 0x");
-    //             console_write_byte(buf);
-    //             console_writeline(".");
-    //
-    //             res = f_write(&fil, &buf, 1, &write_count);
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: 1. writing failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             console_write("SAVE: 1. write wrote ");
-    //             console_write_dword_dec(write_count);
-    //             console_writeline(" bytes.");
-    //
-    //             buf = (uint8_t)(ti->addr >> 8);
-    //
-    //             console_write("SAVE: 2. address part = 0x");
-    //             console_write_byte(buf);
-    //             console_writeline(".");
-    //
-    //             res = f_write(&fil, &buf, 1, &write_count);
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: 2. writing failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             console_write("SAVE: 2. write wrote ");
-    //             console_write_dword_dec(write_count);
-    //             console_writeline(" bytes.");
-    //
-    //             console_write("SAVE: Length = ");
-    //             console_write_word_dec(ti->len);
-    //             console_writeline(".");
-    //
-    //             res = f_write(&fil, ti->bytes, ti->len, &write_count);
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: 3. writing failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             console_write("SAVE: 3. write wrote ");
-    //             console_write_dword_dec(write_count);
-    //             console_writeline(" bytes.");
-    //
-    //             res = f_close(&fil);
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: Closing failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             res = f_mount(0, "", 0);
-    //             if(res != FR_OK)
-    //             {
-    //                 console_write("SAVE: Unmounting failed (");
-    //                 console_write_dword_dec((uint32_t)res);
-    //                 console_writeline(")!");
-    //                 break;
-    //             }
-    //
-    //             statetoggle_toggle();
-    //             toggle_gpio(MT_GPIO_PIN_NR_LED, 3, 200, true); // Hard-coded
-    //         }while(false);
-    //     }
-    //
-    //     alloc_free(name);
-    //     alloc_free(ti->bytes);
-    //     alloc_free(ti);
-    // }
+    while(true)
+    {
+        // Wait for SAVE (either as control command, or to really save):
+
+        static char const * const cur_dir_path = "/"; // TODO: Make dynamic via "cd"!
+
+        char* name = 0;
+
+        set_led(true); // SAVE mode.
+        //
+        struct tape_input * const ti = cbm_receive(0);
+
+        if(ti == 0)
+        {
+            console_deb_writeline(
+                "kernel_main : Error: Receive from commodore failed!");
+            continue; // Try again..
+        }
+
+        name = tape_input_create_str_from_name(ti);
+
+        console_write("kernel_main : Name from tape input = \"");
+        console_write(name);
+        console_write("\" / ");
+        console_write_bytes((uint8_t const *)name, str_get_len(name));
+        console_writeline(".");
+
+        // Decide, what to do, based on name given:
+
+        // - 16 characters available
+        // - File system support (by choice) limited to 8.3 format.
+        // => 16 - 8 - 1 - 3 = 4 characters available for commands.
+        //
+        //                                      "   THEGREAT.PRG "
+        static char const * const cmd_ls   =    "LS"; // (no parameters)
+        // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
+        static char const * const cmd_rm   =    "RM ";
+        // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
+        // static char const * const cmd_mv   =    "mv "; // New file name by Pi.
+        static char const * const cmd_load =    "./"; // (no space)
+        // Anything else. => Really save file.
+
+        if(str_starts_with(name, cmd_ls))
+        {
+            FATFS fatfs;
+
+            f_mount(&fatfs, "", 0);
+            dir_reinit("/");
+
+            char* name = "/";
+            int entry_count = -1;
+            uint32_t len = 0;
+            struct dir_entry * * const entry_arr =
+                dir_create_entry_arr(&entry_count);
+
+            dir_deinit();
+            f_mount(0, "", 0);
+
+            char const * * const name_arr = alloc_alloc(
+                entry_count * sizeof *name_arr);
+
+            for(int i = 0;i < entry_count;++i)
+            {
+                name_arr[i] = entry_arr[i]->name;
+            }
+
+            uint8_t * const bytes = basic_get_prints(
+                MT_BASIC_ADDR_C64, name_arr, entry_count, &len);
+
+            armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+            set_led(false); // LOAD mode.
+            cbm_send(bytes, name, len, 0); // Return value ignored.
+
+            alloc_free(name_arr);
+            alloc_free(bytes);
+            dir_free_entry_arr(entry_arr, entry_count);
+        }
+        else if(str_starts_with(name, cmd_load))
+        {
+            FATFS fatfs;
+            FIL fil;
+
+            f_mount(&fatfs, "", 0);
+
+            char const * const name_only = name + str_get_len(cmd_load);
+
+            if(f_open(&fil, name_only, FA_READ) == FR_OK)
+            {
+                uint32_t const len = (uint32_t)f_size(&fil);
+                uint8_t * bytes = alloc_alloc(len * sizeof *bytes);
+                UINT read_len = 0;
+
+                f_read(&fil, bytes, (UINT)len, &read_len); // No error check!
+                f_close(&fil); // No error check.
+
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+                set_led(false); // LOAD mode.
+                cbm_send(bytes, name_only, len, 0); // Return value ignored.
+
+                alloc_free(bytes);
+            }
+            //
+            // Otherwise: TODO: Error handling (message?).
+
+            f_mount(0, "", 0);
+        }
+        else if(str_starts_with(name, cmd_rm))
+        {
+            FATFS fatfs;
+            char const * const name_only = name + str_get_len(cmd_rm);
+            char* full_path = str_create_concat(cur_dir_path, name_only);
+
+            f_mount(&fatfs, "", 1);
+
+            f_unlink(full_path);
+
+            alloc_free(full_path);
+            full_path = 0;
+
+            f_mount(0, "", 0);
+        }
+        //
+        // TODO: Add more commands, here.
+        //
+        else
+        {
+            // TODO: FIX, not working, yet:
+
+            // Really save to file:
+
+            do
+            {
+                FRESULT res;
+                FATFS fatfs;
+                FIL fil;
+                UINT write_count;
+                uint8_t buf;
+
+                res = f_mount(&fatfs, "", 1);
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: Mounting failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+
+                res = f_open(
+                    &fil, name, FA_CREATE_NEW | FA_WRITE); // No overwrite.
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: Creating failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+
+                console_write("SAVE: Address = 0x");
+                console_write_word(ti->addr);
+                console_writeline(".");
+
+                buf = (uint8_t)(ti->addr & 0x00FF);
+
+                console_write("SAVE: 1. address part = 0x");
+                console_write_byte(buf);
+                console_writeline(".");
+
+                res = f_write(&fil, &buf, 1, &write_count);
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: 1. writing failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+
+                console_write("SAVE: 1. write wrote ");
+                console_write_dword_dec(write_count);
+                console_writeline(" bytes.");
+
+                buf = (uint8_t)(ti->addr >> 8);
+
+                console_write("SAVE: 2. address part = 0x");
+                console_write_byte(buf);
+                console_writeline(".");
+
+                res = f_write(&fil, &buf, 1, &write_count);
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: 2. writing failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+
+                console_write("SAVE: 2. write wrote ");
+                console_write_dword_dec(write_count);
+                console_writeline(" bytes.");
+
+                console_write("SAVE: Length = ");
+                console_write_word_dec(ti->len);
+                console_writeline(".");
+
+                res = f_write(&fil, ti->bytes, ti->len, &write_count);
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: 3. writing failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+
+                console_write("SAVE: 3. write wrote ");
+                console_write_dword_dec(write_count);
+                console_writeline(" bytes.");
+
+                res = f_close(&fil);
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: Closing failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+
+                res = f_mount(0, "", 0);
+                if(res != FR_OK)
+                {
+                    console_write("SAVE: Unmounting failed (");
+                    console_write_dword_dec((uint32_t)res);
+                    console_writeline(")!");
+                    break;
+                }
+            }while(false);
+        }
+
+        alloc_free(name);
+        alloc_free(ti->bytes);
+        alloc_free(ti);
+    }
 #endif //MT_INTERACTIVE
 }
