@@ -37,6 +37,9 @@
 #include "cbm/cbm_receive.h"
 #include "cbm/cbm_send.h"
 
+#include "cmd/cmd_output.h"
+#include "cmd/cmd.h"
+
 #if PERI_BASE == PERI_BASE_PI1
     #define VIDEO_SUPPORT 1
 #else //PERI_BASE == PERI_BASE_PI1
@@ -192,6 +195,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 #else //MT_INTERACTIVE
     // "File system and SAVE control" mode:
     //
+    cmd_reinit("/");
     while(true)
     {
         // Wait for SAVE (either as control command, or to really save):
@@ -238,36 +242,14 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         if(str_starts_with(name, cmd_dir))
         {
-            filesys_remount();
-            dir_reinit("/");
-
-            char* name = "/";
-            int entry_count = -1;
-            uint32_t len = 0;
-            struct dir_entry * * const entry_arr =
-                dir_create_entry_arr(&entry_count);
-
-            dir_deinit();
-            filesys_unmount();
-
-            char const * * const name_arr = alloc_alloc(
-                entry_count * sizeof *name_arr);
-
-            for(int i = 0;i < entry_count;++i)
-            {
-                name_arr[i] = entry_arr[i]->name;
-            }
-
-            uint8_t * const bytes = basic_get_prints(
-                MT_BASIC_ADDR_C64, name_arr, entry_count, &len);
+            struct cmd_output * o = cmd_create_output(name);
 
             armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
             gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
-            cbm_send(bytes, name, len, 0); // Return value ignored.
+            cbm_send(o->bytes, o->name, o->count, 0); // Return value ignored.
 
-            alloc_free(name_arr);
-            alloc_free(bytes);
-            dir_free_entry_arr(entry_arr, entry_count);
+            cmd_free_output(o);
+            o = 0;
         }
         else if(str_starts_with(name, cmd_load))
         {
