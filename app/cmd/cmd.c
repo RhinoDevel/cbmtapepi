@@ -89,6 +89,7 @@ static void exec_remove(char const * const command)
 
     f_unlink(name_only);
 
+    dir_deinit();
     filesys_unmount();
 }
 
@@ -104,6 +105,7 @@ static struct cmd_output * exec_load(char const * const command)
 
     if(f_open(&fil, name_only, FA_READ) != FR_OK)
     {
+        dir_deinit();
         filesys_unmount();
         return 0;
     }
@@ -117,9 +119,8 @@ static struct cmd_output * exec_load(char const * const command)
     f_read(&fil, o->bytes, (UINT)o->count, &read_len);
 
     f_close(&fil);
-
+    dir_deinit();
     filesys_unmount();
-
     return o;
 }
 
@@ -188,6 +189,7 @@ static bool exec_save(
             f_unlink(command);
         }
     }
+    dir_deinit();
     filesys_unmount();
     return ret_val;
 }
