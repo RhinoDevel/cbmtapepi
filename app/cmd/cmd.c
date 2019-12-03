@@ -8,6 +8,23 @@
 #include "../../lib/dir/dir.h"
 #include "../../lib/basic/basic.h"
 #include "../../lib/basic/basic_addr.h"
+#include "../../lib/ff14/source/ff.h"
+
+#include <stdbool.h>
+
+// - 16 characters available
+// - File system support (by choice) limited to 8.3 format.
+// => 16 - 8 - 1 - 3 = 4 characters available for commands.
+//
+//                                      "   THEGREAT.PRG "
+static char const * const c_dir   =   "$"; // (no parameters)
+static char const * const c_rm    =   "RM ";
+// static char const * const c_load  =   "*"; // (no space)
+// static char const * const c_cd   =    "cd "; // Supports "..", too.
+// static char const * const c_cp   =    "cp "; // Outp. file name by Pi.
+// static char const * const c_mv   =    "mv "; // New file name by Pi.
+//
+// Anything else. => Really save file.
 
 static char * s_cur_dir_path = 0; // Initialized by cmd_reinit().
 
@@ -28,7 +45,7 @@ static struct dir_entry * * create_dir_entry_arr(int * const entry_count)
     return ret_val;
 }
 
-static struct cmd_output * create_output_dir()
+static struct cmd_output * exec_dir()
 {
     struct cmd_output * ret_val = alloc_alloc(sizeof *ret_val);
     int entry_count = -1;
@@ -62,31 +79,41 @@ static struct cmd_output * create_output_dir()
     return ret_val;
 }
 
-struct cmd_output * cmd_create_output(char const * const command)
+static void exec_remove(char const * const command)
 {
-    // - 16 characters available
-    // - File system support (by choice) limited to 8.3 format.
-    // => 16 - 8 - 1 - 3 = 4 characters available for commands.
-    //
-    //                                      "   THEGREAT.PRG "
-    static char const * const c_dir   =   "$"; // (no parameters)
-    // static char const * const c_rm    =   "RM ";
-    // static char const * const c_load  =   "*"; // (no space)
-    // static char const * const c_cd   =    "cd "; // Supports "..", too.
-    // static char const * const c_cp   =    "cp "; // Outp. file name by Pi.
-    // static char const * const c_mv   =    "mv "; // New file name by Pi.
-    //
-    // Anything else. => Really save file.
+    char const * const name_only = command + str_get_len(c_rm);
+    char* full_path = str_create_concat(s_cur_dir_path, name_only);
 
+    filesys_remount();
+
+    f_unlink(full_path);
+
+    alloc_free(full_path);
+    full_path = 0;
+
+    filesys_unmount();
+}
+
+bool cmd_exec(char const * const command, struct cmd_output * * const output)
+{
+    *output = 0;
+    
     if(s_cur_dir_path == 0)
     {
-        return 0;
+        return false;
     }
+
     if(str_starts_with(command, c_dir))
     {
-        return create_output_dir();
+        *output = exec_dir();
+        return true;
     }
-    return 0; // TODO: Implement!
+    if(str_starts_with(command, c_rm))
+    {
+        exec_remove(command);
+        return true;
+    }
+    return false; // TODO: Implement!
 }
 
 void cmd_reinit(char const * const start_dir_path)

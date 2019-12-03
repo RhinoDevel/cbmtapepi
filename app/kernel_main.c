@@ -200,8 +200,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     {
         // Wait for SAVE (either as control command, or to really save):
 
-        static char const * const cur_dir_path = "/"; // TODO: Make dynamic via "cd"!
-
         char* name = 0;
 
         gpio_set_output(MT_GPIO_PIN_NR_LED, true); // SAVE mode.
@@ -242,14 +240,18 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         if(str_starts_with(name, cmd_dir))
         {
-            struct cmd_output * o = cmd_create_output(name);
+            struct cmd_output * o = 0;
 
-            armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-            gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
-            cbm_send(o->bytes, o->name, o->count, 0); // Return value ignored.
+            cmd_exec(name, &o);
+            if(o != 0)
+            {
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+                gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
+                cbm_send(o->bytes, o->name, o->count, 0);
 
-            cmd_free_output(o);
-            o = 0;
+                cmd_free_output(o);
+                o = 0;
+            }
         }
         else if(str_starts_with(name, cmd_load))
         {
@@ -281,17 +283,18 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         }
         else if(str_starts_with(name, cmd_rm))
         {
-            char const * const name_only = name + str_get_len(cmd_rm);
-            char* full_path = str_create_concat(cur_dir_path, name_only);
+            struct cmd_output * o = 0;
 
-            filesys_remount();
+            cmd_exec(name, &o);
+            if(o != 0)
+            {
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+                gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
+                cbm_send(o->bytes, o->name, o->count, 0);
 
-            f_unlink(full_path);
-
-            alloc_free(full_path);
-            full_path = 0;
-
-            filesys_unmount();
+                cmd_free_output(o);
+                o = 0;
+            }
         }
         //
         // TODO: Add more commands, here.

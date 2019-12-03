@@ -9,10 +9,12 @@
 
 #include "cmd_output.h"
 
+#include <stdbool.h>
+
 /**
- * - Caller takes ownership of returned object.
+ * - Caller takes ownership of object "returned" via output pointer.
  */
-struct cmd_output * cmd_create_output(char const * const command);
+bool cmd_exec(char const * const command, struct cmd_output * * const output);
 
 void cmd_reinit(char const * const start_dir_path);
 
