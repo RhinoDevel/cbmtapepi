@@ -316,8 +316,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         //
         else
         {
-            // TODO: FIX, not working, yet:
-
             // Really save to file:
 
             do
