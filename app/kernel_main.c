@@ -242,7 +242,20 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         {
             struct cmd_output * o = 0;
 
-            cmd_exec(name, &o);
+            cmd_exec(name, 0, &o);
+
+            armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+            gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
+            cbm_send(o->bytes, o->name, o->count, 0);
+
+            cmd_free_output(o);
+            o = 0;
+        }
+        else if(str_starts_with(name, cmd_load))
+        {
+            struct cmd_output * o = 0;
+
+            cmd_exec(name, 0, &o);
             if(o != 0)
             {
                 armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
@@ -252,49 +265,14 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                 cmd_free_output(o);
                 o = 0;
             }
-        }
-        else if(str_starts_with(name, cmd_load))
-        {
-            FIL fil;
-
-            filesys_remount();
-
-            char const * const name_only = name + str_get_len(cmd_load);
-
-            if(f_open(&fil, name_only, FA_READ) == FR_OK)
-            {
-                uint32_t const len = (uint32_t)f_size(&fil);
-                uint8_t * bytes = alloc_alloc(len * sizeof *bytes);
-                UINT read_len = 0;
-
-                f_read(&fil, bytes, (UINT)len, &read_len); // No error check!
-                f_close(&fil); // No error check.
-
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-                gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
-                cbm_send(bytes, name_only, len, 0); // Return value ignored.
-
-                alloc_free(bytes);
-            }
             //
-            // Otherwise: TODO: Error handling (message?).
-
-            filesys_unmount();
+            // Otherwise: TODO: Implement sending error message!
         }
         else if(str_starts_with(name, cmd_rm))
         {
             struct cmd_output * o = 0;
 
-            cmd_exec(name, &o);
-            if(o != 0)
-            {
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-                gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
-                cbm_send(o->bytes, o->name, o->count, 0);
-
-                cmd_free_output(o);
-                o = 0;
-            }
+            cmd_exec(name, 0, &o);
         }
         //
         // TODO: Add more commands, here.
@@ -303,95 +281,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         {
             // Really save to file:
 
-            do
-            {
-                FRESULT res;
-                FIL fil;
-                UINT write_count;
-                uint8_t buf;
+            struct cmd_output * o = 0;
 
-                filesys_remount();
-
-                res = f_open(
-                    &fil, name, FA_CREATE_NEW | FA_WRITE); // No overwrite.
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: Creating failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
-
-                console_write("SAVE: Address = 0x");
-                console_write_word(ti->addr);
-                console_writeline(".");
-
-                buf = (uint8_t)(ti->addr & 0x00FF);
-
-                console_write("SAVE: 1. address part = 0x");
-                console_write_byte(buf);
-                console_writeline(".");
-
-                res = f_write(&fil, &buf, 1, &write_count);
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: 1. writing failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
-
-                console_write("SAVE: 1. write wrote ");
-                console_write_dword_dec(write_count);
-                console_writeline(" bytes.");
-
-                buf = (uint8_t)(ti->addr >> 8);
-
-                console_write("SAVE: 2. address part = 0x");
-                console_write_byte(buf);
-                console_writeline(".");
-
-                res = f_write(&fil, &buf, 1, &write_count);
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: 2. writing failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
-
-                console_write("SAVE: 2. write wrote ");
-                console_write_dword_dec(write_count);
-                console_writeline(" bytes.");
-
-                console_write("SAVE: Length = ");
-                console_write_word_dec(ti->len);
-                console_writeline(".");
-
-                res = f_write(&fil, ti->bytes, ti->len, &write_count);
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: 3. writing failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
-
-                console_write("SAVE: 3. write wrote ");
-                console_write_dword_dec(write_count);
-                console_writeline(" bytes.");
-
-                res = f_close(&fil);
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: Closing failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
-
-                filesys_unmount();
-            }while(false);
+            cmd_exec(name, ti, &o);
         }
 
         alloc_free(name);

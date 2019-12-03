@@ -2,6 +2,7 @@
 // Marcel Timm, RhinoDevel, 2019dec03
 
 #include "cmd.h"
+#include "../tape/tape_input.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
 #include "../../lib/filesys/filesys.h"
@@ -17,12 +18,12 @@
 // => 16 - 8 - 1 - 3 = 4 characters available for commands.
 //
 //                                      "   THEGREAT.PRG "
-static char const * const c_dir   =   "$"; // (no parameters)
-static char const * const c_rm    =   "RM ";
-// static char const * const c_load  =   "*"; // (no space)
-// static char const * const c_cd   =    "cd "; // Supports "..", too.
-// static char const * const c_cp   =    "cp "; // Outp. file name by Pi.
-// static char const * const c_mv   =    "mv "; // New file name by Pi.
+static char const * const s_dir   =   "$"; // (no parameters)
+static char const * const s_rm    =   "RM ";
+static char const * const s_load  =   "*"; // (no space)
+// static char const * const s_cd   =    "cd "; // Supports "..", too.
+// static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
+// static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
 // Anything else. => Really save file.
 
@@ -81,39 +82,144 @@ static struct cmd_output * exec_dir()
 
 static void exec_remove(char const * const command)
 {
-    char const * const name_only = command + str_get_len(c_rm);
-    char* full_path = str_create_concat(s_cur_dir_path, name_only);
+    char const * const name_only = command + str_get_len(s_rm);
 
     filesys_remount();
+    dir_reinit(s_cur_dir_path);
 
-    f_unlink(full_path);
-
-    alloc_free(full_path);
-    full_path = 0;
+    f_unlink(name_only);
 
     filesys_unmount();
 }
 
-bool cmd_exec(char const * const command, struct cmd_output * * const output)
+static struct cmd_output * exec_load(char const * const command)
+{
+    char const * const name_only = command + str_get_len(s_load);
+    struct cmd_output * o = 0;
+    FIL fil;
+    UINT read_len = 0;
+
+    filesys_remount();
+    dir_reinit(s_cur_dir_path);
+
+    if(f_open(&fil, name_only, FA_READ) != FR_OK)
+    {
+        filesys_unmount();
+        return 0;
+    }
+
+    o = alloc_alloc(sizeof *o);
+
+    o->name  = str_create_copy(name_only);
+    o->count = (uint32_t)f_size(&fil);
+    o->bytes = alloc_alloc(o->count * sizeof *(o->bytes));
+
+    f_read(&fil, o->bytes, (UINT)o->count, &read_len);
+
+    f_close(&fil);
+
+    filesys_unmount();
+
+    return o;
+}
+
+static bool exec_save(
+    char const * const command, struct tape_input const * const ti)
+{
+    bool ret_val = false,
+        file_is_open = false;
+    FIL fil;
+
+    filesys_remount();
+    dir_reinit(s_cur_dir_path);
+
+    do
+    {
+        UINT write_count;
+        uint8_t buf;
+
+        // (no overwrite)
+        //
+        if(f_open(&fil, command, FA_CREATE_NEW | FA_WRITE) != FR_OK)
+        {
+            break;
+        }
+        file_is_open = true;
+
+        buf = (uint8_t)(ti->addr & 0x00FF);
+        if(f_write(&fil, &buf, 1, &write_count) != FR_OK)
+        {
+            break;
+        }
+        if(write_count != 1)
+        {
+            break;
+        }
+
+        buf = (uint8_t)(ti->addr >> 8);
+        if(f_write(&fil, &buf, 1, &write_count) != FR_OK)
+        {
+            break;
+        }
+        if(write_count != 1)
+        {
+            break;
+        }
+
+        if(f_write(&fil, ti->bytes, ti->len, &write_count) != FR_OK)
+        {
+            break;
+        }
+        if(write_count != ti->len)
+        {
+            break;
+        }
+
+        ret_val = true;
+    }while(false);
+
+    if(file_is_open)
+    {
+        f_close(&fil);
+        file_is_open = false;
+
+        if(!ret_val)
+        {
+            f_unlink(command);
+        }
+    }
+    filesys_unmount();
+    return ret_val;
+}
+
+bool cmd_exec(
+    char const * const command,
+    struct tape_input const * const ti,
+    struct cmd_output * * const output)
 {
     *output = 0;
-    
+
     if(s_cur_dir_path == 0)
     {
         return false;
     }
 
-    if(str_starts_with(command, c_dir))
+    if(str_starts_with(command, s_dir))
     {
         *output = exec_dir();
         return true;
     }
-    if(str_starts_with(command, c_rm))
+    if(str_starts_with(command, s_rm))
     {
         exec_remove(command);
         return true;
     }
-    return false; // TODO: Implement!
+    if(str_starts_with(command, s_load))
+    {
+        *output = exec_load(command);
+        return *output != 0;
+    }
+    return exec_save(command, ti);
 }
 
 void cmd_reinit(char const * const start_dir_path)
