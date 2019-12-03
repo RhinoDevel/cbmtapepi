@@ -29,6 +29,7 @@
 #include "../lib/basic/basic_addr.h"
 #include "../lib/ff14/source/ff.h"
 #include "../lib/dir/dir.h"
+#include "../lib/filesys/filesys.h"
 #include "../lib/str/str.h"
 
 #include "tape/tape_init.h"
@@ -237,9 +238,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         if(str_starts_with(name, cmd_dir))
         {
-            FATFS fatfs;
-
-            f_mount(&fatfs, "", 0);
+            filesys_remount();
             dir_reinit("/");
 
             char* name = "/";
@@ -249,7 +248,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                 dir_create_entry_arr(&entry_count);
 
             dir_deinit();
-            f_mount(0, "", 0);
+            filesys_unmount();
 
             char const * * const name_arr = alloc_alloc(
                 entry_count * sizeof *name_arr);
@@ -272,10 +271,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         }
         else if(str_starts_with(name, cmd_load))
         {
-            FATFS fatfs;
             FIL fil;
 
-            f_mount(&fatfs, "", 0);
+            filesys_remount();
 
             char const * const name_only = name + str_get_len(cmd_load);
 
@@ -297,22 +295,21 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
             //
             // Otherwise: TODO: Error handling (message?).
 
-            f_mount(0, "", 0);
+            filesys_unmount();
         }
         else if(str_starts_with(name, cmd_rm))
         {
-            FATFS fatfs;
             char const * const name_only = name + str_get_len(cmd_rm);
             char* full_path = str_create_concat(cur_dir_path, name_only);
 
-            f_mount(&fatfs, "", 1);
+            filesys_remount();
 
             f_unlink(full_path);
 
             alloc_free(full_path);
             full_path = 0;
 
-            f_mount(0, "", 0);
+            filesys_unmount();
         }
         //
         // TODO: Add more commands, here.
@@ -326,19 +323,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
             do
             {
                 FRESULT res;
-                FATFS fatfs;
                 FIL fil;
                 UINT write_count;
                 uint8_t buf;
 
-                res = f_mount(&fatfs, "", 1);
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: Mounting failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
+                filesys_remount();
 
                 res = f_open(
                     &fil, name, FA_CREATE_NEW | FA_WRITE); // No overwrite.
@@ -418,14 +407,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                     break;
                 }
 
-                res = f_mount(0, "", 0);
-                if(res != FR_OK)
-                {
-                    console_write("SAVE: Unmounting failed (");
-                    console_write_dword_dec((uint32_t)res);
-                    console_writeline(")!");
-                    break;
-                }
+                filesys_unmount();
             }while(false);
         }
 
