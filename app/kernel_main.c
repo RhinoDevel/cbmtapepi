@@ -201,6 +201,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         // Wait for SAVE (either as control command, or to really save):
 
         char* name = 0;
+        struct cmd_output * o = 0;
 
         gpio_set_output(MT_GPIO_PIN_NR_LED, true); // SAVE mode.
         //
@@ -223,69 +224,26 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         console_writeline(".");
 #endif //NDEBUG
 
-        // Decide, what to do, based on name given:
-
-        // - 16 characters available
-        // - File system support (by choice) limited to 8.3 format.
-        // => 16 - 8 - 1 - 3 = 4 characters available for commands.
-        //
-        //                                      "   THEGREAT.PRG "
-        static char const * const cmd_dir   =    "$"; // (no parameters)
-        // static char const * const cmd_cd   =    "cd "; // Supports "..", too.
-        static char const * const cmd_rm   =    "RM ";
-        // static char const * const cmd_cp   =    "cp "; // Outp. file name by Pi.
-        // static char const * const cmd_mv   =    "mv "; // New file name by Pi.
-        static char const * const cmd_load =    "*"; // (no space)
-        // Anything else. => Really save file.
-
-        if(str_starts_with(name, cmd_dir))
+        if(cmd_exec(name, ti, &o))
         {
-            struct cmd_output * o = 0;
-
-            cmd_exec(name, 0, &o);
-
-            armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-            gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
-            cbm_send(o->bytes, o->name, o->count, 0);
-
-            cmd_free_output(o);
-            o = 0;
-        }
-        else if(str_starts_with(name, cmd_load))
-        {
-            struct cmd_output * o = 0;
-
-            cmd_exec(name, 0, &o);
             if(o != 0)
             {
                 armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
                 gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
                 cbm_send(o->bytes, o->name, o->count, 0);
-
-                cmd_free_output(o);
-                o = 0;
             }
-            //
-            // Otherwise: TODO: Implement sending error message!
         }
-        else if(str_starts_with(name, cmd_rm))
-        {
-            struct cmd_output * o = 0;
-
-            cmd_exec(name, 0, &o);
-        }
-        //
-        // TODO: Add more commands, here.
-        //
         else
         {
-            // Really save to file:
+            console_deb_writeline("kernel_main : Error: Command exec. failed!");
 
-            struct cmd_output * o = 0;
-
-            cmd_exec(name, ti, &o);
+            // TODO: Implement blinking as error indicator (also above)!
         }
 
+        if(o != 0)
+        {
+            cmd_free_output(o);
+        }
         alloc_free(name);
         alloc_free(ti->bytes);
         alloc_free(ti);
