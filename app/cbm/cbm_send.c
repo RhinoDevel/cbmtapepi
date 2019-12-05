@@ -6,6 +6,7 @@
 #include "../config.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
+#include "../../lib/basic/basic_addr.h"
 #include "../tape/tape_send_params.h"
 #include "../tape/tape_filetype.h"
 #include "../tape/tape_send.h"
@@ -72,17 +73,40 @@ bool cbm_send(
 
     fill_name(p.data->name, name);
 
-    // BUG: TODO: Does NOT seem to work for (all) machine language files,
-    //       at least not on the C64! Fix:
-    //
-    p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
-    //
-    // Hard-coded - maybe not always correct, but works for C64 and PET,
-    // both with machine language and BASIC PRG files.
-
     // First two bytes hold the start address:
     //
     p.data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
+
+    // TODO: This is not really OK, just for testing:
+    //
+    switch(p.data->addr)
+    {
+        case MT_BASIC_ADDR_PET: // (falls through)
+        case MT_BASIC_ADDR_VIC: // (falls through)
+        case MT_BASIC_ADDR_C64:
+        {
+#ifndef NDEBUG
+            console_writeline("cbm_send: Chose relocatable file type.");
+#endif //NDEBUG
+            p.data->type = tape_filetype_relocatable;
+            break;
+        }
+
+        default:
+        {
+#ifndef NDEBUG
+            console_writeline("cbm_send: Chose NON-relocatable file type.");
+#endif //NDEBUG
+            p.data->type = tape_filetype_non_relocatable;
+            break;
+        }
+    }
+    //
+    // // BUG: TODO: Does NOT seem to work for (all) machine language files,
+    // //       at least not on the C64! Fix:
+    // //
+    // p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
+
     p.data->bytes = bytes + 2;
     p.data->len = count - 2;
 

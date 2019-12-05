@@ -29,6 +29,7 @@ rm lib/basic/basic.o
 rm lib/video/video.o
 rm lib/xmodem/xmodem.o
 rm lib/ymodem/ymodem.o
+rm lib/petasc/petasc.o
 rm lib/dir/dir.o
 rm lib/filesys/filesys.o
 rm lib/ff14/source/diskio.o
