@@ -4,6 +4,7 @@
 #include "basic.h"
 #include "basic_token.h"
 #include "../alloc/alloc.h"
+#include "../petasc/petasc.h"
 #include "../str/str.h"
 #include "../assert.h"
 
@@ -18,6 +19,7 @@ uint8_t* basic_get_prints(
     uint16_t const addr,
     char const * const * const str_arr,
     uint32_t const str_count,
+    char const petscii_not_found_replacer,
     uint32_t * const len)
 {
     assert(addr > 0);
@@ -52,8 +54,6 @@ uint8_t* basic_get_prints(
         + str_len_all; // Space for actual strings.
 
     uint8_t * const ret_val = alloc_alloc(*len);
-
-    // TODO: Convert to PETSCII!
 
     // *** Address: ***
 
@@ -93,7 +93,8 @@ uint8_t* basic_get_prints(
         ret_val[i++] = '"';
         while(str_arr[j][k] != '\0')
         {
-            ret_val[i++] = str_arr[j][k];
+            ret_val[i++] = petasc_get_petscii(
+                str_arr[j][k], petscii_not_found_replacer);
             ++k;
         }
         ret_val[i++] = '"';

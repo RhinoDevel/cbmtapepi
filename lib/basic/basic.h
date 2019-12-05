@@ -19,6 +19,7 @@ uint8_t* basic_get_prints(
     uint16_t const addr,
     char const * const * const str_arr,
     uint32_t const str_count,
+    char const petscii_not_found_replacer,
     uint32_t * const len);
 
 /**

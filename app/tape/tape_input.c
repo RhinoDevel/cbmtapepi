@@ -2,9 +2,11 @@
 // Marcel Timm, RhinoDevel, 2019sep14
 
 #include "tape_input.h"
+#include "../config.h"
 #include "../../lib/console/console.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
+#include "../../lib/petasc/petasc.h"
 
 void tape_input_console_write(
     struct tape_input const * const d, bool const write_bytes)
@@ -66,7 +68,7 @@ char* tape_input_create_str_from_name(struct tape_input const * const d)
 
     for(int i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        ret_val[i] = (char)d->name[i];// TODO: PETSCII to ASCII conversion?
+        ret_val[i] = petasc_get_ascii((char)d->name[i], MT_ASCII_REPLACER);
     }
     ret_val[MT_TAPE_INPUT_NAME_LEN] = '\0';
 

@@ -219,9 +219,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 #ifndef NDEBUG
         console_write("kernel_main : Name from tape input = \"");
         console_write(name);
-        console_write("\" / ");
-        console_write_bytes((uint8_t const *)name, str_get_len(name));
-        console_writeline(".");
+        console_writeline("\".");
 #endif //NDEBUG
 
         if(cmd_exec(name, ti, &o))

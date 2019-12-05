@@ -13,6 +13,12 @@
 
 #define MT_GPIO_PIN_NR_LED 27
 
+#define MT_PETSCII_REPLACER 166
+//
+// Checkerboard
+
+#define MT_ASCII_REPLACER '_'
+
 // Comment this out for non-interactive mode,
 // otherwise a menu-based UI will be shown via serial interface
 // (it makes a lot of sense to also define NDEBUG, if MT_INTERACTIVE is

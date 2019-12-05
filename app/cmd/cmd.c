@@ -2,6 +2,7 @@
 // Marcel Timm, RhinoDevel, 2019dec03
 
 #include "cmd.h"
+#include "../config.h"
 #include "../tape/tape_input.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
@@ -69,6 +70,7 @@ static struct cmd_output * exec_dir()
         MT_BASIC_ADDR_PET, // (should also be OK for VIC20, C64, etc.)
         (char const * *)name_arr,
         name_count,
+        MT_PETSCII_REPLACER,
         &(ret_val->count));
 
     alloc_free(name_arr[0]);

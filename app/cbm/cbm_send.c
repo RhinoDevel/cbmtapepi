@@ -7,6 +7,7 @@
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
 #include "../../lib/basic/basic_addr.h"
+#include "../../lib/petasc/petasc.h"
 #include "../tape/tape_send_params.h"
 #include "../tape/tape_filetype.h"
 #include "../tape/tape_send.h"
@@ -33,7 +34,7 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
 
     while(i < MT_TAPE_INPUT_NAME_LEN && buf[i] != '\0')
     {
-        name_out[i] = (uint8_t)buf[i]; // TODO: Implement real conversion to PETSCII.
+        name_out[i] = (uint8_t)petasc_get_petscii(buf[i], MT_PETSCII_REPLACER);
         ++i;
     }
     while(i < MT_TAPE_INPUT_NAME_LEN)
