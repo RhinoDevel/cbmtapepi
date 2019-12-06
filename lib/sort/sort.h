@@ -6,6 +6,13 @@
 
 #include <stddef.h>
 
+// Example: Compare function for an array of strings:
+//
+// static int cmp_str(void const * const a, void const * const b)
+// {
+//     return str_cmp(*(char const * const *)a, *(char const * const *)b);
+// }
+
 /** Sort elements in given array in-place via given compare function and
  *  insertion sort algorithm.
  */
