@@ -115,6 +115,7 @@ $MT_CC lib/video/video.c -o lib/video/video.o
 $MT_CC lib/xmodem/xmodem.c -o lib/xmodem/xmodem.o
 $MT_CC lib/ymodem/ymodem.c -o lib/ymodem/ymodem.o
 $MT_CC lib/petasc/petasc.c -o lib/petasc/petasc.o
+$MT_CC lib/sort/sort.c -o lib/sort/sort.o
 $MT_CC lib/dir/dir.c -o lib/dir/dir.o
 $MT_CC lib/filesys/filesys.c -o lib/filesys/filesys.o
 $MT_CC lib/ff14/source/diskio.c -o lib/ff14/source/diskio.o
@@ -198,6 +199,7 @@ arm-none-eabi-ld \
     lib/xmodem/xmodem.o \
     lib/ymodem/ymodem.o \
     lib/petasc/petasc.o \
+    lib/sort/sort.o \
     lib/dir/dir.o \
     lib/filesys/filesys.o \
     lib/ff14/source/diskio.o \
