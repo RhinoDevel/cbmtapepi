@@ -61,4 +61,6 @@ int str_get_index_of_trailing(char const * const s, char const c);
  */
 char* str_create_concat(char const * const first, char const * const last);
 
+int str_cmp(char const * const a, char const * const b);
+
 #endif //MT_STR

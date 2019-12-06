@@ -192,3 +192,31 @@ char* str_create_concat(char const * const first, char const * const last)
 
     return s;
 }
+
+int str_cmp(char const * const a, char const * const b)
+{
+    int i = -1,
+        diff = 0;
+
+    do
+    {
+        ++i;
+
+        if(a[i] == '\0')
+        {
+            if(b[i] == '\0')
+            {
+                return 0;
+            }
+            return -1;
+        }
+        if(b[i] == '\0')
+        {
+            return 1;
+        }
+
+        diff = (int)a[i] - (int)b[i];
+    }while(diff == 0);
+
+    return diff;
+}
