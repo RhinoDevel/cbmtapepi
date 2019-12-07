@@ -12,6 +12,10 @@
 #include "../../lib/basic/basic_addr.h"
 #include "../../lib/ff14/source/ff.h"
 
+#ifndef NDEBUG
+    #include "../../lib/console/console.h"
+#endif //NDEBUG
+
 #include <stdbool.h>
 
 // - 16 characters available
@@ -153,9 +157,22 @@ static bool exec_cd(char const * const command)
         s_cur_dir_path = str_create_concat(buf, "/");
         alloc_free(buf);
         buf = 0;
-        
+
+#ifndef NDEBUG
+        console_write("cmd/exec_cd : Changed to \"");
+        console_write(s_cur_dir_path);
+        console_writeline("\" (full path).");
+#endif //NDEBUG
+
         return true;
     }
+
+#ifndef NDEBUG
+        console_write("cmd/exec_cd : Failed to change to \"");
+        console_write(name_only);
+        console_writeline("\" (sub dir. name).");
+#endif //NDEBUG
+
     return false;
 }
 
