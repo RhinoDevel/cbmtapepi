@@ -190,6 +190,9 @@ void dir_free_entry_arr(struct dir_entry * * arr, int const len)
 {
     for(int i = 0;i < len;++i)
     {
+        alloc_free(arr[i]->name);
+        arr[i]->name = 0;
+
         alloc_free(arr[i]);
     }
     alloc_free(arr);

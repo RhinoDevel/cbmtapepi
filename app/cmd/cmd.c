@@ -22,9 +22,9 @@
 static char const * const s_dir   =   "$"; // (no parameters)
 static char const * const s_rm    =   "RM ";
 static char const * const s_load  =   "*"; // (no space)
-// static char const * const s_cd   =    "cd "; // Supports "..", too.
-// static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
-// static char const * const s_mv   =    "mv "; // New file name by Pi.
+// static char const * const s_cd   =    "CD "; // Supports "..", too.
+// static char const * const s_cp   =    "CP "; // Outp. file name by Pi.
+// static char const * const s_mv   =    "MV "; // New file name by Pi.
 //
 // Anything else. => Really save file.
 
@@ -58,7 +58,9 @@ static struct cmd_output * exec_dir()
     name_arr[0] = str_create_concat(s_cur_dir_path, ":");
     for(int i = 1;i < name_count;++i)
     {
-        name_arr[i] = entry_arr[i - 1]->name;
+        name_arr[i] = str_create_concat(
+            entry_arr[i - 1]->is_dir ? "DIR " : "    ",
+            entry_arr[i - 1]->name);
     }
 
     dir_free_entry_arr(entry_arr, entry_count);
@@ -73,8 +75,11 @@ static struct cmd_output * exec_dir()
         MT_PETSCII_REPLACER,
         &(ret_val->count));
 
-    alloc_free(name_arr[0]);
-    name_arr[0] = 0;
+    for(int i = 0;i < name_count;++i)
+    {
+        alloc_free(name_arr[i]);
+        name_arr[i] = 0;
+    }
     alloc_free(name_arr);
     name_arr = 0;
     name_count = -1;
