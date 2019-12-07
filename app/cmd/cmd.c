@@ -133,7 +133,7 @@ static struct cmd_output * exec_load(char const * const command)
     return o;
 }
 
-static void exec_cd(char const * const command)
+static bool exec_cd(char const * const command)
 {
     char const * const name_only = command + str_get_len(s_cd);
 
@@ -153,7 +153,10 @@ static void exec_cd(char const * const command)
         s_cur_dir_path = str_create_concat(buf, "/");
         alloc_free(buf);
         buf = 0;
+        
+        return true;
     }
+    return false;
 }
 
 static bool exec_save(
@@ -255,8 +258,7 @@ bool cmd_exec(
     }
     if(str_starts_with(command, s_cd))
     {
-        exec_cd(command);
-        return true;
+        return exec_cd(command);
     }
     return exec_save(command, ti);
 }
