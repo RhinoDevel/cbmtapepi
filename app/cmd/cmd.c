@@ -20,15 +20,17 @@
 //
 //                                      "   THEGREAT.PRG "
 static char const * const s_dir   =   "$"; // (no parameters)
-static char const * const s_rm    =   "RM ";
+static char const * const s_rm    =   "rm ";
 static char const * const s_load  =   "*"; // (no space)
-// static char const * const s_cd   =    "CD "; // Supports "..", too.
-// static char const * const s_cp   =    "CP "; // Outp. file name by Pi.
-// static char const * const s_mv   =    "MV "; // New file name by Pi.
+static char const * const s_cd   =    "cd "; // Supports "..", too.
+// static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
+// static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
 // Anything else. => Really save file.
 
-static char * s_cur_dir_path = 0; // Initialized by cmd_reinit().
+static char * s_cur_dir_path = 0;
+//
+// Initialized by cmd_reinit(). Changed by exec_cd().
 
 static struct dir_entry * * create_dir_entry_arr(int * const entry_count)
 {
@@ -131,6 +133,29 @@ static struct cmd_output * exec_load(char const * const command)
     return o;
 }
 
+static void exec_cd(char const * const command)
+{
+    char const * const name_only = command + str_get_len(s_cd);
+
+    filesys_remount();
+    dir_reinit(s_cur_dir_path);
+
+    bool const has_sub_dir = dir_has_sub_dir(name_only);
+
+    dir_deinit();
+    filesys_unmount();
+
+    if(has_sub_dir)
+    {
+        char* buf = str_create_concat(s_cur_dir_path, name_only);
+
+        alloc_free(s_cur_dir_path);
+        s_cur_dir_path = str_create_concat(buf, "/");
+        alloc_free(buf);
+        buf = 0;
+    }
+}
+
 static bool exec_save(
     char const * const command, struct tape_input const * const ti)
 {
@@ -227,6 +252,11 @@ bool cmd_exec(
     {
         *output = exec_load(command);
         return *output != 0;
+    }
+    if(str_starts_with(command, s_cd))
+    {
+        exec_cd(command);
+        return true;
     }
     return exec_save(command, ti);
 }
