@@ -3,6 +3,7 @@
 
 #include "dir.h"
 #include "../alloc/alloc.h"
+#include "../sort/sort.h"
 #include "../str/str.h"
 #include "../ff14/source/ff.h"
 
@@ -124,6 +125,22 @@ static struct dir_entry * create_entry_from_next_entry()
     return entry;
 }
 
+static int cmp_dir_entry(void const * const a, void const * const b)
+{
+    struct dir_entry const * const e_a = *(struct dir_entry const * const *)a;
+    struct dir_entry const * const e_b = *(struct dir_entry const * const *)b;
+
+    if(e_a->is_dir != e_b->is_dir)
+    {
+        if(e_a->is_dir)
+        {
+            return -1;
+        }
+        return 1;
+    }
+    return str_cmp(e_a->name, e_b->name);
+}
+
 /**
  * - Rewinds to first entry!
  * - Returns -1 in error.
@@ -212,6 +229,8 @@ struct dir_entry * * dir_create_entry_arr(int * const count)
         *count = -1;
         return 0;
     }
+
+    sort_insertion(arr, *count, sizeof *arr, cmp_dir_entry);
 
     return arr;
 }
