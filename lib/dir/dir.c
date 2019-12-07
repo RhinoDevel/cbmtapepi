@@ -238,6 +238,26 @@ struct dir_entry * * dir_create_entry_arr(int * const count)
     return arr;
 }
 
+bool dir_has_sub_dir(char const * const name)
+{
+    FILINFO info;
+
+    if(s_dir == 0)
+    {
+        return false;
+    }
+    if(s_dir_path == 0)
+    {
+        return false;
+    }
+
+    if(f_stat(name, &info) != FR_OK)
+    {
+        return false;
+    }
+    return (info.fattrib & AM_DIR) != 0;
+}
+
 bool dir_deinit()
 {
     if(s_dir == 0)

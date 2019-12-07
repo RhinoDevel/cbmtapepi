@@ -39,6 +39,11 @@ char* dir_create_name_of_next_entry(bool * const is_dir);
 struct dir_entry * * dir_create_entry_arr(int * const count);
 
 /**
+ * - Also returns false on error (!).
+ */
+bool dir_has_sub_dir(char const * const name);
+
+/**
  * - OK to be called, if already deinitialized (returns true).
  */
 bool dir_deinit();
