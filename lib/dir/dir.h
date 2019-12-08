@@ -53,4 +53,11 @@ bool dir_deinit();
  */
 bool dir_reinit(char const * const dir_path);
 
+/** Helper method.
+ *
+ *  - Caller takes ownership of returned object.
+ */
+char* dir_create_full_path(
+    char const * const dir_path, char const * const entry_name);
+
 #endif //MT_DIR

@@ -250,6 +250,7 @@ struct dir_entry * * dir_create_entry_arr(int * const count)
 bool dir_has_sub_dir(char const * const name)
 {
     FILINFO info;
+    char* full_path = 0;
 
     if(s_dir == 0)
     {
@@ -260,7 +261,14 @@ bool dir_has_sub_dir(char const * const name)
         return false;
     }
 
-    if(f_stat(name, &info) != FR_OK)
+    full_path = dir_create_full_path(s_dir_path, name);
+
+    FRESULT const r = f_stat(full_path, &info);
+
+    alloc_free(full_path);
+    full_path = 0;
+
+    if(r != FR_OK)
     {
         return false;
     }
@@ -306,4 +314,21 @@ bool dir_reinit(char const * const dir_path)
         }
     }
     return init(dir_path);
+}
+
+char* dir_create_full_path(
+    char const * const dir_path, char const * const entry_name)
+{
+    uint32_t const dir_path_len = str_get_len(dir_path);
+
+    if(dir_path_len < 1)
+    {
+        return 0;
+    }
+
+    if(dir_path[dir_path_len - 1] == '/')
+    {
+        return str_create_concat(dir_path, entry_name);
+    }
+    return str_create_concat_three(dir_path, "/", entry_name);
 }
