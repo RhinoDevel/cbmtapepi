@@ -220,3 +220,8 @@ int str_cmp(char const * const a, char const * const b)
 
     return diff;
 }
+
+bool str_are_equal(char const * const a, char const * const b)
+{
+    return str_cmp(a, b) == 0;
+}
