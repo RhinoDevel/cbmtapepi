@@ -22,7 +22,7 @@
 // - File system support (by choice) limited to 8.3 format.
 // => 16 - 8 - 1 - 3 = 4 characters available for commands.
 //
-//                                      "   THEGREAT.PRG "
+//                                      "   thegreat.prg "
 static char const * const s_dir   =   "$"; // (no parameters)
 static char const * const s_rm    =   "rm ";
 static char const * const s_load  =   "*"; // (no space)
@@ -151,11 +151,10 @@ static bool exec_cd(char const * const command)
 
     if(has_sub_dir)
     {
-        char* buf = str_create_concat(s_cur_dir_path, name_only);
+        char* buf = dir_create_full_path(s_cur_dir_path, name_only);
 
         alloc_free(s_cur_dir_path);
-        s_cur_dir_path = str_create_concat(buf, "/");
-        alloc_free(buf);
+        s_cur_dir_path = buf;
         buf = 0;
 
 #ifndef NDEBUG
@@ -170,7 +169,9 @@ static bool exec_cd(char const * const command)
 #ifndef NDEBUG
         console_write("cmd/exec_cd : Failed to change to \"");
         console_write(name_only);
-        console_writeline("\" (sub dir. name).");
+        console_write("\" (sub dir. name) in \"");
+        console_write(s_cur_dir_path);
+        console_writeline("\".");
 #endif //NDEBUG
 
     return false;
