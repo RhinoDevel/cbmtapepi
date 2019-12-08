@@ -94,21 +94,31 @@ static struct cmd_output * exec_dir()
     return ret_val;
 }
 
-static void exec_remove(char const * const command)
+/**
+ * - No support for deletion of empty subfolders.
+ */
+static bool exec_remove(char const * const command)
 {
+    FRESULT r = FR_NO_FILE;
     char const * const name_only = command + str_get_len(s_rm);
 
     filesys_remount();
     dir_reinit(s_cur_dir_path);
 
-    char * const full_path = dir_create_full_path(
-        s_cur_dir_path, name_only);
+    if(dir_is_file(name_only))
+    {
+        char * const full_path = dir_create_full_path(
+            s_cur_dir_path, name_only);
 
-    f_unlink(full_path);
+        r = f_unlink(full_path);
 
-    alloc_free(full_path);
+        alloc_free(full_path);
+    }
+
     dir_deinit();
     filesys_unmount();
+
+    return r == FR_OK;
 }
 
 static struct cmd_output * exec_load(char const * const command)
@@ -312,8 +322,7 @@ bool cmd_exec(
     }
     if(str_starts_with(command, s_rm))
     {
-        exec_remove(command);
-        return true;
+        return exec_remove(command);
     }
     if(str_starts_with(command, s_load))
     {
