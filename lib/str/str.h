@@ -61,6 +61,15 @@ int str_get_index_of_trailing(char const * const s, char const c);
  */
 char* str_create_concat(char const * const first, char const * const last);
 
+/** Concatenate three strings into new string to-be-returned.
+ *
+ *  - Caller takes ownership of returned object.
+ */
+char* str_create_concat_three(
+    char const * const first,
+    char const * const middle,
+    char const * const last);
+
 int str_cmp(char const * const a, char const * const b);
 
 bool str_are_equal(char const * const a, char const * const b);

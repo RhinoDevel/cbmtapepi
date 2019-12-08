@@ -193,6 +193,18 @@ char* str_create_concat(char const * const first, char const * const last)
     return s;
 }
 
+char* str_create_concat_three(
+    char const * const first,
+    char const * const middle,
+    char const * const last)
+{
+    char* buf = str_create_concat(first, middle),
+        * const ret_val = str_create_concat(buf, last);
+
+    alloc_free(buf);
+    return ret_val;
+}
+
 int str_cmp(char const * const a, char const * const b)
 {
     int i = -1,
