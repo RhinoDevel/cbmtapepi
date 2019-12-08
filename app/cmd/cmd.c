@@ -4,6 +4,7 @@
 #include "cmd.h"
 #include "../config.h"
 #include "../tape/tape_input.h"
+#include "../../lib/assert.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
 #include "../../lib/filesys/filesys.h"
@@ -139,42 +140,74 @@ static struct cmd_output * exec_load(char const * const command)
 
 static bool exec_cd(char const * const command)
 {
+    bool ret_val = false;
     char const * const name_only = command + str_get_len(s_cd);
 
-    filesys_remount();
-    dir_reinit(s_cur_dir_path);
-
-    bool const has_sub_dir = dir_has_sub_dir(name_only);
-
-    dir_deinit();
-    filesys_unmount();
-
-    if(has_sub_dir)
+    do
     {
-        char* buf = dir_create_full_path(s_cur_dir_path, name_only);
+        bool const is_back_cmd = str_are_equal(name_only, "..");
+        char* buf = 0;
+
+        if(is_back_cmd && str_are_equal(s_cur_dir_path, MT_FILESYS_ROOT))
+        {
+            break;
+        }
+
+        if(is_back_cmd)
+        {
+            int const last_slash_i = str_get_last_index(s_cur_dir_path, '/');
+
+            assert(last_slash_i >= 0);
+
+            buf = str_create_partial_copy(s_cur_dir_path, 0, last_slash_i + 1);
+
+            if(!str_are_equal(buf, MT_FILESYS_ROOT))
+            {
+                buf[last_slash_i] = '\0'; // (minimal memory waste..)
+            }
+        }
+        else
+        {
+            filesys_remount();
+            dir_reinit(s_cur_dir_path);
+
+            bool const has_sub_dir = dir_has_sub_dir(name_only);
+
+            dir_deinit();
+            filesys_unmount();
+
+            if(!has_sub_dir)
+            {
+                break;
+            }
+
+            buf = dir_create_full_path(s_cur_dir_path, name_only);
+        }
 
         alloc_free(s_cur_dir_path);
         s_cur_dir_path = buf;
         buf = 0;
+        ret_val = true;
+    }while(false);
 
 #ifndef NDEBUG
+    if(ret_val)
+    {
         console_write("cmd/exec_cd : Changed to \"");
         console_write(s_cur_dir_path);
-        console_writeline("\" (full path).");
-#endif //NDEBUG
-
-        return true;
+        console_writeline("\".");
     }
-
-#ifndef NDEBUG
+    else
+    {
         console_write("cmd/exec_cd : Failed to change to \"");
         console_write(name_only);
-        console_write("\" (sub dir. name) in \"");
+        console_write("\" from \"");
         console_write(s_cur_dir_path);
         console_writeline("\".");
+    }
 #endif //NDEBUG
 
-    return false;
+    return ret_val;
 }
 
 static bool exec_save(
