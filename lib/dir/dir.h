@@ -30,7 +30,9 @@ char const * dir_get_dir_path();
  */
 char* dir_create_name_of_next_entry(bool * const is_dir);
 
-/**
+/** Elements in returned array are always ordered in the same way
+ *  (directories first, then files, sub-sorted by name).
+ *
  * - Returns 0 on error (count == -1)
  *   or count of entries being zero (count == 0).
  * - Assumes given pointer not to be set to 0 (no error check).
