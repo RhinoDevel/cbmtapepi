@@ -54,17 +54,54 @@ extern void _enable_interrupts(); // See boot.S.
 
 extern uint32_t __heap; // See memmap.ld.
 
-static bool s_timer_irq_state = false;
+enum led_state
+{
+    led_state_off,
+    led_state_on,
+    led_state_blink
+};
+static enum led_state s_led_state = led_state_off;
 
 /** IRQ interrupt handler.
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
 {
+    static bool timer_irq_state = false;
+    static bool act_state = false;
+    static int act_count = 0;
+
     armtimer_irq_clear();
 
-    s_timer_irq_state = !s_timer_irq_state;
+    timer_irq_state = !timer_irq_state;
 
-    gpio_set_output(GPIO_PIN_NR_ACT, s_timer_irq_state);
+    ++act_count;
+    if(act_count == 2)
+    {
+        act_state = !act_state;
+        act_count = 0;
+        gpio_set_output(GPIO_PIN_NR_ACT, act_state);
+    }
+
+    switch(s_led_state)
+    {
+        case led_state_on:
+        {
+            gpio_set_output(MT_GPIO_PIN_NR_LED, true);
+            break;
+        }
+        case led_state_off:
+        {
+            gpio_set_output(MT_GPIO_PIN_NR_LED, false);
+            break;
+        }
+
+        case led_state_blink: // (falls through)
+        default:
+        {
+            gpio_set_output(MT_GPIO_PIN_NR_LED, timer_irq_state);
+            break;
+        }
+    }
 }
 
 #ifndef MT_INTERACTIVE
@@ -136,6 +173,85 @@ static void init_console()
     console_init(&p);
 }
 
+static void irq_armtimer_init()
+{
+    irqcontroller_irq_src_enable_armtimer();
+
+    _enable_interrupts();
+
+    // Timer counts down 250.000 times in one second (with 250 kHz):
+    //
+    armtimer_start(250000 * 1, 250);
+    //
+    // 0.25 seconds, hard-coded for 250MHz clock.
+}
+
+static void cmd_enter()
+{
+    cmd_reinit(MT_FILESYS_ROOT);
+    s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+    while(true)
+    {
+        // Wait for SAVE (either as control command, or to really save):
+
+        char* name = 0;
+        struct cmd_output * o = 0;
+        struct tape_input * const ti = cbm_receive(0);
+
+        if(ti == 0)
+        {
+            console_deb_writeline(
+                "kernel_main : Error: Receive from commodore failed!");
+
+            s_led_state = led_state_blink;
+            //
+            // Indicates an error occurred, but still in SAVE mode (IRQ).
+
+            continue; // Try again..
+        }
+
+        name = tape_input_create_str_from_name(ti);
+
+#ifndef NDEBUG
+        console_write("kernel_main : Name from tape input = \"");
+        console_write(name);
+        console_writeline("\".");
+#endif //NDEBUG
+
+        if(cmd_exec(name, ti, &o))
+        {
+            if(o != 0)
+            {
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+
+                s_led_state = led_state_off;
+                //
+                // Indicates LOAD mode (IRQ).
+
+                cbm_send(o->bytes, o->name, o->count, 0);
+            }
+
+            s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+        }
+        else
+        {
+            console_deb_writeline("kernel_main : Error: Command exec. failed!");
+
+            s_led_state = led_state_blink;
+            //
+            // Indicates an error occurred, but still in SAVE mode (IRQ).
+        }
+
+        if(o != 0)
+        {
+            cmd_free_output(o);
+        }
+        alloc_free(name);
+        alloc_free(ti->bytes);
+        alloc_free(ti);
+    }
+}
+
 /**
  * - Entry point (see boot.S).
  */
@@ -157,6 +273,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 
         .peri_base = PERI_BASE
     });
+
+    irq_armtimer_init(); // Needs GPIO.
 
     // Initialize console in-/output:
     //
@@ -181,13 +299,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         armtimer_get_tick,
         armtimer_busywait_microseconds);
 
-    irqcontroller_irq_src_enable_armtimer();
-    _enable_interrupts();
-    //
-    // Timer counts down 250.000 times in one second (with 250 kHz):
-    //
-    armtimer_start(250000 * 1, 500); // 0.5 seconds, hard-coded for 250MHz clock.
-
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
     //
@@ -195,56 +306,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 #else //MT_INTERACTIVE
     // "File system and SAVE control" mode:
     //
-    cmd_reinit(MT_FILESYS_ROOT);
-    while(true)
-    {
-        // Wait for SAVE (either as control command, or to really save):
-
-        char* name = 0;
-        struct cmd_output * o = 0;
-
-        gpio_set_output(MT_GPIO_PIN_NR_LED, true); // SAVE mode.
-        //
-        struct tape_input * const ti = cbm_receive(0);
-
-        if(ti == 0)
-        {
-            console_deb_writeline(
-                "kernel_main : Error: Receive from commodore failed!");
-            continue; // Try again..
-        }
-
-        name = tape_input_create_str_from_name(ti);
-
-#ifndef NDEBUG
-        console_write("kernel_main : Name from tape input = \"");
-        console_write(name);
-        console_writeline("\".");
-#endif //NDEBUG
-
-        if(cmd_exec(name, ti, &o))
-        {
-            if(o != 0)
-            {
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-                gpio_set_output(MT_GPIO_PIN_NR_LED, false); // LOAD mode.
-                cbm_send(o->bytes, o->name, o->count, 0);
-            }
-        }
-        else
-        {
-            console_deb_writeline("kernel_main : Error: Command exec. failed!");
-
-            // TODO: Implement blinking as error indicator (also above)!
-        }
-
-        if(o != 0)
-        {
-            cmd_free_output(o);
-        }
-        alloc_free(name);
-        alloc_free(ti->bytes);
-        alloc_free(ti);
-    }
+    cmd_enter();
 #endif //MT_INTERACTIVE
 }
