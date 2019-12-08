@@ -46,6 +46,11 @@ struct dir_entry * * dir_create_entry_arr(int * const count);
 bool dir_has_sub_dir(char const * const name);
 
 /**
+ * - Also returns false on error (!).
+ */
+bool dir_is_file(char const * const name);
+
+/**
  * - OK to be called, if already deinitialized (returns true).
  */
 bool dir_deinit();

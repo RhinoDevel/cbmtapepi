@@ -275,6 +275,34 @@ bool dir_has_sub_dir(char const * const name)
     return (info.fattrib & AM_DIR) != 0;
 }
 
+bool dir_is_file(char const * const name)
+{
+    FILINFO info;
+    char* full_path = 0;
+
+    if(s_dir == 0)
+    {
+        return false;
+    }
+    if(s_dir_path == 0)
+    {
+        return false;
+    }
+
+    full_path = dir_create_full_path(s_dir_path, name);
+
+    FRESULT const r = f_stat(full_path, &info);
+
+    alloc_free(full_path);
+    full_path = 0;
+
+    if(r != FR_OK)
+    {
+        return false;
+    }
+    return (info.fattrib & AM_DIR) == 0;
+}
+
 bool dir_deinit()
 {
     if(s_dir == 0)
