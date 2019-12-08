@@ -13,6 +13,8 @@
 
 #define MT_GPIO_PIN_NR_LED 27
 
+#define MT_FILESYS_ROOT "/"
+
 #define MT_PETSCII_REPLACER 166
 //
 // Checkerboard

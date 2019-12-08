@@ -195,7 +195,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 #else //MT_INTERACTIVE
     // "File system and SAVE control" mode:
     //
-    cmd_reinit("/");
+    cmd_reinit(MT_FILESYS_ROOT);
     while(true)
     {
         // Wait for SAVE (either as control command, or to really save):
