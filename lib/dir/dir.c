@@ -7,6 +7,10 @@
 #include "../str/str.h"
 #include "../ff14/source/ff.h"
 
+#ifndef NDEBUG
+    #include "../console/console.h"
+#endif //NDEBUG
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -52,6 +56,11 @@ static bool init(char const * const dir_path)
 
     if(f_opendir(s_dir, dir_path) != FR_OK)
     {
+#ifndef NDEBUG
+        console_write("dir/init : Error: Failed to open dir. at \"");
+        console_write(dir_path);
+        console_writeline("\"!");
+#endif //NDEBUG
         return false;
     }
 
