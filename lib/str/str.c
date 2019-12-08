@@ -76,6 +76,20 @@ uint32_t str_get_len_max(
     return ret_val;
 }
 
+int str_get_last_index(char const * const s, char const c)
+{
+    int const l = (int)str_get_len(s);
+
+    for(int i = l - 1;i >= 0;--i)
+    {
+        if(s[i] == c)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void str_to_upper(char * const s_out, char const * const s_in)
 {
     int i = 0;
@@ -106,6 +120,27 @@ void str_to_lower(char * const s_out, char const * const s_in)
         s_out[i] = s_in[i];
     }
     s_out[i] = '\0';//s_in[i];
+}
+
+char* str_create_partial_copy(
+    char const * const s, uint32_t const index, uint32_t const count)
+{
+    uint32_t const len = str_get_len(s);
+
+    if(index + count > len)
+    {
+        return 0;
+    }
+
+    char * const partial_copy = alloc_alloc((count + 1) * sizeof *partial_copy);
+
+    for(uint32_t i = 0; i < count; ++i)
+    {
+        partial_copy[i] = s[i + index];
+    }
+    partial_copy[count] = '\0';
+
+    return partial_copy;
 }
 
 void str_copy(char * const s_out, char const * const s_in)

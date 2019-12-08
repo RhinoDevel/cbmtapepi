@@ -24,6 +24,11 @@ uint32_t str_get_len_max(
     char const * const * const s_arr, uint32_t const s_count);
 
 /**
+ * - Returns -1, if not found.
+ */
+int str_get_last_index(char const * const s, char const c);
+
+/**
  * - In and output strings may be equal.
  */
 void str_to_upper(char * const s_out, char const * const s_in);
@@ -37,6 +42,12 @@ void str_to_lower(char * const s_out, char const * const s_in);
  * - In and output strings may be equal.
  */
 void str_copy(char * const s_out, char const * const s_in);
+
+/**
+ * - Caller takes ownership of returned object.
+ */
+char* str_create_partial_copy(
+    char const * const s, uint32_t const index, uint32_t const count);
 
 /**
  * - Caller takes ownership of returned object.
