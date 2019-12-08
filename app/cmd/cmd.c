@@ -101,8 +101,12 @@ static void exec_remove(char const * const command)
     filesys_remount();
     dir_reinit(s_cur_dir_path);
 
-    f_unlink(name_only);
+    char * const full_path = dir_create_full_path(
+        s_cur_dir_path, name_only);
 
+    f_unlink(full_path);
+
+    alloc_free(full_path);
     dir_deinit();
     filesys_unmount();
 }
@@ -117,8 +121,12 @@ static struct cmd_output * exec_load(char const * const command)
     filesys_remount();
     dir_reinit(s_cur_dir_path);
 
-    if(f_open(&fil, name_only, FA_READ) != FR_OK)
+    char * const full_path = dir_create_full_path(
+        s_cur_dir_path, name_only);
+
+    if(f_open(&fil, full_path, FA_READ) != FR_OK)
     {
+        alloc_free(full_path);
         dir_deinit();
         filesys_unmount();
         return 0;
@@ -133,6 +141,7 @@ static struct cmd_output * exec_load(char const * const command)
     f_read(&fil, o->bytes, (UINT)o->count, &read_len);
 
     f_close(&fil);
+    alloc_free(full_path);
     dir_deinit();
     filesys_unmount();
     return o;
@@ -220,6 +229,9 @@ static bool exec_save(
     filesys_remount();
     dir_reinit(s_cur_dir_path);
 
+    char * const full_path = dir_create_full_path(
+        s_cur_dir_path, command);
+
     do
     {
         UINT write_count;
@@ -227,7 +239,7 @@ static bool exec_save(
 
         // (no overwrite)
         //
-        if(f_open(&fil, command, FA_CREATE_NEW | FA_WRITE) != FR_OK)
+        if(f_open(&fil, full_path, FA_CREATE_NEW | FA_WRITE) != FR_OK)
         {
             break;
         }
@@ -275,6 +287,7 @@ static bool exec_save(
             f_unlink(command);
         }
     }
+    alloc_free(full_path);
     dir_deinit();
     filesys_unmount();
     return ret_val;
