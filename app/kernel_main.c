@@ -114,6 +114,72 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
         return 0;
     }
+
+    static void cmd_enter()
+    {
+        cmd_reinit(MT_FILESYS_ROOT);
+        s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+        while(true)
+        {
+            // Wait for SAVE (either as control command, or to really save):
+
+            char* name = 0;
+            struct cmd_output * o = 0;
+            struct tape_input * const ti = cbm_receive(0);
+
+            if(ti == 0)
+            {
+                console_deb_writeline(
+                    "kernel_main : Error: Receive from commodore failed!");
+
+                s_led_state = led_state_blink;
+                //
+                // Indicates an error occurred, but still in SAVE mode (IRQ).
+
+                continue; // Try again..
+            }
+
+            name = tape_input_create_str_from_name(ti);
+
+#ifndef NDEBUG
+            console_write("kernel_main : Name from tape input = \"");
+            console_write(name);
+            console_writeline("\".");
+#endif //NDEBUG
+
+            if(cmd_exec(name, ti, &o))
+            {
+                if(o != 0)
+                {
+                    armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+
+                    s_led_state = led_state_off;
+                    //
+                    // Indicates LOAD mode (IRQ).
+
+                    cbm_send(o->bytes, o->name, o->count, 0);
+                }
+
+                s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+            }
+            else
+            {
+                console_deb_writeline("kernel_main : Error: Command exec. failed!");
+
+                s_led_state = led_state_blink;
+                //
+                // Indicates an error occurred, but still in SAVE mode (IRQ).
+            }
+
+            if(o != 0)
+            {
+                cmd_free_output(o);
+            }
+            alloc_free(name);
+            alloc_free(ti->bytes);
+            alloc_free(ti);
+        }
+    }
 #endif //MT_INTERACTIVE
 
 #if VIDEO_SUPPORT
@@ -184,72 +250,6 @@ static void irq_armtimer_init()
     armtimer_start(250000 * 1, 250);
     //
     // 0.25 seconds, hard-coded for 250MHz clock.
-}
-
-static void cmd_enter()
-{
-    cmd_reinit(MT_FILESYS_ROOT);
-    s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-    while(true)
-    {
-        // Wait for SAVE (either as control command, or to really save):
-
-        char* name = 0;
-        struct cmd_output * o = 0;
-        struct tape_input * const ti = cbm_receive(0);
-
-        if(ti == 0)
-        {
-            console_deb_writeline(
-                "kernel_main : Error: Receive from commodore failed!");
-
-            s_led_state = led_state_blink;
-            //
-            // Indicates an error occurred, but still in SAVE mode (IRQ).
-
-            continue; // Try again..
-        }
-
-        name = tape_input_create_str_from_name(ti);
-
-#ifndef NDEBUG
-        console_write("kernel_main : Name from tape input = \"");
-        console_write(name);
-        console_writeline("\".");
-#endif //NDEBUG
-
-        if(cmd_exec(name, ti, &o))
-        {
-            if(o != 0)
-            {
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-
-                s_led_state = led_state_off;
-                //
-                // Indicates LOAD mode (IRQ).
-
-                cbm_send(o->bytes, o->name, o->count, 0);
-            }
-
-            s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-        }
-        else
-        {
-            console_deb_writeline("kernel_main : Error: Command exec. failed!");
-
-            s_led_state = led_state_blink;
-            //
-            // Indicates an error occurred, but still in SAVE mode (IRQ).
-        }
-
-        if(o != 0)
-        {
-            cmd_free_output(o);
-        }
-        alloc_free(name);
-        alloc_free(ti->bytes);
-        alloc_free(ti);
-    }
 }
 
 /**
