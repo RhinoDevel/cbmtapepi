@@ -1,6 +1,6 @@
-### Coming soon:
+### Coming soon (already working in Git master head):
 - SD card read/write via Commodore built-in commands!
-- **Forget** about the serial cables / button hassle (already working in Git master head).
+- **Forget** about the serial cables / button hassle.
 
 # CBM Tape Pi v1.5.1
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
