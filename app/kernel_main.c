@@ -40,15 +40,15 @@
 #include "cmd/cmd_output.h"
 #include "cmd/cmd.h"
 
-#if PERI_BASE == PERI_BASE_PI1
-    #define VIDEO_SUPPORT 1
-#else //PERI_BASE == PERI_BASE_PI1
-    #define VIDEO_SUPPORT 0
-#endif //PERI_BASE == PERI_BASE_PI1
-
-#if VIDEO_SUPPORT
-    #include "../lib/video/video.h"
-#endif //VIDEO_SUPPORT
+// #if PERI_BASE == PERI_BASE_PI1
+//     #define VIDEO_SUPPORT 1
+// #else //PERI_BASE == PERI_BASE_PI1
+//     #define VIDEO_SUPPORT 0
+// #endif //PERI_BASE == PERI_BASE_PI1
+//
+// #if VIDEO_SUPPORT
+//     #include "../lib/video/video.h"
+// #endif //VIDEO_SUPPORT
 
 extern void _enable_interrupts(); // See boot.S.
 
@@ -182,13 +182,13 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     }
 #endif //MT_INTERACTIVE
 
-#if VIDEO_SUPPORT
-#else //VIDEO_SUPPORT
-    static void dummy_write(uint8_t const byte)
-    {
-        (void)byte; // Doing nothing.
-    }
-#endif //VIDEO_SUPPORT
+// #if VIDEO_SUPPORT
+// #else //VIDEO_SUPPORT
+//     static void dummy_write(uint8_t const byte)
+//     {
+//         (void)byte; // Doing nothing.
+//     }
+// #endif //VIDEO_SUPPORT
 
 /** Connect console (singleton) to wanted in-/output.
  */
@@ -206,20 +206,20 @@ static void init_console()
     p.read_byte = dummy_read;
 #endif //MT_INTERACTIVE
 
-    // p.write_byte = miniuart_write_byte;
-    // //
-    // // If MiniUART is also used for serial transfer, using UART as console
-    // // may cause serial transfers to fail (e.g. assertions and debug output)!
-    // //
-    // p.write_newline_with_cr = true;
+    p.write_byte = miniuart_write_byte;
     //
-#if VIDEO_SUPPORT
-    p.write_byte = video_write_byte;
-#else //VIDEO_SUPPORT
-    p.write_byte = dummy_write;
-#endif //VIDEO_SUPPORT
+    // If MiniUART is also used for serial transfer, using UART as console
+    // may cause serial transfers to fail (e.g. assertions and debug output)!
     //
-    p.write_newline_with_cr = false;
+    p.write_newline_with_cr = true;
+    //
+// #if VIDEO_SUPPORT
+//     p.write_byte = video_write_byte;
+// #else //VIDEO_SUPPORT
+//     p.write_byte = dummy_write;
+// #endif //VIDEO_SUPPORT
+//     //
+//     p.write_newline_with_cr = false;
 
     miniuart_init();
 
@@ -280,13 +280,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     init_console();
 
-    // Does not work for Raspberry Pi 2, yet:
-    //
-    // Initialize video:
-    //
-#if VIDEO_SUPPORT
-    video_init();
-#endif //VIDEO_SUPPORT
+//     // Does not work for Raspberry Pi 2, yet:
+//     //
+//     // Initialize video:
+//     //
+// #if VIDEO_SUPPORT
+//     video_init();
+// #endif //VIDEO_SUPPORT
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
