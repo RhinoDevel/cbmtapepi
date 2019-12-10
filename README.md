@@ -1,6 +1,7 @@
 ### Coming soon (already working in Git master head):
-- SD card read/write via Commodore built-in commands!
-- **Forget** about the serial cables / button hassle.
+- SD card read/write via Commodore built-in commands.
+- **Forget** about the serial cables / button hassle!
+- Take a look at the [new video with CBM 3032](https://youtu.be/CkLR3lkHjh4).
 
 # CBM Tape Pi v1.5.1
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
