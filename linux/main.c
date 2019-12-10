@@ -194,13 +194,11 @@ static bool send_to_commodore(
 
     fill_name(p.data->name, name);
 
-    // BUG: TODO: Does NOT seem to work for (all) machine language files,
-    //       at least not on the C64! Fix:
+    // Hard-coded for PET PRG files. C64 (and other) machines need to load
+    // PRGs that are not starting at BASIC start address / are not relocatable
+    // as non-relocatable because of this (e.g.: LOAD"",1,1 on C64):
     //
-    p.data->type = tape_filetype_relocatable; // (necessary for PET PRG file)
-    //
-    // Hard-coded - maybe not always correct, but works for C64 and PET,
-    // both with machine language and BASIC PRG files.
+    p.data->type = tape_filetype_relocatable;
 
     // First two bytes hold the start address:
     //
