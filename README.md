@@ -1,13 +1,9 @@
-## Currently this readme is work-in-progress! Stay tuned, CBM Tape Pi v1.6.0 will soon be released (feel free to watch the video below in the meantime or follow the comments in file create.sh to compile CBM Tape Pi yourself)..
-
 # CBM Tape Pi v1.6.0
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
 Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
 [Video with CBM 3032](https://youtu.be/CkLR3lkHjh4)
-
-<img src="./docs/" alt="Photo" title="Photo with overlays containing all relevant informations to build CBM Tape Pi connections yourself." width="800"/>
 
 ## Features
 
@@ -17,7 +13,7 @@ Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
   - Traverse directories.
   - List current directory's content.
   - Delete files.
-  
+
 - Simple as possible, easy to build hardware interface:
   - No ICs, just a minimum amount of discrete components.
   - Only five connections need to be soldered (wires on the tape port plug).
@@ -70,7 +66,7 @@ You need:
       RUN
   ```
   For non-relocatable (non-BASIC) PRGs on a VIC 20 or a more recent machine (e.g. a C64):
-  
+
   ```
       SAVE"*MYCBMAPP.PRG":LOAD,1,1
       ...
@@ -90,9 +86,9 @@ You need:
 
   ```
       SAVE"CD PETPRGS"
-  ``` 
+  ```
   To return from a subfolder type:
-  
+
   ```
       SAVE"CD .."
   ```
