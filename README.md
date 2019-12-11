@@ -29,6 +29,7 @@ Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
 ### To-do
 
+- Support loading PRG files with filenames longer than 12 characters.
 - Fast load (and save).
 - Custom commands (via wedge) instead of (mis-)using Commodore SAVE command.
 - "Real"/complete tape drive emulation.
