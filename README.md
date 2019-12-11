@@ -1,120 +1,123 @@
-### Coming soon (already working in Git master head):
-- SD card read/write via Commodore built-in commands.
-- **Forget** about the serial cables / button hassle!
-- Take a look at the [new video with CBM 3032](https://youtu.be/CkLR3lkHjh4).
+## Currently this readme is work-in-progress! Stay tuned, CBM Tape Pi v1.6.0 will soon be released (feel free to watch the video below in the meantime or follow the comments in file create.sh to compile CBM Tape Pi yourself)..
 
-# CBM Tape Pi v1.5.1
+# CBM Tape Pi v1.6.0
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
-Use a Raspberry Pi as datassette drive with your Commodore computer!
+Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
-[Video with C64](https://youtu.be/OaE2jjz9rNg)
+[Video with CBM 3032](https://youtu.be/CkLR3lkHjh4)
 
-[Video with CBM 3032](https://youtu.be/Clf2ns-0-9E)
+<img src="./docs/" alt="Photo" title="Photo with overlays containing all relevant informations to build CBM Tape Pi connections yourself." width="800"/>
 
-<img src="./docs/Photo%20of%20connected%20Raspberry%20Pi%201.jpg" alt="Photo" title="Photo with overlays containing all relevant informations to build CBM Tape Pi connections yourself." width="800"/>
+## Features
 
-CBM Tape Pi is a Commodore datassette/tape drive emulator.
-
-- you can transfer PRG files between your modern computer and your Commodore machine via serial connection and a Raspberry Pi, just by using built-in LOAD and SAVE datassette commands on your Commodore machine
-- it is written in bare-metal C and independent of any OS on Raspberry Pi (like Raspbian)
-- it works with any OS on your modern computer, if an application is installed that can transfer files via serial connection and YMODEM protocol
+- Access Pi's SD card from your Commodore to:
+  - Load PRGs.
+  - Save PRGs.
+  - Traverse directories.
+  - List current directory's content.
+  - Delete files.
+  
+- Simple as possible, easy to build hardware interface:
+  - No ICs, just a minimum amount of discrete components.
+  - Only five connections need to be soldered (wires on the tape port plug).
 
 ## Project goals
 
 ### Done
 
-- load and save PRG files for "all" Commodore 8-bit machines without the need for extra software on Commodore machine
-- use simplest and cheapest way to built such an interface
-- use as few hardware components as possible
+- Load and save PRG files for "all" Commodore 8-bit machines without the need for extra software on Commodore machine.
+- Use simplest and cheapest way to built such an interface.
+- Use as few hardware components as possible.
+- Use a Raspberry Pi and one of its mass storage devices.
 
 ### To-do
 
-- read from / write to Raspberry Pi's SD card (make serial interface "obsolete")
-- read from / write to a USB memory stick connected to Raspberry Pi (make serial interface "obsolete")
-- "real"/complete tape drive emulation (e.g. to use fast loaders)
-- MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md)
+- Fast load (and save).
+- Custom commands (via wedge) instead of (mis-)using Commodore SAVE command.
+- "Real"/complete tape drive emulation.
+- MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ## Requirements
 
-The hardware effort is kept as low as possible. There are no ICs required and soldering is optional. A beginner can put this together!
-
 You need:
 
-- some cables (not that many, if you want to solder)
-- a breadboard (if you do not want to solder) or a circuit board
-- one LED
-- one NPN transistor (e.g. a PN2222A or a BC547)
-- one push button
-- three 10k Ohm resistors
-- one 80k Ohm resistor (you can put this together by using multiple resistors)
-- one 100k Ohm resistor
-- one 1k Ohm resistor
-- a Commodore cassette port plug
-- a Raspberry Pi 1 or 2 (more recent models may work, not tested, yet)
-- an SD card (I am using an old 64MB card)
-- a modern computer with a serial interface to connect to Raspberry Pi (another Raspberry Pi is an option, because a serial port is included)
+- Some cables (not that many, if you want to solder).
+- 1x breadboard (if you do not want to solder) or a circuit board.
+- 1x LED.
+- 1x NPN transistor (e.g. a PN2222A or a BC547).
+- 2x 10k Ohm resistors.
+- 1x 80k Ohm resistor (you can put this together by using multiple resistors).
+- 1x 100k Ohm resistor.
+- 1x 1k Ohm resistor.
+- 1x Commodore cassette port plug.
+- 1x Raspberry Pi 1, Zero or 2 (more recent models may work, not tested, yet).
+- 1x SD card (I am using an old 64MB card).
 
 ## How to use
 
-- setup connections (see [photo](./docs/Photo%20of%20connected%20Raspberry%20Pi%201.jpg) above or [picture](./docs/Serial%20to%20CBM%20tape%20via%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below)
-- put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file)
-- **LOAD** - Sending PRG file to Commodore machine:
-  - if the LED is on, SAVE mode is active and you need to press the button to enable LOAD mode  
-  - enter LOAD on Commodore computer
-  - send a PRG file to Raspberry Pi via serial connection and YMODEM protocol (see examples below)
-  - wait for Commodore computer to load your PRG file from Raspberry Pi
-  - repeat this as often as you want
-- **SAVE** - Receiving PRG file from Commodore machine:
-  - if the LED is off, LOAD mode is active and you need to press the button to enabled SAVE mode
-  - start application waiting for file to receive via serial connection and YMODEM protocol (see examples below)
-  - enter SAVE on Commodore machine (it is a good idea to add a name for the PRG file, too)
-  - wait for your modern computer to retrieve your PRG file from Raspberry Pi
-  - repeat this as often as you want
-- pressing the button to toggle between LOAD and SAVE mode also cancels a maybe running operation - if something went wrong, just press the button twice (wait for the LED to toggle between presses) to reset the Raspberry Pi into the same mode
-- on mode (LOAD or SAVE) initialization (triggered by cancel or mode toggle via button by user or triggered by an error) the status LED will flash some times to indicate entering mode
+- Setup connections (see [photo](./docs/) above or [picture](./docs/) below).
+- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file).
+- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
+- The interface's LED will be on, if waiting for commands (via SAVE).
+- The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
+- The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
+- Currently, the commands to the Pi will be send via Commodore SAVE command, if you have a (big) PRG loaded in memory, consider executing NEW before SAVE, to avoid that the PRG will unnecessarily be sent to the Pi.
+- **LOAD**: E.g. a PRG file named ```mycbmapp.prg```:
+
+  ```
+      SAVE"*MYCBMAPP.PRG":LOAD
+      RUN
+  ```
+  For non-relocatable (non-BASIC) PRGs on a VIC 20 or a more recent machine (e.g. a C64):
+  
+  ```
+      SAVE"*MYCBMAPP.PRG":LOAD,1,1
+      ...
+  ```
+- **SAVE**: E.g. a PRG file named ```mynewapp```:
+
+  ```
+      SAVE"MYNEWAPP"
+  ```
+- **LIST**: List content of current directory:
+
+  ```
+      SAVE"$":LOAD
+      RUN
+  ```
+- **CD**: Change directory, e.g. to subfolder named "petprgs":
+
+  ```
+      SAVE"CD PETPRGS"
+  ``` 
+  To return from a subfolder type:
+  
+  ```
+      SAVE"CD .."
+  ```
+- **RM**: Remove a file, e.g. the file named "oldfile.prg":
+
+  ```
+      SAVE"RM OLDFILE.PRG"
+  ```
 
 ## Connections
-Connect sender (e.g. your PC), Raspberry Pi and Commodore machine this way:
-![Wiring](./docs/Serial%20to%20CBM%20tape%20via%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png)
-
-## Examples
-
-- An easy way is to use a Linux OS and the CBM Tape Pi Bash scripts that are included in the release package, just follow the instructions shown at commandline during execution:
-  - Use [send.sh](./send.sh) to send files to Raspberry Pi / Commodore machine.
-  - Use [retrieve.sh](./retrieve.sh) to receive files from Raspberry Pi / Commodore machine.
-  - You can modify stuff in the script files (e.g. the serial interface device to use).
-
-- How to manually use your computer's Linux commandline and a USB to serial interface at /dev/ttyUSB0:
-
-  - Setup serial interface once (115200 baud, 8 data bits, no parity, 1 stop bit):
-      ```shell
-      stty -F /dev/ttyUSB0 115200
-      ```
-  - Send PRG file to Raspberry Pi:
-      ```shell
-      sx --ymodem mycbmapp.prg < /dev/ttyUSB0 > /dev/ttyUSB0
-      ```
-  - Receive PRG file from Raspberry Pi:
-      ```shell
-      rx --ymodem < /dev/ttyUSB0 > /dev/ttyUSB0
-      ```
-
-- If you want to use Microsoft Windows OS instead of some Linux OS (or some other Unix derivative), you may want to give [TeraTerm](https://ttssh2.osdn.jp/) a try (it has YMODEM send and receive features). 
-
-- Using [Minicom](https://salsa.debian.org/minicom-team/minicom) is another option to send and receive via YMODEM protocol. 
+Connect Raspberry Pi and Commodore machine this way:
+![Wiring](./docs/)
 
 ## Supported Commodore machines
 
-- CBM / PET computers (tested with 3032)
-- VIC 20 / VC20
-- C64
-- other Commodore computer with tape interface (not tested, yet)
+- CBM / PET computers (tested with 3032).
+- VIC 20 / VC20.
+- C64.
+- Other Commodore computer with tape interface (not tested, yet).
 
 ## Supported Raspberry Pis
 
-- 1
-- 2
-- other Raspberry Pis (not tested, yet)
+- Raspberry Pi 1.
+- Raspberry Pi 2.
+- Raspberry Pi Zero.
+- Other Raspberry Pis (not tested, yet).
 
 ![RhinoDevel](./data/rhino.bmp)
