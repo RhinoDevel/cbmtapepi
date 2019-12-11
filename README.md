@@ -3,7 +3,7 @@
 
 Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
-[Video with CBM 3032](https://youtu.be/CkLR3lkHjh4)
+[Video with CBM 3032 (please excuse the cuts, there is no fast loader, yet..)](https://youtu.be/CkLR3lkHjh4)
 
 ## Features
 
