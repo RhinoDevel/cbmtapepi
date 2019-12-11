@@ -52,7 +52,7 @@ You need:
 
 ## How to use
 
-- Setup connections (see [photo](./docs/) above or [picture](./docs/) below).
+- Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
 - Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file).
 - The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
 - The interface's LED will be on, if waiting for commands (via SAVE).
@@ -100,7 +100,10 @@ You need:
 
 ## Connections
 Connect Raspberry Pi and Commodore machine this way:
-![Wiring](./docs/)
+![Wiring](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png)
+
+- [Raspberry Pi GPIO connections](./docs/CBM%20Tape%20Pi%20-%20Raspberry%20Pi%20GPIO%20connections.png)
+- [Commodore tape port connections](./docs/CBM%20Tape%20Pi%20-%20Commodore%20machine%20cassette%20port%20connections.png)
 
 ## Supported Commodore machines
 
