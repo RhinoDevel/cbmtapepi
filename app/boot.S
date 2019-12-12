@@ -110,6 +110,8 @@ setup_ivt:
 	mov sp, #0x03700000 // Above 32kB address.
     //ldr sp, =0x04000000 // Above 64MB address.
 
+    // TODO: Enable branch prediction, data cache and instruction cache?
+
 	// Set whole BSS section to zero (it is optional, but C standard):
 
 	ldr r4, =__bss_start // See: https://community.arm.com/processors/b/blog/posts/how-to-load-constants-in-assembly-for-arm-architecture
