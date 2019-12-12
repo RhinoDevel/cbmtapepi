@@ -70,7 +70,7 @@ _handler_arm_reset:
 
     // Switch to correct mode to set IRQ stack pointer:
     //
-    mov r3, #(0x12 | 0x80 | 0x40) // IRQ mode | IRQ inhibit | FIRQ inhibit.
+    mov r3, #0xD2 // #(0x12 | 0x80 | 0x40) // IRQ mode | IRQ inhibit | FIRQ inhibit.
     msr cpsr_c, r3
 
     // Set IRQ stack address (grows downwards to address 0):
@@ -80,7 +80,7 @@ _handler_arm_reset:
 
     // Switch back to supervisor mode:
     //
-    mov r3, #(0x13 | 0x80 | 0x40)  // SVR mode | IRQ inhibit | FIRQ inhibit.
+    mov r3, #0xD3 // #(0x13 | 0x80 | 0x40)  // SVR mode | IRQ inhibit | FIRQ inhibit.
     msr cpsr_c, r3
 
 	// Set stack address (grows downwards to address 0):
