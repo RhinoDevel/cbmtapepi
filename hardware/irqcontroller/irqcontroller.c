@@ -64,3 +64,22 @@ void irqcontroller_irq_src_enable_armtimer()
     //
     s_irqcontroller_reg->enable_basic_irqs = IRQ_ARM_TIMER;
 }
+
+void irqcontroller_irq_enable()
+{
+    asm volatile (
+        "push {r3}\n\t"
+        "mrs r3, cpsr\n\t" // Copy current program status register to R3.
+        "bic r3, r3, #0x80\n\t" // Clear bit 7 (enables "normal" IRQs, later).
+
+        "msr cpsr_c, r3\n\t"
+        //
+        // Update control byte ("_c") of CPSR, only (to enable IRQs).
+
+        "pop {r3}"
+    );
+    //
+    // (volatile should be enabled implicitly anyway,
+    //  because there are no output operands,
+    //  see: https://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html)
+}

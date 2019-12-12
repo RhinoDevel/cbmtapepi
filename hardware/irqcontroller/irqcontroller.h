@@ -44,4 +44,6 @@ void __attribute__((interrupt("FIQ"))) handler_fiq();
  */
 void irqcontroller_irq_src_enable_armtimer();
 
+void irqcontroller_irq_enable();
+
 #endif //MT_IRQCONTROLLER
