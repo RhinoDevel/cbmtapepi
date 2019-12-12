@@ -1,9 +1,13 @@
 # CBM Tape Pi v1.6.0
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
+![CBM Tape Pi hardware](./docs/title.jpg)
+
 Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
-[Video with CBM 3032 (please excuse the cuts, there is no fast loader, yet..)](https://youtu.be/CkLR3lkHjh4)
+- Video: [CBM 3032 (please excuse the cuts, there is no fast loader, yet..)](https://youtu.be/CkLR3lkHjh4)
+
+- Latest release: [CBM Tape Pi v1.6.0](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.0)
 
 ## Features
 
@@ -54,12 +58,12 @@ You need:
 ## How to use
 
 - Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
-- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file).
+- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.0) on an SD card holding other necessary Pi boot files (easiest way is to use an SD card having Raspbian installed and overwrite the kernel file).
 - The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
 - The interface's LED will be on, if waiting for commands (via SAVE).
 - The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
 - The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
-- Currently, the commands to the Pi will be send via Commodore SAVE command, if you have a (big) PRG loaded in memory, consider executing NEW before SAVE, to avoid that the PRG will unnecessarily be sent to the Pi.
+- Currently, the commands to the Pi will be send via Commodore SAVE command, if you have a (big) PRG loaded in memory, consider executing ```NEW``` before ```SAVE```, to avoid that the PRG will unnecessarily be sent to the Pi.
 - **LOAD**: E.g. a PRG file named ```mycbmapp.prg```:
 
   ```
