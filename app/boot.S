@@ -68,10 +68,25 @@ _handler_arm_reset:
     ldmia r3!, {r5, r6, r7, r8, r9, r10, r11, r12}
     stmia r4!, {r5, r6, r7, r8, r9, r10, r11, r12}
 
+    // Switch to correct mode to set IRQ stack pointer:
+    //
+    mov r3, #(0x12 | 0x80 | 0x40) // IRQ mode | IRQ inhibit | FIRQ inhibit.
+    msr cpsr_c, r3
+
+    // Set IRQ stack address (grows downwards to address 0):
+    //
+    mov sp, #0x03F00000 // Above 32kB address.
+    //ldr sp, =0x06000000 // Above 64MB address.
+
+    // Switch back to supervisor mode:
+    //
+    mov r3, #(0x13 | 0x80 | 0x40)  // SVR mode | IRQ inhibit | FIRQ inhibit.
+    msr cpsr_c, r3
+
 	// Set stack address (grows downwards to address 0):
     //
-	//mov sp, #0x00008000 // Above 32kB address.
-    ldr sp, =0x04000000 // Above 64MB address.
+	mov sp, #0x03700000 // Above 32kB address.
+    //ldr sp, =0x04000000 // Above 64MB address.
 
 	// Set whole BSS section to zero (it is optional, but C standard):
 

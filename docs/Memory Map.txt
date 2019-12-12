@@ -24,4 +24,11 @@
 ^
 | (stack grows downwards)
 |
-0x04000000 / 64 MB  Top of stack.
+0x03700000 / 55 MB  Top of stack (4 byte / 32 bit - aligned).
+
+^
+| (stack grows downwards)
+|
+0x03F00000 / 63 MB  Top of IRQ mode stack
+                    (4 byte / 32 bit - aligned;
+                     below 64MB, because of possible shared memory with GPU)
