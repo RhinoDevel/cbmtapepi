@@ -20,6 +20,27 @@
 // Preserve registers above to be used as parameters of kernel_main().
 //
 _start:
+
+/*
+    // Enable for everything more recent than PERI_BASE_PI1?
+    //
+    // Switch from hypervisor to supervisor mode, if necessary:
+    //
+    .arch_extension sec // Necessary?
+    .arch_extension virt
+	mrs		r3, cpsr
+	and		r3, r3, #0x1F
+	cmp		r3, #0x13 // SVR mode.
+	beq		setup_ivt
+	mov		r3, #0x13 // SVR mode.
+	msr		spsr_cxsf, r3
+	add		r3, pc, #4
+	msr		ELR_hyp, r3
+	eret
+
+setup_ivt:
+*/
+
     // Setup interrupt vector table at start (should be at 0x00008000):
     //
     ldr pc, _vector_arm_reset
