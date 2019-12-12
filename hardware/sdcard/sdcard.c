@@ -23,7 +23,8 @@
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
 #include "../gpio/gpio.h"
-#include "../../lib/console/console.h"
+// #include "../../lib/console/console.h"
+#include "../peribase.h"
 
 #include "sdcard.h"
 #include "sdcard_defines.h"
@@ -57,21 +58,21 @@ struct SDDescriptor
 
 // EMMC registers used:
 //
-static volatile unsigned int* const EMMC_BLKSIZECNT  = (unsigned int*)(0x20300004);
-static volatile unsigned int* const EMMC_ARG1        = (unsigned int*)(0x20300008);
-static volatile unsigned int* const EMMC_CMDTM       = (unsigned int*)(0x2030000c);
-static volatile unsigned int* const EMMC_RESP0       = (unsigned int*)(0x20300010);
-static volatile unsigned int* const EMMC_RESP1       = (unsigned int*)(0x20300014);
-static volatile unsigned int* const EMMC_RESP2       = (unsigned int*)(0x20300018);
-static volatile unsigned int* const EMMC_RESP3       = (unsigned int*)(0x2030001c);
-static volatile unsigned int* const EMMC_DATA        = (unsigned int*)(0x20300020);
-static volatile unsigned int* const EMMC_STATUS      = (unsigned int*)(0x20300024);
-static volatile unsigned int* const EMMC_CONTROL0    = (unsigned int*)(0x20300028);
-static volatile unsigned int* const EMMC_CONTROL1    = (unsigned int*)(0x2030002c);
-static volatile unsigned int* const EMMC_INTERRUPT   = (unsigned int*)(0x20300030);
-static volatile unsigned int* const EMMC_IRPT_MASK   = (unsigned int*)(0x20300034);
-static volatile unsigned int* const EMMC_IRPT_EN     = (unsigned int*)(0x20300038);
-static volatile unsigned int* const EMMC_SLOTISR_VER = (unsigned int*)(0x203000fc);
+static volatile unsigned int* const EMMC_BLKSIZECNT  = (unsigned int*)(PERI_BASE + 0x00300004);
+static volatile unsigned int* const EMMC_ARG1        = (unsigned int*)(PERI_BASE + 0x00300008);
+static volatile unsigned int* const EMMC_CMDTM       = (unsigned int*)(PERI_BASE + 0x0030000c);
+static volatile unsigned int* const EMMC_RESP0       = (unsigned int*)(PERI_BASE + 0x00300010);
+static volatile unsigned int* const EMMC_RESP1       = (unsigned int*)(PERI_BASE + 0x00300014);
+static volatile unsigned int* const EMMC_RESP2       = (unsigned int*)(PERI_BASE + 0x00300018);
+static volatile unsigned int* const EMMC_RESP3       = (unsigned int*)(PERI_BASE + 0x0030001c);
+static volatile unsigned int* const EMMC_DATA        = (unsigned int*)(PERI_BASE + 0x00300020);
+static volatile unsigned int* const EMMC_STATUS      = (unsigned int*)(PERI_BASE + 0x00300024);
+static volatile unsigned int* const EMMC_CONTROL0    = (unsigned int*)(PERI_BASE + 0x00300028);
+static volatile unsigned int* const EMMC_CONTROL1    = (unsigned int*)(PERI_BASE + 0x0030002c);
+static volatile unsigned int* const EMMC_INTERRUPT   = (unsigned int*)(PERI_BASE + 0x00300030);
+static volatile unsigned int* const EMMC_IRPT_MASK   = (unsigned int*)(PERI_BASE + 0x00300034);
+static volatile unsigned int* const EMMC_IRPT_EN     = (unsigned int*)(PERI_BASE + 0x00300038);
+static volatile unsigned int* const EMMC_SLOTISR_VER = (unsigned int*)(PERI_BASE + 0x003000fc);
 
 // Command table:
 //
@@ -571,6 +572,7 @@ static int reset_card()
     }
     if(i == max_iter)
     {
+        // console_deb_writeline("reset_card : Error: Max. iteration reached!");
         return SD_ERROR_RESET;
     }
 
@@ -585,6 +587,8 @@ static int reset_card()
     //
     if((resp = sdSetClock(FREQ_SETUP)))
     {
+        // console_deb_writeline("reset_card : Error: Set clock failed!");
+
         return resp;
     }
 
@@ -912,8 +916,8 @@ int sdcard_init()
     //
     if((resp = init_emmc_clock_rate()))
     {
-        console_deb_writeline(
-            "sdcard_init: Error: Init EMMC clock rate failed!");
+        // console_deb_writeline(
+        //     "sdcard_init: Error: Init EMMC clock rate failed!");
         return resp;
     }
 
@@ -921,7 +925,7 @@ int sdcard_init()
     //
     if((resp = reset_card()))
     {
-        console_deb_writeline("sdcard_init: Error: Card reset failed!");
+        // console_deb_writeline("sdcard_init: Error: Card reset failed!");
         return resp;
     }
 
@@ -947,7 +951,7 @@ int sdcard_init()
     {
         if( resp == SD_BUSY )
         {
-            console_deb_writeline("sdcard_init: Error: SD card is busy!");
+            // console_deb_writeline("sdcard_init: Error: SD card is busy!");
             return resp;
         }
 
@@ -959,8 +963,8 @@ int sdcard_init()
         {
             if((resp = reset_card()))
             {
-                console_deb_writeline(
-                    "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
+                // console_deb_writeline(
+                    // "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
                 return resp;
             }
         }
@@ -969,8 +973,8 @@ int sdcard_init()
         // Resolve voltage.
         if((resp = sdAppSendOpCond(ACMD41_ARG_SC)))
         {
-            console_deb_writeline(
-                "sdcard_init: Error: Resolving voltage failed!");
+            // console_deb_writeline(
+                // "sdcard_init: Error: Resolving voltage failed!");
             return resp;
         }
 
