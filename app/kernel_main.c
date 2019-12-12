@@ -50,8 +50,6 @@
 //     #include "../lib/video/video.h"
 // #endif //VIDEO_SUPPORT
 
-extern void _enable_interrupts(); // See boot.S.
-
 extern uint32_t __heap; // See memmap.ld.
 
 enum led_state
@@ -243,7 +241,7 @@ static void irq_armtimer_init()
 {
     irqcontroller_irq_src_enable_armtimer();
 
-    _enable_interrupts();
+    irqcontroller_irq_enable();
 
     // Timer counts down 250.000 times in one second (with 250 kHz):
     //

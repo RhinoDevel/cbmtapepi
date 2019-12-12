@@ -37,6 +37,8 @@
 // ./lib/alloc/allocconf.h: #define MT_ALLOC_GRANULARITY 4
 // ./lib/alloc/allocconf.h: #define MT_ALLOC_ALIGN_TO_GRANULARITY
 
-// Also see ./hardware/peribase.h
+// Also see: ./hardware/peribase.h
+
+// Also see: ./boot.S
 
 #endif //MT_CONFIG
