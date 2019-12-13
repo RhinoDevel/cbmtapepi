@@ -50,7 +50,10 @@ DSTATUS disk_initialize (
     {
         return 0;
     }
-    if(sdcard_init() != SD_OK)
+
+    int const r = sdcard_init();
+
+    if(r != SD_OK && r != SD_ALREADY_INITIALIZED)
     {
         return STA_NOINIT;
     }
