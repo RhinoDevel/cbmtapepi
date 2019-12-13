@@ -23,7 +23,7 @@
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
 #include "../gpio/gpio.h"
-// #include "../../lib/console/console.h"
+#include "../../lib/console/console.h"
 #include "../peribase.h"
 
 #include "sdcard.h"
@@ -188,18 +188,23 @@ static int wait_for_interrupt(unsigned int const mask)
 /* Wait for any command that may be in progress.
  */
 static int sdWaitForCommand()
-  {
-  // Check for status indicating a command in progress.
-  int count = 1000000;
-  while( (*EMMC_STATUS & SR_CMD_INHIBIT) && !(*EMMC_INTERRUPT & INT_ERROR_MASK) && count-- )
-    armtimer_busywait_microseconds(1);
-  if( count <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK) )
-    {
-    return SD_BUSY;
-    }
+{
+    // Check for status indicating a command in progress:
 
-  return SD_OK;
-  }
+    int count = 1000000;
+
+    while((*EMMC_STATUS & SR_CMD_INHIBIT)
+        && !(*EMMC_INTERRUPT & INT_ERROR_MASK)
+        && count--)
+    {
+        armtimer_busywait_microseconds(1);
+    }
+    if(count <= 0 || (*EMMC_INTERRUPT & INT_ERROR_MASK))
+    {
+        return SD_BUSY;
+    }
+    return SD_OK;
+}
 
 /* Wait for any data that may be in progress.
  */
@@ -572,7 +577,7 @@ static int reset_card()
     }
     if(i == max_iter)
     {
-        // console_deb_writeline("reset_card : Error: Max. iteration reached!");
+        console_deb_writeline("reset_card : Error: Max. iteration reached!");
         return SD_ERROR_RESET;
     }
 
@@ -587,7 +592,7 @@ static int reset_card()
     //
     if((resp = sdSetClock(FREQ_SETUP)))
     {
-        // console_deb_writeline("reset_card : Error: Set clock failed!");
+        console_deb_writeline("reset_card : Error: Set clock failed!");
 
         return resp;
     }
@@ -626,6 +631,11 @@ static int sdAppSendOpCond( int arg )
     {
         if(resp != SD_TIMEOUT )
         {
+#ifndef NDEBUG
+            console_write("sdAppSendOpCond : Returning with code ");
+            console_write_dword_dec((uint32_t)resp);
+            console_writeline(" (1).");
+#endif //NDEBUG
             return resp;
         }
     }
@@ -638,6 +648,11 @@ static int sdAppSendOpCond( int arg )
         {
             if(resp != SD_TIMEOUT )
             {
+#ifndef NDEBUG
+                console_write("sdAppSendOpCond : Returning with code ");
+                console_write_dword_dec((uint32_t)resp);
+                console_writeline(" (2).");
+#endif //NDEBUG
                 return resp;
             }
         }
@@ -646,12 +661,14 @@ static int sdAppSendOpCond( int arg )
     // Return timeout error if still not busy.
     if(!(s_sdcard.ocr & R3_COMPLETE))
     {
+        console_deb_writeline("sdAppSendOpCond : Error: Timeout!");
         return SD_TIMEOUT;
     }
 
     // Check that at least one voltage value was returned.
     if(!(s_sdcard.ocr & ACMD41_VOLTAGE))
     {
+        console_deb_writeline("sdAppSendOpCond : Error: Voltage!");
         return SD_ERROR_VOLTAGE;
     }
 
@@ -916,8 +933,8 @@ int sdcard_init()
     //
     if((resp = init_emmc_clock_rate()))
     {
-        // console_deb_writeline(
-        //     "sdcard_init: Error: Init EMMC clock rate failed!");
+        console_deb_writeline(
+            "sdcard_init: Error: Init EMMC clock rate failed!");
         return resp;
     }
 
@@ -925,7 +942,7 @@ int sdcard_init()
     //
     if((resp = reset_card()))
     {
-        // console_deb_writeline("sdcard_init: Error: Card reset failed!");
+        console_deb_writeline("sdcard_init: Error: Card reset failed!");
         return resp;
     }
 
@@ -951,7 +968,7 @@ int sdcard_init()
     {
         if( resp == SD_BUSY )
         {
-            // console_deb_writeline("sdcard_init: Error: SD card is busy!");
+            console_deb_writeline("sdcard_init: Error: SD card is busy!");
             return resp;
         }
 
@@ -961,20 +978,27 @@ int sdcard_init()
         //
         if(*EMMC_STATUS & SR_CMD_INHIBIT)
         {
+            console_deb_writeline(
+                "sdcard_init: Resetting card a second time..");
             if((resp = reset_card()))
             {
-                // console_deb_writeline(
-                    // "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
+                console_deb_writeline(
+                    "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
                 return resp;
             }
         }
+
         // wait(50);
 
         // Resolve voltage.
         if((resp = sdAppSendOpCond(ACMD41_ARG_SC)))
         {
-            // console_deb_writeline(
-                // "sdcard_init: Error: Resolving voltage failed!");
+#ifndef NDEBUG
+            console_write(
+                "sdcard_init: Error: Resolving voltage failed (error code: ");
+            console_write_dword_dec(resp);
+            console_writeline(")!");
+#endif //NDEBUG
             return resp;
         }
 
