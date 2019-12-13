@@ -54,12 +54,16 @@ static bool init(char const * const dir_path)
         return false;
     }
 
-    if(f_opendir(s_dir, dir_path) != FR_OK)
+    FRESULT const r = f_opendir(s_dir, dir_path);
+    //
+    if(r != FR_OK)
     {
 #ifndef NDEBUG
         console_write("dir/init : Error: Failed to open dir. at \"");
         console_write(dir_path);
-        console_writeline("\"!");
+        console_write("\" (error code: ");
+        console_write_dword_dec((uint32_t)r);
+        console_writeline(")!");
 #endif //NDEBUG
         return false;
     }
