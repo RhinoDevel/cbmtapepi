@@ -708,6 +708,12 @@ static int init_emmc_clock_rate()
 
     s_emmc_clock_rate = (int)r;
 
+#ifndef NDEBUG
+    console_write("init_emmc_clock_rate : Rate is ");
+    console_write_dword_dec(s_emmc_clock_rate);
+    console_writeline(".");
+#endif //NDEBUG
+
     return SD_OK;
 }
 
