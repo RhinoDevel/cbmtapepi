@@ -16,6 +16,9 @@
 //#include "../hardware/pl011uart/pl011uart.h"
 #include "../hardware/gpio/gpio_params.h"
 #include "../hardware/gpio/gpio.h"
+#ifndef NDEBUG
+    #include "../hardware/sdcard/sdcard.h"
+#endif //NDEBUG
 
 #include "ui/ui.h"
 
@@ -272,8 +275,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         .peri_base = PERI_BASE
     });
 
-    irq_armtimer_init(); // Needs GPIO.
-
     // Initialize console in-/output:
     //
     init_console();
@@ -286,6 +287,19 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 //     video_init();
 // #endif //VIDEO_SUPPORT
 
+#ifndef NDEBUG
+    int const result_sdcard_init = sdcard_init();
+
+    if(result_sdcard_init != SD_OK
+        && result_sdcard_init != SD_ALREADY_INITIALIZED)
+    {
+        console_write("kernel_main : Error: SD card init failed with error ");
+        console_write_dword_dec(result_sdcard_init);
+        console_writeline("!");
+    }
+#endif //NDEBUG
+
+
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
     alloc_init(&__heap, MT_HEAP_SIZE);
@@ -296,6 +310,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         armtimer_start_one_mhz,
         armtimer_get_tick,
         armtimer_busywait_microseconds);
+
+    irq_armtimer_init(); // Needs GPIO.
 
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
