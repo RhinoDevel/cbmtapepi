@@ -54,11 +54,11 @@ _vector_fiq:
 
 _handler_arm_reset:
 
+/*
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  ***
     // *************************************
     //
-/*
     // Switch from hypervisor to supervisor mode, if necessary:
     //
     .arch_extension virt
@@ -71,6 +71,18 @@ _handler_arm_reset:
     add		r3, pc, #4
     msr		ELR_hyp, r3
     eret
+    //
+// Another option to do this (always switches to SVR, assumes HYP to be active):
+//
+//    .arch_extension virt
+//    .arch_extension sec
+//    mrs r3, cpsr
+//    bic r3, r3, #0x1F
+//    orr r3, r3, #0x13 // SVR mode.
+//    msr spsr_cxsf, r3
+//    add r3, pc, #4
+//    msr ELR_hyp, r3
+//    eret
 
 setup_ivt:
 */
@@ -110,7 +122,8 @@ setup_ivt:
 	mov sp, #0x03700000 // Above 32kB address.
     //ldr sp, =0x04000000 // Above 64MB address.
 
-    // TODO: Enable branch prediction, data cache and instruction cache?
+    // TODO: Enable branch prediction, data cache and instruction cache
+    //       (maybe some stuff already is enabled for PERI_BASE_PI2..)?
 
 	// Set whole BSS section to zero (it is optional, but C standard):
 
