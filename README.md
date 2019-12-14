@@ -1,4 +1,4 @@
-# CBM Tape Pi v1.6.0
+# CBM Tape Pi v1.6.1
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
 ![CBM Tape Pi hardware](./docs/title.jpg)
@@ -7,7 +7,7 @@ Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
 - Video: [CBM 3032 (please excuse the cuts, there is no fast loader, yet..)](https://youtu.be/CkLR3lkHjh4)
 
-- Latest release: [CBM Tape Pi v1.6.0](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.0)
+- Latest release: [CBM Tape Pi v1.6.1](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1)
 
 ## Features
 
@@ -37,7 +37,7 @@ Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 - Fast load (and save).
 - Custom commands (via wedge) instead of (mis-)using Commodore SAVE command.
 - "Real"/complete tape drive emulation.
-- MAYBE IMPOSSIBLE: Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
+- MAYBE IMPOSSIBLE (kernel module?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ## Requirements
 
@@ -58,7 +58,7 @@ You need:
 ## How to use
 
 - Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
-- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.0) on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
+- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1) on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
 - Delete (if existing) config.txt and cmdline.txt from boot partition.
 - Overwrite fixup.dat, start.elf and bootcode.bin with the files having the same names from [Raspberry Pi firmware release 1.20171029](https://github.com/raspberrypi/firmware/tree/1.20171029/boot).
 - The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
