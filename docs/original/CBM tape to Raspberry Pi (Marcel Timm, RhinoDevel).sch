@@ -74,7 +74,7 @@
 </Diagrams>
 <Paintings>
   <Text -10 -30 12 #000000 0 "Raspberry Pi Commodore datassette emulator simple-as-possible interface.">
-  <Text -10 -70 14 #000000 0 "CBM Tape Pi v1.6.0 (Marcel Timm, RhinoDevel, 2019, rhinodevel.com)">
+  <Text -10 -70 14 #000000 0 "CBM Tape Pi v1.6.1 (Marcel Timm, RhinoDevel, 2019, rhinodevel.com)">
   <Rectangle -10 20 140 480 #000000 2 2 #55ff7f 1 0>
   <Rectangle 340 20 160 360 #000000 2 2 #55ff7f 1 0>
   <Text 340 0 12 #000000 0 "Commodore tape port">
