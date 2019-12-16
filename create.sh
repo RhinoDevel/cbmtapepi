@@ -81,8 +81,8 @@ export OPTIONS_GCC_ALL=" \
     -fpic \
     -ffreestanding"
 
+#    -DNDEBUG \
 export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
-    -DNDEBUG \
     -O2 \
     -std=gnu99 \
     -Wall \
@@ -156,6 +156,7 @@ $MT_CC app/ui/ui.c -o app/ui/ui.o
 $MT_CC app/cbm/cbm_receive.c -o app/cbm/cbm_receive.o
 $MT_CC app/cbm/cbm_send.c -o app/cbm/cbm_send.o
 $MT_CC app/cmd/cmd.c -o app/cmd/cmd.o
+$MT_CC app/petload/petload.c -o app/petload/petload.o
 $MT_CC app/kernel_main.c -o app/kernel_main.o
 
 echo Linking..
@@ -186,6 +187,7 @@ arm-none-eabi-ld \
     app/cbm/cbm_receive.o \
     app/cbm/cbm_send.o \
     app/cmd/cmd.o \
+    app/petload/petload.o \
     \
     lib/mem/mem.o \
     lib/console/console.o \
