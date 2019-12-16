@@ -5,6 +5,7 @@
 #define MT_BASIC
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #define MT_BASIC_MAX_CHAR_PER_LOGICAL_LINE 80
 
@@ -27,5 +28,15 @@ uint8_t* basic_get_prints(
  * - Caller takes ownership of return value.
  */
 uint8_t* basic_get_sample(uint16_t const addr, uint32_t * const len);
+
+/**
+ * - Fills given len with length of return value in byte.
+ * - Caller takes ownership of return value.
+ */
+uint8_t* basic_get_sys(
+    uint16_t const addr,
+    uint16_t const sys_addr,
+    bool const skip_addr,
+    uint32_t * const len);
 
 #endif //MT_BASIC
