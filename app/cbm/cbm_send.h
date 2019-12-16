@@ -7,6 +7,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+void cbm_send_fill_name(
+    uint8_t * const name_out, char const * const name_in);
+
 /**
  * - Given function is optional.
  */

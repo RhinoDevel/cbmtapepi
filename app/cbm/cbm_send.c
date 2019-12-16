@@ -19,7 +19,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-static void fill_name(uint8_t * const name_out, char const * const name_in)
+static void fill_add_bytes(uint8_t * const add_bytes)
+{
+    // Additional bytes (to be stored in header):
+    //
+    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
+    {
+        add_bytes[i] = 0x20;
+    }
+}
+
+void cbm_send_fill_name(
+    uint8_t * const name_out, char const * const name_in)
 {
     // static uint8_t const sample_name[] = {
     //     'R', 'H', 'I', 'N', 'O', 'D', 'E', 'V', 'E', 'L',
@@ -45,16 +56,6 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
     alloc_free(buf);
 }
 
-static void fill_add_bytes(uint8_t * const add_bytes)
-{
-    // Additional bytes (to be stored in header):
-    //
-    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
-    {
-        add_bytes[i] = 0x20;
-    }
-}
-
 bool cbm_send(
     uint8_t /*const*/ * const bytes,
     char const * const name,
@@ -71,7 +72,7 @@ bool cbm_send(
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
     p.data = alloc_alloc(sizeof *(p.data));
 
-    fill_name(p.data->name, name);
+    cbm_send_fill_name(p.data->name, name);
 
     // First two bytes hold the start address:
     //
