@@ -9,6 +9,7 @@
 
 #include "tape_filetype.h"
 
+// First five bytes of the 192 bytes long tape buffer are filled with something.
 #define MT_TAPE_INPUT_NAME_LEN 16
 #define MT_TAPE_INPUT_ADD_BYTES_LEN 171
 
