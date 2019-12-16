@@ -57,6 +57,7 @@ You need:
 
 ## How to use
 
+- **Warning**: When using CBM Tape Pi, don't toggle the Commodore datassette connector ports that are (by Commodore default) used as inputs into output mode (e.g. via POKEs), because the 5V from the Commodore may harm the connected Raspberry Pi GPIO pins (max. of 3.3V allowed)!
 - Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
 - Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1) on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
 - Delete (if existing) config.txt and cmdline.txt from boot partition.
