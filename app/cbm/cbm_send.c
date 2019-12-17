@@ -56,11 +56,8 @@ void cbm_send_fill_name(
     alloc_free(buf);
 }
 
-bool cbm_send(
-    uint8_t /*const*/ * const bytes,
-    char const * const name,
-    uint32_t const count,
-    bool (*is_stop_requested)())
+bool cbm_send_data(
+    struct tape_input * const data, bool (*is_stop_requested)())
 {
     bool ret_val = false;
     struct tape_send_params p;
@@ -70,28 +67,42 @@ bool cbm_send(
     p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
     p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
-    p.data = alloc_alloc(sizeof *(p.data));
+    p.data = data;
 
-    cbm_send_fill_name(p.data->name, name);
+    ret_val = tape_send(&p, mem_addr);
+
+    alloc_free(mem_addr);
+    return ret_val;
+}
+
+bool cbm_send(
+    uint8_t /*const*/ * const bytes,
+    char const * const name,
+    uint32_t const count,
+    bool (*is_stop_requested)())
+{
+    bool ret_val = false;
+    struct tape_input * const data = alloc_alloc(sizeof *data);
+
+    cbm_send_fill_name(data->name, name);
 
     // First two bytes hold the start address:
     //
-    p.data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
+    data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
 
     // Hard-coded for PET PRG files. C64 (and other) machines need to load
     // PRGs that are not starting at BASIC start address / are not relocatable
     // as non-relocatable because of this (e.g.: LOAD"",1,1 on C64):
     //
-    p.data->type = tape_filetype_relocatable;
+    data->type = tape_filetype_relocatable;
 
-    p.data->bytes = bytes + 2;
-    p.data->len = count - 2;
+    data->bytes = bytes + 2;
+    data->len = count - 2;
 
-    fill_add_bytes(p.data->add_bytes);
+    fill_add_bytes(data->add_bytes);
 
-    ret_val = tape_send(&p, mem_addr);
+    ret_val = cbm_send_data(data, is_stop_requested);
 
-    alloc_free(mem_addr);
-    alloc_free(p.data);
+    alloc_free(data);
     return ret_val;
 }
