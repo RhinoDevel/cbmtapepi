@@ -183,19 +183,22 @@ uint8_t* basic_get_sys(
     assert(sys_addr > 0);
     assert(len != 0);
 
+    static uint32_t const sys_addr_len = 5;
     uint32_t i = 0, j = 0;
     uint16_t line_nr = s_line_first;
-    char sys_addr_dec[5];
+    char sys_addr_dec[sys_addr_len];
 
     calc_word_to_dec(sys_addr, sys_addr_dec);
-
-    uint32_t sys_addr_len = str_get_len(sys_addr_dec);
+    while(j < sys_addr_len && sys_addr_dec[j] == '0')
+    {
+        ++j;
+    }
 
     *len = (skip_addr ? 0 : 2) // Address
         + 2 // Link to next line.
         + 2 // Line number.
         + 1 // BASIC token SYS.
-        + sys_addr_len
+        + (sys_addr_len - j) // Real length of SYS address.
         + 1 // End of line.
         + 2; // End of program.
 
@@ -226,7 +229,7 @@ uint8_t* basic_get_sys(
 
     ret_val[i++] = (uint8_t)basic_token_sys; // SYS
 
-    while(sys_addr_dec[j] != '\0')
+    while(j < sys_addr_len)
     {
         ret_val[i++] = sys_addr_dec[j];
         ++j;
