@@ -36,6 +36,8 @@
 #include "../lib/str/str.h"
 
 #include "tape/tape_init.h"
+#include "tape/tape_input.h"
+#include "petload/petload.h"
 
 #include "cbm/cbm_receive.h"
 #include "cbm/cbm_send.h"
@@ -61,6 +63,9 @@ enum led_state
     led_state_on,
     led_state_blink
 };
+
+static char const * const s_fastload_pet2 = "!pet2";
+
 static enum led_state s_led_state = led_state_off;
 
 /** IRQ interrupt handler.
@@ -148,7 +153,24 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             console_writeline("\".");
 #endif //NDEBUG
 
-            if(cmd_exec(name, ti, &o))
+            if(str_starts_with(name, s_fastload_pet2))
+            {
+                struct tape_input * ti = petload_create();
+
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+
+                s_led_state = led_state_off;
+                //
+                // Indicates LOAD mode (IRQ).
+
+                cbm_send_data(ti, 0);
+                
+                tape_input_free(ti);
+                ti = 0;
+
+                s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+            }
+            else if(cmd_exec(name, ti, &o))
             {
                 if(o != 0)
                 {
