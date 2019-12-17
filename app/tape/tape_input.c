@@ -3,10 +3,22 @@
 
 #include "tape_input.h"
 #include "../config.h"
+#include "../../lib/assert.h"
 #include "../../lib/console/console.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/str/str.h"
 #include "../../lib/petasc/petasc.h"
+
+void tape_input_free(struct tape_input * const d)
+{
+    if(d == 0)
+    {
+        assert(false);
+        return;
+    }
+    alloc_free(d->bytes);
+    alloc_free(d);
+}
 
 void tape_input_console_write(
     struct tape_input const * const d, bool const write_bytes)

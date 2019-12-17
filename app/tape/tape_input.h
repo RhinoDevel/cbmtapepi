@@ -23,6 +23,12 @@ struct tape_input
     uint8_t add_bytes[MT_TAPE_INPUT_ADD_BYTES_LEN]; // Additional bytes (to be stored in header).
 };
 
+/**
+ * - Also frees d->bytes.
+ * - Given pointer will be invalid on return.
+ */
+void tape_input_free(struct tape_input * const d);
+
 void tape_input_console_write(
     struct tape_input const * const d, bool const write_bytes);
 
