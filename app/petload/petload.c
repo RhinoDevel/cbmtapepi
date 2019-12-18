@@ -11,9 +11,16 @@
 
 static char const * const s_name = "petload";
 
-static uint16_t const s_addr_tape_buf_one = 634/*0x27A*/;
+// *** BASIC v2 / Rev. 3 ROMs: ***
+
+// static uint16_t const s_addr_key_buf_char_count = 158/*0x009E*/;
 //
-// PET ROM v2 and v3 tape #1 buffer.
+// Number of characters currently stored in keyboard buffer.
+
+//static uint16_t const s_addr_key_buf = 623/*0x026F*/; // Keyboard buffer.
+static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
+
+// *** ***
 
 static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
 
@@ -24,7 +31,9 @@ struct tape_input * petload_create()
     int i = 0;
 
     cbm_send_fill_name(ret_val->name, s_name);
+
     ret_val->type = tape_filetype_relocatable; // Correct for PET.
+
     ret_val->addr = MT_BASIC_ADDR_PET;
     ret_val->bytes = basic_get_sys(
         ret_val->addr,
