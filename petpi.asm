@@ -11,7 +11,7 @@
 ; (if there are no commented-out values following,
 ; these addresses are equal).
 
-*=655 ;tape buf. #1 and #2 used (192-5-16+192=363 bytes)
+*=634 ;tape buf. #1 and #2 used (192+192=384 bytes), load via basic loader prg.
 
 ; -------------------
 ; system sub routines
@@ -43,16 +43,25 @@ chr_0    = $30
 chr_a    = $41
 chr_spc  = $20
 
-tapbufin = $bb          ;$271 ;tape buffer #1 and #2 indices to next char (2 bytes)
+tapbufin = $bb          ;$271 ;tape buf. #1 & #2 indices to next char (2 bytes)
 cursor   = $c4          ;$e0
 
-; Using tape #1 port:
-;
-sense    = $e810;bit 4 ; pia 1, port a
-read     = $e811;bit 0 ; pia 1, control register a
-write    = $e840;bit 3 ; via, port b
+; using tape #1 port for transfer:
 
-defbasic = $401          ;default start addr.of basic prg
+cas_sense = $e810          ;bit 4
+;
+;pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
+;               unconnected, "0v"/0 when key pressed)
+
+cas_read = $e811          ;bit 0
+;
+;pia 1, control register a (59409)
+
+cas_write = $e840          ;bit 3
+;
+;via, port b (59456, tested => correct, 5v for 1, 0v output for 0)
+
+defbasic = $401          ;default start addr. of basic prg
 
 adptr    = 15          ;6 ;unused terminal & src. width
 
@@ -68,14 +77,18 @@ adptr    = 15          ;6 ;unused terminal & src. width
 
          jsr clrscr
 
-         lda #1        ;make sure that initial write ready signal
-         sta wrmo+1    ;to expect is set to one.
+                       ; expected values at this point:
+                       ;
+                       ; cas_write/read-ack   = output, set to high (cbm default)
+                       ; cas_read/data        = input, don't care about level
+                       ; cas_sense/data-ready = input, set to low (done by pi, not cbm default)
 
-         ; EXPECTS: WRITE = OUTPUT and LOW = READ ACK
-         ;          READ  = INPUT          = DATA
-         ;          SENSE = INPUT and LOW  = WRITE READY
+         lda #1        ;make sure that initial data-ready signal
+         sta drmo+1    ;to expect on cas_sense is set to one
 
-         jsr togout    ;set WRITE to high
+                       ; ask for data:
+                       ;
+         jsr out2low   ;set read-ack on cas_write to low
 
          jsr readbyte  ;read start address
          sta adptr     ;store for transfer
@@ -84,7 +97,7 @@ adptr    = 15          ;6 ;unused terminal & src. width
          sta adptr+1
          sta loadadr+1
 
-         ;lda adptr+1    ;print start address
+                       ;lda adptr+1    ;print start address
          jsr printby
          lda adptr
          jsr printby
@@ -97,7 +110,7 @@ adptr    = 15          ;6 ;unused terminal & src. width
          jsr readbyte
          sta le+1
 
-         ;lda le+1       ;print payload byte count
+                       ;lda le+1       ;print payload byte count
          jsr printby
          lda le
          jsr printby
@@ -107,7 +120,7 @@ keywait  jsr get       ;wait for user key press
          beq keywait
          cmp #chr_stop
          bne cursave   ;exit,if run/stop was pressed
-break    jsr out2low  ;return with WRITE set to high
+break    jsr out2low   ;return with read-ack on cas_write set to low
          rts
 
 cursave  lda cursor    ;remember cursor position for progress updates
@@ -143,7 +156,7 @@ nextpl   lda crsrbuf   ;reset cursor position for progress update on screen
 
          lda #chr_spc
          jsr wrt
-         ;ldy #0
+                       ;ldy #0
          lda (adptr),y ;print byte read
          jsr printby
 
@@ -187,23 +200,23 @@ readdone jsr crlf
 runasm   jmp (loadadr)
 
 ; ****************************************
-; *** "toggle" WRITE based on tapbufin ***
+; *** "toggle" write based on tapbufin ***
 ; ****************************************
 
 togout   lda tapbufin  ;"toggle" depending on tapbufin
          beq toghigh
          dec tapbufin  ;toggle output to low
-         lda write
+         lda cas_write
          and #247
          jmp togdo
 toghigh  inc tapbufin  ;toggle output to high
-         lda write
+         lda cas_write
          ora #8
-togdo    sta write        ;does not work in vice (v3.1)!
+togdo    sta cas_write ;does not work in vice (v3.1)!
          rts
 
 ; ************************
-; *** set WRITE to low ***
+; *** set write to low ***
 ; ************************
 
 out2low  lda #1
@@ -228,18 +241,18 @@ readloop jsr get       ;let user be able to break execution with run/stop key
          pla           ;function usable by main only,
          jmp break     ;because of this..
 
-readcont lda sense        ;wait for write ready signal
-         and #16        ;write ready line
+readcont lda cas_sense ;wait for data-ready signal
+         and #16       ;data-ready line
          lsr a
          lsr a
          lsr a
          lsr a
-wrmo     cmp #0        ;this value will be toggled between 0 and 1 in-place.
+drmo     cmp #0        ;this value will be toggled between 0 and 1 in-place.
          bne readloop
 
-         eor #1        ;toggle next write ready val.to expect
-         sta wrmo+1
-         lda read
+         eor #1        ;toggle next data-ready val.to expect
+         sta drmo+1
+         lda cas_read
          and #1        ;data line
 
          beq readnext  ;bit read is zero
@@ -266,7 +279,7 @@ printhd  and #$0f      ;ignore left 4 bits
          clc           ;more or equal $0a - a to f
          adc #chr_a-$0a
          bcc print
-printd   ;clc           ;less than $0a - 0 to 9
+printd                 ;clc           ;less than $0a - 0 to 9
          adc #chr_0
 print    jsr wrt
          rts
