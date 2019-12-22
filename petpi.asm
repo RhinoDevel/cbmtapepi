@@ -79,12 +79,12 @@ adptr    = 15          ;6 ;unused terminal & src. width
 
                        ; expected values at this point:
                        ;
-                       ; cas_write/read-ack   = output, set to high (cbm default)
+                       ; cas_write/read-ack   = outp., set to high (cbm default)
                        ; cas_read/data        = input, don't care about level
-                       ; cas_sense/data-ready = input, set to low (done by pi, not cbm default)
+                       ; cas_sense/data-ready = input, set to high (cbm default)
 
-         lda #1        ;make sure that initial data-ready signal
-         sta drmo+1    ;to expect on cas_sense is set to one
+         lda #0        ;make sure that initial data-ready signal
+         sta drmo+1    ;to expect on cas_sense is set to zero
 
                        ; ask for data:
                        ;
