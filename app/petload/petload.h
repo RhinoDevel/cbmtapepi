@@ -12,4 +12,12 @@
  */
 struct tape_input * petload_create();
 
+/**
+ * - Expects: MT_TAPE_GPIO_PIN_NR_READ configured as output.
+ *            MT_TAPE_GPIO_PIN_NR_WRITE configured as input with pull-down.
+ *            MT_TAPE_GPIO_PIN_NR_SENSE configured as output, set to HIGH.
+ * - Waits for HIGH on MT_TAPE_GPIO_PIN_NR_WRITE before starting transfer.
+ */
+void petload_send(uint8_t const * const bytes, uint32_t const count);
+
 #endif //MT_PETLOAD
