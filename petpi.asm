@@ -11,28 +11,29 @@
 ; (if there are no commented-out values following,
 ; these addresses are equal).
 
-*=634 ;tape buf. #1 and #2 used (192+192=384 bytes), load via basic loader prg.
+*=32384
+;*=634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
 
 ; -------------------
 ; system sub routines
 ; -------------------
 
-crlf     = $c9e2          ;$c9d2 <- basic 1.0 / rom v2 value
+crlf     = $c9e2;$c9d2 <- basic 1.0 / rom v2 value.
 wrt      = $ffd2
 get      = $ffe4
-clrscr   = $e229          ;$e236
+clrscr   = $e229;$e236
 
 ; --------------
 ; basic commands
 ; --------------
 
-run      = $c785          ;$c775 ;basic run
+run      = $c785;$c775 ; basic run.
 
 ; ---------------
 ; system pointers
 ; ---------------
 
-varstptr = 42          ;124 ;pointer to start of basic variables
+varstptr = 42;124 ; pointer to start of basic variables.
 
 ; -----------
 ; "constants"
@@ -43,27 +44,30 @@ chr_0    = $30
 chr_a    = $41
 chr_spc  = $20
 
-tapbufin = $bb          ;$271 ;tape buf. #1 & #2 indices to next char (2 bytes)
-cursor   = $c4          ;$e0
+cursor   = $c4;$e0
+
+tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 
 ; using tape #1 port for transfer:
 
-cas_sense = $e810          ;bit 4
+cas_sense = $e810 ; bit 4.
 ;
-;pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
-;               unconnected, "0v"/0 when key pressed)
+; pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
+;                unconnected, "0v"/0 when key pressed).
 
-cas_read = $e811          ;bit 0
+cas_read = $e811 ; bit 0. pia 1, control register a (59409)
+
+cas_write = $e840 ; bit 3
 ;
-;pia 1, control register a (59409)
+; via, port b (59456, tested => correct, 5v for 1, 0v output for 0).
 
-cas_write = $e840          ;bit 3
-;
-;via, port b (59456, tested => correct, 5v for 1, 0v output for 0)
+defbasic = $401 ; default start addr. of basic prg.
 
-defbasic = $401          ;default start addr. of basic prg
+adptr    = 15;6 ; unused terminal & src. width.
 
-adptr    = 15          ;6 ;unused terminal & src. width
+out_req  = cas_write
+in_ready = cas_read
+in_data  = cas_sense
 
 ; ---------
 ; functions
@@ -77,27 +81,27 @@ adptr    = 15          ;6 ;unused terminal & src. width
 
          jsr clrscr
 
-                       ; expected values at this point:
-                       ;
-                       ; cas_write/read-ack   = outp., set to high (cbm default)
-                       ; cas_read/data        = input, don't care about level
-                       ; cas_sense/data-ready = input, set to high (cbm default)
+; expected values at this point:
+;
+; cas_write/out_req = output.
+; cas_read/in_ready = input, don't care about level, just care about change.
+; cas_sense/in_data = input, don't care about level.
 
-         lda #0        ;make sure that initial data-ready signal
-         sta drmo+1    ;to expect on cas_sense is set to zero
+         lda out_req
+         lsr a
+         lsr a
+         lsr a
+         and #1
+         sta tapbufin
 
-                       ; ask for data:
-                       ;
-         jsr out2low   ;set read-ack on cas_write to low
-
-         jsr readbyte  ;read start address
-         sta adptr     ;store for transfer
-         sta loadadr   ;store for later autostart
+         jsr readbyte  ; read start address.
+         sta adptr     ; store for transfer.
+         sta loadadr   ; store for later autostart.
          jsr readbyte
          sta adptr+1
          sta loadadr+1
 
-                       ;lda adptr+1    ;print start address
+         ;lda adptr+1  ; print start address.
          jsr printby
          lda adptr
          jsr printby
@@ -105,22 +109,22 @@ adptr    = 15          ;6 ;unused terminal & src. width
          lda #chr_spc
          jsr wrt
 
-         jsr readbyte  ;read payload byte count
+         jsr readbyte  ; read payload byte count.
          sta le
          jsr readbyte
          sta le+1
 
-                       ;lda le+1       ;print payload byte count
+         ;lda le+1     ; print payload byte count.
          jsr printby
          lda le
          jsr printby
          jsr crlf
 
-keywait  jsr get       ;wait for user key press
+keywait  jsr get       ; wait for user key press.
          beq keywait
          cmp #chr_stop
-         bne cursave   ;exit,if run/stop was pressed
-break    jsr out2low   ;return with read-ack on cas_write set to low
+         bne cursave   ; exit,if run/stop was pressed.
+break    jsr out2low   ; set output request line to low.
          rts
 
 cursave  lda cursor    ;remember cursor position for progress updates
@@ -156,7 +160,7 @@ nextpl   lda crsrbuf   ;reset cursor position for progress update on screen
 
          lda #chr_spc
          jsr wrt
-                       ;ldy #0
+         ;ldy #0
          lda (adptr),y ;print byte read
          jsr printby
 
@@ -177,6 +181,7 @@ dodecle  dec le        ;read is not done
          jmp nextpl
 
 readdone jsr crlf
+         jsr togout ; read-ack.
 
          jsr out2low
 
@@ -187,7 +192,7 @@ readdone jsr crlf
          cmp #>defbasic
          bne runasm
 
-         lda adptr+1   ;set basic variables start pointer to behind loaded prg
+         lda adptr+1 ; set basic variables start pointer to behind loaded prg.
          sta varstptr+1
          lda adptr
          sta varstptr
@@ -206,13 +211,13 @@ runasm   jmp (loadadr)
 togout   lda tapbufin  ;"toggle" depending on tapbufin
          beq toghigh
          dec tapbufin  ;toggle output to low
-         lda cas_write
+         lda out_req
          and #247
          jmp togdo
-toghigh  inc tapbufin  ;toggle output to high
-         lda cas_write
+toghigh  inc tapbufin ; toggle out_req output to high.
+         lda out_req
          ora #8
-togdo    sta cas_write ;does not work in vice (v3.1)!
+togdo    sta out_req ; [does not work in vice (v3.1)]
          rts
 
 ; ************************
@@ -226,47 +231,37 @@ out2low  lda #1
 
 ; ************************************
 ; *** read a byte into accumulator ***
-; ***                              ***
-; *** must be used by main, only!  ***
 ; ************************************
 
-readbyte ldy #0        ;byte buffer during read
-         ldx #1        ;to hold 2^exp
-readloop jsr get       ;let user be able to break execution with run/stop key
-         beq readcont
-         cmp #chr_stop
-         bne readcont  ;exit,if run/stop was pressed
+readbyte sei
+         ldy #0         ; byte buffer during read.
+         ldx #1         ; to hold 2^exp.
 
-         pla           ;hard-coded break -
-         pla           ;function usable by main only,
-         jmp break     ;because of this..
+readloop jsr togout     ; request next data bit.
 
-readcont lda cas_sense ;wait for data-ready signal
-         and #16       ;data-ready line
+readwait bit in_ready   ; wait for data-ready toggling.
+         bpl readwait   ;
+         bit in_ready-1 ; resets toggle flag.
+
+         lda in_data       ; load actual data (bit 4).
          lsr a
          lsr a
          lsr a
          lsr a
-drmo     cmp #0        ;this value will be toggled between 0 and 1 in-place.
-         bne readloop
+         and #1
 
-         eor #1        ;toggle next data-ready val.to expect
-         sta drmo+1
-         lda cas_read
-         and #1        ;data line
-
-         beq readnext  ;bit read is zero
-         stx tapbufin+1;bit read is one, add to byte (buffer)
-         tya           ;get current byte buffer content
-         ora tapbufin+1;"add" current bit read
-         tay           ;save into byte buffer
-readnext txa           ;get next 2^exp
+         beq readnext   ; bit read is zero.
+         stx tapbufin+1 ; bit read is one, add to byte (buffer).
+         tya            ; get current byte buffer content.
+         ora tapbufin+1 ; "add" current bit read.
+         tay            ; save into byte buffer.
+readnext txa            ; get next 2^exp.
          asl
          tax
-         jsr togout    ;acknowledge
-         cpx #0        ;last bit read?
+         cpx #0         ; last bit read?
          bne readloop
-         tya           ;get byte read into accumulator
+         tya            ; get byte read into accumulator.
+         cli
          rts
 
 ; *********************************************************
