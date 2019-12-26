@@ -159,12 +159,6 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     }
 
 #ifndef NDEBUG
-    console_writeline("petload_send : Waiting for read-ack..");
-#endif //NDEBUG
-
-    wait_for_data_req();
-
-#ifndef NDEBUG
     console_writeline("petload_send : Done.");
 #endif //NDEBUG
 }
