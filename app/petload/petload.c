@@ -36,6 +36,10 @@ static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
 
 static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
 
+/** Wait for logic level change on data-req. line.
+ *
+ *  - To be called by send_bit(), only.
+ */
 static void wait_for_data_req()
 {
 // #ifndef NDEBUG
