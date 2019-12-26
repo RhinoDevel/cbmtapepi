@@ -17,7 +17,8 @@ struct tape_input * petload_create();
  *            MT_TAPE_GPIO_PIN_NR_WRITE configured as input with pull-down.
  *            MT_TAPE_GPIO_PIN_NR_SENSE configured as output.
  * - Waits for level change on MT_TAPE_GPIO_PIN_NR_WRITE before starting
- *   transfer.
+ *   transfer. <=> petload_send() must be waiting BEFORE CBM machine's first
+ *                 data-req.
  */
 void petload_send(uint8_t const * const bytes, uint32_t const count);
 
