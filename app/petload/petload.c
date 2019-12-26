@@ -67,19 +67,28 @@ static void wait_for_data_req()
     s_expected_data_req_level = !s_expected_data_req_level;
 }
 
-static void send_bit(uint8_t const bit)
+/** Send a data-ready pulse to PET on data-ready line.
+ *
+ *  - To be called by send_bit(), only.
+ */
+static void send_data_ready_pulse()
 {
     static uint32_t const pulse_microseconds = 5;
 
-    wait_for_data_req();
-
-    gpio_set_output(s_data_to_pet, (bool)bit);
-
-    assert(gpio_read(s_data_ready_to_pet) == s_data_ready_default_level);
+    //assert(gpio_read(s_data_ready_to_pet) == s_data_ready_default_level);
 
     gpio_set_output(s_data_ready_to_pet, !s_data_ready_default_level);
     armtimer_busywait_microseconds(pulse_microseconds);
     gpio_set_output(s_data_ready_to_pet, s_data_ready_default_level);
+}
+
+static void send_bit(uint8_t const bit)
+{
+    wait_for_data_req();
+
+    gpio_set_output(s_data_to_pet, (bool)bit);
+
+    send_data_ready_pulse();
 }
 
 static void send_byte(uint8_t const byte)
