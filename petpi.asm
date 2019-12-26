@@ -20,8 +20,6 @@
 
 crlf     = $c9e2;$c9d2 <- basic 1.0 / rom v2 value.
 wrt      = $ffd2
-get      = $ffe4
-clrscr   = $e229;$e236
 
 ; --------------
 ; basic commands
@@ -39,7 +37,6 @@ varstptr = 42;124 ; pointer to start of basic variables.
 ; "constants"
 ; -----------
 
-chr_stop = 3
 chr_0    = $30
 chr_a    = $41
 chr_spc  = $20
@@ -47,6 +44,7 @@ chr_spc  = $20
 cursor   = $c4;$e0
 
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
+adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
 
 ; using tape #1 port for transfer:
 
@@ -63,8 +61,6 @@ cas_write = $e840 ; bit 3
 
 defbasic = $401 ; default start addr. of basic prg.
 
-adptr    = 15;6 ; unused terminal & src. width.
-
 out_req  = cas_write
 in_ready = cas_read
 in_data  = cas_sense
@@ -77,15 +73,14 @@ in_data  = cas_sense
 ; *** main ***
 ; ************
 
-         cld
-
-         jsr clrscr
+         ;cld
 
 ; expected values at this point:
 ;
 ; cas_write/out_req = output.
-; cas_read/in_ready = input, don't care about level, just care about change.
-; cas_sense/in_data = input, don't care about level.
+; cas_read/in_ready = input, don't care about level, just care about HIGH -> LOW
+;                     change.
+; cas_sense/in_data = input.
 
          lda out_req
          lsr a
@@ -118,51 +113,11 @@ in_data  = cas_sense
          jsr printby
          lda le
          jsr printby
-         jsr crlf
 
-keywait  jsr get       ; wait for user key press.
-         beq keywait
-         cmp #chr_stop
-         bne cursave   ; exit,if run/stop was pressed.
-break    jsr out2low   ; set output request line to low.
-         rts
+nextpl   jsr readbyte  ; read byte.
 
-cursave  lda cursor    ;remember cursor position for progress updates
-         sta crsrbuf
-         lda cursor+1
-         sta crsrbuf+1
-         lda cursor+2
-         sta crsrbuf+2
-
-nextpl   lda crsrbuf   ;reset cursor position for progress update on screen
-         sta cursor
-         lda crsrbuf+1
-         sta cursor+1
-         lda crsrbuf+2
-         sta cursor+2
-
-         lda adptr+1   ;print current byte address
-         jsr printby
-         lda adptr
-         jsr printby
-
-         lda #chr_spc
-         jsr wrt
-
-         lda le+1      ;print current count of bytes left
-         jsr printby
-         lda le
-         jsr printby
-
-         jsr readbyte  ;read byte
-         ldy #0        ;store byte at current address
-         sta (adptr),y
-
-         lda #chr_spc
-         jsr wrt
-         ;ldy #0
-         lda (adptr),y ;print byte read
-         jsr printby
+         ldy #0        ; store byte
+         sta (adptr),y ; at current address.
 
          inc adptr
          bne decle
@@ -180,37 +135,32 @@ dodecle  dec le        ;read is not done
          dec le+1      ;decrement high byte,too
          jmp nextpl
 
-readdone jsr crlf
-         jsr togout ; read-ack.
+readdone lda loadadr    ; decide, if run shall be exec. (based on start addr.).
+         cmp #<defbasic ;
+         bne exit       ;
+         lda loadadr+1  ;
+         cmp #>defbasic ;
+         bne exit       ;
 
-         jsr out2low
-
-         lda loadadr   ;decide,if basic or asm prg loaded
-         cmp #<defbasic;(decision based on start address, only..)
-         bne runasm
-         lda loadadr+1
-         cmp #>defbasic
-         bne runasm
-
-         lda adptr+1 ; set basic variables start pointer to behind loaded prg.
-         sta varstptr+1
-         lda adptr
-         sta varstptr
+         lda adptr+1    ; set basic variables start pointer to behind loaded
+         sta varstptr+1 ; prg.
+         lda adptr      ;
+         sta varstptr   ;
 
          jsr crlf
 
-         lda #0        ;this actually
-         jmp run       ;is ok (checked stack pointer values)
+         lda #0         ; this actually
+         jmp run        ; is ok (checked stack pointer values).
 
-runasm   jmp (loadadr)
+exit     rts
 
 ; ****************************************
 ; *** "toggle" write based on tapbufin ***
 ; ****************************************
 
-togout   lda tapbufin  ;"toggle" depending on tapbufin
+togout   lda tapbufin ; "toggle" depending on tapbufin.
          beq toghigh
-         dec tapbufin  ;toggle output to low
+         dec tapbufin ; toggle output to low.
          lda out_req
          and #247
          jmp togdo
@@ -218,15 +168,6 @@ toghigh  inc tapbufin ; toggle out_req output to high.
          lda out_req
          ora #8
 togdo    sta out_req ; [does not work in vice (v3.1)]
-         rts
-
-; ************************
-; *** set write to low ***
-; ************************
-
-out2low  lda #1
-         sta tapbufin
-         jsr togout
          rts
 
 ; ************************************
@@ -274,7 +215,7 @@ printhd  and #$0f      ;ignore left 4 bits
          clc           ;more or equal $0a - a to f
          adc #chr_a-$0a
          bcc print
-printd                 ;clc           ;less than $0a - 0 to 9
+printd   ;clc           ;less than $0a - 0 to 9
          adc #chr_0
 print    jsr wrt
          rts
@@ -297,6 +238,6 @@ prbloop  lsr a
 ; variables
 ; ---------
 
-le       byte 0, 0 ;count of payload bytes
+le       byte 0, 0 ; count of payload bytes.
 crsrbuf  byte 0, 0, 0
-loadadr  byte 0, 0 ;hold start address of loaded prg
+loadadr  byte 0, 0 ; hold start address of loaded prg.
