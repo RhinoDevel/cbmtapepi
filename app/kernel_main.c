@@ -64,6 +64,12 @@ enum led_state
     led_state_blink
 };
 
+enum load_mode
+{
+    load_mode_cbm,
+    load_mode_pet2
+};
+
 static char const * const s_fastload_pet2 = "!pet2";
 
 static enum led_state s_led_state = led_state_off;
@@ -123,6 +129,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     static void cmd_enter()
     {
+        enum load_mode lm = load_mode_cbm;
+
         cmd_reinit(MT_FILESYS_ROOT);
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
         while(true)
@@ -157,30 +165,67 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             {
                 struct tape_input * ti = petload_create();
 
+                lm = load_mode_cbm; // (just for clarification)
+
                 armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
 
                 s_led_state = led_state_off;
                 //
                 // Indicates LOAD mode (IRQ).
 
+                assert(lm == load_mode_cbm);
                 cbm_send_data(ti, 0);
-                
+
                 tape_input_free(ti);
                 ti = 0;
 
                 s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+
+                lm = load_mode_pet2;
             }
             else if(cmd_exec(name, ti, &o))
             {
                 if(o != 0)
                 {
                     armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+                    //
+                    // Necessary for fast load modes?
 
                     s_led_state = led_state_off;
                     //
                     // Indicates LOAD mode (IRQ).
 
-                    cbm_send(o->bytes, o->name, o->count, 0);
+                    switch(lm)
+                    {
+                        case load_mode_cbm:
+                        {
+                            cbm_send(o->bytes, o->name, o->count, 0);
+
+                            // TODO: Implement correctly:
+                            //
+#ifndef NDEBUG
+                            if(str_are_equal(o->name, "petpi2ba.prg"))
+                            {
+                                console_writeline(
+                                    "kernel_main : Switching to PET 2 fastload..");
+                                lm = load_mode_pet2;
+                            }
+#endif //NDEBUG
+                            break;
+                        }
+                        case load_mode_pet2:
+                        {
+                            petload_send(o->bytes, o->count);
+                            break;
+                        }
+
+                        default:
+                        {
+                            assert(false);
+                            break;
+                        }
+                    }
+
                 }
 
                 s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
