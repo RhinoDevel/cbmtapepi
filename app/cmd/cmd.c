@@ -16,6 +16,8 @@
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
 
+    // For load via YMODEM command:
+    //
     #include "../../lib/ymodem/ymodem.h"
     #include "../../lib/ymodem/ymodem_receive_params.h"
     #include "../../lib/ymodem/ymodem_receive_err.h"
