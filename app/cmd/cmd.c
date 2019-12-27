@@ -15,6 +15,12 @@
 
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
+
+    #include "../../lib/ymodem/ymodem.h"
+    #include "../../lib/ymodem/ymodem_receive_params.h"
+    #include "../../lib/ymodem/ymodem_receive_err.h"
+    #include "../../hardware/armtimer/armtimer.h"
+    #include "../../hardware/miniuart/miniuart.h"
 #endif //NDEBUG
 
 #include <stdbool.h>
@@ -23,11 +29,14 @@
 // - File system support (by choice) limited to 8.3 format.
 // => 16 - 8 - 1 - 3 = 4 characters available for commands.
 //
-//                                      "   thegreat.prg "
-static char const * const s_dir   =   "$"; // (no parameters)
-static char const * const s_rm    =   "rm ";
-static char const * const s_load  =   "*"; // (no space)
-static char const * const s_cd   =    "cd "; // Supports "..", too.
+//                                 "   thegreat.prg "
+static char const * const s_dir  = "$"; // (no parameters)
+static char const * const s_rm   = "rm ";
+static char const * const s_load = "*"; // (no space)
+static char const * const s_cd   = "cd "; // Supports "..", too.
+#ifndef NDEBUG
+    static char const * const s_load_ymodem = "y*";
+#endif //NDEBUG
 // static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
 // static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
@@ -120,6 +129,60 @@ static bool exec_remove(char const * const command)
 
     return r == FR_OK;
 }
+
+#ifndef NDEBUG
+    static struct cmd_output * exec_load_ymodem()
+    {
+        static uint32_t const len = 64 * 1024; // 64 kB.
+
+        struct ymodem_receive_params p;
+        enum ymodem_receive_err e;
+        struct cmd_output * o = 0;
+
+        // TODO: Hard-coded:
+        //
+        p.timer_start_one_mhz = armtimer_start_one_mhz;
+        p.timer_get_tick = armtimer_get_tick;
+        p.write_byte = miniuart_write_byte;
+        p.read_byte = miniuart_read_byte;
+        p.is_ready_to_read = miniuart_is_ready_to_read;
+        p.is_stop_requested = 0;
+        p.buf = alloc_alloc(len * sizeof (uint8_t));
+        p.buf_len = len;
+        p.file_len = 0;
+        p.name[0] = '\0';
+
+        console_writeline("exec_load_ymodem : Waiting for YMODEM sender..");
+        e = ymodem_receive(&p);
+        if(e != ymodem_receive_err_none)
+        {
+            // Debug output:
+            //
+            console_write("exec_load_ymodem : Failed to receive file (error ");
+            console_write_dword_dec((uint32_t)e);
+            console_writeline(")!");
+
+            alloc_free(p.buf);
+            p.buf = 0;
+            return 0;
+        }
+
+        // Debug output:
+        //
+        console_write("exec_load_ymodem : Received file \"");
+        console_write(p.name);
+        console_write("\" with a length of ");
+        console_write_dword_dec(p.file_len);
+        console_writeline(" bytes.");
+
+        o = alloc_alloc(sizeof *o);
+
+        o->name  = str_create_copy(p.name);
+        o->count = p.file_len;
+        o->bytes = p.buf;
+        return o;
+    }
+#endif //NDEBUG
 
 static struct cmd_output * exec_load(char const * const command)
 {
@@ -333,6 +396,13 @@ bool cmd_exec(
     {
         return exec_cd(command);
     }
+#ifndef NDEBUG
+    if(str_starts_with(command, s_load_ymodem))
+    {
+        *output = exec_load_ymodem();
+        return *output != 0;
+    }
+#endif //NDEBUG
     return exec_save(command, ti);
 }
 
