@@ -21,12 +21,6 @@
 crlf     = $c9e2;$c9d2 <- basic 1.0 / rom v2 value.
 wrt      = $ffd2
 
-; --------------
-; basic commands
-; --------------
-
-run      = $c785;$c775 ; basic run.
-
 ; ---------------
 ; system pointers
 ; ---------------
@@ -41,8 +35,6 @@ chr_0    = $30
 chr_a    = $41
 chr_spc  = $20
 
-cursor   = $c4;$e0
-
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
 
@@ -53,7 +45,7 @@ cas_sense = $e810 ; bit 4.
 ; pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
 ;                unconnected, "0v"/0 when key pressed).
 
-cas_read = $e811 ; bit 0. pia 1, control register a (59409)
+cas_read = $e811 ; bit 7 is high-to-low flag. pia 1, control register a (59409)
 
 cas_write = $e840 ; bit 3
 ;
@@ -64,6 +56,7 @@ defbasic = $401 ; default start addr. of basic prg.
 out_req  = cas_write
 in_ready = cas_read
 in_data  = cas_sense
+datamask = $10 ; bit 4.
 
 ; ---------
 ; functions
@@ -135,27 +128,18 @@ dodecle  dec le        ;read is not done
          dec le+1      ;decrement high byte,too
          jmp nextpl
 
-readdone lda loadadr    ; decide, if run shall be exec. (based on start addr.).
-         cmp #<defbasic ;
-         bne exit       ;
-         lda loadadr+1  ;
-         cmp #>defbasic ;
-         bne exit       ;
-
-         lda adptr+1    ; set basic variables start pointer to behind loaded
-         sta varstptr+1 ; prg.
+readdone lda adptr+1    ; set basic variables start pointer to behind loaded
+         sta varstptr+1 ; prg. maybe not correct for (all) machine code prg's.
          lda adptr      ;
          sta varstptr   ;
 
          jsr crlf
-
-         lda #0         ; this actually
-         jmp run        ; is ok (checked stack pointer values).
-
-exit     rts
+         rts
 
 ; ****************************************
 ; *** "toggle" write based on tapbufin ***
+; ****************************************
+; *** modifies register a.             ***
 ; ****************************************
 
 togout   lda tapbufin ; "toggle" depending on tapbufin.
@@ -170,38 +154,40 @@ toghigh  inc tapbufin ; toggle out_req output to high.
 togdo    sta out_req ; [does not work in vice (v3.1)]
          rts
 
-; ************************************
-; *** read a byte into accumulator ***
-; ************************************
+; **************************************
+; *** read a byte into register a    ***
+; **************************************
+; *** modifies registers a, x and y. ***
+; **************************************
 
 readbyte sei
+
          ldy #0         ; byte buffer during read.
-         ldx #1         ; to hold 2^exp.
+         ldx #0         ; (read bit) counter.
 
 readloop jsr togout     ; request next data bit.
 
-readwait bit in_ready   ; wait for data-ready toggling.
-         bpl readwait   ;
-         bit in_ready-1 ; resets toggle flag.
+readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
+         bpl readwait   ; branch, if n is 0 ("positive").
 
-         lda in_data       ; load actual data (bit 4).
-         lsr a
-         lsr a
-         lsr a
-         lsr a
-         and #1
+         bit in_ready-1 ; resets "toggle" bit by read operation (see pia doc.).
 
-         beq readnext   ; bit read is zero.
-         stx tapbufin+1 ; bit read is one, add to byte (buffer).
-         tya            ; get current byte buffer content.
-         ora tapbufin+1 ; "add" current bit read.
-         tay            ; save into byte buffer.
-readnext txa            ; get next 2^exp.
-         asl
-         tax
-         cpx #0         ; last bit read?
+         lda in_data    ; load actual data (bit 4) into c flag.
+         clc            ;
+         and #datamask  ; sets z flag to 1, if bit 4 is 0.
+         beq readadd    ; bit read is zero.
+         sec            ;
+
+readadd  tya            ; put read bit from c flag into byte buffer.
+         ror            ;
+         tay            ;
+
+         inx
+         cpx #8         ; last bit read?
          bne readloop
+
          tya            ; get byte read into accumulator.
+
          cli
          rts
 
@@ -239,5 +225,4 @@ prbloop  lsr a
 ; ---------
 
 le       byte 0, 0 ; count of payload bytes.
-crsrbuf  byte 0, 0, 0
 loadadr  byte 0, 0 ; hold start address of loaded prg.
