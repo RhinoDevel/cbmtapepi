@@ -47,9 +47,9 @@ void alloc_free(void * const block_addr)
 
     n->is_allocated = 0;
 
-#ifndef NDEBUG
-    alloc_mem_clear(n->block_addr, n->block_len, MT_ALLOC_DEB_CLR_4);
-#endif //NDEBUG
+// #ifndef NDEBUG
+//     alloc_mem_clear(n->block_addr, n->block_len, MT_ALLOC_DEB_CLR_4);
+// #endif //NDEBUG
 
     if(n->next_node_addr != 0)
     {
