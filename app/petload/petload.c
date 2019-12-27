@@ -22,8 +22,11 @@ static uint32_t const s_data_ready_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
 static uint32_t const s_data_to_pet = MT_TAPE_GPIO_PIN_NR_SENSE;
 
 static bool const s_data_ready_default_level = true; // HIGH
+static bool const s_data_req_default_level = false; // LOW
 
-static bool s_expected_data_req_level = false; // To be set in petload_send().
+static bool s_expected_data_req_level = false;
+//
+// Set by petload_send() and wait_for_data_req().
 
 // *** BASIC v2 / Rev. 3 ROMs: ***
 
@@ -139,16 +142,17 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #ifndef NDEBUG
     console_write("petload_send : Setting data-ready line to ");
     console_write(s_data_ready_default_level ? "HIGH" : "LOW");
-    console_writeline(".");
+    console_writeline("..");
 #endif //NDEBUG
     gpio_set_output(s_data_ready_to_pet, s_data_ready_default_level);
 
-    s_expected_data_req_level = !gpio_read(s_data_req_from_pet);
 #ifndef NDEBUG
-    console_write("petload_send : First expected data-req. level is ");
-    console_write(s_expected_data_req_level ? "HIGH" : "LOW");
-    console_writeline(".");
+    console_write("petload_send : Waiting for data-request line to get ");
+    console_write(s_data_req_default_level ? "HIGH" : "LOW");
+    console_writeline("..");
 #endif //NDEBUG
+    s_expected_data_req_level = s_data_req_default_level;
+    wait_for_data_req();
 
 #ifndef NDEBUG
     console_write("petload_send : Sending address bytes ");

@@ -6,12 +6,12 @@
 ; cbm pet
 
 ; configured for basic 2.0 / rom v3.
-; can be reconfigured for basic 1.0 / rom v2 by
-; replacing values with following values in comments
-; (if there are no commented-out values following,
-; these addresses are equal).
+;
+; can be reconfigured for basic 1.0 / rom v2 by replacing values with following
+; values in comments (if there are no commented-out values following, these
+; addresses are equal).
 
-*=32384
+*=826 ; tape buf. #2 used (192 bytes).
 ;*=634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
 
 ; -------------------
@@ -56,6 +56,8 @@ defbasic = $401 ; default start addr. of basic prg.
 out_req  = cas_write
 in_ready = cas_read
 in_data  = cas_sense
+reqmask  = 8 ; bit 3.
+reqmaskn = 1 not reqmask ; (val. before not operator does not seem to matter)
 datamask = $10 ; bit 4.
 
 ; ---------
@@ -70,24 +72,19 @@ datamask = $10 ; bit 4.
 
 ; expected values at this point:
 ;
-; cas_write/out_req = output.
-; cas_read/in_ready = input, don't care about level, just care about HIGH -> LOW
+; cas_write/out_req = output, default level will be set to low.
+; cas_read/in_ready = input, don't care about level, just care about high -> low
 ;                     change.
 ; cas_sense/in_data = input.
 
-         lda out_req
-         lsr a
-         lsr a
-         lsr a
-         and #1
-         sta tapbufin
+         lda out_req   ; request-data line default level is low.
+         and #reqmaskn
+         sta out_req
 
          jsr readbyte  ; read start address.
          sta adptr     ; store for transfer.
-         sta loadadr   ; store for later autostart.
          jsr readbyte
          sta adptr+1
-         sta loadadr+1
 
          ;lda adptr+1  ; print start address.
          jsr printby
@@ -98,34 +95,34 @@ datamask = $10 ; bit 4.
          jsr wrt
 
          jsr readbyte  ; read payload byte count.
-         sta le
+         sta tapbufin
          jsr readbyte
-         sta le+1
+         sta tapbufin+1
 
-         ;lda le+1     ; print payload byte count.
+         ;lda tapbufin+1     ; print payload byte count.
          jsr printby
-         lda le
+         lda tapbufin
          jsr printby
 
 nextpl   jsr readbyte  ; read byte.
 
-         ldy #0        ; store byte
-         sta (adptr),y ; at current address.
+         ldy #0        ;
+         sta (adptr),y ; store byte at current address.
 
          inc adptr
          bne decle
          inc adptr+1
 
-decle    lda le
+decle    lda tapbufin
          cmp #1
          bne dodecle
-         lda le+1      ;low byte is 1
+         lda tapbufin+1      ;low byte is 1
          beq readdone  ;read done,if high byte is 0
-dodecle  dec le        ;read is not done
-         lda le
+dodecle  dec tapbufin        ;read is not done
+         lda tapbufin
          cmp #$ff
          bne nextpl
-         dec le+1      ;decrement high byte,too
+         dec tapbufin+1      ;decrement high byte,too
          jmp nextpl
 
 readdone lda adptr+1    ; set basic variables start pointer to behind loaded
@@ -133,25 +130,9 @@ readdone lda adptr+1    ; set basic variables start pointer to behind loaded
          lda adptr      ;
          sta varstptr   ;
 
+         ; todo: fix list output of basic prgs (and more?)!
+
          jsr crlf
-         rts
-
-; ****************************************
-; *** "toggle" write based on tapbufin ***
-; ****************************************
-; *** modifies register a.             ***
-; ****************************************
-
-togout   lda tapbufin ; "toggle" depending on tapbufin.
-         beq toghigh
-         dec tapbufin ; toggle output to low.
-         lda out_req
-         and #247
-         jmp togdo
-toghigh  inc tapbufin ; toggle out_req output to high.
-         lda out_req
-         ora #8
-togdo    sta out_req ; [does not work in vice (v3.1)]
          rts
 
 ; **************************************
@@ -165,7 +146,15 @@ readbyte sei
          ldy #0         ; byte buffer during read.
          ldx #0         ; (read bit) counter.
 
-readloop jsr togout     ; request next data bit.
+readloop txa            ; req. next data bit ("toggle" data-request line level).
+         and #1
+         beq toghigh
+         lda out_req    ; toggle output to low.
+         and #reqmaskn
+         jmp togdo
+toghigh  lda out_req    ; toggle out_req output to high.
+         ora #reqmask
+togdo    sta out_req    ; [does not work in vice (v3.1)]
 
 readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
          bpl readwait   ; branch, if n is 0 ("positive").
@@ -194,6 +183,8 @@ readadd  tya            ; put read bit from c flag into byte buffer.
 ; *********************************************************
 ; *** print "hexadigit" (hex.0-f) stored in accumulator ***
 ; *********************************************************
+; *** modifies register a.                              ***
+; *********************************************************
 
 printhd  and #$0f      ;ignore left 4 bits
          cmp #$0a
@@ -209,9 +200,11 @@ print    jsr wrt
 ; ******************************************************
 ; *** print byte in accumulator as hexadecimal value ***
 ; ******************************************************
+; *** modifies register a.                           ***
+; ******************************************************
 
 printby  pha
-prbloop  lsr a
+         lsr a
          lsr a
          lsr a
          lsr a
@@ -219,10 +212,3 @@ prbloop  lsr a
          pla
          jsr printhd
          rts
-
-; ---------
-; variables
-; ---------
-
-le       byte 0, 0 ; count of payload bytes.
-loadadr  byte 0, 0 ; hold start address of loaded prg.
