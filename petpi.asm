@@ -71,17 +71,18 @@ datamask = $10 ; bit 4.
          sta out_req
 
          jsr readbyte  ; read start address.
-         sta adptr
+         sty adptr
          jsr readbyte
-         sta adptr+1
+         sty adptr+1
 
          jsr readbyte  ; read payload byte count.
-         sta tapbufin
+         sty tapbufin
          jsr readbyte
-         sta tapbufin+1
+         sty tapbufin+1
 
 nextpl   jsr readbyte  ; read byte.
 
+         tya           ;
          ldy #0        ;
          sta (adptr),y ; store byte at current address.
 
@@ -112,7 +113,7 @@ readdone lda adptr+1    ; set basic variables start and end pointers to behind
          rts
 
 ; **************************************
-; *** read a byte into register a    ***
+; *** read a byte into register y    ***
 ; **************************************
 ; *** modifies registers a, x and y. ***
 ; **************************************
@@ -148,5 +149,4 @@ readadd  tya            ; put read bit from c flag into byte buffer.
          dex
          bne readloop   ; last bit read?
 
-         tya            ; get byte read into accumulator.
-         rts
+         rts            ; read byte is in register y.
