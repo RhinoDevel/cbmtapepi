@@ -80,26 +80,22 @@ datamask = $10 ; bit 4.
          jsr readbyte
          sty tapbufin+1
 
-nextpl   jsr readbyte  ; read byte.
+nextpl   lda tapbufin
+         bne declelo
+         lda tapbufin+1 ; low byte is zero.
+         beq readdone
+         dec tapbufin+1 ; high byte is not zero (but low byte is).
+declelo  dec tapbufin
+
+         jsr readbyte  ; read byte.
 
          tya           ;
          ldy #0        ;
          sta (adptr),y ; store byte at current address.
 
          inc adptr
-         bne decle
-         inc adptr+1
-
-decle    lda tapbufin
-         cmp #1
-         bne dodecle
-         lda tapbufin+1      ;low byte is 1
-         beq readdone  ;read done,if high byte is 0
-dodecle  dec tapbufin        ;read is not done
-         lda tapbufin
-         cmp #$ff
          bne nextpl
-         dec tapbufin+1      ;decrement high byte,too
+         inc adptr+1
          jmp nextpl
 
 readdone lda adptr+1    ; set basic variables start and end pointers to behind
@@ -108,6 +104,8 @@ readdone lda adptr+1    ; set basic variables start and end pointers to behind
          lda adptr      ;
          sta varstptr   ;
          sta varenptr   ;
+
+         ; todo: reset more, because bug is not fixed, yet!
 
          cli
          rts
