@@ -26,6 +26,7 @@ wrt      = $ffd2
 ; ---------------
 
 varstptr = 42;124 ; pointer to start of basic variables.
+varenptr = 44;126 ; pointer to end of basic variables.
 
 ; -----------
 ; "constants"
@@ -125,12 +126,12 @@ dodecle  dec tapbufin        ;read is not done
          dec tapbufin+1      ;decrement high byte,too
          jmp nextpl
 
-readdone lda adptr+1    ; set basic variables start pointer to behind loaded
-         sta varstptr+1 ; prg. maybe not correct for (all) machine code prg's.
+readdone lda adptr+1    ; set basic variables start and end pointers to behind
+         sta varstptr+1 ; loaded prg.
+         sta varenptr+1 ;
          lda adptr      ;
          sta varstptr   ;
-
-         ; todo: fix list output of basic prgs (and more?)!
+         sta varenptr   ;
 
          jsr crlf
          rts
