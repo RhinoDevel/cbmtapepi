@@ -118,7 +118,7 @@ readdone lda adptr+1    ; set basic variables start and end pointers to behind
 ; **************************************
 
 readbyte ldy #0         ; byte buffer during read.
-         ldx #0         ; (read bit) counter.
+         ldx #8         ; (read bit) counter.
 
 readloop txa            ; req. next data bit ("toggle" data-request line level).
          and #1
@@ -145,9 +145,8 @@ readadd  tya            ; put read bit from c flag into byte buffer.
          ror            ;
          tay            ;
 
-         inx
-         cpx #8         ; last bit read?
-         bne readloop
+         dex
+         bne readloop   ; last bit read?
 
          tya            ; get byte read into accumulator.
          rts
