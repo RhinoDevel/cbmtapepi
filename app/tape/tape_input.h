@@ -9,9 +9,14 @@
 
 #include "tape_filetype.h"
 
-// First five bytes of the 192 bytes long tape buffer are filled with something.
-#define MT_TAPE_INPUT_NAME_LEN 16
-#define MT_TAPE_INPUT_ADD_BYTES_LEN 171
+// First five bytes of the 192 bytes long tape buffer are filled with:
+//
+// 1) 1 byte = Tape filetype (probably).
+// 2) 2 byte = PRG start address.
+// 3) 2 byte = Address after last byte of PRG [(3) - (2) = PRG byte count].
+//
+#define MT_TAPE_INPUT_NAME_LEN 16 // (4)
+#define MT_TAPE_INPUT_ADD_BYTES_LEN 171 // (5)
 
 struct tape_input
 {
