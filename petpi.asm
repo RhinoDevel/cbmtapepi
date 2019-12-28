@@ -14,13 +14,6 @@
 *=826 ; tape buf. #2 used (192 bytes).
 ;*=634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
 
-; -------------------
-; system sub routines
-; -------------------
-
-crlf     = $c9e2;$c9d2 <- basic 1.0 / rom v2 value.
-wrt      = $ffd2
-
 ; ---------------
 ; system pointers
 ; ---------------
@@ -32,10 +25,6 @@ varenptr = 44;126 ; pointer to end of basic variables.
 ; "constants"
 ; -----------
 
-chr_0    = $30
-chr_a    = $41
-chr_spc  = $20
-
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
 
@@ -46,13 +35,11 @@ cas_sense = $e810 ; bit 4.
 ; pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
 ;                unconnected, "0v"/0 when key pressed).
 
-cas_read = $e811 ; bit 7 is high-to-low flag. pia 1, control register a (59409)
+cas_read = $e811 ; bit 7 is high-to-low flag. pia 1, control register a (59409).
 
 cas_write = $e840 ; bit 3
 ;
 ; via, port b (59456, tested => correct, 5v for 1, 0v output for 0).
-
-defbasic = $401 ; default start addr. of basic prg.
 
 out_req  = cas_write
 in_ready = cas_read
@@ -70,6 +57,7 @@ datamask = $10 ; bit 4.
 ; ************
 
          ;cld
+         sei
 
 ; expected values at this point:
 ;
@@ -83,27 +71,14 @@ datamask = $10 ; bit 4.
          sta out_req
 
          jsr readbyte  ; read start address.
-         sta adptr     ; store for transfer.
+         sta adptr
          jsr readbyte
          sta adptr+1
-
-         ;lda adptr+1  ; print start address.
-         jsr printby
-         lda adptr
-         jsr printby
-
-         lda #chr_spc
-         jsr wrt
 
          jsr readbyte  ; read payload byte count.
          sta tapbufin
          jsr readbyte
          sta tapbufin+1
-
-         ;lda tapbufin+1     ; print payload byte count.
-         jsr printby
-         lda tapbufin
-         jsr printby
 
 nextpl   jsr readbyte  ; read byte.
 
@@ -133,7 +108,7 @@ readdone lda adptr+1    ; set basic variables start and end pointers to behind
          sta varstptr   ;
          sta varenptr   ;
 
-         jsr crlf
+         cli
          rts
 
 ; **************************************
@@ -142,9 +117,7 @@ readdone lda adptr+1    ; set basic variables start and end pointers to behind
 ; *** modifies registers a, x and y. ***
 ; **************************************
 
-readbyte sei
-
-         ldy #0         ; byte buffer during read.
+readbyte ldy #0         ; byte buffer during read.
          ldx #0         ; (read bit) counter.
 
 readloop txa            ; req. next data bit ("toggle" data-request line level).
@@ -177,39 +150,4 @@ readadd  tya            ; put read bit from c flag into byte buffer.
          bne readloop
 
          tya            ; get byte read into accumulator.
-
-         cli
-         rts
-
-; *********************************************************
-; *** print "hexadigit" (hex.0-f) stored in accumulator ***
-; *********************************************************
-; *** modifies register a.                              ***
-; *********************************************************
-
-printhd  and #$0f      ;ignore left 4 bits
-         cmp #$0a
-         bcc printd
-         clc           ;more or equal $0a - a to f
-         adc #chr_a-$0a
-         bcc print
-printd   ;clc           ;less than $0a - 0 to 9
-         adc #chr_0
-print    jsr wrt
-         rts
-
-; ******************************************************
-; *** print byte in accumulator as hexadecimal value ***
-; ******************************************************
-; *** modifies register a.                           ***
-; ******************************************************
-
-printby  pha
-         lsr a
-         lsr a
-         lsr a
-         lsr a
-         jsr printhd
-         pla
-         jsr printhd
          rts
