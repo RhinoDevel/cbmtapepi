@@ -48,8 +48,8 @@ You need:
 - 1x LED.
 - 1x NPN transistor (e.g. a PN2222A or a BC547).
 - 2x 10k Ohm resistors.
-- 1x 80k Ohm resistor (you can put this together by using multiple resistors).
-- 1x 100k Ohm resistor.
+- 1x 11k Ohm resistor (e.g. use a 10k Ohm and a 1k Ohm resistor in series).
+- 1x 16k Ohm resistor (you can also put this one together by using multiple resistors).
 - 1x 1k Ohm resistor.
 - 1x Commodore cassette port plug.
 - 1x Raspberry Pi 1, Zero or 2 (more recent models may work, not tested, yet).
