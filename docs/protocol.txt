@@ -1,0 +1,32 @@
+1) Normal mode is active.
+
+CBM: User: Uses SAVE and LOAD to enable fast mode.
+
+=>
+
+2) Fast mode is active.
+
+PI: Call petload_retrieve():
+
+- PI: Request first data bit: data-req / SENSE = LOW
+
+- PI: Waiting for data-ready toggle from HIGH to LOW
+      [wait_for_data_ready_pulse()].
+
+[=> CBM (OS): MOTOR goes HIGH]
+
+CBM: User: (Fast mode) command execution:
+
+- CBM: Disable interrupts, make sure that MOTOR is set to HIGH).
+
+* CBM: Waits for data-req / SENSE to get LOW. <=> Already LOW.
+
+- CBM: Set current bit to data line.
+
+- CBM: MOTOR pulse HIGH -> LOW -> HIGH.
+
+=> PI: Read bit from data line, request next bit (go to * above).
+
+>>> At some point, all bits are transferred. <<<
+
+CBM: Toggle to Pi -> CBM transfer mode.
