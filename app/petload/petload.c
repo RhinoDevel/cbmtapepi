@@ -240,7 +240,7 @@ uint8_t* petload_retrieve(uint16_t * const addr, uint16_t * const payload_len)
         ret_val[i] = retrieve_byte();
     }
 #ifndef NDEBUG
-    console_writeline("petload_retrieve : Retrieved payload bytes.");
+    console_writeline("petload_retrieve : Retrieved payload bytes. Done.");
 #endif //NDEBUG
 
     return ret_val;
