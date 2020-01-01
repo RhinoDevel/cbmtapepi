@@ -19,7 +19,13 @@
 ; ---------------
 
 varstptr = 42;124 ; pointer to start of basic variables.
-varenptr = 44;126 ; pointer to end of basic variables.
+
+; ----------------
+; system functions
+; ----------------
+
+clr = $c577;$c56a or $c770?
+rechain = $c442;$c433 or $c430?
 
 ; -----------
 ; "constants"
@@ -98,16 +104,16 @@ declelo  dec tapbufin
          inc adptr+1
          jmp nextpl
 
-readdone lda adptr+1    ; set basic variables start and end pointers to behind
-         sta varstptr+1 ; loaded prg.
-         sta varenptr+1 ;
+readdone cli
+
+         lda adptr+1    ; set basic variables start pointer to behind loaded
+         sta varstptr+1 ; prg.
          lda adptr      ;
          sta varstptr   ;
-         sta varenptr   ;
 
-         ; todo: reset more, because bug is not fixed, yet!
+         jsr clr
+         jsr rechain
 
-         cli
          rts
 
 ; **************************************
