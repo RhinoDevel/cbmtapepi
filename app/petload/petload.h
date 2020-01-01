@@ -13,6 +13,8 @@
 struct tape_input * petload_create();
 
 /**
+ * - petload_retrieve() must already be waiting BEFORE CBM machine's first
+ *   fast mode command to-be-retrieved.
  *
  * - Caller takes ownership of returned object.
  */
