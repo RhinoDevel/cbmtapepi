@@ -13,6 +13,12 @@
 struct tape_input * petload_create();
 
 /**
+ *
+ * - Caller takes ownership of returned object.
+ */
+uint8_t* petload_retrieve(uint16_t * const addr, uint16_t * const payload_len);
+
+/**
  * - Expects: MT_TAPE_GPIO_PIN_NR_READ configured as output (data-ready line).
  *            MT_TAPE_GPIO_PIN_NR_WRITE configured as input with pull-down
  *            (date-request line).
