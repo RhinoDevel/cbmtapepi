@@ -73,14 +73,14 @@ void tape_input_console_write(
     }
 }
 
-char* tape_input_create_str_from_name(struct tape_input const * const d)
+char* tape_input_create_str_from_name_only(uint8_t const * const name)
 {
     char * const ret_val = alloc_alloc(
         (MT_TAPE_INPUT_NAME_LEN + 1) * sizeof *ret_val);
 
     for(int i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        ret_val[i] = petasc_get_ascii((char)d->name[i], MT_ASCII_REPLACER);
+        ret_val[i] = petasc_get_ascii((char)name[i], MT_ASCII_REPLACER);
     }
     ret_val[MT_TAPE_INPUT_NAME_LEN] = '\0';
 
@@ -94,4 +94,8 @@ char* tape_input_create_str_from_name(struct tape_input const * const d)
     }
 
     return ret_val;
+}
+char* tape_input_create_str_from_name(struct tape_input const * const d)
+{
+    return tape_input_create_str_from_name_only(d->name);
 }

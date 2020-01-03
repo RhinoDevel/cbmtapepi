@@ -43,5 +43,6 @@ void tape_input_console_write(
  * - Caller takes ownership of returned object.
  */
 char* tape_input_create_str_from_name(struct tape_input const * const d);
+char* tape_input_create_str_from_name_only(uint8_t const * const name);
 
 #endif //MT_TAPE_INPUT
