@@ -135,35 +135,85 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
         while(true)
         {
-            // Wait for SAVE (either as control command, or to really save):
-
             char* name = 0;
             struct cmd_output * o = 0;
-            struct tape_input * const ti = cbm_receive(0);
+            struct tape_input * ti = 0;
 
-            if(ti == 0)
+            switch(lm)
             {
-                console_deb_writeline(
-                    "kernel_main : Error: Receive from commodore failed!");
+                case load_mode_cbm:
+                {
+                    // Wait for SAVE (either as ctrl. cmd., or to really save):
 
-                s_led_state = led_state_blink;
-                //
-                // Indicates an error occurred, but still in SAVE mode (IRQ).
+                    ti = cbm_receive(0);
+                    if(ti == 0)
+                    {
+                        console_deb_writeline(
+                            "kernel_main : Error: Receive from commodore failed!");
 
-                continue; // Try again..
+                        s_led_state = led_state_blink;
+                        //
+                        // Indicates an error occ., but still in SAVE mode (IRQ).
+
+                        continue; // Try again..
+                    }
+
+                    name = tape_input_create_str_from_name(ti);
+
+    #ifndef NDEBUG
+                    console_write("kernel_main : Name from tape input = \"");
+                    console_write(name);
+                    console_writeline("\".");
+    #endif //NDEBUG
+                    break;
+                }
+                case load_mode_pet2:
+                {
+                    // TODO: Stupid hack for testing:
+
+                    int i = 0;
+                    char* name = 0;
+                    uint16_t addr = 0,
+                        len = 0;
+                    uint8_t* payload = petload_retrieve(&addr, &len, &name);
+
+                    ti = alloc_alloc(sizeof *ti);
+
+                    while(i < MT_TAPE_INPUT_NAME_LEN)
+                    {
+                        if(name[i] == '\0')
+                        {
+                            break;
+                        }
+                        ti->name[i] = name[i]; // No translation to PETSCII!
+
+                        ++i;
+                    }
+                    while(i < MT_TAPE_INPUT_NAME_LEN)
+                    {
+                        ti->name[i] = ' '; // Hard-coded!
+
+                        ++i;
+                    }
+                    ti->type = tape_filetype_relocatable;
+                    ti->addr = addr;
+                    ti->bytes = payload;
+                    ti->len = len;
+                    //ti->add_bytes
+
+                    break;
+                }
+
+                default:
+                {
+                    assert(false);
+                    break;
+                }
             }
 
-            name = tape_input_create_str_from_name(ti);
-
-#ifndef NDEBUG
-            console_write("kernel_main : Name from tape input = \"");
-            console_write(name);
-            console_writeline("\".");
-#endif //NDEBUG
-
-            if(str_starts_with(name, s_fastload_pet2))
+            if(str_starts_with(name, s_fastload_pet2)) // TODO: No special handling, when already in fast load mode(?!).
             {
-                struct tape_input * ti = petload_create();
+                struct tape_input * ti_create = petload_create();
 
                 lm = load_mode_cbm; // (just for clarification)
 
@@ -174,10 +224,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 // Indicates LOAD mode (IRQ).
 
                 assert(lm == load_mode_cbm);
-                cbm_send_data(ti, 0);
+                cbm_send_data(ti_create, 0);
 
-                tape_input_free(ti);
-                ti = 0;
+                tape_input_free(ti_create);
+                ti_create = 0;
 
                 s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
 
@@ -242,10 +292,15 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             if(o != 0)
             {
                 cmd_free_output(o);
+                o = 0;
             }
             alloc_free(name);
-            alloc_free(ti->bytes);
-            alloc_free(ti);
+            if(ti != 0)
+            {
+                alloc_free(ti->bytes);
+                alloc_free(ti);
+                ti = 0;
+            }
         }
     }
 #endif //MT_INTERACTIVE
