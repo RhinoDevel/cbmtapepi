@@ -29,7 +29,7 @@ rechain = $c442;$c433 or $c430?
 ; -----------
 
 counter  = $e849    ; read timer 2 counter high byte.
-del      = 4        ; (see function for details)
+del      = 32        ; (see function for details) ; todo: debugging!
 
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
@@ -69,16 +69,18 @@ oudmask  = 8 ; bit 3.
 oudmaskn = 1 not oudmask ; (val. before not operator does not seem to matter)
 ireqmask = $10 ; bit 4.
 
-*=634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
+*=698;634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
 
 ; ---------
 ; variables
 ; ---------
 
-addr     byte 0, 0
-len      byte 0, 0
-str      text " ", " ", " ", " ", " ", " ", " ", " "
-         text " ", " ", " ", " ", " ", " ", " ", " "
+; todo: debugging:
+;
+addr     byte $de, $ad;0, 0
+len      byte $be, $ef;0, 0
+str      text "$", "1", "2", "3", "4", "5", "6", "7";" ", " ", " ", " ", " ", " ", " ", " "
+         text "8", "9", "0", "a", "b", "c", "d", " ";" ", " ", " ", " ", " ", " ", " ", " "
 
 ; ---------
 ; functions
@@ -100,8 +102,8 @@ str      text " ", " ", " ", " ", " ", " ", " ", " "
          and #ordmaskn  ; motor signal should already be enabled, but anyway..
          sta out_rdy    ;
 
-strnext  ldx #0         ; send string.
-         ldy str,x
+         ldx #0         ; send string.
+strnext  ldy str,x
          jsr sendbyte
          inx
          cpx #16        ; hard-coded for sixteen characters.
@@ -215,17 +217,17 @@ sendbyte txa
          ldx #8         ; (send bit) counter.
 
 sendloop lda in_req     ; wait for data-req. line to toggle.
-         and #ireqmask  ; => register a holds either 00001000 or 00000000.
+         and #ireqmask  ; => register a holds either 00010000 or 00000000.
 
 sendtog  cmp #0         ; (value will be changed in-place)
          bne sendloop
 
          eor #ireqmask  ; toggle expected next data-req. value
-         sta sendtog+1  ; between 00000000 and 00001000 (low or high).
+         sta sendtog+1  ; between 00000000 and 00010000 (low or high).
 
          tya
          lsr            ; sends current bit to c flag.
-         tay
+         tay            ; (does not change c flag)
 
          lda outdata    ; (does not change c flag)
          bcc sendzer
