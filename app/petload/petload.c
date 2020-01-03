@@ -222,11 +222,32 @@ struct tape_input * petload_create()
     return ret_val;
 }
 
-uint8_t* petload_retrieve(uint16_t * const addr, uint16_t * const payload_len)
+uint8_t* petload_retrieve(
+    uint16_t * const addr,
+    uint16_t * const payload_len,
+    char * * const name)
 {
+    assert(addr != 0);
+    assert(payload_len != 0);
+    assert(name != 0 && *name == 0);
+
     assert(gpio_read(s_data_req_to_pet) == s_data_req_to_pet_default_level);
 
+    static uint32_t const name_len = MT_TAPE_INPUT_NAME_LEN;
+
     uint8_t* ret_val = 0;
+    uint8_t name_pet[MT_TAPE_INPUT_NAME_LEN];
+
+    for(uint32_t i = 0;i < name_len;++i)
+    {
+        name_pet[i] = (char)retrieve_byte();
+    }
+    *name = tape_input_create_str_from_name_only(name_pet);
+#ifndef NDEBUG
+    console_write("petload_retrieve : Retrieved \"name\" \"");
+    console_write(*name);
+    console_writeline("\".");
+#endif //NDEBUG
 
     *addr = (uint16_t)retrieve_byte();
     *addr |= (uint16_t)retrieve_byte() << 8;

@@ -17,8 +17,12 @@ struct tape_input * petload_create();
  *   fast mode command to-be-retrieved.
  *
  * - Caller takes ownership of returned object.
+ * - Caller takes ownership of object at address given pointer will be set to.
  */
-uint8_t* petload_retrieve(uint16_t * const addr, uint16_t * const payload_len);
+uint8_t* petload_retrieve(
+    uint16_t * const addr,
+    uint16_t * const payload_len,
+    char * * const name);
 
 /**
  * - Expects: MT_TAPE_GPIO_PIN_NR_READ configured as output (data-ready line).
