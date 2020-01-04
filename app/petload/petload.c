@@ -172,7 +172,7 @@ static uint8_t retrieve_byte()
 {
     uint8_t ret_val = 0;
 
-    for(int i = 7;i >= 0; --i)
+    for(int i = 0;i < 8; ++i)
     {
         ret_val |= retrieve_bit(i) << i;
     }
