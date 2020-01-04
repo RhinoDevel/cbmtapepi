@@ -167,16 +167,6 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
     alloc_free(buf);
 }
 
-static void fill_add_bytes(uint8_t * const add_bytes)
-{
-    // Additional bytes (to be stored in header):
-    //
-    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
-    {
-        add_bytes[i] = 0x20;
-    }
-}
-
 static bool send_to_commodore(
     uint8_t /*const*/ * const bytes,
     char const * const name,
@@ -206,7 +196,7 @@ static bool send_to_commodore(
     p.data->bytes = bytes + 2;
     p.data->len = count - 2;
 
-    fill_add_bytes(p.data->add_bytes);
+    tape_input_fill_add_bytes(p.data->add_bytes);
 
 #ifndef NDEBUG
     console_write("Start address is 0x");

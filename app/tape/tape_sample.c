@@ -30,16 +30,6 @@ static void fill_name(uint8_t * const name)
     }
 }
 
-static void fill_add_bytes(uint8_t * const add_bytes)
-{
-    // Additional bytes (to be stored in header):
-    //
-    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
-    {
-        add_bytes[i] = 0x20;
-    }
-}
-
 static void pet_fill_buf(struct tape_input * const buf)
 {
     static uint8_t /*const*/ bytes[] = {
@@ -56,7 +46,7 @@ static void pet_fill_buf(struct tape_input * const buf)
     buf->addr = 826; // PET ROM v2 and v3 tape #2 buffer.
     buf->bytes = bytes;
     buf->len = sizeof bytes;
-    fill_add_bytes(buf->add_bytes);
+    tape_input_fill_add_bytes(buf->add_bytes);
 }
 
 static void c64_fill_buf(struct tape_input * const buf)
@@ -75,7 +65,7 @@ static void c64_fill_buf(struct tape_input * const buf)
     buf->addr = 2024; // C64: 16 unused bytes.
     buf->bytes = bytes;
     buf->len = sizeof bytes;
-    fill_add_bytes(buf->add_bytes);
+    tape_input_fill_add_bytes(buf->add_bytes);
 }
 
 bool tape_sample_send(enum tape_sample_type const t)

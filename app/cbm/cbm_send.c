@@ -19,16 +19,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-static void fill_add_bytes(uint8_t * const add_bytes)
-{
-    // Additional bytes (to be stored in header):
-    //
-    for(int i = 0;i<MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
-    {
-        add_bytes[i] = 0x20;
-    }
-}
-
 void cbm_send_fill_name(
     uint8_t * const name_out, char const * const name_in)
 {
@@ -99,7 +89,7 @@ bool cbm_send(
     data->bytes = bytes + 2;
     data->len = count - 2;
 
-    fill_add_bytes(data->add_bytes);
+    tape_input_fill_add_bytes(data->add_bytes);
 
     ret_val = cbm_send_data(data, is_stop_requested);
 

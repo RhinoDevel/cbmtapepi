@@ -99,3 +99,13 @@ char* tape_input_create_str_from_name(struct tape_input const * const d)
 {
     return tape_input_create_str_from_name_only(d->name);
 }
+
+void tape_input_fill_add_bytes(uint8_t * const add_bytes)
+{
+    // Additional bytes (to be stored in header):
+    //
+    for(int i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
+    {
+        add_bytes[i] = 0x20;
+    }
+}

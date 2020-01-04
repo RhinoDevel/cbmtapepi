@@ -45,4 +45,6 @@ void tape_input_console_write(
 char* tape_input_create_str_from_name(struct tape_input const * const d);
 char* tape_input_create_str_from_name_only(uint8_t const * const name);
 
+void tape_input_fill_add_bytes(uint8_t * const add_bytes);
+
 #endif //MT_TAPE_INPUT
