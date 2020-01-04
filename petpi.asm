@@ -75,12 +75,10 @@ ireqmask = $10 ; bit 4.
 ; variables
 ; ---------
 
-; todo: debugging:
-;
-addr     byte $de, $ad;0, 0
-len      byte $be, $ef;0, 0
-str      text "$", "1", "2", "3", "4", "5", "6", "7";" ", " ", " ", " ", " ", " ", " ", " "
-         text "8", "9", "0", "a", "b", "c", "d", " ";" ", " ", " ", " ", " ", " ", " ", " "
+addr     byte 0, 0
+len      byte 0, 0
+str      text "$", " ", " ", " ", " ", " ", " ", " " ; todo: debugging!
+         text " ", " ", " ", " ", " ", " ", " ", " "
 
 ; ---------
 ; functions
