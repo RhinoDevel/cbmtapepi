@@ -222,54 +222,51 @@ struct tape_input * petload_create()
     return ret_val;
 }
 
-uint8_t* petload_retrieve(
-    uint16_t * const addr,
-    uint16_t * const payload_len,
-    char * * const name)
+struct tape_input * petload_retrieve()
 {
-    assert(addr != 0);
-    assert(payload_len != 0);
-    assert(name != 0 && *name == 0);
-
     assert(gpio_read(s_data_req_to_pet) == s_data_req_to_pet_default_level);
 
-    static uint32_t const name_len = MT_TAPE_INPUT_NAME_LEN;
+    struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 
-    uint8_t* ret_val = 0;
-    uint8_t name_pet[MT_TAPE_INPUT_NAME_LEN];
-
-    for(uint32_t i = 0;i < name_len;++i)
+    for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        name_pet[i] = (char)retrieve_byte();
+        ret_val->name[i] = retrieve_byte();
     }
-    *name = tape_input_create_str_from_name_only(name_pet);
 #ifndef NDEBUG
-    console_write("petload_retrieve : Retrieved \"name\" \"");
-    console_write(*name);
-    console_writeline("\".");
-#endif //NDEBUG
-
-    *addr = (uint16_t)retrieve_byte();
-    *addr |= (uint16_t)retrieve_byte() << 8;
-#ifndef NDEBUG
-    console_write("petload_retrieve : Retrieved address ");
-    console_write_word(*addr);
-    console_writeline(".");
-#endif //NDEBUG
-
-    *payload_len = (uint16_t)retrieve_byte();
-    *payload_len |= (uint16_t)retrieve_byte() << 8;
-#ifndef NDEBUG
-    console_write("petload_retrieve : Retrieved payload byte count ");
-    console_write_word(*payload_len);
-    console_writeline(".");
-#endif //NDEBUG
-
-    ret_val = alloc_alloc(*payload_len * sizeof *ret_val);
-
-    for(uint16_t i = 0;i < *payload_len; ++i)
     {
-        ret_val[i] = retrieve_byte();
+        char * const deb_name = tape_input_create_str_from_name_only(
+            ret_val->name);
+
+        console_write("petload_retrieve : Retrieved \"name\" \"");
+        console_write(deb_name);
+        console_writeline("\".");
+
+        alloc_free(deb_name);
+    }
+#endif //NDEBUG
+
+    ret_val->type = tape_filetype_relocatable; // Hard-coded
+
+    ret_val->addr = (uint16_t)retrieve_byte();
+    ret_val->addr |= (uint16_t)retrieve_byte() << 8;
+#ifndef NDEBUG
+    console_write("petload_retrieve : Retrieved address 0x");
+    console_write_word(ret_val->addr);
+    console_writeline(".");
+#endif //NDEBUG
+
+    ret_val->len = (uint16_t)retrieve_byte();
+    ret_val->len |= (uint16_t)retrieve_byte() << 8;
+#ifndef NDEBUG
+    console_write("petload_retrieve : Retrieved byte count 0x");
+    console_write_word(ret_val->len);
+    console_writeline(".");
+#endif //NDEBUG
+
+    ret_val->bytes = alloc_alloc(ret_val->len * sizeof *ret_val->bytes);
+    for(uint16_t i = 0;i < ret_val->len; ++i)
+    {
+        ret_val->bytes[i] = retrieve_byte();
     }
 #ifndef NDEBUG
     console_writeline("petload_retrieve : Retrieved payload bytes.");

@@ -16,13 +16,11 @@ struct tape_input * petload_create();
  * - petload_retrieve() must already be waiting BEFORE CBM machine's first
  *   fast mode command to-be-retrieved.
  *
+ * - This uses tape_input, but this is just be convention/convenience..
+ *
  * - Caller takes ownership of returned object.
- * - Caller takes ownership of object at address given pointer will be set to.
  */
-uint8_t* petload_retrieve(
-    uint16_t * const addr,
-    uint16_t * const payload_len,
-    char * * const name);
+struct tape_input * petload_retrieve();
 
 /**
  * - Expects: MT_TAPE_GPIO_PIN_NR_READ configured as output (data-ready line).

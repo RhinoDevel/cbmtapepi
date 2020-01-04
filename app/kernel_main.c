@@ -160,47 +160,16 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
                     name = tape_input_create_str_from_name(ti);
 
-    #ifndef NDEBUG
+#ifndef NDEBUG
                     console_write("kernel_main : Name from tape input = \"");
                     console_write(name);
                     console_writeline("\".");
-    #endif //NDEBUG
+#endif //NDEBUG
                     break;
                 }
                 case load_mode_pet2:
                 {
-                    // TODO: Stupid hack for testing:
-
-                    int i = 0;
-                    char* name = 0;
-                    uint16_t addr = 0,
-                        len = 0;
-                    uint8_t* payload = petload_retrieve(&addr, &len, &name);
-
-                    ti = alloc_alloc(sizeof *ti);
-
-                    while(i < MT_TAPE_INPUT_NAME_LEN)
-                    {
-                        if(name[i] == '\0')
-                        {
-                            break;
-                        }
-                        ti->name[i] = name[i]; // No translation to PETSCII!
-
-                        ++i;
-                    }
-                    while(i < MT_TAPE_INPUT_NAME_LEN)
-                    {
-                        ti->name[i] = ' '; // Hard-coded!
-
-                        ++i;
-                    }
-                    ti->type = tape_filetype_relocatable;
-                    ti->addr = addr;
-                    ti->bytes = payload;
-                    ti->len = len;
-                    //ti->add_bytes
-
+                    ti = petload_retrieve();
                     break;
                 }
 
