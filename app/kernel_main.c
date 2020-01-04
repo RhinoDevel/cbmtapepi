@@ -159,17 +159,23 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                     }
 
                     name = tape_input_create_str_from_name(ti);
-
 #ifndef NDEBUG
                     console_write("kernel_main : Name from tape input = \"");
                     console_write(name);
-                    console_writeline("\".");
+                    console_writeline("\" (normal mode).");
 #endif //NDEBUG
                     break;
                 }
                 case load_mode_pet2:
                 {
                     ti = petload_retrieve();
+
+                    name = tape_input_create_str_from_name(ti);
+#ifndef NDEBUG
+                    console_write("kernel_main : Name from tape input = \"");
+                    console_write(name);
+                    console_writeline("\" (pet2 fast mode).");
+#endif //NDEBUG
                     break;
                 }
 
