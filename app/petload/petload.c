@@ -263,6 +263,8 @@ struct tape_input * petload_retrieve()
     console_writeline(".");
 #endif //NDEBUG
 
+    // TODO: Explicit support for 0 bytes.
+
     ret_val->bytes = alloc_alloc(ret_val->len * sizeof *ret_val->bytes);
     for(uint16_t i = 0;i < ret_val->len; ++i)
     {
