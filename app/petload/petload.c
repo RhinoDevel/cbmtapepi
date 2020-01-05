@@ -228,6 +228,10 @@ struct tape_input * petload_retrieve()
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 
+    ret_val->type = tape_filetype_relocatable; // Hard-coded
+
+    tape_input_fill_add_bytes(ret_val->add_bytes);
+
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
         ret_val->name[i] = retrieve_byte();
@@ -245,8 +249,6 @@ struct tape_input * petload_retrieve()
     }
 #endif //NDEBUG
 
-    ret_val->type = tape_filetype_relocatable; // Hard-coded
-
     ret_val->addr = (uint16_t)retrieve_byte();
     ret_val->addr |= (uint16_t)retrieve_byte() << 8;
 #ifndef NDEBUG
@@ -262,17 +264,24 @@ struct tape_input * petload_retrieve()
     console_write_word(ret_val->len);
     console_writeline(".");
 #endif //NDEBUG
-
-    // TODO: Explicit support for 0 bytes.
-
-    ret_val->bytes = alloc_alloc(ret_val->len * sizeof *ret_val->bytes);
-    for(uint16_t i = 0;i < ret_val->len; ++i)
+    if(ret_val->len > 0)
     {
-        ret_val->bytes[i] = retrieve_byte();
-    }
+        ret_val->bytes = alloc_alloc(ret_val->len * sizeof *ret_val->bytes);
+        for(uint16_t i = 0;i < ret_val->len; ++i)
+        {
+            ret_val->bytes[i] = retrieve_byte();
+        }
 #ifndef NDEBUG
-    console_writeline("petload_retrieve : Retrieved payload bytes.");
+        console_writeline("petload_retrieve : Retrieved payload bytes.");
 #endif //NDEBUG
+    }
+    else
+    {
+        ret_val->bytes = 0;
+#ifndef NDEBUG
+        console_writeline("petload_retrieve : No payload bytes to retrieve.");
+#endif //NDEBUG
+    }
 
 #ifndef NDEBUG
     console_writeline("petload_retrieve : Done.");
