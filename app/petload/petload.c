@@ -302,10 +302,18 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     gpio_set_output(s_data_ready_to_pet, s_data_ready_to_pet_default_level);
 
     assert(s_data_req_from_pet == s_data_from_pet);
-    s_expected_data_req_level = !gpio_read(
-        s_data_req_from_pet/*s_data_from_pet*/);
+    //
+    bool const save_expected_data_req_level = gpio_read(
+        s_data_req_from_pet/*s_data_from_pet*/); // FROM PET (not to PET)!
+        //
+        // [send_data_request() used below overwrites this..]
     //
     // Depends on preceding petload_retrieve() run.
+
+    // TODO: Debugging:
+    //
+    console_writeline("petload_send : Waiting 5 seconds for debugging..");
+    armtimer_busywait_microseconds(5 * 1000 * 1000);
 
     assert(s_data_req_to_pet == s_data_to_pet);
 #ifndef NDEBUG
@@ -313,6 +321,7 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #endif //NDEBUG
     send_data_request(); // Depends on preceding petload_retrieve() run.
 
+    s_expected_data_req_level = save_expected_data_req_level; // Restores
 #ifndef NDEBUG
     console_write("petload_send : Waiting for data-request line to get ");
     console_write(s_expected_data_req_level ? "HIGH" : "LOW");

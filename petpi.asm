@@ -154,7 +154,7 @@ plfinchk lda adptr      ; check, if end is reached.
 ;
 reinloop lda in_req     ; wait for data-req. line to toggle.
          and #ireqmask  ; => register a holds either 00010000 or 00000000.
-reintog  cmp #0         ; (equals initially expected data-req. level above)
+reintog  cmp sendtog+1  ; (should always be zero, here)
          bne reinloop
 
 ; expected values at this point:
