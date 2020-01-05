@@ -69,7 +69,7 @@ oudmask  = 8 ; bit 3.
 oudmaskn = 1 not oudmask ; (val. before not operator does not seem to matter)
 ireqmask = $10 ; bit 4.
 
-*=698;634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
+*=634 ; tape buf. #1 & #2 used (192+192=384 bytes), load via basic loader prg.
 
 ; ---------
 ; variables
@@ -150,18 +150,21 @@ plfinchk lda adptr      ; check, if end is reached.
 
 ; >>> retrieve bytes: <<<
 
+; wait for initial start-retrieve-request from pi:
+;
+reinloop lda in_req     ; wait for data-req. line to toggle.
+         and #ireqmask  ; => register a holds either 00010000 or 00000000.
+reintog  cmp #0         ; (equals initially expected data-req. level above)
+         bne reinloop
+
 ; expected values at this point:
 ;
-; cas_write/out_req = output, default level will be set to low.
+; cas_write/out_req = output, current level was decided by sending done, above.
 ; cas_read/in_ready = input, don't care about level, just care about high -> low
 ;                     change.
 ; cas_sense/in_data = input.
 
-retrieve lda out_req   ; request-data line default level is low.
-         and #reqmaskn
-         sta out_req
-
-         jsr readbyte  ; read start address.
+retrieve jsr readbyte  ; read start address.
          sty adptr
          jsr readbyte
          sty adptr+1
@@ -259,8 +262,8 @@ senddata sta outdata    ; set data bit.
 readbyte ldy #0         ; byte buffer during read.
          ldx #8         ; (read bit) counter.
 
-readloop txa            ; req. next data bit ("toggle" data-request line level).
-         and #1
+readloop lda out_req    ; req. next data bit ("toggle" data-request line level).
+         and #reqmask
          beq toghigh
          lda out_req    ; toggle output to low.
          and #reqmaskn

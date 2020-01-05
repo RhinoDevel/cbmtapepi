@@ -33,7 +33,6 @@ static uint32_t const s_data_ready_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
 static uint32_t const s_data_to_pet = MT_TAPE_GPIO_PIN_NR_SENSE;
 //
 static bool const s_data_ready_to_pet_default_level = true; // HIGH
-static bool const s_data_req_from_pet_default_level = false; // LOW
 
 static bool s_expected_data_req_level = false;
 //
@@ -54,7 +53,8 @@ static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
 
 /** Send a data-request to PET on data-request line.
  *
- *  - To be called by retrieve_bit(), only.
+ *  - To be called by retrieve_bit().
+ *  - Also used by petload_send() as initial send-start-request.
  */
 static void send_data_request()
 {
@@ -301,12 +301,23 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #endif //NDEBUG
     gpio_set_output(s_data_ready_to_pet, s_data_ready_to_pet_default_level);
 
+    assert(s_data_req_from_pet == s_data_from_pet);
+    s_expected_data_req_level = !gpio_read(
+        s_data_req_from_pet/*s_data_from_pet*/);
+    //
+    // Depends on preceding petload_retrieve() run.
+
+    assert(s_data_req_to_pet == s_data_to_pet);
+#ifndef NDEBUG
+    console_writeline("petload_send : Sending initial send-start-request..");
+#endif //NDEBUG
+    send_data_request(); // Depends on preceding petload_retrieve() run.
+
 #ifndef NDEBUG
     console_write("petload_send : Waiting for data-request line to get ");
-    console_write(s_data_req_from_pet_default_level ? "HIGH" : "LOW");
+    console_write(s_expected_data_req_level ? "HIGH" : "LOW");
     console_writeline("..");
 #endif //NDEBUG
-    s_expected_data_req_level = s_data_req_from_pet_default_level;
     wait_for_data_req();
 
 #ifndef NDEBUG
