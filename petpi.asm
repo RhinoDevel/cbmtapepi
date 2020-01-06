@@ -153,10 +153,10 @@ plfinchk lda adptr      ; check, if end is reached.
 
 ; wait for initial request to send data from pi to commodore:
 ;
-reinloop lda in_req     ; wait for retrieve data-req. line to toggle.
+
+retrieve lda in_req     ; wait for retrieve data-req. line to go low.
          and #ireqmask  ; => register a holds either 00010000 or 00000000.
-reintog  cmp #0         ; (default value of sense line is high)
-         bne reinloop
+         bne retrieve   ; (default value of sense line is high)
 
 ; expected values at this point:
 ;
@@ -165,7 +165,7 @@ reintog  cmp #0         ; (default value of sense line is high)
 ;                     change.
 ; cas_sense/in_data = input.
 
-retrieve jsr readbyte  ; read start address.
+         jsr readbyte  ; read start address.
          sty adptr
          jsr readbyte
          sty adptr+1
