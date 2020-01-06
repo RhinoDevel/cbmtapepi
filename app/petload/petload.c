@@ -56,37 +56,23 @@ static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
  */
 static void wait_for_data_ready_pulse()
 {
+    assert(!s_data_ready_from_pet_default_level);
+
     // TODO: Measure MOTOR line rise & fall times and improve these values:
     //
     static uint32_t const pause_rise_microseconds = 1000;
     static uint32_t const pause_fall_microseconds = 1000;
 
-    if(s_data_ready_from_pet_default_level)
-    {
-        // Default level wait:
-        //
-        gpio_wait_for_high(s_data_ready_from_pet);
-        armtimer_busywait_microseconds(pause_rise_microseconds);
+    // Default level wait:
+    //
+    gpio_wait_for_low(s_data_ready_from_pet);
+    armtimer_busywait_microseconds(pause_fall_microseconds);
 
-        // Pulse wait:
-        //
-        gpio_wait_for_low(s_data_ready_from_pet);
-        armtimer_busywait_microseconds(pause_fall_microseconds);
-        //gpio_wait_for_high(s_data_ready_from_pet);
-    }
-    else
-    {
-        // Default level wait:
-        //
-        gpio_wait_for_low(s_data_ready_from_pet);
-        armtimer_busywait_microseconds(pause_fall_microseconds);
-
-        // Pulse wait:
-        //
-        gpio_wait_for_high(s_data_ready_from_pet);
-        armtimer_busywait_microseconds(pause_rise_microseconds);
-        //gpio_wait_for_low(s_data_ready_from_pet);
-    }
+    // Pulse wait:
+    //
+    gpio_wait_for_high(s_data_ready_from_pet);
+    armtimer_busywait_microseconds(pause_rise_microseconds);
+    //gpio_wait_for_low(s_data_ready_from_pet);
 }
 
 /** Wait for logic level change on data-req. line.
@@ -218,8 +204,6 @@ struct tape_input * petload_create()
 struct tape_input * petload_retrieve()
 {
     assert(gpio_read(s_data_req_to_pet) == s_data_req_to_pet_default_level);
-    assert(gpio_read(
-            s_data_ready_from_pet) == s_data_ready_from_pet_default_level);
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 

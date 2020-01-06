@@ -96,9 +96,10 @@ str      text "$", " ", " ", " ", " ", " ", " ", " " ; todo: debugging!
          lda #0         ; make sure to initially wait for data-req. low.
          sta sendtog+1  ;
 
-         lda out_rdy    ; enable motor signal (by disabling bit 3).
-         and #ordmaskn  ; motor signal should already be enabled, but anyway..
+         lda out_rdy    ; disable motor signal (by enabling bit 3).
+         ora #ordmask   ; motor signal should already be disabled, but anyway..
          sta out_rdy    ;
+         jsr waitdel    ; (motor signal takes its time..)
 
          ldx #0         ; send string.
 strnext  ldy str,x
@@ -239,11 +240,11 @@ sendzer  and #oudmaskn  ; set bit to zero to send 0 (low).
 senddata sta outdata    ; set data bit.
 
          lda out_rdy    ; motor signal pulse.
-         ora #ordmask   ; => low.
+         and #ordmaskn  ; disable bit => motor signal to high.
          sta out_rdy    ;
          jsr waitdel    ; (motor signal takes its time and its a pulse..)
          lda out_rdy    ;
-         and #ordmaskn  ; => high.
+         eor #ordmask   ; enable bit => motor signal back to low.
          sta out_rdy    ;
 
          dex

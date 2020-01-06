@@ -19,8 +19,6 @@ struct tape_input * petload_create();
  * - SENSE line (data-request to PET) must be HIGH
  *   when calling function and will be HIGH on return from function.
  *
- * - MOTOR line (data-ready from PET) must be LOW when calling function.
- *
  * - This uses tape_input struct, but this is just by convention and for
  *   convenience.
  *
