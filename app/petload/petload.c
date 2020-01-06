@@ -286,11 +286,6 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #endif //NDEBUG
     gpio_set_output(s_data_ready_to_pet, s_data_ready_to_pet_default_level);
 
-    // TODO: Debugging:
-    //
-    console_writeline("petload_send : Waiting 5 seconds for debugging..");
-    armtimer_busywait_microseconds(5 * 1000 * 1000);
-
 #ifndef NDEBUG
     console_writeline(
         "petload_send : Sending initial start request on data line..");
@@ -306,11 +301,10 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
         !s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
 
 #ifndef NDEBUG
-    console_write("petload_send : Waiting for data-request line to get ");
+    console_write("petload_send : Expecting data-request line to get ");
     console_write(s_send_expected_data_req_level ? "HIGH" : "LOW");
-    console_writeline("..");
+    console_writeline(".");
 #endif //NDEBUG
-    wait_for_data_req();
 
 #ifndef NDEBUG
     console_write("petload_send : Sending address bytes ");
