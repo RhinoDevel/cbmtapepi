@@ -150,11 +150,11 @@ plfinchk lda adptr      ; check, if end is reached.
 
 ; >>> retrieve bytes: <<<
 
-; wait for initial start-retrieve-request from pi:
+; wait for initial request to send data from pi to commodore:
 ;
-reinloop lda in_req     ; wait for data-req. line to toggle.
+reinloop lda in_req     ; wait for retrieve data-req. line to toggle.
          and #ireqmask  ; => register a holds either 00010000 or 00000000.
-reintog  cmp sendtog+1  ; (should always be zero, here)
+reintog  cmp #0         ; (default value of sense line is high)
          bne reinloop
 
 ; expected values at this point:

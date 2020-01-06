@@ -28,15 +28,16 @@ static bool const s_data_req_to_pet_default_level = true; // HIGH
 
 // Send:
 //
-static uint32_t const s_data_req_from_pet = MT_TAPE_GPIO_PIN_NR_WRITE;
+static uint32_t const s_data_req_from_pet = s_data_from_pet;
 static uint32_t const s_data_ready_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
-static uint32_t const s_data_to_pet = MT_TAPE_GPIO_PIN_NR_SENSE;
+static uint32_t const s_data_to_pet = s_data_req_to_pet;
 //
 static bool const s_data_ready_to_pet_default_level = true; // HIGH
-
-static bool s_expected_data_req_level = false;
+static bool const s_data_to_pet_default_level = s_data_req_to_pet_default_level;
 //
-// Set by petload_send() and wait_for_data_req().
+static bool s_send_expected_data_req_level = false;
+//
+// Set by wait_for_data_req() and petload_send().
 
 // *** BASIC v2 / Rev. 3 ROMs: ***
 
@@ -50,17 +51,6 @@ static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
 // *** ***
 
 static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
-
-/** Send a data-request to PET on data-request line.
- *
- *  - To be called by retrieve_bit().
- *  - Also used by petload_send() as initial send-start-request.
- */
-static void send_data_request()
-{
-    gpio_set_output(s_data_req_to_pet, s_expected_data_req_level);
-    s_expected_data_req_level = !s_expected_data_req_level;
-}
 
 /** Wait for pulse on data-ready line.
  */
@@ -116,7 +106,7 @@ static void wait_for_data_req()
     //
     static uint32_t const pause_microseconds = 2;
 
-    if(s_expected_data_req_level)
+    if(s_send_expected_data_req_level)
     {
         gpio_wait_for_high(s_data_req_from_pet);
     }
@@ -125,7 +115,7 @@ static void wait_for_data_req()
         gpio_wait_for_low(s_data_req_from_pet);
     }
     armtimer_busywait_microseconds(pause_microseconds);
-    s_expected_data_req_level = !s_expected_data_req_level;
+    s_send_expected_data_req_level = !s_send_expected_data_req_level;
 }
 
 /** Send a data-ready pulse to PET on data-ready line.
@@ -149,10 +139,13 @@ static void send_data_ready_pulse()
  */
 static uint8_t retrieve_bit(int const bit_nr)
 {
-    send_data_request(
+    // Send data-request to Commodore:
+    //
+    gpio_set_output(
+        s_data_req_to_pet,
         bit_nr % 2 == 0
-            ? s_data_req_to_pet_default_level
-            : !s_data_req_to_pet_default_level);
+            ? !s_data_req_to_pet_default_level
+            : s_data_req_to_pet_default_level);
 
     wait_for_data_ready_pulse();
 
@@ -294,6 +287,12 @@ struct tape_input * petload_retrieve()
 
 void petload_send(uint8_t const * const bytes, uint32_t const count)
 {
+    // Current value is the value of the bit retrieved as last bit via
+    // petload_retrieve():
+    //
+    assert(s_data_from_pet == s_data_req_from_pet);
+    s_send_expected_data_req_level = !gpio_read(s_data_req_from_pet);
+
 #ifndef NDEBUG
     console_write("petload_send : Setting data-ready line to ");
     console_write(s_data_ready_to_pet_default_level ? "HIGH" : "LOW");
@@ -301,30 +300,28 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #endif //NDEBUG
     gpio_set_output(s_data_ready_to_pet, s_data_ready_to_pet_default_level);
 
-    assert(s_data_req_from_pet == s_data_from_pet);
-    //
-    bool const save_expected_data_req_level = gpio_read(
-        s_data_req_from_pet/*s_data_from_pet*/); // FROM PET (not to PET)!
-        //
-        // [send_data_request() used below overwrites this..]
-    //
-    // Depends on preceding petload_retrieve() run.
-
     // TODO: Debugging:
     //
     console_writeline("petload_send : Waiting 5 seconds for debugging..");
     armtimer_busywait_microseconds(5 * 1000 * 1000);
 
-    assert(s_data_req_to_pet == s_data_to_pet);
 #ifndef NDEBUG
-    console_writeline("petload_send : Sending initial send-start-request..");
+    console_writeline(
+        "petload_send : Sending initial start request on data line..");
 #endif //NDEBUG
-    send_data_request(); // Depends on preceding petload_retrieve() run.
+    assert(s_data_req_to_pet == s_data_to_pet);
+    assert(s_data_req_to_pet_default_level == s_data_to_pet_default_level);
+    assert(
+        gpio_read(s_data_to_pet/*s_data_req_to_pet*/)
+            == s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
+    //
+    gpio_set_output(
+        s_data_to_pet/*s_data_req_to_pet*/,
+        !s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
 
-    s_expected_data_req_level = save_expected_data_req_level; // Restores
 #ifndef NDEBUG
     console_write("petload_send : Waiting for data-request line to get ");
-    console_write(s_expected_data_req_level ? "HIGH" : "LOW");
+    console_write(s_send_expected_data_req_level ? "HIGH" : "LOW");
     console_writeline("..");
 #endif //NDEBUG
     wait_for_data_req();
@@ -358,6 +355,16 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     {
         send_byte(bytes[i]);
     }
+
+#ifndef NDEBUG
+    console_writeline(
+        "petload_send : Setting data line back to default value..");
+#endif //NDEBUG
+    assert(s_data_req_to_pet == s_data_to_pet);
+    assert(s_data_req_to_pet_default_level == s_data_to_pet_default_level);
+    gpio_set_output(
+        s_data_to_pet/*s_data_req_to_pet*/,
+        s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
 
 #ifndef NDEBUG
     console_writeline("petload_send : Done.");
