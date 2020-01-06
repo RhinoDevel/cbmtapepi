@@ -218,12 +218,10 @@ struct tape_input * petload_create()
 struct tape_input * petload_retrieve()
 {
     assert(gpio_read(s_data_req_to_pet) == s_data_req_to_pet_default_level);
+    assert(gpio_read(
+            s_data_ready_from_pet) == s_data_ready_from_pet_default_level);
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
-
-    ret_val->type = tape_filetype_relocatable; // Hard-coded
-
-    tape_input_fill_add_bytes(ret_val->add_bytes);
 
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
@@ -275,6 +273,10 @@ struct tape_input * petload_retrieve()
         console_writeline("petload_retrieve : No payload bytes to retrieve.");
 #endif //NDEBUG
     }
+
+    ret_val->type = tape_filetype_relocatable; // Hard-coded
+
+    tape_input_fill_add_bytes(ret_val->add_bytes);
 
 #ifndef NDEBUG
     console_writeline("petload_retrieve : Done.");

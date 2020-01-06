@@ -16,8 +16,10 @@ struct tape_input * petload_create();
  * - petload_retrieve() must already be waiting BEFORE CBM machine's first
  *   fast mode command to-be-retrieved.
  *
- * - SENSE line (data-request from pet) must be HIGH
+ * - SENSE line (data-request to PET) must be HIGH
  *   when calling function and will be HIGH on return from function.
+ *
+ * - MOTOR line (data-ready from PET) must be LOW when calling function.
  *
  * - This uses tape_input struct, but this is just by convention and for
  *   convenience.
