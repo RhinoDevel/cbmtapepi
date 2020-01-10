@@ -188,6 +188,12 @@ static bool exec_remove(char const * const command)
 
 static struct cmd_output * exec_load(char const * const command)
 {
+#ifndef NDEBUG
+    console_write("exec_load: Trying to load file from command \"");
+    console_write(command);
+    console_writeline("\"..");
+#endif
+
     char const * const name_only = command + str_get_len(s_load);
     struct cmd_output * o = 0;
     FIL fil;
@@ -201,6 +207,11 @@ static struct cmd_output * exec_load(char const * const command)
 
     if(f_open(&fil, full_path, FA_READ) != FR_OK)
     {
+#ifndef NDEBUG
+        console_write("exec_load : Error: Opening file \"");
+        console_write(full_path);
+        console_writeline("\" failed!");
+#endif //NDEBUG
         alloc_free(full_path);
         dir_deinit();
         filesys_unmount();
@@ -214,6 +225,14 @@ static struct cmd_output * exec_load(char const * const command)
     o->bytes = alloc_alloc(o->count * sizeof *(o->bytes));
 
     f_read(&fil, o->bytes, (UINT)o->count, &read_len);
+
+#ifndef NDEBUG
+    assert(o->count == read_len);
+
+    console_write("exec_load: Read ");
+    console_write_dword_dec(read_len);
+    console_writeline(" bytes.");
+#endif
 
     f_close(&fil);
     alloc_free(full_path);
