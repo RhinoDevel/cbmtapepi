@@ -29,7 +29,7 @@ rechain = $c442;$c433 or $c430?
 ; -----------
 
 counter  = $e849    ; read timer 2 counter high byte.
-del      = 32        ; (see function for details) ; todo: debugging!
+del      = 32       ; (see function for details) ; todo: debugging!
 
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
@@ -77,7 +77,7 @@ ireqmask = $10 ; bit 4.
 
 addr     byte 0, 0
 len      byte 0, 0
-str      text "$", " ", " ", " ", " ", " ", " ", " " ; todo: debugging!
+str      text " ", " ", " ", " ", " ", " ", " ", " "
          text " ", " ", " ", " ", " ", " ", " ", " "
 
 ; ---------
@@ -165,15 +165,20 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
 ;                     change.
 ; cas_sense/in_data = input.
 
-         jsr readbyte  ; read start address.
-         sty adptr
-         jsr readbyte
-         sty adptr+1
-
          jsr readbyte  ; read payload byte count.
          sty tapbufin
          jsr readbyte
          sty tapbufin+1
+
+         cpy #0        ; exit, if byte count is zero.
+         bne nextpl
+         lda tapbufin
+         beq exit
+
+         jsr readbyte  ; read start address.
+         sty adptr
+         jsr readbyte
+         sty adptr+1
 
 nextpl   lda tapbufin
          bne declelo
@@ -193,9 +198,7 @@ declelo  dec tapbufin
          inc adptr+1
          jmp nextpl
 
-readdone cli
-
-         lda adptr+1    ; set basic variables start pointer to behind loaded
+readdone lda adptr+1    ; set basic variables start pointer to behind loaded
          sta varstptr+1 ; prg.
          lda adptr      ;
          sta varstptr   ;
@@ -203,6 +206,7 @@ readdone cli
          jsr clr
          jsr rechain
 
+exit     cli
          rts
 
 ; **************************************

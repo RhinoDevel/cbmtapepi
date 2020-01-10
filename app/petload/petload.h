@@ -32,4 +32,6 @@ struct tape_input * petload_retrieve();
  */
 void petload_send(uint8_t const * const bytes, uint32_t const count);
 
+void petload_send_nop();
+
 #endif //MT_PETLOAD

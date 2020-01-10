@@ -273,6 +273,9 @@ struct tape_input * petload_retrieve()
 
 void petload_send(uint8_t const * const bytes, uint32_t const count)
 {
+    assert(count >= 2);
+    assert((bytes == 0) == (count == 2));
+
     // Current value is the value of the bit retrieved as last bit via
     // petload_retrieve():
     //
@@ -306,16 +309,6 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     console_writeline(".");
 #endif //NDEBUG
 
-#ifndef NDEBUG
-    console_write("petload_send : Sending address bytes ");
-    console_write_byte(bytes[0]);
-    console_write(" and ");
-    console_write_byte(bytes[1]);
-    console_writeline("..");
-#endif //NDEBUG
-    send_byte(bytes[0]);
-    send_byte(bytes[1]);
-
     uint16_t const payload_len = count - 2;
 
 #ifndef NDEBUG
@@ -328,13 +321,34 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     send_byte(payload_len & 0x00FF);
     send_byte(payload_len >> 8);
 
-#ifndef NDEBUG
-    console_writeline("petload_send : Sending payload bytes..");
-#endif //NDEBUG
-    for(uint32_t i = 2;i < count; ++i)
+    if(payload_len != 0)
     {
-        send_byte(bytes[i]);
+#ifndef NDEBUG
+        console_write("petload_send : Sending address bytes ");
+        console_write_byte(bytes[0]);
+        console_write(" and ");
+        console_write_byte(bytes[1]);
+        console_writeline("..");
+#endif //NDEBUG
+        send_byte(bytes[0]);
+        send_byte(bytes[1]);
+
+#ifndef NDEBUG
+        console_write("petload_send : Sending ");
+        console_write_word_dec(payload_len);
+        console_writeline(" payload bytes..");
+#endif //NDEBUG
+        for(uint32_t i = 2;i < count; ++i)
+        {
+            send_byte(bytes[i]);
+        }
     }
+#ifndef NDEBUG
+    else
+    {
+        console_writeline("petload_send : No address or payload to send.");
+    }
+#endif
 
 #ifndef NDEBUG
     console_writeline(
@@ -349,4 +363,9 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #ifndef NDEBUG
     console_writeline("petload_send : Done.");
 #endif //NDEBUG
+}
+
+void petload_send_nop()
+{
+    petload_send(0, 2);
 }

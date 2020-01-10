@@ -210,12 +210,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             }
             else if(cmd_exec(name, ti, &o))
             {
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+                //
+                // Necessary for fast load modes?
+
                 if(o != 0)
                 {
-                    armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-                    //
-                    // Necessary for fast load modes?
-
                     s_led_state = led_state_off;
                     //
                     // Indicates LOAD mode (IRQ).
@@ -250,7 +250,27 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                             break;
                         }
                     }
+                }
+                else
+                {
+                    switch(lm)
+                    {
+                        case load_mode_cbm:
+                        {
+                            break;
+                        }
+                        case load_mode_pet2:
+                        {
+                            petload_send_nop();
+                            break;
+                        }
 
+                        default:
+                        {
+                            assert(false);
+                            break;
+                        }
+                    }
                 }
 
                 s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
