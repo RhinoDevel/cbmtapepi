@@ -9,7 +9,7 @@ d_mode = $0200 ; txtptr will hold this value at chrgot during direct mode call.
 ;
 sav_x = chrget+3 ; saved x register content.
 sav_y = chrget+4 ; saved y register content.
-buf   = chrget+5
+;= chrget+5
 
 cmd_sign = 255 ; command symbol.
 emp_sign = $20 ; "empty" character to be used in string.
