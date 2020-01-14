@@ -7,12 +7,12 @@ d_mode = $0200 ; txtptr will hold this value at chrgot during direct mode call.
 
 ; three free bytes:
 ;
-str_i = chrget+3 ; command string character index.
-sav_x = chrget+4 ; saved x register content.
-sav_y = chrget+5 ; saved y register content.
+sav_x = chrget+3 ; saved x register content.
+sav_y = chrget+4 ; saved y register content.
+buf   = chrget+5
 
-wait_i   = 255 ; index value to indicate waiting for initial command symbol.
-cmd_sign = $21 ; command symbol.
+cmd_sign = 255 ; command symbol.
+emp_sign = $20 ; "empty" character to be used in string.
 str_len  = 16
 
 *=634
@@ -25,8 +25,6 @@ str      lda #<wedge
          sta chrget+1
          lda #>wedge
          sta chrget+2
-         lda #wait_i
-         sta str_i
          rts
          byte 0
          byte 0
@@ -60,55 +58,37 @@ savexy   sty sav_y      ; save original y register content.
          cmp #>d_mode
          bne skip
 
-         ldy #0         ; for later character loading into a.
-
-         lda str_i      ; check, if waiting for command sign or already reading
-         cmp #wait_i    ; entered characters after command sign.
-         bne next_i     ;
-
-         ; waiting for command sign.
-
+         ldy #0         ;
          lda (txtptr),y ; load current character.
          cmp #cmd_sign  ; check, if this is the command sign.
-         beq cmd        ;
+         bne skip       ;
 
-         ; it is not the command sign.
+         ; it is the command character.
+
+         inc txtptr
+next_i   lda (txtptr),y
+         beq fill_i
+         sta str,y
+         iny
+         cpy #str_len
+         bne next_i
+
+         lda (txtptr),y
+         bne skip
+
+fill_i   tya
+         clc
+         adc txtptr     ; txtptr + y
+         sta txtptr     ;
+
+         lda #emp_sign
+next_f   cpy #str_len
+         beq skip
+         sta str,y
+         iny
+         jmp next_f
 
 skip     ldy sav_y      ; restore original y register content.
          ldx sav_x      ; restore original x register content.
-         
+
          jmp chrgot
-
-cmd      inc str_i      ; set string index from 255 to 0.
-
-done     ldy sav_y      ; restore original y register content.
-         ldx sav_x      ; restore original x register content.
-         
-         jmp chrget
-
-         ; process current character after command sign.
-
-next_i   lda (txtptr),y ; load current character.
-
-         bne fill_i
-
-         ; null => exit with error
-
-         ldx #wait_i
-         stx str_i
-         jmp skip
-
-         ; fill string at current index with current character:
-
-fill_i   sta str        ; TODO: Implement correctly!
-
-         inc str_i
-         lda str_i
-         cmp #str_len
-         bne done       ; process next character.
-
-         ; string is filled.
-
-         lda #wait_i
-         sta str_i
-         jmp done
