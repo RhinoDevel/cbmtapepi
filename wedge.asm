@@ -2,22 +2,21 @@
 chrget = $70
 chrgot = $76
 txtptr = $77 ; two bytes.
-mains = $c399+2 ; val. on stack for jsr $0070 from basic main routine (for rts).
-d_mode = $0200 ; txtptr will hold this value at chrgot during direct mode call.
+buf = $0200 ; basic input buffer's address.
 
-; three free bytes:
+cmd_char = 255 ; command symbol.
+spc_char = $20 ; "empty" character to be used in string.
+str_len  = 16  ; size of command string stored at label "str".
+
+; use the three free bytes behind installed wedge jump:
 ;
-sav_x = chrget+3 ; saved x register content.
-sav_y = chrget+4 ; saved y register content.
+savex = chrget+3 ; saved x register content.
+savey = chrget+4 ; saved y register content.
 ;= chrget+5
-
-cmd_sign = 255 ; command symbol.
-emp_sign = $20 ; "empty" character to be used in string.
-str_len  = 16
 
 *=634
 
-; install wedge (reuse space later for address, length and command string):
+; wedge installer (space reused later for address, length and command string):
 ;
 addr     lda #$4c ; jmp
 len      sta chrget
@@ -36,32 +35,24 @@ str      lda #<wedge
 
 ; the wedge:
 ;
-wedge    inc txtptr     ; increment txtptr (because of code overwritten at
-         bne savexy     ; chrget with jump to wedge).
-         inc txtptr+1   ;
+wedge    inc txtptr     ; increment here, because of code overwritten at chrget
+         bne savexy     ; with jump to wedge.
+         inc txtptr+1
 
-savexy   sty sav_y      ; save original y register content.
-         stx sav_x      ; save original x register content.
+savexy   sty savey      ; save original x and y register contents.
+         stx savex
 
-         tsx            ; check, if call came from basic main routine.
-         lda $0101,x    ; check w/o pulling from and pushing (back) to stack.
-         cmp #<mains
-         bne skip
-         lda $0102,x
-         cmp #>mains
-         bne skip
-
-         lda txtptr     ; check, if call came from basic direct mode.
-         cmp #<d_mode
-         bne skip
+         lda txtptr     ; exec. cmd. in basic direct mode, only.
+         cmp #<buf      ; original basic functionality of cmd. char. must still
+         bne to_basic   ; work (e.g. pi symbol as constant).
          lda txtptr+1
-         cmp #>d_mode
-         bne skip
+         cmp #>buf
+         bne to_basic
 
-         ldy #0         ;
-         lda (txtptr),y ; load current character.
-         cmp #cmd_sign  ; check, if this is the command sign.
-         bne skip       ;
+         ldy #0         ; check, if current character is the command sign.
+         lda (txtptr),y
+         cmp #cmd_char
+         bne to_basic
 
          ; it is the command character.
 
@@ -74,21 +65,20 @@ next_i   lda (txtptr),y
          bne next_i
 
          lda (txtptr),y
-         bne skip
+         bne to_basic
 
 fill_i   tya
          clc
          adc txtptr     ; txtptr + y
          sta txtptr     ;
 
-         lda #emp_sign
+         lda #spc_char
 next_f   cpy #str_len
-         beq skip
+         beq to_basic
          sta str,y
          iny
          jmp next_f
 
-skip     ldy sav_y      ; restore original y register content.
-         ldx sav_x      ; restore original x register content.
-
-         jmp chrgot
+to_basic ldy savey      ; restore saved register values and let basic handle
+         ldx savex      ; character from input buffer txtptr currently points
+         jmp chrgot     ; to.
