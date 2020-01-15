@@ -1,26 +1,31 @@
 
-chrget = $70
-chrgot = $76
-txtptr = $77 ; two bytes.
-buf = $0200 ; basic input buffer's address.
+chrget   = $70
+chrgot   = $76
+txtptr   = $77          ; two bytes.
+buf      = $0200        ; basic input buffer's address.
+cas_buf1 = $027a
 
-cmd_char = 255 ; command symbol.
-spc_char = $20 ; "empty" character to be used in string.
-str_len  = 16  ; size of command string stored at label "str".
+cmd_char = 255          ; command symbol.
+spc_char = $20          ; "empty" character to be used in string.
+str_len  = 16           ; size of command string stored at label "str".
 
 ; use the three free bytes behind installed wedge jump:
 ;
-savex = chrget+3 ; saved x register content.
-savey = chrget+4 ; saved y register content.
+savex    = chrget+3     ; saved x register content.
+savey    = chrget+4     ; saved y register content.
 ;= chrget+5
 
-*=634
+addr     = cas_buf1
+len      = addr+2
+str      = len+2
+
+*        = addr
 
 ; wedge installer (space reused later for address, length and command string):
-;
-addr     lda #$4c ; jmp
-len      sta chrget
-str      lda #<wedge
+
+         lda #$4c ; jmp
+         sta chrget
+         lda #<wedge
          sta chrget+1
          lda #>wedge
          sta chrget+2
@@ -34,7 +39,7 @@ str      lda #<wedge
          byte 0
 
 ; the wedge:
-;
+
 wedge    inc txtptr     ; increment here, because of code overwritten at chrget
          bne savexy     ; with jump to wedge.
          inc txtptr+1
@@ -54,24 +59,22 @@ savexy   sty savey      ; save original x and y register contents.
          cmp #cmd_char
          bne to_basic
 
-         ; it is the command character.
-
-         inc txtptr
-next_i   lda (txtptr),y
+         inc txtptr     ; save at most "str_len" count of characters from input
+next_i   lda (txtptr),y ; buffer to "str".
          beq fill_i
          sta str,y
          iny
          cpy #str_len
          bne next_i
 
-         lda (txtptr),y
-         bne to_basic
+         lda (txtptr),y ; there must be a terminating zero following,
+         bne to_basic   ; go to basic with character right after cmd. sign,
+                        ; otherwise.
 
-fill_i   tya
-         clc
-         adc txtptr     ; txtptr + y
-         sta txtptr     ;
-
+fill_i   tya            ; increment txtptr by count of read characters
+         clc            ; and fill remaining places in "str" array with spaces.
+         adc txtptr
+         sta txtptr
          lda #spc_char
 next_f   cpy #str_len
          beq to_basic
