@@ -227,7 +227,7 @@ send_pl  clc            ; put first address above data into buffer.
          sta tapbufin
          lda adptr+1
          adc len+1
-         sta tapbufin
+         sta tapbufin+1
 
 pl_next  ldy #0         ; send payload.
          lda (adptr),y
