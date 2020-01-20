@@ -30,7 +30,7 @@ rechain  = $c442;$c433 or $c430?
 ; -----------
 
 counter  = $e849    ; read timer 2 counter high byte.
-del      = 32       ; (see function for details) ; todo: debugging!
+del      = 1        ; (see function for details) ; todo: 100us would be enough.
 
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
@@ -127,10 +127,10 @@ savexy   sty savey      ; save original x and y register contents.
          ldy txtptr+1   ; exec. cmd. in basic direct mode, only.
          cpy #>buf      ; original basic functionality of cmd. char. must still
          bne to_basic   ; work (e.g. pi symbol as constant).
-         ldy txtptr     
+         ldy txtptr
          ;cpy #<buf     ; hard-coded: commented-out for "buf" = $??00, only!
-         bne to_basic   
-         
+         bne to_basic
+
          ; hard-coded for y already holding 0 (see above)!
          ;
          ;ldy #0         ; check, if current character is the command sign.

@@ -58,10 +58,15 @@ static void wait_for_data_ready_pulse()
 {
     assert(!s_data_ready_from_pet_default_level);
 
-    // TODO: Measure MOTOR line rise & fall times and improve these values:
+    // These values depend on motor signal rise and fall times,
+    // measured these with attached Raspberry Pi 1 and running CBM Tape Pi
+    // transfer at a CBM 3032 as:
     //
-    static uint32_t const pause_rise_microseconds = 1000;
-    static uint32_t const pause_fall_microseconds = 1000;
+    // - Rise time = ~25us.
+    // - Fall time = ~50us.
+    //
+    static uint32_t const pause_rise_microseconds = 2*25; // Measured ~25us.
+    static uint32_t const pause_fall_microseconds = 2*50; // Measured ~50us.
 
     // Default level wait:
     //

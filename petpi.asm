@@ -29,7 +29,7 @@ rechain = $c442;$c433 or $c430?
 ; -----------
 
 counter  = $e849    ; read timer 2 counter high byte.
-del      = 32       ; (see function for details) ; todo: debugging!
+del      = 1        ; (see function for details) ; todo: 100us would be enough.
 
 tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
 adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
