@@ -171,11 +171,11 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
          sty tapbufin+1
 
          cpy #0        ; exit, if byte count is zero.
-         bne nextpl
+         bne readaddr
          lda tapbufin
          beq exit
 
-         jsr readbyte  ; read start address.
+readaddr jsr readbyte  ; read start address.
          sty adptr
          jsr readbyte
          sty adptr+1
