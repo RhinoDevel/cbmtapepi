@@ -274,6 +274,8 @@ r_finchk lda addr       ; check, if end is reached.
          cmp lim+1
          bne r_next
 
+         ; TODO: Some BUG exists when loading 7167 (payload) bytes long PRG!
+
          sta varstptr+1 ; set basic variables start pointer to behind loaded
          lda addr       ; payload.
          sta varstptr   ;
