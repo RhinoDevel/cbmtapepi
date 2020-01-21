@@ -236,16 +236,23 @@ struct tape_input * petload_retrieve()
     console_write_word(ret_val->addr);
     console_writeline(".");
 #endif //NDEBUG
-
-    ret_val->len = (uint16_t)retrieve_byte();
-    ret_val->len |= (uint16_t)retrieve_byte() << 8;
-#ifndef NDEBUG
-    console_write("petload_retrieve : Retrieved byte count 0x");
-    console_write_word(ret_val->len);
-    console_writeline(".");
-#endif //NDEBUG
-    if(ret_val->len > 0)
+    if(ret_val->addr != 0)
     {
+        uint16_t lim = 0;
+
+        lim = (uint16_t)retrieve_byte();
+        lim |= (uint16_t)retrieve_byte() << 8;
+
+        ret_val->len = lim - ret_val->addr;
+
+#ifndef NDEBUG
+        console_write("petload_retrieve : Retrieved limit 0x");
+        console_write_word(lim);
+        console_write(", byte count is 0x");
+        console_write_word(ret_val->len);
+        console_writeline(".");
+#endif //NDEBUG
+
         ret_val->bytes = alloc_alloc(ret_val->len * sizeof *ret_val->bytes);
         for(uint16_t i = 0;i < ret_val->len; ++i)
         {
@@ -257,9 +264,11 @@ struct tape_input * petload_retrieve()
     }
     else
     {
+        ret_val->len = 0;
         ret_val->bytes = 0;
 #ifndef NDEBUG
-        console_writeline("petload_retrieve : No payload bytes to retrieve.");
+        console_writeline(
+            "petload_retrieve : No limit or payload bytes to retrieve.");
 #endif //NDEBUG
     }
 
@@ -316,16 +325,6 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 
     uint16_t const payload_len = count - 2;
 
-#ifndef NDEBUG
-    console_write("petload_send : Sending length bytes ");
-    console_write_byte(payload_len & 0x00FF);
-    console_write(" and ");
-    console_write_byte(payload_len >> 8);
-    console_writeline("..");
-#endif //NDEBUG
-    send_byte(payload_len & 0x00FF);
-    send_byte(payload_len >> 8);
-
     if(payload_len != 0)
     {
 #ifndef NDEBUG
@@ -337,6 +336,19 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #endif //NDEBUG
         send_byte(bytes[0]);
         send_byte(bytes[1]);
+
+        uint16_t const addr = bytes[1] << 8 | bytes[0],
+            lim = addr + payload_len;
+
+#ifndef NDEBUG
+        console_write("petload_send : Sending limit bytes ");
+        console_write_byte(lim & 0x00FF);
+        console_write(" and ");
+        console_write_byte(lim >> 8);
+        console_writeline("..");
+#endif //NDEBUG
+        send_byte(lim & 0x00FF);
+        send_byte(lim >> 8);
 
 #ifndef NDEBUG
         console_write("petload_send : Sending ");
@@ -351,7 +363,17 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #ifndef NDEBUG
     else
     {
-        console_writeline("petload_send : No address or payload to send.");
+#ifndef NDEBUG
+        console_write("petload_send : Sending fake address bytes ");
+        console_write_byte(0);
+        console_write(" and ");
+        console_write_byte(0);
+        console_writeline("..");
+#endif //NDEBUG
+        send_byte(0);
+        send_byte(0);
+        
+        console_writeline("petload_send : No limit or payload to send.");
     }
 #endif
 
