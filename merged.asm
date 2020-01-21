@@ -11,8 +11,12 @@
 ; system pointers
 ; ---------------
 
-varstptr = 42;124      ; pointer to start of basic variables.
+termwili = $0f          ; term. width & lim. for scanning src. columns
+                        ; (2 unused bytes).
+varstptr = $2a          ; pointer to start of basic variables.
 txtptr   = $77          ; two bytes.
+tapbufin = $bb          ; tape buf. #1 & #2 indices to next char (2 bytes).
+
 buf      = $0200        ; basic input buffer's address.
 cas_buf1 = $027a
 
@@ -22,57 +26,63 @@ cas_buf1 = $027a
 
 chrget   = $70
 chrgot   = $76
-clr      = $c577;$c56a or $c770?
-rechain  = $c442;$c433 or $c430?
+clr      = $c577
+rechain  = $c442
+
+; ----------
+; peripheral
+; ----------
+
+counter  = $e849        ; read timer 2 counter high byte.
+
+; using tape #1 port for transfer:
+
+cas_sens = $e810        ; bit 4.
+;
+; pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
+;                unconnected, "0v"/0 when key pressed).
+
+cas_read = $e811        ; bit 7 is high-to-low flag. pia 1, ctrl.reg. a (59409).
+
+cas_wrt  = $e840        ; bit 3.
+;
+; via, port b (59456, tested => correct, 5v for 1, 0v output for 0).
+
+cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 
 ; -----------
 ; "constants"
 ; -----------
 
-counter  = $e849    ; read timer 2 counter high byte.
-del      = 1        ; (see function for details) ; todo: 100us would be enough.
+del      = 1            ; (see func. for details) ; todo: 100us would be enough.
+str_len  = 16           ; size of command string stored at label "str".
 
-tapbufin = $bb;$271 ; tape buf. #1 & #2 indices to next char (2 bytes).
-adptr    = 15;6 ; term. width & lim. for scanning src. columns (2 unused bytes).
-
-; using tape #1 port for transfer:
-
-cas_sense = $e810 ; bit 4.
-;
-; pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
-;                unconnected, "0v"/0 when key pressed).
-
-cas_read = $e811 ; bit 7 is high-to-low flag. pia 1, control register a (59409).
-
-cas_write = $e840 ; bit 3
-;
-; via, port b (59456, tested => correct, 5v for 1, 0v output for 0).
-
-cas_motor = $e813 ; bit 3 (0 = motor on, 1 = motor off).
+cmd_char = $ff          ; command symbol.
+spc_char = $20          ; "empty" character to be used in string.
 
 ; retrieve bytes:
 ;
-out_req  = cas_write
+out_req  = cas_wrt
 in_ready = cas_read
-in_data  = cas_sense
+in_data  = cas_sens
 reqmask  = 8 ; bit 3.
 reqmaskn = 1 not reqmask ; (val. before not operator does not seem to matter)
-indamask = $10 ; bit 4.
+indamask = 16 ; bit 4.
 
 ; send bytes:
 ;
-out_rdy  = cas_motor
-in_req   = cas_sense
-outdata  = cas_write
+out_rdy  = cas_moto
+in_req   = cas_sens
+outdata  = cas_wrt
 ordmask  = 8 ; or mask. bit 3 on <=> motor off.
 ordmaskn = 1 not ordmask ; and mask. bit 3 off <=> motor on.
 oudmask  = 8 ; bit 3.
 oudmaskn = 1 not oudmask ; (val. before not operator does not seem to matter)
-ireqmask = $10 ; bit 4.
+ireqmask = 16 ; bit 4.
 
-cmd_char = 255          ; command symbol.
-spc_char = $20          ; "empty" character to be used in string.
-str_len  = 16           ; size of command string stored at label "str".
+; -----------
+; "variables"
+; -----------
 
 ; use the three free bytes behind installed wedge jump:
 ;
@@ -80,35 +90,28 @@ savex    = chrget+3     ; saved x register content.
 savey    = chrget+4     ; saved y register content.
 temp     = chrget+5
 
-; ---------
-; variables
-; ---------
+addr     = termwili
+lim      = tapbufin
 
-addr     = cas_buf1
-len      = addr+2
-str      = len+2
+str      = cas_buf1
 
-*        = addr
+*        = str
 
 ; ---------
 ; functions
 ; ---------
 
 ; ***********************
-; *** wedge installer *** (space reused later for addr., len. and cmd. string)
+; *** wedge installer *** (space reused later for cmd. string)
 ; ***********************
 
-         lda #$4c ; jmp
+         lda #$4c       ; jmp
          sta chrget
          lda #<wedge
          sta chrget+1
          lda #>wedge
          sta chrget+2
          rts
-         byte 0
-         byte 0
-         byte 0
-         byte 0
          byte 0
          byte 0
          byte 0
@@ -131,27 +134,21 @@ savexy   sty savey      ; save original x and y register contents.
          ;cpy #<buf     ; hard-coded: commented-out for "buf" = $??00, only!
          bne to_basic
 
-         ; hard-coded for y already holding 0 (see above)!
-         ;
-         ;ldy #0         ; check, if current character is the command sign.
-         lda (txtptr),y
+         lda (txtptr),y ; check, if current character is the command sign.
          cmp #cmd_char
          bne to_basic
 
-         ;ldy #0
          inc txtptr     ; save at most "str_len" count of characters from input
-next_i   lda (txtptr),y ; buffer to "str".
+next_i   lda (txtptr),y ; copy from buffer to "str".
          beq fill_i
          sta str,y
          iny
          cpy #str_len
          bne next_i
 
-; TODO: Include this again!
-;
-;         lda (txtptr),y ; there must be a terminating zero following,
-;         bne to_basic   ; go to basic with character right after cmd. sign,
-;                        ; otherwise.
+         lda (txtptr),y ; there must be a terminating zero following,
+         bne to_basic   ; go to basic with character right after cmd. sign,
+                        ; otherwise.
 
 fill_i   tya            ; increment txtptr by count of read characters
          clc            ; and fill remaining places in "str" array with spaces.
@@ -159,12 +156,10 @@ fill_i   tya            ; increment txtptr by count of read characters
          sta txtptr
          lda #spc_char
 next_f   cpy #str_len
-         beq main;to_main
+         beq main
          sta str,y
          iny
          jmp next_f
-
-;to_main  jsr main
 
 to_basic ldy savey      ; restore saved register values and let basic handle
          ldx savex      ; character from input buffer txtptr currently points
@@ -174,28 +169,29 @@ to_basic ldy savey      ; restore saved register values and let basic handle
 ; *** main ***
 ; ************
 
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO: Handle "addr" and "len" setup (0 for commands, filled for saving)!
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
 main     sei
+
+; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+; TODO: Handle "addr" and "lim" setup (0 for commands, filled for saving)!
+; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+         ;
+         lda #0
+         sta addr
+         sta addr+1
+         sta lim
+         sta lim+1
 
 ; >>> send bytes: <<<
 
          lda #0         ; make sure to initially wait for data-req. low.
          sta sendtog+1  ;
 
-; TODO: OK?
-;
-;         lda out_rdy    ; disable motor signal (by enabling bit 3).
-;         ora #ordmask   ; motor signal should already be disabled, but anyway..
-;         sta out_rdy    ;
-;         jsr waitdel    ; (motor signal takes its time..)
-;
-         tax
-         ;
-         ;ldx #0         ; send string.
+         lda out_rdy    ; disable motor signal (by enabling bit 3).
+         ora #ordmask   ; motor signal should already be disabled, but anyway..
+         sta out_rdy    ;
+         jsr waitdel    ; (motor signal takes its time..)
 
+         ldx #0         ; send string.
 strnext  ldy str,x
          stx temp
          jsr sendbyte
@@ -204,46 +200,34 @@ strnext  ldy str,x
          cpx #str_len
          bne strnext
 
-         ldy addr       ; send address (and fill address pointer for later).
-         sty adptr
+         ldy addr       ; send address.
          jsr sendbyte
          ldy addr+1
-         sty adptr+1
          jsr sendbyte
 
-         ldy len        ; send length.
+         lda addr       ; address is zero => no limit and payload to send.
+         bne send_lim
+         lda addr+1
+         beq retrieve
+
+send_lim ldy lim        ; send first address above payload ("limit").
          jsr sendbyte
-         ldy len+1
+         ldy lim+1
          jsr sendbyte
 
-         lda len
-         bne send_pl
-         lda len+1
-         beq retrieve   ; length is zero. => no payload to send.
-
-send_pl  clc            ; put first address above data into buffer.
-         lda adptr
-         adc len
-         sta tapbufin
-         lda adptr+1
-         adc len+1
-         sta tapbufin+1
-
-pl_next  ldy #0         ; send payload.
-         lda (adptr),y
+s_next   ldy #0         ; send payload.
+         lda (addr),y
          tay
          jsr sendbyte
-
-         inc adptr      ; increment to next (read) address.
-         bne plfinchk
-         inc adptr+1
-
-plfinchk lda adptr      ; check, if end is reached.
-         cmp tapbufin
-         bne pl_next
-         lda adptr+1
-         cmp tapbufin+1
-         bne pl_next
+         inc addr       ; increment to next (read) address.
+         bne s_finchk
+         inc addr+1
+s_finchk lda addr       ; check, if end is reached.
+         cmp lim
+         bne s_next
+         lda addr+1
+         cmp lim
+         bne s_next
 
 ; >>> retrieve bytes: <<<
 
@@ -256,54 +240,49 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
 
 ; expected values at this point:
 ;
-; cas_write/out_req = output, current level was decided by sending done, above.
+; cas_wrt/out_req = output, current level was decided by sending done, above.
 ; cas_read/in_ready = input, don't care about level, just care about high -> low
 ;                     change.
-; cas_sense/in_data = input.
+; cas_sens/in_data = input.
 
-         jsr readbyte  ; read payload byte count.
-         sty tapbufin
+         jsr readbyte  ; read address.
+         sty addr
          jsr readbyte
-         sty tapbufin+1
+         sty addr+1
 
-         cpy #0        ; exit, if byte count is zero.
-         bne readaddr
-         lda tapbufin
+         cpy #0        ; exit, if address is zero.
+         bne read_lim
+         lda addr
          beq exit
 
-readaddr jsr readbyte  ; read start address.
-         sty adptr
+read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
+         sty lim
          jsr readbyte
-         sty adptr+1
+         sty lim+1
 
-nextpl   lda tapbufin
-         bne declelo
-         lda tapbufin+1 ; low byte is zero.
-         beq readdone
-         dec tapbufin+1 ; high byte is not zero (but low byte is).
-declelo  dec tapbufin
+r_next   jsr readbyte   ; retrieve payload.
+         tya            ; store byte at current address.
+         ldy #0
+         sta (addr),y
+         inc addr       ; increment to next (write) address.
+         bne r_finchk
+         inc addr+1
+r_finchk lda addr       ; check, if end is reached.
+         cmp lim
+         bne r_next
+         lda addr+1
+         cmp lim+1
+         bne r_next
 
-         jsr readbyte  ; read byte.
-
-         tya           ;
-         ldy #0        ;
-         sta (adptr),y ; store byte at current address.
-
-         inc adptr
-         bne nextpl
-         inc adptr+1
-         jmp nextpl
-
-readdone lda adptr+1    ; set basic variables start pointer to behind loaded
-         sta varstptr+1 ; prg.
-         lda adptr      ;
+         sta varstptr+1 ; set basic variables start pointer to behind loaded
+         lda addr       ; payload.
          sta varstptr   ;
 
          jsr clr
          jsr rechain
 
 exit     cli
-         jmp to_basic;rts
+         jmp to_basic
 
 ; **************************************
 ; *** send a byte from register y    ***
@@ -338,12 +317,7 @@ senddata sta outdata    ; set data bit.
          and #ordmaskn  ; disable bit => motor signal to high.
          sta out_rdy    ;
 
-         ;jsr waitdel    ; (motor signal takes its time and its a pulse..)
-         ;
-         lda #del
-         sta counter
-delay    cmp counter
-         bcs delay      ; branch, if "del" is equal or greater than counter.
+         jsr waitdel    ; (motor signal takes its time and its a pulse..)
 
          lda out_rdy    ;
          eor #ordmask   ; enable bit => motor signal back to low.
@@ -398,9 +372,9 @@ readadd  tya            ; put read bit from c flag into byte buffer.
 ; ************************************************************
 ; *** modifies register a.                                 ***
 ; ************************************************************
-;
-;waitdel  lda #del
-;         sta counter
-;delay    cmp counter
-;         bcs delay      ; branch, if "del" is equal or greater than counter.
-;         rts
+
+waitdel  lda #del
+         sta counter
+delay    cmp counter
+         bcs delay      ; branch, if "del" is equal or greater than counter.
+         rts
