@@ -226,7 +226,7 @@ s_finchk lda addr       ; check, if end is reached.
          cmp lim
          bne s_next
          lda addr+1
-         cmp lim
+         cmp lim+1
          bne s_next
 
 ; >>> retrieve bytes: <<<
