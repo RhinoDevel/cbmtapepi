@@ -274,15 +274,16 @@ r_finchk lda addr       ; check, if end is reached.
          cmp lim+1
          bne r_next
 
-         ; TODO: Some BUG exists when loading 7167 (payload) bytes long PRG!
-         ;       7282 (payload) bytes work (??!!).
-
          sta varstptr+1 ; set basic variables start pointer to behind loaded
          lda addr       ; payload.
          sta varstptr   ;
 
+         ; TODO: Some BUG exists when loading 7167 (payload) bytes long PRG!
+         ;       7282 (payload) bytes work (??!!):
+         ;
          jsr clr
-         jsr rechain
+         jsr rechain ; TODO: Some other BUG exists, where the transfer won't
+                     ;       start, if this line is commented-out!
 
 exit     cli
          jmp to_basic
