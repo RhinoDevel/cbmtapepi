@@ -138,7 +138,7 @@ savexy   sty savey      ; save original x and y register contents.
          cmp #cmd_char
          bne to_basic
 
-         inc txtptr     ; save at most "str_len" count of characters from input
+         inc txtptr     ; save at most "str_len" count of characters from input.
 next_i   lda (txtptr),y ; copy from buffer to "str".
          beq fill_i
          sta str,y
@@ -182,7 +182,7 @@ main     sei
          sta lim+1
 
 ; >>> send bytes: <<<
-   
+
          sta sendtog+1  ; make sure to initially wait for data-req. low.
 
          lda out_rdy    ; disable motor signal (by enabling bit 3).
