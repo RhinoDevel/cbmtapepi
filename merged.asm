@@ -182,9 +182,8 @@ main     sei
          sta lim+1
 
 ; >>> send bytes: <<<
-
-         lda #0         ; make sure to initially wait for data-req. low.
-         sta sendtog+1  ;
+   
+         sta sendtog+1  ; make sure to initially wait for data-req. low.
 
          lda out_rdy    ; disable motor signal (by enabling bit 3).
          ora #ordmask   ; motor signal should already be disabled, but anyway..
