@@ -150,11 +150,7 @@ next_i   lda (txtptr),y ; copy from buffer to "str".
          bne to_basic   ; go to basic with character right after cmd. sign,
                         ; otherwise.
 
-fill_i   tya            ; increment txtptr by count of read characters
-         clc            ; and fill remaining places in "str" array with spaces.
-         adc txtptr
-         sta txtptr
-         lda #spc_char
+fill_i   lda #spc_char  ; fill remaining places in "str" array with spaces.
 next_f   cpy #str_len
          beq main
          sta str,y
