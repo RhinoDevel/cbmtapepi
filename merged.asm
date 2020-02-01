@@ -28,7 +28,6 @@ chrget   = $70
 chrgot   = $76
 rstxclr  = $c572        ; reset txtptr and perform basic clr command.
 rechain  = $c442        ; rechain basic program in memory.
-crlf     = $fdd0        ; print carriage return and line feed.
 ready    = $c389        ; print return, "ready.", return and waits for basic
                         ; line or direct command.
 ; ----------
@@ -278,8 +277,6 @@ r_finchk lda addr       ; check, if end is reached.
          sta varstptr   ;
 
 exit     cli
-
-         jsr crlf       ; print CR & LF.
 
          jsr rstxclr    ; equals preparations after basic load at $c439.
          jsr rechain    ;
