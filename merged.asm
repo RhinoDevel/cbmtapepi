@@ -26,8 +26,8 @@ cas_buf1 = $027a
 
 chrget   = $70
 chrgot   = $76
-clr      = $c577
-rechain  = $c442
+rstxclr  = $c572        ; reset txtptr and perform basic clr command.
+rechain  = $c442        ; rechain basic program in memory.
 
 ; ----------
 ; peripheral
@@ -277,12 +277,8 @@ r_finchk lda addr       ; check, if end is reached.
          lda addr       ; payload.
          sta varstptr   ;
 
-         ; TODO: Some BUG exists when loading 7167 (payload) bytes long PRG!
-         ;       7282 (payload) bytes work (??!!):
-         ;
-         jsr clr
-         jsr rechain ; TODO: Some other BUG exists, where the transfer won't
-                     ;       start, if this line is commented-out!
+         jsr rstxclr    ; equals preparations after basic load at $c439.
+         jsr rechain    ;
 
 exit     cli
          jmp to_basic
