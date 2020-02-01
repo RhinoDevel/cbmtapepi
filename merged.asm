@@ -59,7 +59,7 @@ cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 del      = 1            ; (see func. for details) ; todo: 100us would be enough.
 str_len  = 16           ; size of command string stored at label "str".
 
-cmd_char = $ff          ; command symbol.
+cmd_char = $21;$ff      ; command symbol.
 spc_char = $20          ; "empty" character to be used in string.
 
 ; retrieve bytes:
