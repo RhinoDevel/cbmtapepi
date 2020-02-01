@@ -310,7 +310,7 @@ sendtog  cmp #0         ; (value will be changed in-place)
          lda outdata    ; (does not change c flag)
          bcc sendzer
          ora #oudmask   ; set bit to one to send 1 (high).
-         jmp senddata
+         bne senddata   ; always branches (save one byte by not using jmp).
 sendzer  and #oudmaskn  ; set bit to zero to send 0 (low).
 
 senddata sta outdata    ; set data bit.
