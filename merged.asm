@@ -157,7 +157,7 @@ next_f   cpy #str_len
          beq main
          sta str,y
          iny
-         jmp next_f
+         bne next_f     ; always branches (saves one byte by not using jmp).
 
 skip     ldy temp1      ; restore saved register values and let basic handle
          ldx temp0      ; character from input buffer txtptr currently points
