@@ -28,7 +28,9 @@ chrget   = $70
 chrgot   = $76
 rstxclr  = $c572        ; reset txtptr and perform basic clr command.
 rechain  = $c442        ; rechain basic program in memory.
-
+crlf     = $fdd0        ; print carriage return and line feed.
+ready    = $c389        ; print return, "ready.", return and waits for basic
+                        ; line or direct command.
 ; ----------
 ; peripheral
 ; ----------
@@ -86,9 +88,9 @@ ireqmask = 16 ; bit 4.
 
 ; use the three free bytes behind installed wedge jump:
 ;
-savex    = chrget+3     ; saved x register content.
-savey    = chrget+4     ; saved y register content.
-temp     = chrget+5
+temp0     = chrget+3     ; saved x register content.
+temp1     = chrget+4     ; saved y register content.
+temp2     = chrget+5
 
 addr     = termwili
 lim      = tapbufin
@@ -124,19 +126,19 @@ wedge    inc txtptr     ; increment here, because of code overwritten at chrget
          bne savexy     ; with jump to wedge.
          inc txtptr+1
 
-savexy   sty savey      ; save original x and y register contents.
-         stx savex
+savexy   sty temp1      ; save original x and y register contents.
+         stx temp0
 
          ldy txtptr+1   ; exec. cmd. in basic direct mode, only.
          cpy #>buf      ; original basic functionality of cmd. char. must still
-         bne to_basic   ; work (e.g. pi symbol as constant).
+         bne skip       ; work (e.g. pi symbol as constant).
          ldy txtptr
          ;cpy #<buf     ; hard-coded: commented-out for "buf" = $??00, only!
-         bne to_basic
+         bne skip
 
          lda (txtptr),y ; check, if current character is the command sign.
          cmp #cmd_char
-         bne to_basic
+         bne skip
 
          inc txtptr     ; save at most "str_len" count of characters from input.
 next_i   lda (txtptr),y ; copy from buffer to "str".
@@ -147,7 +149,7 @@ next_i   lda (txtptr),y ; copy from buffer to "str".
          bne next_i
 
          lda (txtptr),y ; there must be a terminating zero following,
-         bne to_basic   ; go to basic with character right after cmd. sign,
+         bne skip       ; go to basic with character right after cmd. sign,
                         ; otherwise.
 
 fill_i   lda #spc_char  ; fill remaining places in "str" array with spaces.
@@ -157,13 +159,15 @@ next_f   cpy #str_len
          iny
          jmp next_f
 
-to_basic ldy savey      ; restore saved register values and let basic handle
-         ldx savex      ; character from input buffer txtptr currently points
+skip     ldy temp1      ; restore saved register values and let basic handle
+         ldx temp0      ; character from input buffer txtptr currently points
          jmp chrgot     ; to.
 
 ; ************
 ; *** main ***
 ; ************
+
+         ; (bytes at temp0 and temp1 can be reused from here on)
 
 main     sei
 
@@ -188,9 +192,9 @@ main     sei
 
          ldx #0         ; send string.
 strnext  ldy str,x
-         stx temp
+         stx temp2
          jsr sendbyte
-         ldx temp
+         ldx temp2
          inx
          cpx #str_len
          bne strnext
@@ -273,11 +277,14 @@ r_finchk lda addr       ; check, if end is reached.
          lda addr       ; payload.
          sta varstptr   ;
 
+exit     cli
+
+         jsr crlf       ; print CR & LF.
+
          jsr rstxclr    ; equals preparations after basic load at $c439.
          jsr rechain    ;
 
-exit     cli
-         jmp to_basic
+         jmp ready
 
 ; **************************************
 ; *** send a byte from register y    ***
