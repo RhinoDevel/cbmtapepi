@@ -191,11 +191,11 @@ main     sei
          sta out_rdy    ;
          jsr waitdel    ; (motor signal takes its time..)
 
-         ldx #0         ; send string.
+         ldx #0         ; send command string.
 strnext  ldy str,x
-         stx temp2
+         stx temp1
          jsr sendbyte
-         ldx temp2
+         ldx temp1
          inx
          cpx #str_len
          bne strnext
@@ -231,9 +231,8 @@ s_finchk lda addr       ; check, if end is reached.
 
 ; >>> retrieve bytes: <<<
 
-; wait for initial request to send data from pi to commodore:
+; wait for initial request from pi to send data to commodore:
 ;
-
 retrieve lda in_req     ; wait for retrieve data-req. line to go low.
          and #ireqmask  ; => register a holds either 00010000 or 00000000.
          bne retrieve   ; (default value of sense line is high)
