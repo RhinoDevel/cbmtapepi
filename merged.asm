@@ -11,14 +11,16 @@
 ; system pointers
 ; ---------------
 
-termwili = $0f          ; term. width & lim. for scanning src. columns
-                        ; (2 unused bytes).
 varstptr = $2a          ; pointer to start of basic variables.
 txtptr   = $77          ; two bytes.
-tapbufin = $bb          ; tape buf. #1 & #2 indices to next char (2 bytes).
-
 buf      = $0200        ; basic input buffer's address.
-cas_buf1 = $027a
+
+; used to store program and data:
+
+termwili = $0f          ; term. width & lim. for scanning src. columns
+                        ; (2 unused bytes).
+tapbufin = $bb          ; tape buf. #1 & #2 indices to next char (2 bytes).
+cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 
 ; ----------------
 ; system functions
@@ -103,7 +105,7 @@ str      = cas_buf1
 ; ---------
 
 ; ***********************
-; *** wedge installer *** (space reused later for cmd. string)
+; *** wedge installer *** (space reused after installation for cmd. string)
 ; ***********************
 
          lda #$4c       ; jmp
