@@ -29,6 +29,7 @@ cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 chrget   = $70
 chrgot   = $76
 rstxclr  = $c572        ; reset txtptr and perform basic clr command.
+;rstx    = $c5a7        ; (just) reset txtptr.
 rechain  = $c442        ; rechain basic program in memory.
 ready    = $c389        ; print return, "ready.", return and waits for basic
                         ; line or direct command.
@@ -239,10 +240,10 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
 
 ; expected values at this point:
 ;
-; cas_wrt/out_req = output, current level was decided by sending done, above.
+; cas_wrt/out_req   = output, current level was decided by sending done, above.
 ; cas_read/in_ready = input, don't care about level, just care about high -> low
 ;                     change.
-; cas_sens/in_data = input.
+; cas_sens/in_data  = input.
 
          jsr readbyte  ; read address.
          sty addr
@@ -252,7 +253,7 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
          cpy #0        ; exit, if address is zero.
          bne read_lim
          lda addr
-         beq exit
+         beq exit      ; todo: overdone and maybe unwanted (see label)!
 
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
          sty lim
@@ -273,6 +274,7 @@ r_finchk lda addr       ; check, if end is reached.
          cmp lim+1
          bne r_next
 
+         ;lda addr+1
          sta varstptr+1 ; set basic variables start pointer to behind loaded
          lda addr       ; payload.
          sta varstptr   ;
