@@ -287,9 +287,11 @@ exit     cli
          jmp ready
 
 ; **************************************
-; *** send a byte from register y    ***
+; *** send a byte from register y.   ***
 ; **************************************
 ; *** modifies registers a, x and y. ***
+; ***                                ***
+; *** modifies temp0.                ***
 ; **************************************
 
 sendbyte ldx #8         ; (send bit) counter.
