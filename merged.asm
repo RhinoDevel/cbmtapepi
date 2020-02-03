@@ -89,8 +89,8 @@ ireqmask = 16 ; bit 4.
 
 ; use the three free bytes behind installed wedge jump:
 ;
-temp0     = chrget+3     ; saved x register content.
-temp1     = chrget+4     ; saved y register content.
+temp0     = chrget+3
+temp1     = chrget+4
 temp2     = chrget+5
 
 addr     = termwili
@@ -124,11 +124,10 @@ str      = cas_buf1
 ; *****************
 
 wedge    inc txtptr     ; increment here, because of code overwritten at chrget
-         bne savexy     ; with jump to wedge.
+         bne save_y     ; with jump to wedge.
          inc txtptr+1
 
-savexy   sty temp1      ; save original x and y register contents.
-         stx temp0
+save_y   sty temp0      ; temporarily save original y register contents.
 
          ldy txtptr+1   ; exec. cmd. in basic direct mode, only.
          cpy #>buf      ; original basic functionality of cmd. char. must still
@@ -160,15 +159,14 @@ next_f   cpy #str_len
          iny
          bne next_f     ; always branches (saves one byte by not using jmp).
 
-skip     ldy temp1      ; restore saved register values and let basic handle
-         ldx temp0      ; character from input buffer txtptr currently points
-         jmp chrgot     ; to.
+skip     ldy temp0      ; restore saved register y value and let basic handle
+         jmp chrgot     ; char. from input buffer txtptr currently points to.
 
 ; ************
 ; *** main ***
 ; ************
 
-         ; (bytes at temp0 and temp1 can be reused from here on)
+         ; (byte at temp0 can be reused from here on)
 
 main     sei
 
