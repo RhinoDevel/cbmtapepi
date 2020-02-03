@@ -184,7 +184,7 @@ main     sei
 ; >>> send bytes: <<<
 
          ;lda #0
-         sta sendtog+1  ; make sure to initially wait for data-req. low.
+         sta temp0      ; make sure to initially wait for data-req. low.
 
          lda out_rdy    ; disable motor signal (by enabling bit 3).
          ora #ordmask   ; motor signal should already be disabled, but anyway..
@@ -296,11 +296,11 @@ sendbyte ldx #8         ; (send bit) counter.
 sendloop lda in_req     ; wait for data-req. line to toggle.
          and #ireqmask  ; => register a holds either 00010000 or 00000000.
 
-sendtog  cmp #0         ; (value will be changed in-place)
+         cmp temp0
          bne sendloop
 
          eor #ireqmask  ; toggle expected next data-req. value
-         sta sendtog+1  ; between 00000000 and 00010000 (low or high).
+         sta temp0      ; between 00000000 and 00010000 (low or high).
 
          tya
          lsr            ; sends current bit to c flag.
