@@ -136,6 +136,7 @@ save_y   sty temp0      ; temporarily save original y register contents.
          ;cpy #<buf     ; hard-coded: commented-out for "buf" = $??00, only!
          bne skip
 
+         ;ldy #0        ; hard-coded: commented-out for "buf" = $??00, only!
          lda (txtptr),y ; check, if current character is the command sign.
          cmp #cmd_char
          bne skip
@@ -182,6 +183,7 @@ main     sei
 
 ; >>> send bytes: <<<
 
+         ;lda #0
          sta sendtog+1  ; make sure to initially wait for data-req. low.
 
          lda out_rdy    ; disable motor signal (by enabling bit 3).
