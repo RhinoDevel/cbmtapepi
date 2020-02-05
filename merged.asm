@@ -246,24 +246,23 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
 ; cas_sens/in_data  = input.
 
          jsr readbyte  ; read address.
-         sty addr
+         sta addr
          jsr readbyte
-         sty addr+1
+         sta addr+1
 
-         cpy #0        ; exit, if address is zero.
+         ;cmp #0       ; exit, if addr. is 0 (comm.-out, because of readbyte).
          bne read_lim
          lda addr
          beq exit      ; todo: overdone and maybe unwanted (see label)!
 
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
-         sty lim
+         sta lim
          jsr readbyte
-         sty lim+1
+         sta lim+1
 
-r_next   jsr readbyte   ; retrieve payload.
-         tya            ; store byte at current address.
          ldy #0
-         sta (addr),y
+r_next   jsr readbyte   ; retrieve payload.
+         sta (addr),y   ; store byte at current address.
          inc addr       ; increment to next (write) address.
          bne r_finchk
          inc addr+1
@@ -333,12 +332,16 @@ senddata sta outdata    ; set data bit.
          rts
 
 ; **************************************
-; *** read a byte into register y    ***
+; *** read a byte into register a.   ***
 ; **************************************
-; *** modifies registers a, x and y. ***
+; *** modifies registers a and x.    ***
+; ***                                ***
+; *** modifies temp1.                ***
 ; **************************************
 
-readbyte ldy #0         ; byte buffer during read.
+readbyte lda #0         ; byte buffer during read.
+         sta temp1
+
          ldx #8         ; (read bit) counter.
 
 readloop lda out_req    ; req. next data bit ("toggle" data-request line level).
@@ -362,14 +365,13 @@ readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
          beq readadd    ; bit read is zero.
          sec            ;
 
-readadd  tya            ; put read bit from c flag into byte buffer.
-         ror            ;
-         tay            ;
+readadd  ror temp1      ; put read bit from c flag into byte buffer.
 
          dex
          bne readloop   ; last bit read?
 
-         rts            ; read byte is in register y.
+         lda temp1
+         rts            ; read byte is in register a.
 
 ; ************************************************************
 ; *** wait constant "del" multiplied by 256 microseconds   ***
