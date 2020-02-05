@@ -172,9 +172,11 @@ skip     ldy temp0      ; restore saved register y value and let basic handle
 
 main     sei
 
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ; TODO: Handle "addr" and "lim" setup (0 for commands, filled for saving)!
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+; TODO (probably on Pi): Handle Pi error (e.g. file or sub folder not found)!
+; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          ;
          lda #0
          sta addr
@@ -309,10 +311,9 @@ sendloop lda in_req     ; wait for data-req. line to toggle.
          tay            ; (does not change c flag)
 
          lda outdata    ; (does not change c flag)
-         bcc sendzer
-         ora #oudmask   ; set bit to one to send 1 (high).
-         bne senddata   ; always branches (save one byte by not using jmp).
-sendzer  and #oudmaskn  ; set bit to zero to send 0 (low).
+         and #oudmaskn  ; set bit to zero to send 0/low (does not change c fl.).
+         bcc senddata
+         ora #oudmask   ; set bit to one to send 1/high.
 
 senddata sta outdata    ; set data bit.
 
