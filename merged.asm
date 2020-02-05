@@ -70,7 +70,6 @@ out_req  = cas_wrt
 in_ready = cas_read
 in_data  = cas_sens
 reqmask  = 8 ; bit 3.
-reqmaskn = 1 not reqmask ; (val. before not operator does not seem to matter)
 indamask = 16 ; bit 4.
 
 ; send bytes:
@@ -262,8 +261,8 @@ read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
          jsr readbyte
          sta lim+1
 
-         ldy #0
 r_next   jsr readbyte   ; retrieve payload.
+         ldy #0
          sta (addr),y   ; store byte at current address.
          inc addr       ; increment to next (write) address.
          bne r_finchk
@@ -335,25 +334,15 @@ senddata sta outdata    ; set data bit.
 ; **************************************
 ; *** read a byte into register a.   ***
 ; **************************************
-; *** modifies registers a and x.    ***
-; ***                                ***
-; *** modifies temp1.                ***
+; *** modifies registers a, x and y. ***
 ; **************************************
 
-readbyte lda #0         ; byte buffer during read.
-         sta temp1
-
-         ldx #8         ; (read bit) counter.
+readbyte ldx #0         ; byte buffer during read.
+         ldy #8         ; (read bit) counter.
 
 readloop lda out_req    ; req. next data bit ("toggle" data-request line level).
-         and #reqmask
-         beq toghigh
-         lda out_req    ; toggle output to low.
-         and #reqmaskn
-         jmp togdo
-toghigh  lda out_req    ; toggle out_req output to high.
-         ora #reqmask
-togdo    sta out_req    ; [does not work in vice (v3.1)]
+         eor #reqmask   ; toggle output bit.
+         sta out_req    ; [does not work in vice (v3.1)]
 
 readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
          bpl readwait   ; branch, if n is 0 ("positive").
@@ -366,12 +355,13 @@ readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
          beq readadd    ; bit read is zero.
          sec            ;
 
-readadd  ror temp1      ; put read bit from c flag into byte buffer.
+readadd  txa
+         ror            ; put read bit from c flag into byte buffer.
+         tax
 
-         dex
+         dey
          bne readloop   ; last bit read?
 
-         lda temp1
          rts            ; read byte is in register a.
 
 ; ************************************************************
