@@ -337,12 +337,13 @@ senddata sta outdata    ; set data bit.
 ; *** modifies registers a, x and y. ***
 ; **************************************
 
-readbyte ldx #0         ; byte buffer during read.
-         ldy #8         ; (read bit) counter.
+readbyte lda #0         ; byte buffer during read (also y).
+         ldx #8         ; (read bit) counter.
 
-readloop lda out_req    ; req. next data bit ("toggle" data-request line level).
+readloop tay
+         lda out_req    ; req. next data bit ("toggle" data-request line level).
          eor #reqmask   ; toggle output bit.
-         sta out_req    ; [does not work in vice (v3.1)]
+         sta out_req    ;
 
 readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
          bpl readwait   ; branch, if n is 0 ("positive").
@@ -350,19 +351,18 @@ readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
          bit in_ready-1 ; resets "toggle" bit by read operation (see pia doc.).
 
          lda in_data    ; load actual data (bit 4) into c flag.
-         clc            ;
          and #indamask  ; sets z flag to 1, if bit 4 is 0.
+         clc            ;
          beq readadd    ; bit read is zero.
          sec            ;
 
-readadd  txa
+readadd  tya
          ror            ; put read bit from c flag into byte buffer.
-         tax
 
-         dey
+         dex
          bne readloop   ; last bit read?
 
-         rts            ; read byte is in register a.
+         rts            ; read byte is in register a (and y).
 
 ; ************************************************************
 ; *** wait constant "del" multiplied by 256 microseconds   ***
