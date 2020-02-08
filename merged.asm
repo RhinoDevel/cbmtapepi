@@ -37,8 +37,6 @@ ready    = $c389        ; print return, "ready.", return and waits for basic
 ; peripheral
 ; ----------
 
-counter  = $e849        ; read timer 2 counter high byte.
-
 ; using tape #1 port for transfer:
 
 cas_sens = $e810        ; bit 4.
@@ -58,7 +56,7 @@ cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 ; "constants"
 ; -----------
 
-del      = 1            ; (see func. for details) ; todo: 100us would be enough.
+moto_del = #20          ; to wait approximately 100 microseconds (see usage).
 str_len  = 16           ; size of command string stored at label "str".
 
 cmd_char = $21;$ff      ; command symbol.
@@ -191,7 +189,10 @@ main     sei
          lda out_rdy    ; disable motor signal (by enabling bit 3).
          ora #ordmask   ; motor signal should already be disabled, but anyway..
          sta out_rdy    ;
-         jsr waitdel    ; (motor signal takes its time..)
+
+         ldx #20        ; vice says: #20 => 101 cycles.
+initmotd dex            ; (motor signal takes its time..)
+         bne initmotd
 
          ldx #0         ; send command string.
 strnext  ldy str,x
@@ -320,7 +321,11 @@ senddata sta outdata    ; set data bit.
          and #ordmaskn  ; disable bit => motor signal to high.
          sta out_rdy    ;
 
-         jsr waitdel    ; (motor signal takes its time and its a pulse..)
+         txa            ;
+         ldx #20        ; vice says: #20 => 101 cycles.
+sendmotd dex            ; (motor signal takes its time and its a pulse..)
+         bne sendmotd   ;
+         tax            ;
 
          lda out_rdy    ;
          eor #ordmask   ; enable bit => motor signal back to low.
@@ -363,15 +368,3 @@ readadd  tya
          bne readloop   ; last bit read?
 
          rts            ; read byte is in register a (and y).
-
-; ************************************************************
-; *** wait constant "del" multiplied by 256 microseconds   ***
-; ************************************************************
-; *** modifies register a.                                 ***
-; ************************************************************
-
-waitdel  lda #del
-         sta counter
-delay    cmp counter
-         bcs delay      ; branch, if "del" is equal or greater than counter.
-         rts
