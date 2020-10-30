@@ -1,3 +1,5 @@
+***CBM Tape Pi** is **not** abandoned! I am planning on continuing work on the fast loader (etc.) after the next [Musical Keyboard](https://github.com/RhinoDevel/keyboard/blob/master/README.md) release is out. Stay tuned!*
+
 # CBM Tape Pi v1.6.1
 *Marcel Timm, RhinoDevel, 2019, [rhinodevel.com](http://rhinodevel.com/)*
 
