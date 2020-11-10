@@ -1,4 +1,4 @@
-***Status update: **Fast loader** is working, but has at least one bug and could still be made a lot faster.***
+*Status update: **Fast loader** is working, but has at least one bug and could still be made a lot faster.*
 
 # CBM Tape Pi v1.6.1
 *Marcel Timm, RhinoDevel, 2020, [rhinodevel.com](http://rhinodevel.com/)*
