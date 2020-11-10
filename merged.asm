@@ -255,7 +255,8 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
          jsr readbyte
          sta addr + 1
 
-         ;cmp #0       ; exit, if addr. is 0 (comm.-out, because of readbyte).
+         ;lda addr + 1
+         cmp #0       ; exit, if addr. is 0.
          bne read_lim
          lda addr
          beq exit      ; todo: overdone and maybe unwanted (see label)!
