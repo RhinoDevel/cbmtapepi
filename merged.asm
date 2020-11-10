@@ -67,19 +67,19 @@ spc_char = $20          ; "empty" character to be used in string.
 out_req  = cas_wrt
 in_ready = cas_read
 in_data  = cas_sens
-reqmask  = 8 ; bit 3.
-indamask = 16 ; bit 4.
+reqmask  = %00001000 ; bit 3.
+indamask = %00010000 ; bit 4.
 
 ; send bytes:
 ;
 out_rdy  = cas_moto
 in_req   = cas_sens
 outdata  = cas_wrt
-ordmask  = 8 ; or mask. bit 3 on <=> motor off.
-ordmaskn = 1 not ordmask ; and mask. bit 3 off <=> motor on.
-oudmask  = 8 ; bit 3.
-oudmaskn = 1 not oudmask ; (val. before not operator does not seem to matter)
-ireqmask = 16 ; bit 4.
+ordmask  = %00001000 ; or mask. bit 3 on <=> motor off.
+ordmaskn = %11110111 ; and mask. bit 3 off <=> motor on (is inv. ordmask).
+oudmask  = %00001000 ; bit 3.
+oudmaskn = %11110111 ; (is inverted oudmask)
+ireqmask = %00010000 ; bit 4.
 
 ; -----------
 ; "variables"
