@@ -5,7 +5,10 @@
 
 ; cbm pet
 
-; configured for basic 2.0 / rom v3.
+; configured for basic v4.
+;
+; if an address in basic v2 is different, the basic v2 address is included as
+; commented-out value directly after the basic v4 value.
 
 ; ---------------
 ; system pointers
@@ -28,10 +31,10 @@ cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 
 chrget   = $70
 chrgot   = $76
-rstxclr  = $c572        ; reset txtptr and perform basic clr command.
-;rstx    = $c5a7        ; (just) reset txtptr.
-rechain  = $c442        ; rechain basic program in memory.
-ready    = $c389        ; print return, "ready.", return and waits for basic
+rstxclr  = $b5e9;$c572  ; reset txtptr and perform basic clr command.
+;rstx    = $b622;$c5a7   ; (just) reset txtptr.
+rechain  = $b4b6;$c442  ; rechain basic program in memory.
+ready    = $b3ff;$c389  ; print return, "ready.", return and waits for basic
                         ; line or direct command.
 ; ----------
 ; peripheral
