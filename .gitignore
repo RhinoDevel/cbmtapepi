@@ -3,5 +3,7 @@
 *.img
 *.ihx
 
+*.bak
+
 *.prg
 *.PRG
