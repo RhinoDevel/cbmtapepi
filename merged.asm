@@ -59,7 +59,7 @@ cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 moto_del = 20           ; to wait approximately 100 microseconds (see usage).
 str_len  = 16           ; size of command string stored at label "str".
 
-cmd_char = $21;$ff      ; command symbol.
+cmd_char = $21;$ff      ; command symbol. $21 = "!".
 spc_char = $20          ; "empty" character to be used in string.
 
 ; retrieve bytes:
