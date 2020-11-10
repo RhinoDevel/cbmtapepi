@@ -56,7 +56,7 @@ cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 ; "constants"
 ; -----------
 
-moto_del = #20          ; to wait approximately 100 microseconds (see usage).
+moto_del = 20           ; to wait approximately 100 microseconds (see usage).
 str_len  = 16           ; size of command string stored at label "str".
 
 cmd_char = $21;$ff      ; command symbol.
@@ -190,7 +190,7 @@ main     sei
          ora #ordmask   ; motor signal should already be disabled, but anyway..
          sta out_rdy    ;
 
-         ldx #20        ; vice says: #20 => 101 cycles.
+         ldx #moto_del  ; vice says: #20 => 101 cycles.
 initmotd dex            ; (motor signal takes its time..)
          bne initmotd
 
@@ -322,7 +322,7 @@ senddata sta outdata    ; set data bit.
          sta out_rdy    ;
 
          txa            ;
-         ldx #20        ; vice says: #20 => 101 cycles.
+         ldx #moto_del  ; vice says: #20 => 101 cycles.
 sendmotd dex            ; (motor signal takes its time and its a pulse..)
          bne sendmotd   ;
          tax            ;
