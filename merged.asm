@@ -90,9 +90,9 @@ ireqmask = %00010000 ; in-data-request mask. bit 4.
 
 ; use the three free bytes behind installed wedge jump:
 ;
-temp0     = chrget+3
-temp1     = chrget+4
-temp2     = chrget+5
+temp0    = chrget + 3
+temp1    = chrget + 4
+temp2    = chrget + 5
 
 addr     = termwili
 lim      = tapbufin
@@ -112,9 +112,9 @@ str      = cas_buf1
          lda #$4c       ; jmp
          sta chrget
          lda #<wedge
-         sta chrget+1
+         sta chrget + 1
          lda #>wedge
-         sta chrget+2
+         sta chrget + 2
          rts
          byte 0
          byte 0
@@ -126,11 +126,11 @@ str      = cas_buf1
 
 wedge    inc txtptr     ; increment here, because of code overwritten at chrget
          bne save_y     ; with jump to wedge.
-         inc txtptr+1
+         inc txtptr + 1
 
 save_y   sty temp0      ; temporarily save original y register contents.
 
-         ldy txtptr+1   ; exec. cmd. in basic direct mode, only.
+         ldy txtptr + 1 ; exec. cmd. in basic direct mode, only.
          cpy #>buf      ; original basic functionality of cmd. char. must still
          bne skip       ; work (e.g. pi symbol as constant).
          ldy txtptr
@@ -180,9 +180,9 @@ main     sei
          ;
          lda #0
          sta addr
-         sta addr+1
+         sta addr + 1
          sta lim
-         sta lim+1
+         sta lim + 1
 
 ; >>> send bytes: <<<
 
@@ -208,17 +208,17 @@ strnext  ldy str,x
 
          ldy addr       ; send address.
          jsr sendbyte
-         ldy addr+1
+         ldy addr + 1
          jsr sendbyte
 
          lda addr       ; address is zero => no limit and payload to send.
          bne send_lim
-         lda addr+1
+         lda addr + 1
          beq retrieve
 
 send_lim ldy lim        ; send first address above payload ("limit").
          jsr sendbyte
-         ldy lim+1
+         ldy lim + 1
          jsr sendbyte
 
 s_next   ldy #0         ; send payload.
@@ -227,12 +227,12 @@ s_next   ldy #0         ; send payload.
          jsr sendbyte
          inc addr       ; increment to next (read) address.
          bne s_finchk
-         inc addr+1
+         inc addr + 1
 s_finchk lda addr       ; check, if end is reached.
          cmp lim
          bne s_next
-         lda addr+1
-         cmp lim+1
+         lda addr + 1
+         cmp lim + 1
          bne s_next
 
 ; >>> retrieve bytes: <<<
@@ -253,7 +253,7 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
          jsr readbyte  ; read address.
          sta addr
          jsr readbyte
-         sta addr+1
+         sta addr + 1
 
          ;cmp #0       ; exit, if addr. is 0 (comm.-out, because of readbyte).
          bne read_lim
@@ -263,25 +263,25 @@ retrieve lda in_req     ; wait for retrieve data-req. line to go low.
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
          sta lim
          jsr readbyte
-         sta lim+1
+         sta lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
          ldy #0
          sta (addr),y   ; store byte at current address.
          inc addr       ; increment to next (write) address.
          bne r_finchk
-         inc addr+1
+         inc addr + 1
 r_finchk lda addr       ; check, if end is reached.
          cmp lim
          bne r_next
-         lda addr+1
-         cmp lim+1
+         lda addr + 1
+         cmp lim + 1
          bne r_next
 
-         ;lda addr+1
-         sta varstptr+1 ; set basic variables start pointer to behind loaded
-         lda addr       ; payload.
-         sta varstptr   ;
+         ;lda addr + 1
+         sta varstptr + 1 ; set basic variables start pointer to behind loaded
+         lda addr         ; payload.
+         sta varstptr     ;
 
 exit     cli
 
