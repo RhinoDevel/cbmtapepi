@@ -70,19 +70,19 @@ spc_char = $20          ; "empty" character to be used in string.
 out_req  = cas_wrt
 in_ready = cas_read
 in_data  = cas_sens
-reqmask  = %00001000 ; bit 3.
-indamask = %00010000 ; bit 4.
+reqmask  = %00001000 ; out-data-request mask. bit 3.
+indamask = %00010000 ; in-data mask. bit 4.
 
 ; send bytes:
 ;
 out_rdy  = cas_moto
 in_req   = cas_sens
 outdata  = cas_wrt
-ordmask  = %00001000 ; or mask. bit 3 on <=> motor off.
-ordmaskn = %11110111 ; and mask. bit 3 off <=> motor on (is inv. ordmask).
-oudmask  = %00001000 ; bit 3.
-oudmaskn = %11110111 ; (is inverted oudmask)
-ireqmask = %00010000 ; bit 4.
+ordmask  = %00001000 ; out-ready or-mask. bit 3 on <=> motor off.
+ordmaskn = %11110111 ; out-ready and-mask. bit 3 off <=> motor on.
+oudmask  = %00001000 ; out-data mask. bit 3.
+oudmaskn = %11110111 ; inverted out-data mask.
+ireqmask = %00010000 ; in-data-request mask. bit 4.
 
 ; -----------
 ; "variables"
@@ -173,9 +173,9 @@ skip     ldy temp0      ; restore saved register y value and let basic handle
 main     sei
 
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO: Handle "addr" and "lim" setup (0 for commands, filled for saving)!
+; TODO: handle "addr" and "lim" setup (0 for commands, filled for saving)!
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO (probably on Pi): Handle Pi error (e.g. file or sub folder not found)!
+; TODO (probably on pi): handle pi error (e.g. file or sub folder not found)!
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          ;
          lda #0
@@ -193,7 +193,7 @@ main     sei
          ora #ordmask   ; motor signal should already be disabled, but anyway..
          sta out_rdy    ;
 
-         ldx #moto_del  ; vice says: #20 => 101 cycles.
+         ldx #moto_del  ; vice says: 32 <=> 101 cycles.
 initmotd dex            ; (motor signal takes its time..)
          bne initmotd
 
@@ -325,7 +325,7 @@ senddata sta outdata    ; set data bit.
          sta out_rdy    ;
 
          txa            ;
-         ldx #moto_del  ; vice says: #20 => 101 cycles.
+         ldx #moto_del  ; vice says: 32 <=> 101 cycles.
 sendmotd dex            ; (motor signal takes its time and its a pulse..)
          bne sendmotd   ;
          tax            ;
