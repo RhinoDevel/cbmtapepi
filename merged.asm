@@ -177,11 +177,7 @@ main     sei
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ; TODO (probably on pi): handle pi error (e.g. file or sub folder not found)!
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO: sometimes load does not work (invader.prg / 7169 bytes???, tetris.prg)!
-;
-;       next steps: increase motor waits,
-;                   add debug output on pet,
-;                   log more on pi.
+; TODO: sometimes load does not work, e.g. hangs during first send attempt!
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          ;
          lda #0
