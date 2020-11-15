@@ -199,7 +199,7 @@ main     sei
          ora #ordmask   ; motor signal should already be disabled, but anyway..
          sta out_rdy    ;
 
-         ldx #moto_del  ; vice says: 32 <=> 101 cycles.
+         ldx #moto_del  ; vice says: 20 <=> 101 cycles.
 initmotd dex            ; (motor signal takes its time..)
          bne initmotd
 
@@ -332,7 +332,7 @@ senddata sta outdata    ; set data bit.
          sta out_rdy    ;
 
          txa            ;
-         ldx #moto_del  ; vice says: 32 <=> 101 cycles.
+         ldx #moto_del  ; vice says: 20 <=> 101 cycles.
 sendmotd dex            ; (motor signal takes its time and its a pulse..)
          bne sendmotd   ;
          tax            ;
