@@ -201,6 +201,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 assert(lm == load_mode_cbm);
                 cbm_send_data(ti_create, 0);
 
+                // Wait for motor signal at least to be on its way to LOW
+                // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
+                // MOTOR signal to LOW again):
+                //
+                petload_wait_for_data_ready_val(false, false);
+
                 tape_input_free(ti_create);
                 ti_create = 0;
 
@@ -210,10 +216,6 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             }
             else if(cmd_exec(name, ti, &o))
             {
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-                //
-                // Necessary for fast load modes?
-
                 if(o != 0)
                 {
                     s_led_state = led_state_off;
@@ -224,6 +226,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                     {
                         case load_mode_cbm:
                         {
+                            armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+
                             cbm_send(o->bytes, o->name, o->count, 0);
 
                             // TODO: Implement correctly:
