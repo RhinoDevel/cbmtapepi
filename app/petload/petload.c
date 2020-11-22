@@ -17,27 +17,39 @@
 
 static char const * const s_name = "petload";
 
+// Motor signal rise and fall times,
+// measured these with attached Raspberry Pi 1 and running CBM Tape Pi
+// transfer at a CBM 3032 as:
+//
+// - Rise time = ~25us.
+// - Fall time = ~50us.
+//
+static uint32_t const s_motor_rise_microseconds = 25; // Measured ~25us.
+static uint32_t const s_motor_fall_microseconds = 50; // Measured ~50us.
+
 // Retrieve:
 //
-static uint32_t const s_data_req_to_pet = MT_TAPE_GPIO_PIN_NR_SENSE;
+static uint32_t const s_data_ack_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
 static uint32_t const s_data_ready_from_pet = MT_TAPE_GPIO_PIN_NR_MOTOR;
 static uint32_t const s_data_from_pet = MT_TAPE_GPIO_PIN_NR_WRITE;
 //
 static bool const s_data_ready_from_pet_default_level = false; // LOW
-static bool const s_data_req_to_pet_default_level = true; // HIGH
+static bool const s_data_ack_to_pet_default_level = true; // HIGH
 
 // Send:
 //
 static uint32_t const s_data_req_from_pet = s_data_from_pet;
-static uint32_t const s_data_ready_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
-static uint32_t const s_data_to_pet = s_data_req_to_pet;
+static uint32_t const s_data_ready_to_pet = s_data_ack_to_pet;
+static uint32_t const s_data_to_pet = s_data_ack_to_pet;
 //
-static bool const s_data_ready_to_pet_default_level = true; // HIGH
-static bool const s_data_to_pet_default_level = s_data_req_to_pet_default_level;
+static bool const s_data_ready_to_pet_default_level =
+    s_data_ack_to_pet_default_level;
+static bool const s_data_to_pet_default_level = true; // HIGH
 //
 static bool s_send_expected_data_req_level = false;
 //
-// Set by wait_for_data_req() and petload_send().
+// Set by retrieve_bit() during retrieval (to get initial value before sending)
+// and toggled during send by wait_for_data_req()
 
 // *** BASIC v2 / Rev. 3 ROMs: ***
 
@@ -52,39 +64,11 @@ static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
 
 static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
 
-/** Wait for pulse on data-ready line.
- */
-static void wait_for_data_ready_pulse()
-{
-    assert(!s_data_ready_from_pet_default_level);
-
-    // These values depend on motor signal rise and fall times,
-    // measured these with attached Raspberry Pi 1 and running CBM Tape Pi
-    // transfer at a CBM 3032 as:
-    //
-    // - Rise time = ~25us.
-    // - Fall time = ~50us.
-    //
-    static uint32_t const pause_rise_microseconds = 2*25; // Measured ~25us.
-    static uint32_t const pause_fall_microseconds = 2*50; // Measured ~50us.
-
-    // Default level wait:
-    //
-    gpio_wait_for_low(s_data_ready_from_pet);
-    armtimer_busywait_microseconds(pause_fall_microseconds);
-
-    // Pulse wait:
-    //
-    gpio_wait_for_high(s_data_ready_from_pet);
-    armtimer_busywait_microseconds(pause_rise_microseconds);
-    //gpio_wait_for_low(s_data_ready_from_pet);
-}
-
 /** Wait for logic level change on data-req. line.
  *
  *  - To be called by send_bit(), only.
  */
-static void wait_for_data_req()
+static void wait_for_data_req(bool const is_even_bit)
 {
 // #ifndef NDEBUG
 //     console_writeline("wait_for_data_req : Waiting for data request..");
@@ -95,34 +79,43 @@ static void wait_for_data_req()
     // - PET max. rise time < 2000ns.
     // - PET max. fall time < 50ns.
     //
-    static uint32_t const pause_microseconds = 2;
+    static uint32_t const pause_rise_microseconds = 4;
+    static uint32_t const pause_fall_microseconds = 1;
 
-    if(s_send_expected_data_req_level)
-    {
-        gpio_wait_for_high(s_data_req_from_pet);
-    }
-    else
-    {
-        gpio_wait_for_low(s_data_req_from_pet);
-    }
-    armtimer_busywait_microseconds(pause_microseconds);
+    gpio_wait_for(
+        s_data_req_from_pet,
+        s_send_expected_data_req_level,
+        is_even_bit
+            ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
+            : (s_send_expected_data_req_level
+                ? pause_rise_microseconds
+                : pause_fall_microseconds));
+
     s_send_expected_data_req_level = !s_send_expected_data_req_level;
 }
 
-/** Send a data-ready pulse to PET on data-ready line.
- *
- *  - To be called by send_bit(), only.
+/** Send a data-ack. pulse to PET.
  */
-static void send_data_ready_pulse()
+static void send_data_ack_pulse()
 {
     static uint32_t const pulse_microseconds = 5;
 
     // assert(
-    //     gpio_read(s_data_ready_to_pet) == s_data_ready_to_pet_default_level);
+    //     gpio_read(s_data_ack_to_pet) == s_data_ack_to_pet_default_level);
 
-    gpio_set_output(s_data_ready_to_pet, !s_data_ready_to_pet_default_level);
+    gpio_set_output(s_data_ack_to_pet, !s_data_ack_to_pet_default_level);
     armtimer_busywait_microseconds(pulse_microseconds);
-    gpio_set_output(s_data_ready_to_pet, s_data_ready_to_pet_default_level);
+    gpio_set_output(s_data_ack_to_pet, s_data_ack_to_pet_default_level);
+}
+
+/**
+ * - Just a wrapper.
+ */
+static void send_data_ready_pulse()
+{
+    //assert(s_data_ready_to_pet == s_data_ack_to_pet);
+
+    send_data_ack_pulse();
 }
 
 /**
@@ -130,22 +123,30 @@ static void send_data_ready_pulse()
  */
 static uint8_t retrieve_bit(int const bit_nr)
 {
-    // Send data-request to Commodore:
+    bool const even_bit = bit_nr % 2 == 0;
+
+    petload_wait_for_data_ready_val(
+        even_bit
+            ? !s_data_ready_from_pet_default_level
+            : s_data_ready_from_pet_default_level,
+        even_bit); // Make sure on rise (faster than fall time),
+                   // no need to make sure on fall.
+
+    s_send_expected_data_req_level = !gpio_read(s_data_from_pet);
     //
-    gpio_set_output(
-        s_data_req_to_pet,
-        bit_nr % 2 == 0
-            ? !s_data_req_to_pet_default_level
-            : s_data_req_to_pet_default_level);
+    // (because data-from-pet line used here during retrieval
+    //  and data-request-to-pet line used during send are both using WRITE)
 
-    wait_for_data_ready_pulse();
+    // Send data-ack to Commodore:
+    //
+    send_data_ack_pulse();
 
-    return gpio_read(s_data_from_pet) ? 1 : 0;
+    return s_send_expected_data_req_level ? 0 : 1;
 }
 
-static void send_bit(uint8_t const bit)
+static void send_bit(uint8_t const bit, bool const is_even_bit)
 {
-    wait_for_data_req();
+    wait_for_data_req(is_even_bit);
 
     gpio_set_output(s_data_to_pet, (bool)bit);
 
@@ -167,8 +168,28 @@ static void send_byte(uint8_t const byte)
 {
     for(int i = 0;i < 8; ++i)
     {
-        send_bit(byte >> i & 1);
+        send_bit(byte >> i & 1, i % 2 == 0);
     }
+}
+
+void petload_wait_for_data_ready_val(
+    bool const wait_for_val, bool const do_make_sure)
+{
+    assert(s_data_ready_from_pet == MT_TAPE_GPIO_PIN_NR_MOTOR);
+
+    static uint32_t const pause_rise_microseconds =
+                            2 * s_motor_rise_microseconds;
+    static uint32_t const pause_fall_microseconds =
+                            2 * s_motor_fall_microseconds;
+
+    gpio_wait_for(
+        s_data_ready_from_pet,
+        wait_for_val,
+        do_make_sure
+            ? (wait_for_val
+                ? pause_rise_microseconds
+                : pause_fall_microseconds)
+            : 0);
 }
 
 struct tape_input * petload_create()
@@ -208,9 +229,16 @@ struct tape_input * petload_create()
 
 struct tape_input * petload_retrieve()
 {
-    assert(gpio_read(s_data_req_to_pet) == s_data_req_to_pet_default_level);
+    // (motor / data-ready from pet line may be low OR on its way to low)
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
+
+    #ifndef NDEBUG
+        console_write("petload_retrieve : Setting data-ack. line to ");
+        console_write(s_data_ack_to_pet_default_level ? "HIGH" : "LOW");
+        console_writeline("..");
+    #endif //NDEBUG
+        gpio_set_output(s_data_ack_to_pet, s_data_ack_to_pet_default_level);
 
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
@@ -280,7 +308,8 @@ struct tape_input * petload_retrieve()
     console_writeline("petload_retrieve : Done.");
 #endif //NDEBUG
 
-    assert(gpio_read(s_data_req_to_pet) == s_data_req_to_pet_default_level);
+    assert(gpio_read(s_data_ack_to_pet) == s_data_ack_to_pet_default_level);
+    // (motor / data-ready from pet line may be low OR on its way to low)
 
     return ret_val;
 }
@@ -290,38 +319,25 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     assert(count >= 2);
     assert((bytes == 0) == (count == 2));
 
-    // Current value is the value of the bit retrieved as last bit via
-    // petload_retrieve():
+    // Expected first data-request-from-PET level was already set by retrieval
+    // that (necessarily) preceded petload_send() call:
     //
-    assert(s_data_from_pet == s_data_req_from_pet);
-    s_send_expected_data_req_level = !gpio_read(s_data_req_from_pet);
-
+    assert(s_data_req_from_pet == s_data_from_pet);
+    //s_send_expected_data_req_level
 #ifndef NDEBUG
-    console_write("petload_send : Setting data-ready line to ");
-    console_write(s_data_ready_to_pet_default_level ? "HIGH" : "LOW");
-    console_writeline("..");
-#endif //NDEBUG
-    gpio_set_output(s_data_ready_to_pet, s_data_ready_to_pet_default_level);
-
-#ifndef NDEBUG
-    console_writeline(
-        "petload_send : Sending initial start request on data line..");
-#endif //NDEBUG
-    assert(s_data_req_to_pet == s_data_to_pet);
-    assert(s_data_req_to_pet_default_level == s_data_to_pet_default_level);
-    assert(
-        gpio_read(s_data_to_pet/*s_data_req_to_pet*/)
-            == s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
-    //
-    gpio_set_output(
-        s_data_to_pet/*s_data_req_to_pet*/,
-        !s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
-
-#ifndef NDEBUG
-    console_write("petload_send : Expecting data-request line to get ");
+    console_write("petload_send : Expecting first data-requested value to be ");
     console_write(s_send_expected_data_req_level ? "HIGH" : "LOW");
     console_writeline(".");
 #endif //NDEBUG
+
+    // Data-ready-to-PET level is expected to be on its default value,
+    // because already set by retrieval that (necessarily) preceded
+    // petload_send() call:
+    //
+    assert(s_data_ready_to_pet == s_data_ack_to_pet);
+    assert(s_data_ready_to_pet_default_level
+        == s_data_ack_to_pet_default_level);
+    assert(gpio_read(s_data_ready_to_pet) == s_data_ready_to_pet_default_level);
 
     uint16_t const payload_len = count - 2;
 
@@ -372,7 +388,7 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 #endif //NDEBUG
         send_byte(0);
         send_byte(0);
-        
+
         console_writeline("petload_send : No limit or payload to send.");
     }
 #endif
@@ -381,11 +397,7 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     console_writeline(
         "petload_send : Setting data line back to default value..");
 #endif //NDEBUG
-    assert(s_data_req_to_pet == s_data_to_pet);
-    assert(s_data_req_to_pet_default_level == s_data_to_pet_default_level);
-    gpio_set_output(
-        s_data_to_pet/*s_data_req_to_pet*/,
-        s_data_to_pet_default_level/*s_data_req_to_pet_default_level*/);
+    gpio_set_output(s_data_to_pet, s_data_to_pet_default_level);
 
 #ifndef NDEBUG
     console_writeline("petload_send : Done.");
