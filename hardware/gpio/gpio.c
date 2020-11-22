@@ -243,6 +243,41 @@ void gpio_wait_for_high(uint32_t const pin_nr)
     // Pin is HIGH.
 }
 
+void gpio_wait_for(
+    uint32_t const pin_nr,
+    bool const val,
+    uint32_t const max_change_microseconds)
+{
+    while(true)
+    {
+        if(val)
+        {
+            gpio_wait_for_high(pin_nr);
+        }
+        else
+        {
+            gpio_wait_for_low(pin_nr);
+        }
+
+        if(max_change_microseconds == 0)
+        {
+            break; // No making-sure wanted. Done.
+        }
+
+        // Make sure that line is really at wanted value and not at a voltage
+        // level between defined low and high regions:
+
+        s_wait_microseconds(max_change_microseconds);
+
+        if(gpio_read(pin_nr) == val)
+        {
+            break; // Still at wanted value. Done.
+        }
+
+        // At other level. Try again..
+    }
+}
+
 void gpio_set_output(uint32_t const pin_nr, bool const high)
 {
     gpio_set_func(pin_nr, gpio_func_output);
