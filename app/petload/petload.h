@@ -20,21 +20,20 @@ void petload_wait_for_data_ready_val(
 struct tape_input * petload_create();
 
 /**
- * - petload_retrieve() must already be waiting BEFORE CBM machine's first
- *   fast mode command to-be-retrieved.
+ * - It does NOT matter, if CBM is sending data and waiting for ACK first or if
+ *   Pi is waiting for data [petload_retrieve() already called] first.
  *
  * - MOTOR line (data-ready from PET) must be at least on its way to LOW when
  *   calling function and will be at least on its way to LOW on return from
  *   function.
  *
  * - READ line (data-ack. to PET) does not toggle, but uses a pulse,
- *   because that line triggers a flag bit to be set to one in PET on
- *   HIGH-to-LOW.
+ *   because that line triggers a flag bit to be set to 1 in PET on HIGH-to-LOW.
  *
  * - READ line will be on its default level (HIGH) on exit of this function
  *   [made sure, because also used by petload_send()].
  *
- * - Makes sure that first data-request-from-PET level that is to-be-expected
+ * - Makes sure that first data-ack. from PET level that is to-be-expected
  *   in petload_send() call that is necessarily done after calling this function
  *   (but maybe with some timespan between both calls) is set correctly.
  *
@@ -54,13 +53,12 @@ struct tape_input * petload_retrieve();
  *
  * - SENSE line (data to PET) will be HIGH on return from function.
  *
- * - WRITE line (data-request from PET) value is (indirectly) defined by
+ * - WRITE line (data-ack. from PET) value is (indirectly) defined by
  *   last bit's value retrieved during petload_retrieve() run done before
  *   calling this function.
  *
  * - READ line (data-ready to PET) does not toggle, but uses a pulse,
- *   because that line triggers a flag bit to be set to one in PET on
- *   HIGH-to-LOW.
+ *   because that line triggers a flag bit to be set to 1 in PET on HIGH-to-LOW.
  *
  * - READ line is expected to be on its default level (HIGH) when calling this
  *   function. Preceding call of petload_retrieve() makes sure of that.

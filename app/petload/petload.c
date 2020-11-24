@@ -38,7 +38,7 @@ static bool const s_data_ack_to_pet_default_level = true; // HIGH
 
 // Send:
 //
-static uint32_t const s_data_req_from_pet = s_data_from_pet;
+static uint32_t const s_data_ack_from_pet = s_data_from_pet;
 static uint32_t const s_data_ready_to_pet = s_data_ack_to_pet;
 static uint32_t const s_data_to_pet = s_data_ack_to_pet;
 //
@@ -46,10 +46,10 @@ static bool const s_data_ready_to_pet_default_level =
     s_data_ack_to_pet_default_level;
 static bool const s_data_to_pet_default_level = true; // HIGH
 //
-static bool s_send_expected_data_req_level = false;
+static bool s_send_expected_data_ack_level = false;
 //
 // Set by retrieve_bit() during retrieval (to get initial value before sending)
-// and toggled during send by wait_for_data_req()
+// and toggled during send by wait_for_data_ack()
 
 // *** BASIC v2 / Rev. 3 ROMs: ***
 
@@ -64,14 +64,14 @@ static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
 
 static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
 
-/** Wait for logic level change on data-req. line.
+/** Wait for logic level change on data-ack. line.
  *
  *  - To be called by send_bit(), only.
  */
-static void wait_for_data_req(bool const is_even_bit)
+static void wait_for_data_ack(bool const is_even_bit)
 {
 // #ifndef NDEBUG
-//     console_writeline("wait_for_data_req : Waiting for data request..");
+//     console_writeline("wait_for_data_ack : Waiting for ackn. data..");
 // #endif //NDEBUG
 
     // Measured on user port (!):
@@ -83,15 +83,15 @@ static void wait_for_data_req(bool const is_even_bit)
     static uint32_t const pause_fall_microseconds = 1;
 
     gpio_wait_for(
-        s_data_req_from_pet,
-        s_send_expected_data_req_level,
+        s_data_ack_from_pet,
+        s_send_expected_data_ack_level,
         is_even_bit
             ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
-            : (s_send_expected_data_req_level
+            : (s_send_expected_data_ack_level
                 ? pause_rise_microseconds
                 : pause_fall_microseconds));
 
-    s_send_expected_data_req_level = !s_send_expected_data_req_level;
+    s_send_expected_data_ack_level = !s_send_expected_data_ack_level;
 }
 
 /** Send a data-ack. pulse to PET.
@@ -132,25 +132,25 @@ static uint8_t retrieve_bit(int const bit_nr)
         even_bit); // Make sure on rise (faster than fall time),
                    // no need to make sure on fall.
 
-    s_send_expected_data_req_level = !gpio_read(s_data_from_pet);
+    s_send_expected_data_ack_level = !gpio_read(s_data_from_pet);
     //
     // (because data-from-pet line used here during retrieval
-    //  and data-request-to-pet line used during send are both using WRITE)
+    //  and data-ack.-to-pet line used during send are both using WRITE)
 
     // Send data-ack to Commodore:
     //
     send_data_ack_pulse();
 
-    return s_send_expected_data_req_level ? 0 : 1;
+    return s_send_expected_data_ack_level ? 0 : 1;
 }
 
 static void send_bit(uint8_t const bit, bool const is_even_bit)
 {
-    wait_for_data_req(is_even_bit);
-
     gpio_set_output(s_data_to_pet, (bool)bit);
 
     send_data_ready_pulse();
+
+    wait_for_data_ack(is_even_bit);
 }
 
 static uint8_t retrieve_byte()
@@ -319,14 +319,14 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     assert(count >= 2);
     assert((bytes == 0) == (count == 2));
 
-    // Expected first data-request-from-PET level was already set by retrieval
+    // Expected first data-ack.-from-PET level was already set by retrieval
     // that (necessarily) preceded petload_send() call:
     //
-    assert(s_data_req_from_pet == s_data_from_pet);
-    //s_send_expected_data_req_level
+    assert(s_data_ack_from_pet == s_data_from_pet);
+    //s_send_expected_data_ack_level
 #ifndef NDEBUG
-    console_write("petload_send : Expecting first data-requested value to be ");
-    console_write(s_send_expected_data_req_level ? "HIGH" : "LOW");
+    console_write("petload_send : Expecting first data-ack. value to be ");
+    console_write(s_send_expected_data_ack_level ? "HIGH" : "LOW");
     console_writeline(".");
 #endif //NDEBUG
 
