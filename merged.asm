@@ -248,6 +248,7 @@ read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
          sty lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
+         tya
          ldy #0
          sta (addr),y   ; store byte at current address.
          inc addr       ; increment to next (write) address.
@@ -305,7 +306,7 @@ sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
          rts
 
 ; **************************************
-; *** read a byte into register a.   ***
+; *** read a byte into register y.   ***
 ; **************************************
 ; *** modifies registers a, x and y. ***
 ; **************************************
