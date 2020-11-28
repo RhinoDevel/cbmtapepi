@@ -59,7 +59,6 @@ cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 ; "constants"
 ; -----------
 
-moto_del = 20           ; to wait approximately 100 microseconds (see usage).
 str_len  = 16           ; size of command string stored at label "str".
 
 cmd_char = $21;$ff      ; command symbol. $21 = "!".
@@ -67,22 +66,16 @@ spc_char = $20          ; "empty" character to be used in string.
 
 ; retrieve bytes:
 ;
-out_req  = cas_wrt
-in_ready = cas_read
-in_data  = cas_sens
-reqmask  = %00001000 ; out-data-request mask. bit 3.
-indamask = %00010000 ; in-data mask. bit 4.
+indamask = %00010000 ; in-data mask for cas_sens, bit 4.
+ackmask  = %00001000 ; out-data-ack. mask for cas_wrt, bit 3.
 
 ; send bytes:
 ;
-out_rdy  = cas_moto
-in_req   = cas_sens
-outdata  = cas_wrt
-ordmask  = %00001000 ; out-ready or-mask. bit 3 on <=> motor off.
-ordmaskn = %11110111 ; out-ready and-mask. bit 3 off <=> motor on.
-oudmask  = %00001000 ; out-data mask. bit 3.
-oudmaskn = %11110111 ; inverted out-data mask.
-ireqmask = %00010000 ; in-data-request mask. bit 4.
+oudmask  = %00001000 ; out-data mask for cas_wrt, bit 3 = 1 <=> send high.
+oudmaskn = %11110111 ; inverted out-data mask for cas_wrt,
+                     ; bit 3 = 0 <=> send low.
+ordmask  = %00001000 ; out-data-ready mask for cas_moto, bit 3.
+                     ; bit 3 = 1 <=> motor off, bit 3 = 0 <=> motor on.
 
 ; -----------
 ; "variables"
@@ -91,8 +84,8 @@ ireqmask = %00010000 ; in-data-request mask. bit 4.
 ; use the three free bytes behind installed wedge jump:
 ;
 temp0    = chrget + 3
-temp1    = chrget + 4
-temp2    = chrget + 5
+;temp1    = chrget + 4
+;temp2    = chrget + 5
 
 addr     = termwili
 lim      = tapbufin
@@ -175,10 +168,6 @@ main     sei
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 ; TODO: handle "addr" and "lim" setup (0 for commands, filled for saving)!
 ; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO (probably on pi): handle pi error (e.g. file or sub folder not found)!
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO: sometimes load does not work, e.g. hangs during first send attempt!
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          ;
          lda #0
          sta addr
@@ -188,22 +177,17 @@ main     sei
 
 ; >>> send bytes: <<<
 
-         ;lda #0
-         sta temp0      ; make sure to initially wait for data-req. low.
+         ; motor signal must already be low or on its way to low, here.      
 
-         lda out_rdy    ; disable motor signal (by enabling bit 3).
-         ora #ordmask   ; motor signal should already be disabled, but anyway..
-         sta out_rdy    ;
-
-         ldx #moto_del  ; vice says: 20 <=> 101 cycles.
-initmotd dex            ; (motor signal takes its time..)
-         bne initmotd
+         bit cas_read-1 ; maybe not needed: makes sure that flag raised by
+                        ;                   high-to-low on read line is not
+                        ;                   raised (see pia documentation).
 
          ldx #0         ; send command string.
 strnext  ldy str,x
-         stx temp1
+         stx temp0
          jsr sendbyte
-         ldx temp1
+         ldx temp0
          inx
          cpx #str_len
          bne strnext
@@ -239,34 +223,29 @@ s_finchk lda addr       ; check, if end is reached.
 
 ; >>> retrieve bytes: <<<
 
-; wait for initial request from pi to send data to commodore:
-;
-retrieve lda in_req     ; wait for retrieve data-req. line to go low.
-         and #ireqmask  ; => register a holds either 00010000 or 00000000.
-         bne retrieve   ; (default value of sense line is high)
-
 ; expected values at this point:
 ;
-; cas_wrt/out_req   = output, current level was decided by sending done, above.
-; cas_read/in_ready = input, don't care about level, just care about high -> low
-;                     change.
-; cas_sens/in_data  = input.
+; cas_sens = data input.
+; cas_read = data-ready input, don't care about level, just care about
+;            high -> low change.
+;
+; cas_wrt  = data-ack. output. current level was decided by sending done, above.
 
-         jsr readbyte  ; read address.
-         sta addr
+retrieve jsr readbyte  ; read address.
+         sty addr
          jsr readbyte
-         sta addr + 1
+         sty addr + 1
 
          ;lda addr + 1
-         cmp #0       ; exit, if addr. is 0.
+         cmp #0        ; exit, if addr. is 0.
          bne read_lim
          lda addr
          beq exit      ; todo: overdone and maybe unwanted (see label)!
 
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
-         sta lim
+         sty lim
          jsr readbyte
-         sta lim + 1
+         sty lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
          ldy #0
@@ -297,50 +276,35 @@ exit     cli
 ; *** send a byte from register y.   ***
 ; **************************************
 ; *** modifies registers a, x and y. ***
-; ***                                ***
-; *** modifies temp0.                ***
 ; **************************************
 
 sendbyte ldx #8         ; (send bit) counter.
 
-sendloop lda in_req     ; wait for data-req. line to toggle.
-         and #ireqmask  ; => register a holds either 00010000 or 00000000.
-
-         cmp temp0
-         bne sendloop
-
-         eor #ireqmask  ; toggle expected next data-req. value
-         sta temp0      ; between 00000000 and 00010000 (low or high).
-
-         tya
+sendloop tya
          lsr            ; sends current bit to c flag.
          tay            ; (does not change c flag)
 
-         lda outdata    ; (does not change c flag)
+         lda cas_wrt    ; (does not change c flag)
          and #oudmaskn  ; set bit to zero to send 0/low (does not change c fl.).
          bcc senddata
          ora #oudmask   ; set bit to one to send 1/high.
+senddata sta cas_wrt    ; set data bit.
 
-senddata sta outdata    ; set data bit.
-
-         lda out_rdy    ; motor signal pulse.
-         and #ordmaskn  ; disable bit => motor signal to high.
-         sta out_rdy    ;
-
-         txa            ;
-         ldx #moto_del  ; vice says: 20 <=> 101 cycles.
-sendmotd dex            ; (motor signal takes its time and its a pulse..)
-         bne sendmotd   ;
-         tax            ;
-
-         lda out_rdy    ;
-         eor #ordmask   ; enable bit => motor signal back to low.
-         sta out_rdy    ;
+         lda cas_moto   ; motor signal toggle.
+         eor #ordmask   ;
+         sta cas_moto   ;
 
          dex
-         bne sendloop   ; last bit read?
+         bne sendwait   ; last bit read?
 
          rts
+
+sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
+         bpl sendwait   ; branch, if n is 0 ("positive").
+
+         bit cas_read-1 ; resets "toggle" bit by read operation (see pia doc.).
+         
+         jmp sendloop   ; TODO: replace with always-branching branch opcode?
 
 ; **************************************
 ; *** read a byte into register a.   ***
@@ -348,20 +312,15 @@ sendmotd dex            ; (motor signal takes its time and its a pulse..)
 ; *** modifies registers a, x and y. ***
 ; **************************************
 
-readbyte lda #0         ; byte buffer during read (also y).
+readbyte ldy #0         ; byte buffer during read.
          ldx #8         ; (read bit) counter.
 
-readloop tay
-         lda out_req    ; req. next data bit ("toggle" data-request line level).
-         eor #reqmask   ; toggle output bit.
-         sta out_req    ;
-
-readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
+readwait bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
          bpl readwait   ; branch, if n is 0 ("positive").
 
-         bit in_ready-1 ; resets "toggle" bit by read operation (see pia doc.).
+         bit cas_read-1 ; resets "toggle" bit by read operation (see pia doc.).
 
-         lda in_data    ; load actual data (bit 4) into c flag.
+         lda cas_sens   ; load actual data (bit 4) into c flag.
          and #indamask  ; sets z flag to 1, if bit 4 is 0.
          clc            ;
          beq readadd    ; bit read is zero.
@@ -369,8 +328,13 @@ readwait bit in_ready   ; wait for data-ready toggling (writes bit 7 to n flag).
 
 readadd  tya
          ror            ; put read bit from c flag into byte buffer.
+         tay
+
+         lda cas_wrt    ; acknowledge data bit ("toggle" data-req. line level).
+         eor #ackmask   ; toggle output bit.
+         sta cas_wrt    ;
 
          dex
-         bne readloop   ; last bit read?
+         bne readwait   ; last bit read?
 
-         rts            ; read byte is in register a (and y).
+         rts            ; read byte is in register y.
