@@ -29,18 +29,18 @@ static uint32_t const s_motor_fall_microseconds = 50; // Measured ~50us.
 
 // Retrieve:
 //
-static uint32_t const s_data_ack_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
-static uint32_t const s_data_ready_from_pet = MT_TAPE_GPIO_PIN_NR_MOTOR;
 static uint32_t const s_data_from_pet = MT_TAPE_GPIO_PIN_NR_WRITE;
+static uint32_t const s_data_ready_from_pet = MT_TAPE_GPIO_PIN_NR_MOTOR;
+static uint32_t const s_data_ack_to_pet = MT_TAPE_GPIO_PIN_NR_READ;
 //
 static bool const s_data_ready_from_pet_default_level = false; // LOW
 static bool const s_data_ack_to_pet_default_level = true; // HIGH
 
 // Send:
 //
-static uint32_t const s_data_ack_from_pet = s_data_from_pet;
+static uint32_t const s_data_to_pet = MT_TAPE_GPIO_PIN_NR_SENSE;
 static uint32_t const s_data_ready_to_pet = s_data_ack_to_pet;
-static uint32_t const s_data_to_pet = s_data_ack_to_pet;
+static uint32_t const s_data_ack_from_pet = s_data_from_pet;
 //
 static bool const s_data_ready_to_pet_default_level =
     s_data_ack_to_pet_default_level;
@@ -70,9 +70,9 @@ static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
  */
 static void wait_for_data_ack(bool const is_even_bit)
 {
-// #ifndef NDEBUG
-//     console_writeline("wait_for_data_ack : Waiting for ackn. data..");
-// #endif //NDEBUG
+//#ifndef NDEBUG
+//    console_writeline("wait_for_data_ack : Waiting for ackn. data..");
+//#endif //NDEBUG
 
     // Measured on user port (!):
     //
@@ -100,8 +100,7 @@ static void send_data_ack_pulse()
 {
     static uint32_t const pulse_microseconds = 5;
 
-    // assert(
-    //     gpio_read(s_data_ack_to_pet) == s_data_ack_to_pet_default_level);
+    //assert(gpio_read(s_data_ack_to_pet) == s_data_ack_to_pet_default_level);
 
     gpio_set_output(s_data_ack_to_pet, !s_data_ack_to_pet_default_level);
     armtimer_busywait_microseconds(pulse_microseconds);
@@ -123,12 +122,19 @@ static void send_data_ready_pulse()
  */
 static uint8_t retrieve_bit(int const bit_nr)
 {
-    bool const even_bit = bit_nr % 2 == 0;
+    bool const even_bit = bit_nr % 2 == 0,
+        wait_for_val = even_bit
+            ? !s_data_ready_from_pet_default_level
+            : s_data_ready_from_pet_default_level;
+
+//#ifndef NDEBUG
+//    console_write("retrieve_bit : Waiting for data-ready to be ");
+//    console_write(wait_for_val ? "HIGH" : "LOW");
+//    console_writeline("..");
+//#endif //NDEBUG
 
     petload_wait_for_data_ready_val(
-        even_bit
-            ? !s_data_ready_from_pet_default_level
-            : s_data_ready_from_pet_default_level,
+        wait_for_val,
         even_bit); // Make sure on rise (faster than fall time),
                    // no need to make sure on fall.
 
@@ -159,6 +165,11 @@ static uint8_t retrieve_byte()
 
     for(int i = 0;i < 8; ++i)
     {
+//#ifndef NDEBUG
+//        console_write("retrieve_byte : Retrieving bit nr. ");
+//        console_write_byte_dec((uint8_t)i);
+//        console_writeline("..");
+//#endif //NDEBUG
         ret_val |= retrieve_bit(i) << i;
     }
     return ret_val;
@@ -233,15 +244,23 @@ struct tape_input * petload_retrieve()
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 
-    #ifndef NDEBUG
-        console_write("petload_retrieve : Setting data-ack. line to ");
-        console_write(s_data_ack_to_pet_default_level ? "HIGH" : "LOW");
-        console_writeline("..");
-    #endif //NDEBUG
-        gpio_set_output(s_data_ack_to_pet, s_data_ack_to_pet_default_level);
+#ifndef NDEBUG
+    console_write("petload_retrieve : Setting data-ack. line to ");
+    console_write(s_data_ack_to_pet_default_level ? "HIGH" : "LOW");
+    console_writeline("..");
+#endif //NDEBUG
+    gpio_set_output(s_data_ack_to_pet, s_data_ack_to_pet_default_level);
 
+#ifndef NDEBUG
+    console_writeline("petload_retrieve : Retrieving \"name\"..");
+#endif //NDEBUG
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
+//#ifndef NDEBUG
+//        console_write("petload_retrieve : Retrieving \"name\" byte nr. ");
+//        console_write_byte_dec((uint8_t)i);
+//        console_writeline("..");
+//#endif //NDEBUG
         ret_val->name[i] = retrieve_byte();
     }
 #ifndef NDEBUG
