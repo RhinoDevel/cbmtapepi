@@ -294,17 +294,15 @@ senddata sta cas_wrt    ; set data bit.
          eor #ordmask   ;
          sta cas_moto   ;
 
-         dex
-         bne sendwait   ; last bit read?
-
-         rts
-
 sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
          bpl sendwait   ; branch, if n is 0 ("positive").
 
          bit cas_read-1 ; resets "toggle" bit by read operation (see pia doc.).
-         
-         jmp sendloop   ; TODO: replace with always-branching branch opcode?
+
+         dex
+         bne sendloop   ; last bit read?
+
+         rts
 
 ; **************************************
 ; *** read a byte into register a.   ***
