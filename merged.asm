@@ -384,7 +384,8 @@ if MT_DEBUG = 1
 ; ***************************************************************************
 ; *** address to write to is stored in util_mlm.                          ***
 ; ***************************************************************************
-; *** modifies register a, x and y.
+; *** modifies register a, x and y.                                       ***
+; ***************************************************************************
 
 wrt_code txa
          lsr
@@ -394,11 +395,13 @@ wrt_code txa
          jsr get_code
          ldy #0
          sta (util_mlm),y
+
          txa
          and #$0f
          jsr get_code
          iny
          sta (util_mlm),y
+
          rts
 
 ; **********************************************************************
