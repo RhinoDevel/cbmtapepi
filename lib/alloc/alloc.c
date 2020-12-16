@@ -76,11 +76,13 @@ void* alloc_alloc(MT_USIGN const wanted_len)
 
     if(!nodemem_is_initialized())
     {
+        assert(false);
         return 0;
     }
 
     if(wanted_len == 0)
     {
+        assert(false);
         return 0;
     }
 
@@ -93,12 +95,14 @@ void* alloc_alloc(MT_USIGN const wanted_len)
     //
     if(!nodemem_try_to_reserve_node_space())
     {
+        assert(false);
         return 0; // No more space for another node available.
     }
 
     node_addr = nodemem_get_alloc_node_addr(gran_wanted_len);
     if(node_addr == 0)
     {
+        assert(false);
         return 0;
     }
 
@@ -121,6 +125,7 @@ void* alloc_alloc(MT_USIGN const wanted_len)
     new_node_addr = nodemem_store(&new_node);
     if(new_node_addr == 0)
     {
+        assert(false);
         return 0;
     }
 
