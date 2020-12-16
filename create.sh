@@ -82,6 +82,7 @@ export OPTIONS_GCC_ALL=" \
     -ffreestanding"
 
 #    -DNDEBUG \
+
 export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
     -O2 \
     -std=gnu99 \
