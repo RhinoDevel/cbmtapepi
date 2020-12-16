@@ -141,7 +141,7 @@ static uint8_t retrieve_bit(int const bit_nr)
     s_send_expected_data_ack_level = !gpio_read(s_data_from_pet);
     //
     // (because data-from-pet line used here during retrieval
-    //  and data-ack.-to-pet line used during send are both using WRITE)
+    //  and data-ack.-from-pet line used during send are both using WRITE)
 
     // Send data-ack to Commodore:
     //
@@ -242,6 +242,13 @@ struct tape_input * petload_retrieve()
 {
     // (motor / data-ready from pet line may be low OR on its way to low)
 
+    // TODO: This is a workaround, replace with correct "logic":
+    //
+    gpio_wait_for(
+        s_data_ready_from_pet,
+        s_data_ready_from_pet_default_level,
+        2 * s_motor_fall_microseconds);
+
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 
 #ifndef NDEBUG
@@ -254,13 +261,9 @@ struct tape_input * petload_retrieve()
 #ifndef NDEBUG
     console_writeline("petload_retrieve : Retrieving \"name\"..");
 #endif //NDEBUG
+
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-//#ifndef NDEBUG
-//        console_write("petload_retrieve : Retrieving \"name\" byte nr. ");
-//        console_write_byte_dec((uint8_t)i);
-//        console_writeline("..");
-//#endif //NDEBUG
         ret_val->name[i] = retrieve_byte();
     }
 #ifndef NDEBUG
