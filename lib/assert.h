@@ -19,7 +19,11 @@
     { \
         if(MT_ASSERT_ACTIVE && !(result)) \
         { \
-            console_deb_writeline("*** ERROR: An assertion happened (ignored)!!! ***"); \
+            console_deb_writeline("*** ERROR: An assertion happened!!! ***"); \
+            \
+            while(1) \
+            { \
+            } \
         } \
     }while(0);
 
