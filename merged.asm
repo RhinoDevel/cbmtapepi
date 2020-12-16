@@ -258,8 +258,8 @@ retrieve jsr readbyte  ; read address.
          jsr readbyte
          sty addr + 1
 
-         ;lda addr + 1
-         cmp #0        ; exit, if addr. is 0.
+         ;ldy addr + 1
+         cpy #0        ; exit, if addr. is 0.
          bne read_lim
          lda addr
          beq exit      ; todo: overdone and maybe unwanted (see label)!
