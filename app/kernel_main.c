@@ -420,7 +420,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     }
 #endif //NDEBUG
 
-
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
     alloc_init(&__heap, MT_HEAP_SIZE);
