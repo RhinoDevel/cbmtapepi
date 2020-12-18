@@ -25,6 +25,7 @@ void cmd_reinit(char const * const start_dir_path);
 /** Helper method to deallocate output object.
  *
  *  - Given pointer is no longer valid, after this.
+ *  - Works with 0 given, too (just does nothing).
  */
 void cmd_free_output(struct cmd_output * const output);
 

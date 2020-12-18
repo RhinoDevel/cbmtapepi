@@ -439,6 +439,11 @@ void cmd_reinit(char const * const start_dir_path)
 
 void cmd_free_output(struct cmd_output * const output)
 {
+    if(output == 0)
+    {
+        return; // Nothing to do.
+    }
+
     alloc_free(output->name);
     output->name = 0;
 
