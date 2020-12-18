@@ -34,7 +34,7 @@
 //                                 "   thegreat.prg "
 static char const * const s_dir  = "$"; // (no parameters)
 static char const * const s_rm   = "rm ";
-static char const * const s_load = "*"; // (no space)
+static char const * const s_save = "+"; // Actually save file (no space).
 static char const * const s_cd   = "cd "; // Supports "..", too.
 #ifndef NDEBUG
     static char const * const s_load_ymodem = "y*";
@@ -42,7 +42,7 @@ static char const * const s_cd   = "cd "; // Supports "..", too.
 // static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
 // static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
-// Anything else. => Really save file.
+// Anything else. => Load file.
 
 static char * s_cur_dir_path = 0;
 //
@@ -193,8 +193,6 @@ static struct cmd_output * exec_load(char const * const command)
     console_write(command);
     console_writeline("\"..");
 #endif
-
-    char const * const name_only = command + str_get_len(s_load);
     struct cmd_output * o = 0;
     FIL fil;
     UINT read_len = 0;
@@ -202,8 +200,7 @@ static struct cmd_output * exec_load(char const * const command)
     filesys_remount();
     dir_reinit(s_cur_dir_path);
 
-    char * const full_path = dir_create_full_path(
-        s_cur_dir_path, name_only);
+    char * const full_path = dir_create_full_path(s_cur_dir_path, command);
 
     if(f_open(&fil, full_path, FA_READ) != FR_OK)
     {
@@ -220,7 +217,7 @@ static struct cmd_output * exec_load(char const * const command)
 
     o = alloc_alloc(sizeof *o);
 
-    o->name  = str_create_copy(name_only);
+    o->name  = str_create_copy(command);
     o->count = (uint32_t)f_size(&fil);
     o->bytes = alloc_alloc(o->count * sizeof *(o->bytes));
 
@@ -323,8 +320,8 @@ static bool exec_save(
     filesys_remount();
     dir_reinit(s_cur_dir_path);
 
-    char * const full_path = dir_create_full_path(
-        s_cur_dir_path, command);
+    char const * const name_only = command + str_get_len(s_save);
+    char * const full_path = dir_create_full_path(s_cur_dir_path, name_only);
 
     do
     {
@@ -378,7 +375,7 @@ static bool exec_save(
 
         if(!ret_val)
         {
-            f_unlink(command);
+            f_unlink(name_only);
         }
     }
     alloc_free(full_path);
@@ -408,14 +405,13 @@ bool cmd_exec(
     {
         return exec_remove(command);
     }
-    if(str_starts_with(command, s_load))
-    {
-        *output = exec_load(command);
-        return *output != 0;
-    }
     if(str_starts_with(command, s_cd))
     {
         return exec_cd(command);
+    }
+    if(str_starts_with(command, s_save))
+    {
+        return exec_save(command, ti);
     }
 #ifndef NDEBUG
     if(str_starts_with(command, s_load_ymodem))
@@ -424,7 +420,8 @@ bool cmd_exec(
         return *output != 0;
     }
 #endif //NDEBUG
-    return exec_save(command, ti);
+    *output = exec_load(command);
+    return *output != 0;
 }
 
 void cmd_reinit(char const * const start_dir_path)
