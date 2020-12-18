@@ -20,6 +20,7 @@ MT_DEBUG = 0            ; 1 = debug mode, 0 = release mode.
 ; system pointers
 ; ---------------
 
+basstptr = $28          ; pointer to start of basic program.
 varstptr = $2a          ; pointer to start of basic variables.
 txtptr   = $77          ; two bytes.
 buf      = $0200        ; basic input buffer's address.
@@ -84,6 +85,7 @@ endif ;MT_DEBUG
 str_len  = 16           ; size of command string stored at label "str".
 
 cmd_char = $21;$ff      ; command symbol. $21 = "!".
+sav_char = "+"          ; to save a file (e.g. like "!+myfile.prg").
 spc_char = $20          ; "empty" character to be used in string.
 
 ; retrieve bytes:
@@ -187,15 +189,24 @@ skip     ldy temp0      ; restore saved register y value and let basic handle
 
 main     sei
 
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-; TODO: handle "addr" and "lim" setup (0 for commands, filled for saving)!
-; * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-         ;
+         lda varstptr
+         sta lim
+         lda varstptr + 1
+         sta lim + 1
+
          lda #0
          sta addr
          sta addr + 1
-         sta lim
-         sta lim + 1
+
+         lda str
+         cmp #sav_char
+         bne addrlim_rdy
+
+         lda basstptr
+         sta addr
+         lda basstptr + 1
+         sta addr + 1
+addrlim_rdy
 
 ; >>> send bytes: <<<
 
