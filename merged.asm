@@ -268,23 +268,24 @@ s_finchk lda addr       ; check, if end is reached.
 ; cas_wrt  = data-ack. output. current level was decided by sending done, above.
 
 retrieve jsr readbyte  ; read address.
-         sty addr
+         sta addr
          jsr readbyte
-         sty addr + 1
-
-         ;ldy addr + 1
-         cpy #0        ; exit, if addr. is 0.
+         sta addr + 1
+         
+         ; [cmp #0 is not necessary, because of last lda temp0 in readbyte()]
+         ;
+         ;lda addr + 1
+         ;cmp #0        ; exit, if addr. is 0.
          bne read_lim
          lda addr
          beq exit      ; todo: overdone and maybe unwanted (see label)!
 
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
-         sty varstptr;lim
+         sta varstptr;lim
          jsr readbyte
-         sty varstptr + 1;lim + 1
+         sta varstptr + 1;lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
-         tya
          ldy #0
          sta (addr),y   ; store byte at current address.
          inc addr       ; increment to next (write) address.
@@ -341,13 +342,14 @@ sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
 
          rts
 
-; **************************************
-; *** read a byte into register y.   ***
-; **************************************
-; *** modifies registers a, x and y. ***
-; **************************************
+; ********************************************************
+; *** read a byte into register a and memory at temp0. ***
+; ********************************************************
+; *** modifies registers a, x and memory at temp0.     ***
+; ********************************************************
 
-readbyte ldy #0         ; byte buffer during read.
+readbyte lda #0         
+         sta temp0      ; byte buffer during read.
          ldx #8         ; (read bit) counter.
 
 readwait bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
@@ -361,9 +363,7 @@ readwait bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
          beq readadd    ; bit read is zero.
          sec            ;
 
-readadd  tya
-         ror            ; put read bit from c flag into byte buffer.
-         tay
+readadd  ror temp0      ; put read bit from c flag into byte buffer.
 
          lda cas_wrt    ; acknowledge data bit ("toggle" data-req. line level).
          eor #ackmask   ; toggle output bit.
@@ -372,7 +372,8 @@ readadd  tya
          dex
          bne readwait   ; last bit read?
 
-         rts            ; read byte is in register y.
+         lda temp0
+         rts            ; read byte is in register a and in memory at temp0.
 
 ;; how to output a byte as hexadecimal number to some address (e.g. the screen):
 ;;
