@@ -67,10 +67,10 @@ enum led_state
 enum load_mode
 {
     load_mode_cbm,
-    load_mode_pet2
+    load_mode_pet4
 };
 
-static char const * const s_fastload_pet2 = "!pet2";
+static char const * const s_fastload_pet4 = "!pet4";
 
 static enum led_state s_led_state = led_state_off;
 
@@ -127,6 +127,72 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         return 0;
     }
 
+    /** Wait for SAVE (either as ctrl. cmd., or to really save).
+     * 
+     *  - Sets LED state to blinking on error.
+     *  - Logs error message in debug mode.
+     * 
+     *  - Caller takes ownership of return value.
+     *  - Returns 0 on error.
+     */
+    static struct tape_input * wait_for_save()
+    {
+        struct tape_input * const ret_val = cbm_receive(0);
+
+        if(ret_val == 0)
+        {
+            console_deb_writeline(
+                "wait_for_save : Error: Receive from commodore failed!");
+
+            s_led_state = led_state_blink;
+            //
+            // Indicates an error occ., but still in SAVE mode (IRQ).
+        }
+        return ret_val;
+    }
+
+    /** Wait for command from Commodore machine.
+     * 
+     *  - Caller takes ownership of return value.
+     *  - Returns 0 on error.
+     */
+    static struct tape_input * wait_for_cbm(enum load_mode const lm)
+    {
+        switch(lm)
+        {
+            case load_mode_cbm:
+            {
+                return wait_for_save();
+            }
+            case load_mode_pet4:
+            {
+                return petload_retrieve(); // (must never return 0)
+            }
+
+            default:
+            {
+                assert(false);
+                return 0;
+            }
+        }
+    }
+
+    static void on_failed_cmd(enum load_mode const lm)
+    {
+        console_deb_writeline("on_failed_cmd : Error: Command exec. failed!");
+
+        s_led_state = led_state_blink;
+        //
+        // Indicates an error occurred, but still in SAVE mode (IRQ).
+
+        // Get CBM out of waiting-for-response mode:
+        //
+        if(lm == load_mode_pet4)
+        {
+            petload_send_nop();
+        }
+    }
+
     static void cmd_enter()
     {
         enum load_mode lm = load_mode_cbm;
@@ -135,72 +201,41 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
         while(true)
         {
-            char* name = 0;
             struct cmd_output * o = 0;
-            struct tape_input * ti = 0;
 
-            switch(lm)
+            // Get command (or PRG to save) from Commodore machine:
+
+            struct tape_input * const ti = wait_for_cbm(lm);
+
+            if(ti == 0)
             {
-                case load_mode_cbm:
-                {
-                    // Wait for SAVE (either as ctrl. cmd., or to really save):
-
-                    ti = cbm_receive(0);
-                    if(ti == 0)
-                    {
-                        console_deb_writeline(
-                            "kernel_main : Error: Receive from commodore failed!");
-
-                        s_led_state = led_state_blink;
-                        //
-                        // Indicates an error occ., but still in SAVE mode (IRQ).
-
-                        continue; // Try again..
-                    }
-
-                    name = tape_input_create_str_from_name(ti);
-#ifndef NDEBUG
-                    console_write("kernel_main : Name from tape input = \"");
-                    console_write(name);
-                    console_writeline("\" (normal mode).");
-#endif //NDEBUG
-                    break;
-                }
-                case load_mode_pet2:
-                {
-                    ti = petload_retrieve();
-
-                    name = tape_input_create_str_from_name(ti);
-#ifndef NDEBUG
-                    console_write("kernel_main : Name from tape input = \"");
-                    console_write(name);
-                    console_writeline("\" (pet2 fast mode).");
-#endif //NDEBUG
-                    break;
-                }
-
-                default:
-                {
-                    assert(false);
-                    break;
-                }
+                assert(lm == load_mode_cbm);
+                continue; // Try again..
             }
 
-            if(str_starts_with(name, s_fastload_pet2)) // TODO: No special handling, when already in fast load mode(?!).
+            // Create "command" string to react accordingly:
+
+            char * const name = tape_input_create_str_from_name(ti);
+
+#ifndef NDEBUG
+            console_write("cmd_enter : Name from tape input = \"");
+            console_write(name);
+            console_writeline("\".");
+#endif //NDEBUG
+
+            if(lm == load_mode_cbm && str_starts_with(name, s_fastload_pet4))
             {
                 struct tape_input * ti_create = petload_create();
 
-                lm = load_mode_cbm; // (just for clarification)
-
                 armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
 
-                s_led_state = led_state_off;
-                //
-                // Indicates LOAD mode (IRQ).
+                s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
 
-                assert(lm == load_mode_cbm);
                 cbm_send_data(ti_create, 0);
 
+                console_writeline("cmd_enter : Switching to PET 4 fastload..");
+                lm = load_mode_pet4;
+                //
                 // Wait for motor signal at least to be on its way to LOW
                 // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
                 // MOTOR signal to LOW again):
@@ -211,12 +246,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 ti_create = 0;
 
                 s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-
-                lm = load_mode_pet2;
             }
             else if(cmd_exec(name, ti, &o))
             {
-                if(o != 0)
+                if(o != 0) // Something to send back to CBM.
                 {
                     s_led_state = led_state_off;
                     //
@@ -232,17 +265,22 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
                             // TODO: Implement correctly:
                             //
-#ifndef NDEBUG
-                            if(str_are_equal(o->name, "petpi2ba.prg"))
+//#ifndef NDEBUG
+                            if(str_are_equal(o->name, "petpi4ba.prg"))
                             {
-                                console_writeline(
-                                    "kernel_main : Switching to PET 2 fastload..");
-                                lm = load_mode_pet2;
+                                console_writeline("cmd_enter : Switching to PET 4 fastload..");
+                                lm = load_mode_pet4;
+                                //
+                                // Wait for motor signal at least to be on its way to LOW
+                                // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
+                                // MOTOR signal to LOW again):
+                                //
+                                petload_wait_for_data_ready_val(false, false);
                             }
-#endif //NDEBUG
+//#endif //NDEBUG
                             break;
                         }
-                        case load_mode_pet2:
+                        case load_mode_pet4:
                         {
                             petload_send(o->bytes, o->count);
                             break;
@@ -255,25 +293,13 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                         }
                     }
                 }
-                else
+                else // Nothing to send back to CBM.
                 {
-                    switch(lm)
+                    if(lm == load_mode_pet4)
                     {
-                        case load_mode_cbm:
-                        {
-                            break;
-                        }
-                        case load_mode_pet2:
-                        {
-                            petload_send_nop();
-                            break;
-                        }
-
-                        default:
-                        {
-                            assert(false);
-                            break;
-                        }
+                        // Get CBM out of waiting-for-response mode:
+                        //
+                        petload_send_nop();
                     }
                 }
 
@@ -281,24 +307,17 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             }
             else
             {
-                console_deb_writeline("kernel_main : Error: Command exec. failed!");
-
-                s_led_state = led_state_blink;
-                //
-                // Indicates an error occurred, but still in SAVE mode (IRQ).
+                on_failed_cmd(lm);
             }
 
-            if(o != 0)
-            {
-                cmd_free_output(o);
-                o = 0;
-            }
+            // Deallocate memory:
+
+            cmd_free_output(o);
             alloc_free(name);
             if(ti != 0)
             {
                 alloc_free(ti->bytes);
                 alloc_free(ti);
-                ti = 0;
             }
         }
     }
