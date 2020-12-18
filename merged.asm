@@ -112,7 +112,7 @@ temp0    = chrget + 3
 ;temp2    = chrget + 5
 
 addr     = termwili
-lim      = tapbufin
+;lim      = tapbufin
 
 str      = cas_buf1
 
@@ -189,10 +189,13 @@ skip     ldy temp0      ; restore saved register y value and let basic handle
 
 main     sei
 
-         lda varstptr
-         sta lim
-         lda varstptr + 1
-         sta lim + 1
+         ; commented-out, because directly using varstptr during send and
+         ; retrieve:
+         ;
+         ;lda varstptr
+         ;sta lim
+         ;lda varstptr + 1
+         ;sta lim + 1
 
          lda #0
          sta addr
@@ -235,9 +238,9 @@ strnext  ldy str,x
          lda addr + 1
          beq retrieve
 
-send_lim ldy lim        ; send first address above payload ("limit").
+send_lim ldy varstptr;lim         ; send first address above payload ("limit").
          jsr sendbyte
-         ldy lim + 1
+         ldy varstptr + 1;lim + 1
          jsr sendbyte
 
 s_next   ldy #0         ; send payload.
@@ -248,10 +251,10 @@ s_next   ldy #0         ; send payload.
          bne s_finchk
          inc addr + 1
 s_finchk lda addr       ; check, if end is reached.
-         cmp lim
+         cmp varstptr;lim
          bne s_next
          lda addr + 1
-         cmp lim + 1
+         cmp varstptr + 1;lim + 1
          bne s_next
 
 ; >>> retrieve bytes: <<<
@@ -276,9 +279,9 @@ retrieve jsr readbyte  ; read address.
          beq exit      ; todo: overdone and maybe unwanted (see label)!
 
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
-         sty lim
+         sty varstptr;lim
          jsr readbyte
-         sty lim + 1
+         sty varstptr + 1;lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
          tya
@@ -287,17 +290,17 @@ r_next   jsr readbyte   ; retrieve payload.
          inc addr       ; increment to next (write) address.
          bne r_finchk
          inc addr + 1
-r_finchk lda addr       ; check, if end is reached.
-         cmp lim
+r_finchk lda addr                 ; check, if end is reached.
+         cmp varstptr;lim
          bne r_next
          lda addr + 1
-         cmp lim + 1
+         cmp varstptr + 1;lim + 1
          bne r_next
 
-         ;lda addr + 1
-         sta varstptr + 1 ; set basic variables start pointer to behind loaded
-         lda addr         ; payload.
-         sta varstptr     ;
+         ;;lda addr + 1
+         ;sta varstptr + 1 ; set basic variables start pointer to behind loaded
+         ;lda addr         ; payload.
+         ;sta varstptr     ;
 
 exit     cli
 
