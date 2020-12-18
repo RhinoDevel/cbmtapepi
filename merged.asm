@@ -221,9 +221,7 @@ addrlim_rdy
 
          ldx #0         ; send command string.
 strnext  ldy str,x
-         stx temp0
          jsr sendbyte
-         ldx temp0
          inx
          cpx #str_len
          bne strnext
@@ -310,17 +308,16 @@ exit     cli
 
          jmp ready
 
-; **************************************
-; *** send a byte from register y.   ***
-; **************************************
-; *** modifies registers a, x and y. ***
-; **************************************
+; ********************************************************
+; *** send a byte from register y.                     ***
+; ********************************************************
+; *** modifies registers a, y and memory at temp0.     ***
+; ********************************************************
 
-sendbyte ldx #8         ; (send bit) counter.
+sendbyte sty temp0      ; byte buffer during send.
+         ldy #8         ; (send bit) counter.
 
-sendloop tya
-         lsr            ; sends current bit to c flag.
-         tay            ; (does not change c flag)
+sendloop lsr temp0      ; sends current bit to c flag.
 
          lda cas_wrt    ; (does not change c flag)
          and #oudmaskn  ; set bit to zero to send 0/low (does not change c fl.).
@@ -337,7 +334,7 @@ sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
 
          bit cas_read-1 ; resets "toggle" bit by read operation (see pia doc.).
 
-         dex
+         dey
          bne sendloop   ; last bit read?
 
          rts
