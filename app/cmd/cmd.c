@@ -193,48 +193,15 @@ static struct cmd_output * exec_load(char const * const command)
     console_write(command);
     console_writeline("\"..");
 #endif
-    struct cmd_output * o = 0;
-    FIL fil;
-    UINT read_len = 0;
+    struct cmd_output * const o = alloc_alloc(sizeof *o);
 
-    filesys_remount();
-    dir_reinit(s_cur_dir_path);
-
-    char * const full_path = dir_create_full_path(s_cur_dir_path, command);
-
-    if(f_open(&fil, full_path, FA_READ) != FR_OK)
+    o->bytes = filesys_load(s_cur_dir_path, command, &(o->count));
+    if(o->bytes == 0)
     {
-#ifndef NDEBUG
-        console_write("exec_load : Error: Opening file \"");
-        console_write(full_path);
-        console_writeline("\" failed!");
-#endif //NDEBUG
-        alloc_free(full_path);
-        dir_deinit();
-        filesys_unmount();
+        alloc_free(o);
         return 0;
     }
-
-    o = alloc_alloc(sizeof *o);
-
-    o->name  = str_create_copy(command);
-    o->count = (uint32_t)f_size(&fil);
-    o->bytes = alloc_alloc(o->count * sizeof *(o->bytes));
-
-    f_read(&fil, o->bytes, (UINT)o->count, &read_len);
-
-#ifndef NDEBUG
-    assert(o->count == read_len);
-
-    console_write("exec_load: Read ");
-    console_write_dword_dec(read_len);
-    console_writeline(" bytes.");
-#endif
-
-    f_close(&fil);
-    alloc_free(full_path);
-    dir_deinit();
-    filesys_unmount();
+    o->name = str_create_copy(command);
     return o;
 }
 
