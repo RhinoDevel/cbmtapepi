@@ -59,6 +59,7 @@ rm app/ui/ui.o
 rm app/cbm/cbm_receive.o
 rm app/cbm/cbm_send.o
 rm app/cmd/cmd.o
+rm app/cfg/cfg.o
 rm app/petload/petload.o
 
 # Resulting kernel files:
