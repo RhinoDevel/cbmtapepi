@@ -243,7 +243,7 @@ send_lim ldy varstptr;lim         ; send first address above payload ("limit").
          ldy varstptr + 1;lim + 1
          jsr sendbyte
 
-s_next   ldy #0         ; send payload.
+s_next   ;ldy #0        ; (y is always 0 after sendbyte) ; send payload.
          lda (addr),y
          tay
          jsr sendbyte
@@ -339,7 +339,7 @@ sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
          dey
          bne sendloop   ; last bit read?
 
-         rts
+         rts            ; y is 0, here!
 
 ; ********************************************************
 ; *** read a byte into register a and memory at temp0. ***
@@ -370,7 +370,8 @@ readadd  ror temp0      ; put read bit from c flag into byte buffer.
          bne readwait   ; last bit read?
 
          lda temp0
-         rts            ; read byte is in register a and in memory at temp0.
+         rts            ; read byte is in register a and in memory at temp0,
+                        ; x is 0, here!
 
 ;; how to output a byte as hexadecimal number to some address (e.g. the screen):
 ;;
