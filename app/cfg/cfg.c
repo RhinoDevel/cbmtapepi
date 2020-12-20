@@ -10,7 +10,7 @@
 
 static uint8_t const s_err = 0xFF;
 
-uint8_t cfg_load_mode(char const * const dir_path, char const * const filename)
+uint8_t cfg_load(char const * const dir_path, char const * const filename)
 {
     uint32_t byte_count = 0;
     uint8_t * const bytes = filesys_load(dir_path, filename, &byte_count);
@@ -29,7 +29,7 @@ uint8_t cfg_load_mode(char const * const dir_path, char const * const filename)
     return mode;
 }
 
-bool cfg_save_mode(
+bool cfg_save(
     char const * const dir_path,
     char const * const filename,
     uint8_t const mode)
