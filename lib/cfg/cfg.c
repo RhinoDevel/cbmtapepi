@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-static uint8_t const s_err = 0xFF;
+static uint8_t const s_err = CFG_ERR;
 
 uint8_t cfg_load(char const * const dir_path, char const * const filename)
 {

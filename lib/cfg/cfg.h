@@ -7,13 +7,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define CFG_ERR 0xFF
+
 /**
- * - Returns 0xFF on error.
+ * - Returns CFG_ERR on error.
  */
 uint8_t cfg_load(char const * const dir_path, char const * const filename);
 
 /**
- * - Won't save 0xFF, because this is also the magic value for a load error.
+ * - Won't save CFG_ERR, because this is also the value for a load error.
  */
 bool cfg_save(
     char const * const dir_path,
