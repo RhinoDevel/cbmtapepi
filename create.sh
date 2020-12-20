@@ -159,6 +159,7 @@ $MT_CC app/cbm/cbm_receive.c -o app/cbm/cbm_receive.o
 $MT_CC app/cbm/cbm_send.c -o app/cbm/cbm_send.o
 $MT_CC app/cmd/cmd.c -o app/cmd/cmd.o
 $MT_CC app/petload/petload.c -o app/petload/petload.o
+$MT_CC app/mode/mode.c -o app/mode/mode.o
 $MT_CC app/kernel_main.c -o app/kernel_main.o
 
 echo Linking..
@@ -190,6 +191,7 @@ arm-none-eabi-ld \
     app/cbm/cbm_send.o \
     app/cmd/cmd.o \
     app/petload/petload.o \
+    app/mode/mode.o \
     \
     lib/mem/mem.o \
     lib/console/console.o \

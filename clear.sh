@@ -61,6 +61,7 @@ rm app/cbm/cbm_receive.o
 rm app/cbm/cbm_send.o
 rm app/cmd/cmd.o
 rm app/petload/petload.o
+rm app/mode/mode.o
 
 # Resulting kernel files:
 
