@@ -13,7 +13,7 @@
 uint8_t cfg_load_mode(char const * const dir_path, char const * const filename);
 
 /**
- * - Won't save 0xFF, becuase this is also the magic value for a load error.
+ * - Won't save 0xFF, because this is also the magic value for a load error.
  */
 bool cfg_save_mode(
     char const * const dir_path,
