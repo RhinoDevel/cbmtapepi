@@ -45,6 +45,9 @@
 #include "cmd/cmd_output.h"
 #include "cmd/cmd.h"
 
+#include "mode/mode.h"
+#include "mode/mode_type.h"
+
 // #if PERI_BASE == PERI_BASE_PI1
 //     #define VIDEO_SUPPORT 1
 // #else //PERI_BASE == PERI_BASE_PI1
@@ -62,12 +65,6 @@ enum led_state
     led_state_off,
     led_state_on,
     led_state_blink
-};
-
-enum load_mode
-{
-    load_mode_cbm,
-    load_mode_pet4
 };
 
 static char const * const s_fastload_pet4 = "!pet4";
@@ -156,15 +153,16 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
      *  - Caller takes ownership of return value.
      *  - Returns 0 on error.
      */
-    static struct tape_input * wait_for_cbm(enum load_mode const lm)
+    static struct tape_input * wait_for_cbm(enum mode_type const mode)
     {
-        switch(lm)
+        switch(mode)
         {
-            case load_mode_cbm:
+            case mode_type_save:
             {
                 return wait_for_save();
             }
-            case load_mode_pet4:
+            case mode_type_pet2: // (falls through)
+            case mode_type_pet4:
             {
                 return petload_retrieve(); // (must never return 0)
             }
@@ -177,7 +175,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         }
     }
 
-    static void on_failed_cmd(enum load_mode const lm)
+    static void on_failed_cmd(enum mode_type const mode)
     {
         console_deb_writeline("on_failed_cmd : Error: Command exec. failed!");
 
@@ -187,15 +185,48 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
         // Get CBM out of waiting-for-response mode:
         //
-        if(lm == load_mode_pet4)
+        if(mode == mode_type_pet2 || mode == mode_type_pet4)
         {
             petload_send_nop();
         }
     }
 
+    static bool is_mode_supported(enum mode_type mode)
+    {
+        switch(mode)
+        {
+            case mode_type_save: // (falls through)
+            case mode_type_pet4:
+            {
+                return true;
+            }
+
+            case mode_type_pet2: // (falls through) // (not supported, yet)
+            //
+            case mode_type_err: // (falls through)
+            default:
+            {
+                return false;
+            }
+        }
+    }
+    static enum mode_type get_mode_to_use()
+    {
+        enum mode_type mode = mode_load();
+
+        if(is_mode_supported(mode))
+        {
+            return mode;
+        }
+        else
+        {
+            return mode_type_save; // The default mode.
+        }
+    }
+
     static void cmd_enter()
     {
-        enum load_mode lm = load_mode_cbm;
+        enum mode_type mode = get_mode_to_use();
 
         cmd_reinit(MT_FILESYS_ROOT);
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
@@ -205,11 +236,11 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
             // Get command (or PRG to save) from Commodore machine:
 
-            struct tape_input * const ti = wait_for_cbm(lm);
+            struct tape_input * const ti = wait_for_cbm(mode);
 
             if(ti == 0)
             {
-                assert(lm == load_mode_cbm);
+                assert(mode == mode_type_save);
                 continue; // Try again..
             }
 
@@ -223,7 +254,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             console_writeline("\".");
 #endif //NDEBUG
 
-            if(lm == load_mode_cbm && str_starts_with(name, s_fastload_pet4))
+            if(mode == mode_type_save && str_starts_with(name, s_fastload_pet4))
             {
                 struct tape_input * ti_create = petload_create();
 
@@ -234,7 +265,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 cbm_send_data(ti_create, 0);
 
                 console_writeline("cmd_enter : Switching to PET 4 fastload..");
-                lm = load_mode_pet4;
+                mode = mode_type_pet4;
                 //
                 // Wait for motor signal at least to be on its way to LOW
                 // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
@@ -255,9 +286,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                     //
                     // Indicates LOAD mode (IRQ).
 
-                    switch(lm)
+                    switch(mode)
                     {
-                        case load_mode_cbm:
+                        case mode_type_save:
                         {
                             armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
 
@@ -269,7 +300,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                             if(str_are_equal(o->name, "petpi4ba.prg"))
                             {
                                 console_writeline("cmd_enter : Switching to PET 4 fastload..");
-                                lm = load_mode_pet4;
+                                mode = mode_type_pet4;
                                 //
                                 // Wait for motor signal at least to be on its way to LOW
                                 // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
@@ -280,7 +311,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //#endif //NDEBUG
                             break;
                         }
-                        case load_mode_pet4:
+                        case mode_type_pet4:
                         {
                             petload_send(o->bytes, o->count);
                             break;
@@ -295,7 +326,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 }
                 else // Nothing to send back to CBM.
                 {
-                    if(lm == load_mode_pet4)
+                    if(mode == mode_type_pet4 || mode == mode_type_pet2)
                     {
                         // Get CBM out of waiting-for-response mode:
                         //
@@ -307,7 +338,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             }
             else
             {
-                on_failed_cmd(lm);
+                on_failed_cmd(mode);
             }
 
             // Deallocate memory:
@@ -457,7 +488,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     ui_enter();
 #else //MT_INTERACTIVE
-    // "File system and SAVE control" mode:
+    // "File system and control" mode:
     //
     cmd_enter();
 #endif //MT_INTERACTIVE
