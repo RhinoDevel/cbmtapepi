@@ -345,9 +345,7 @@ sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
 ; *** modifies registers a, x and memory at temp0.     ***
 ; ********************************************************
 
-readbyte lda #0         
-         sta temp0      ; byte buffer during read.
-         ldx #8         ; (read bit) counter.
+readbyte ldx #8         ; (read bit) counter.
 
 readwait bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
          bpl readwait   ; branch, if n is 0 ("positive").
