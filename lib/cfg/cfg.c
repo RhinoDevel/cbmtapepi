@@ -2,9 +2,9 @@
 // Marcel Timm, RhinoDevel, 2020dec19
 
 #include "cfg.h"
-#include "../../lib/alloc/alloc.h"
-#include "../../lib/filesys/filesys.h"
-#include "../../lib/assert.h"
+#include "../alloc/alloc.h"
+#include "../filesys/filesys.h"
+#include "../assert.h"
 
 #include <stdint.h>
 

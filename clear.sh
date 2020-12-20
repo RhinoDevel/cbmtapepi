@@ -33,6 +33,7 @@ rm lib/petasc/petasc.o
 rm lib/sort/sort.o
 rm lib/dir/dir.o
 rm lib/filesys/filesys.o
+rm lib/cfg/cfg.o
 rm lib/ff14/source/diskio.o
 rm lib/ff14/source/ff.o
 
@@ -59,7 +60,6 @@ rm app/ui/ui.o
 rm app/cbm/cbm_receive.o
 rm app/cbm/cbm_send.o
 rm app/cmd/cmd.o
-rm app/cfg/cfg.o
 rm app/petload/petload.o
 
 # Resulting kernel files:

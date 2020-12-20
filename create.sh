@@ -119,6 +119,7 @@ $MT_CC lib/petasc/petasc.c -o lib/petasc/petasc.o
 $MT_CC lib/sort/sort.c -o lib/sort/sort.o
 $MT_CC lib/dir/dir.c -o lib/dir/dir.o
 $MT_CC lib/filesys/filesys.c -o lib/filesys/filesys.o
+$MT_CC lib/cfg/cfg.c -o lib/cfg/cfg.o
 $MT_CC lib/ff14/source/diskio.c -o lib/ff14/source/diskio.o
 $MT_CC lib/ff14/source/ff.c -o lib/ff14/source/ff.o
 
@@ -158,7 +159,6 @@ $MT_CC app/cbm/cbm_receive.c -o app/cbm/cbm_receive.o
 $MT_CC app/cbm/cbm_send.c -o app/cbm/cbm_send.o
 $MT_CC app/cmd/cmd.c -o app/cmd/cmd.o
 $MT_CC app/petload/petload.c -o app/petload/petload.o
-$MT_CC app/cfg/cfg.c -o app/cfg/cfg.o
 $MT_CC app/kernel_main.c -o app/kernel_main.o
 
 echo Linking..
@@ -189,7 +189,6 @@ arm-none-eabi-ld \
     app/cbm/cbm_receive.o \
     app/cbm/cbm_send.o \
     app/cmd/cmd.o \
-    app/cfg/cfg.o \
     app/petload/petload.o \
     \
     lib/mem/mem.o \
@@ -207,6 +206,7 @@ arm-none-eabi-ld \
     lib/sort/sort.o \
     lib/dir/dir.o \
     lib/filesys/filesys.o \
+    lib/cfg/cfg.o \
     lib/ff14/source/diskio.o \
     lib/ff14/source/ff.o \
     \
