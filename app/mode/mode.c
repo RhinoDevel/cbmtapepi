@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 static char const * const s_dir_path = MT_FILESYS_ROOT;
-static char const * const s_filename = "cbmtapepi.cfg";
+static char const * const s_filename = "cbmtape.pi";
 
 enum mode_type mode_load()
 {
