@@ -286,8 +286,8 @@ read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
          sta varstptr + 1;lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
-         ldy #0
-         sta (addr),y   ; store byte at current address.
+         ;ldx #0        ; [x is always 0 after readbyte()]
+         sta (addr,x)   ; store byte at current address.
          inc addr       ; increment to next (write) address.
          bne r_finchk
          inc addr + 1
