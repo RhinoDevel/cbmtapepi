@@ -210,6 +210,38 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             }
         }
     }
+
+    /**
+     * - Does not take ownership of given object.
+     */
+    static enum mode_type get_mode(char const * const name)
+    {
+        if(str_starts_with(name, "save"))
+        {
+            return mode_type_save;
+        }
+        if(str_starts_with(name, "pet2"))
+        {
+            return mode_type_pet2;
+        }
+        if(str_starts_with(name, "pet4"))
+        {
+            return mode_type_pet4;
+        }
+        return mode_type_err;
+    }
+    static bool save_mode(enum mode_type const mode)
+    {
+        if(!is_mode_supported(mode))
+        {
+            return false;
+        }
+        return mode_save(mode);
+    }
+    static bool save_mode_by_name(char const * const name)
+    {
+        return save_mode(get_mode(name));
+    }
     static enum mode_type get_mode_to_use()
     {
         enum mode_type mode = mode_load();
@@ -226,9 +258,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     static void cmd_enter()
     {
-        enum mode_type mode = get_mode_to_use();
+        enum mode_type mode = mode_type_save;//get_mode_to_use(); // TODO: Implement correct usage before enabling this!
 
-        cmd_reinit(MT_FILESYS_ROOT);
+        cmd_reinit(save_mode_by_name, MT_FILESYS_ROOT);
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
         while(true)
         {

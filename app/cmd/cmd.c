@@ -32,6 +32,7 @@
 // => 16 - 8 - 1 - 3 = 4 characters available for commands.
 //
 //                                 "   thegreat.prg "
+static char const * const s_mode = "mode ";
 static char const * const s_dir  = "$"; // (no parameters)
 static char const * const s_rm   = "rm ";
 static char const * const s_save = "+"; // Actually save file (no space).
@@ -43,6 +44,10 @@ static char const * const s_cd   = "cd "; // Supports "..", too.
 // static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
 // Anything else. => Load file.
+
+static bool (*s_save_mode)(char const * const) = 0;
+//
+// Initialized by cmd_reinit().
 
 static char * s_cur_dir_path = 0;
 //
@@ -175,7 +180,7 @@ static bool exec_remove(char const * const command)
         console_write(p.name);
         console_write("\" with a length of ");
         console_write_dword_dec(p.file_len);
-        console_writeline(" bytes.");
+        console_writeline(" byte(-s).");
 
         o = alloc_alloc(sizeof *o);
 
@@ -277,6 +282,29 @@ static bool exec_cd(char const * const command)
     return ret_val;
 }
 
+static bool exec_mode(char const * const command)
+{
+    char const * const name_only = command + str_get_len(s_mode);
+    bool const ret_val = s_save_mode(name_only);
+
+#ifndef NDEBUG
+    if(ret_val)
+    {
+        console_write("cmd/exec_mode : Changed mode to \"");
+        console_write(name_only);
+        console_writeline("\".");
+    }
+    else
+    {
+        console_write("cmd/exec_mode : Failed to change mode to \"");
+        console_write(name_only);
+        console_writeline("\".");
+    }
+#endif //NDEBUG
+
+    return ret_val;
+}
+
 static bool exec_save(
     char const * const command, struct tape_input const * const ti)
 {
@@ -363,6 +391,10 @@ bool cmd_exec(
         return false;
     }
 
+    if(str_starts_with(command, s_mode))
+    {
+        return exec_mode(command);
+    }
     if(str_starts_with(command, s_dir))
     {
         *output = exec_dir();
@@ -391,8 +423,12 @@ bool cmd_exec(
     return *output != 0;
 }
 
-void cmd_reinit(char const * const start_dir_path)
+void cmd_reinit(
+    bool (*save_mode)(char const * const),
+    char const * const start_dir_path)
 {
+    s_save_mode = save_mode;
+
     if(s_cur_dir_path != 0)
     {
         alloc_free(s_cur_dir_path);

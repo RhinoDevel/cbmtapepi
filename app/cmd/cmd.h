@@ -2,7 +2,7 @@
 // Marcel Timm, RhinoDevel, 2019dec03
 
 // Singleton (!) to interpret and react on commands send from Commodore via tape
-// SAVE (filename).
+// SAVE (filename) or with fast load/save PRG.
 
 #ifndef MT_CMD
 #define MT_CMD
@@ -20,7 +20,9 @@ bool cmd_exec(
     struct tape_input const * const ti,
     struct cmd_output * * const output);
 
-void cmd_reinit(char const * const start_dir_path);
+void cmd_reinit(
+    bool (*save_mode)(char const * const),
+    char const * const start_dir_path);
 
 /** Helper method to deallocate output object.
  *
