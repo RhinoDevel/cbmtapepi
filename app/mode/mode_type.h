@@ -7,7 +7,6 @@
 enum mode_type
 {
     mode_type_err = -1,
-    mode_type_invalid = 0,
 
     mode_type_save = 1, // Default type supporting all CBM machines via usage of
                         // OS's SAVE and LOAD commands.
