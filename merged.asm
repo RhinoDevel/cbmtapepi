@@ -200,6 +200,8 @@ main     sei
          lda #0
          sta addr
          sta addr + 1
+         
+         tax ; (for sending command string, below)
 
          lda str
          cmp #sav_char
@@ -219,7 +221,7 @@ addrlim_rdy
                         ;                   high-to-low on read line is not
                         ;                   raised (see pia documentation).
 
-         ldx #0         ; send command string.
+         ;ldx #0        ; send command string.
 strnext  ldy str,x
          jsr sendbyte
          inx
