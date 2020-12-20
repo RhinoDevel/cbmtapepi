@@ -114,7 +114,7 @@ uint8_t* filesys_load(
 
     console_write("filesys_load: Read ");
     console_write_dword_dec(read_len);
-    console_writeline(" bytes.");
+    console_writeline(" byte(-s).");
 #endif
 
     f_close(&fil);
@@ -156,8 +156,19 @@ bool filesys_save(
             mode |= FA_CREATE_NEW;
         }
 
-        if(f_open(&fil, full_path, mode) != FR_OK)
+        FRESULT const open_result = f_open(&fil, full_path, mode);
+
+        if(open_result != FR_OK)
         {
+#ifndef NDEBUG
+        console_write("filesys_save : Error: Opening file \"");
+        console_write(full_path);
+        console_write("\" with mode 0x");
+        console_write_byte((uint8_t)mode);
+        console_write(" failed with err. nr. ");
+        console_write_dword_dec((uint32_t)open_result);
+        console_writeline("!");
+#endif //NDEBUG
             break;
         }
         file_is_open = true;
