@@ -69,7 +69,7 @@ bool ui_terminal_to_commodore(bool const interactive)
     console_write(p.name);
     console_write("\" with a length of ");
     console_write_dword_dec(p.file_len);
-    console_writeline(" bytes.");
+    console_writeline(" byte(-s).");
 #endif //NDEBUG
 
     if(interactive)

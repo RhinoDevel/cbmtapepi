@@ -309,7 +309,7 @@ struct tape_input * petload_retrieve()
             ret_val->bytes[i] = retrieve_byte();
         }
 #ifndef NDEBUG
-        console_writeline("petload_retrieve : Retrieved payload bytes.");
+        console_writeline("petload_retrieve : Retrieved payload byte(-s).");
 #endif //NDEBUG
     }
     else
