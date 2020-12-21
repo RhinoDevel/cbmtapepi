@@ -23,6 +23,7 @@ MT_DEBUG = 0            ; 1 = debug mode, 0 = release mode.
 basstptr = $28          ; pointer to start of basic program.
 varstptr = $2a          ; pointer to start of basic variables.
 txtptr   = $77          ; two bytes.
+sob      = $0401        ; default start address of basic program.
 buf      = $0200        ; basic input buffer's address.
 
 ; used to store program and data:
@@ -82,11 +83,17 @@ endif ;MT_DEBUG
 ; "constants"
 ; -----------
 
+dec_addr1 = 1;cpy_inst/1000
+dec_addr2 = 0;(cpy_inst/100) MOD $a
+dec_addr3 = 6;(cpy_inst/10) MOD $a
+dec_addr4 = 0;cpy_inst MOD $a
+
 str_len  = 16           ; size of command string stored at label "str".
 
 cmd_char = $21;$ff      ; command symbol. $21 = "!".
 sav_char = "+"          ; to save a file (e.g. like "!+myfile.prg").
 spc_char = $20          ; "empty" character to be used in string.
+zer_char = $30          ; zero character for basic loader. $30 = "0".
 
 ; retrieve bytes:
 ;
@@ -112,30 +119,94 @@ temp0    = chrget + 3
 ;temp2    = chrget + 5
 
 addr     = termwili
-;lim      = tapbufin
-
-str      = cas_buf1
-
-*        = str
+lim      = tapbufin
 
 ; ---------
 ; functions
 ; ---------
 
+; **********************
+; *** basic "loader" ***
+; **********************
+
+* = sob
+
+         word bas_next
+         word 7581
+         byte $9e ; sys token
+         byte zer_char + dec_addr1
+         byte zer_char + dec_addr2
+         byte zer_char + dec_addr3
+         byte zer_char + dec_addr4
+         byte ":"
+         byte $8f; rem token
+         text " (c) 2020, rhinodevel"
+         byte 0
+bas_next word 0
+
+; *************************************************
+; *** install by copying to destination address ***
+; *************************************************
+
+cpy_inst  lda #<cpy_src
+          sta addr
+          lda #>cpy_src
+          sta addr + 1
+
+          ; hard-coded destination address:
+          ;
+          lda #<cas_buf1;#<cpy_dst  
+          sta lim ; (this is not a limit, just using lim variable, here)
+          lda #>cas_buf1;#>cpy_dst
+          sta lim + 1
+          
+          ldx #0
+cpy_next  lda (addr,x)
+          sta (lim,x)
+          
+          inc lim
+          bne dstincdone
+          inc lim + 1
+dstincdone
+
+          ; hard-coded source address:
+          ;
+          lda lim
+          cmp #$a2;#<cpy_lim
+          bne dstcmpdone
+          lda lim + 1
+          cmp #$03;#>cpy_lim
+          bne dstcmpdone
+
+          ; hard-coded destination address:
+          ;
+          jmp cas_buf1;cpy_dst    ; done, jump to wedge installer.
+dstcmpdone
+
+          inc addr
+          bne srcincdone
+          inc addr + 1
+srcincdone
+          jmp cpy_next
+
+cpy_src ; source address to begin copying to destination address.
+
+Relocate $027a;cas_buf1 ; hard-coded: assembler does not support constant, here.
+
+cpy_dst ; destination address to copy from source address to.
+
 ; ***********************
 ; *** wedge installer *** (space reused after installation for cmd. string)
 ; ***********************
 
-         lda #$4c       ; jmp
+str      lda #$4c       ; jmp
          sta chrget
          lda #<wedge
          sta chrget + 1
          lda #>wedge
          sta chrget + 2
          rts
-         byte 0
-         byte 0
-         byte 0
+         byte $ab,$cd,$ef
 
 ; *****************
 ; *** the wedge ***
@@ -433,3 +504,5 @@ get_code sed
          rts
 
 endif ;MT_DEBUG
+
+cpy_lim
