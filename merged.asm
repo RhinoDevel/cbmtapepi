@@ -22,6 +22,9 @@ MT_DEBUG = 0            ; 1 = debug mode, 0 = release mode.
 
 basstptr = $28          ; pointer to start of basic program.
 varstptr = $2a          ; pointer to start of basic variables.
+move_dst = $55          ; pointer to top of area to be moved to +1.
+move_src = $57          ; pointer to top of area to be moved +1.
+move_bot = $5c          ; pointer to bottom of area to be moved.
 txtptr   = $77          ; two bytes.
 sob      = $0401        ; default start address of basic program.
 buf      = $0200        ; basic input buffer's address.
@@ -47,6 +50,7 @@ endif ;MT_DEBUG
 
 chrget   = $70
 chrgot   = $76
+memmove  = $b357;$c2d4  ; move (copy?) memory.
 rstxclr  = $b5e9;$c572  ; reset txtptr and perform basic clr command.
 ;rstx    = $b622;$c5a7   ; (just) reset txtptr.
 rechain  = $b4b6;$c442  ; rechain basic program in memory.
@@ -119,7 +123,7 @@ temp0    = chrget + 3
 ;temp2    = chrget + 5
 
 addr     = termwili
-lim      = tapbufin
+;lim      = tapbufin
 
 ; ---------
 ; functions
@@ -149,45 +153,29 @@ bas_next word 0
 ; *************************************************
 
 cpy_inst  lda #<cpy_src
-          sta addr
+          sta move_bot
           lda #>cpy_src
-          sta addr + 1
+          sta move_bot + 1
 
-          ; hard-coded destination address:
-          ;
-          lda #<cas_buf1;#<cpy_dst  
-          sta lim ; (this is not a limit, just using lim variable, here)
-          lda #>cas_buf1;#>cpy_dst
-          sta lim + 1
-          
-          ldx #0
-cpy_next  lda (addr,x)
-          sta (lim,x)
-          
-          inc lim
-          bne dstincdone
-          inc lim + 1
-dstincdone
+          lda #<cpy_lim
+          sta move_src
+          lda #>cpy_lim
+          sta move_src + 1
 
-          ; hard-coded source address:
+          ; hard-coded destination top of area +1:
+          ;          
+dst_top = cas_buf1 + cpy_lim - cpy_src;cpy_dst + cpy_lim - cpy_src
           ;
-          lda lim
-          cmp #$a2;#<cpy_lim
-          bne dstcmpdone
-          lda lim + 1
-          cmp #$03;#>cpy_lim
-          bne dstcmpdone
+          lda #<dst_top
+          sta move_dst
+          lda #>dst_top
+          sta move_dst + 1
+
+          jsr memmove
 
           ; hard-coded destination address:
           ;
           jmp cas_buf1;cpy_dst    ; done, jump to wedge installer.
-dstcmpdone
-
-          inc addr
-          bne srcincdone
-          inc addr + 1
-srcincdone
-          jmp cpy_next
 
 cpy_src ; source address to begin copying to destination address.
 
