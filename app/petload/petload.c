@@ -398,32 +398,20 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
             send_byte(bytes[i]);
         }
     }
-#ifndef NDEBUG
     else
     {
-#ifndef NDEBUG
-        console_write("petload_send : Sending fake address bytes ");
-        console_write_byte(0);
-        console_write(" and ");
-        console_write_byte(0);
-        console_writeline("..");
-#endif //NDEBUG
+        console_deb_writeline("petload_send : No limit or payload to send.");
+        
+        console_deb_writeline("petload_send : Sending fake address bytes (two zeros)..");
         send_byte(0);
         send_byte(0);
-
-        console_writeline("petload_send : No limit or payload to send.");
     }
-#endif
 
-#ifndef NDEBUG
-    console_writeline(
+    console_deb_writeline(
         "petload_send : Setting data line back to default value..");
-#endif //NDEBUG
     gpio_set_output(s_data_to_pet, s_data_to_pet_default_level);
 
-#ifndef NDEBUG
-    console_writeline("petload_send : Done.");
-#endif //NDEBUG
+    console_deb_writeline("petload_send : Done.");
 }
 
 void petload_send_nop()
