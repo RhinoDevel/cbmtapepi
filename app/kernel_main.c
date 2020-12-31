@@ -242,19 +242,19 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     {
         return save_mode(get_mode(name));
     }
-    static enum mode_type get_mode_to_use()
-    {
-        enum mode_type mode = mode_load();
-
-        if(is_mode_supported(mode))
-        {
-            return mode;
-        }
-        else
-        {
-            return mode_type_save; // The default mode.
-        }
-    }
+    // static enum mode_type get_mode_to_use()
+    // {
+    //     enum mode_type mode = mode_load();
+    //
+    //     if(is_mode_supported(mode))
+    //     {
+    //         return mode;
+    //     }
+    //     else
+    //     {
+    //         return mode_type_save; // The default mode.
+    //     }
+    // }
 
     static void cmd_enter()
     {
