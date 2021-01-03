@@ -1,4 +1,8 @@
 
+; 2021.01.03
+;
+; marcel timm, rhinodevel
+
 chrget   = $70
 chrgot   = $76
 txtptr   = $77          ; two bytes.
