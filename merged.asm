@@ -42,7 +42,7 @@ cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 ;
 if MT_DEBUG = 1
 
-util_mlm = $fd          ; utility, pointer for machine language moniter, etc.
+util_mlm = $fd          ; utility, pointer for machine language monitor, etc.
 
 endif ;MT_DEBUG
 
