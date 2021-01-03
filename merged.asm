@@ -10,12 +10,6 @@
 ; if an address in basic v2 is different, the basic v2 address is included as
 ; commented-out value directly after the basic v4 value.
 
-; ------------
-; debug on/off
-; ------------
-
-MT_DEBUG = 0            ; 1 = debug mode, 0 = release mode.
-
 ; ---------------
 ; system pointers
 ; ---------------
@@ -35,14 +29,6 @@ termwili = $0f          ; term. width & lim. for scanning src. columns
                         ; (2 unused bytes).
 tapbufin = $bb          ; tape buf. #1 & #2 indices to next char (2 bytes).
 cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
-
-; used in debug mode, only:
-;
-if MT_DEBUG = 1
-
-util_mlm = $fd          ; utility, pointer for machine language monitor, etc.
-
-endif ;MT_DEBUG
 
 ; ----------------
 ; system functions
@@ -74,14 +60,6 @@ cas_wrt  = $e840        ; bit 3.
 ; via, port b (59456, tested => correct, 5v for 1, 0v output for 0).
 
 cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
-
-; used in debug mode, only:
-;
-if MT_DEBUG = 1
-
-videoram = $8000
-
-endif ;MT_DEBUG
 
 ; -----------
 ; "constants"
@@ -432,65 +410,62 @@ readadd  ror temp0      ; put read bit from c flag into byte buffer.
          rts            ; read byte is in register a and in memory at temp0,
                         ; x is 0, here!
 
-;; how to output a byte as hexadecimal number to some address (e.g. the screen):
-;;
-;if MT_DEBUG = 1
+; - - - debugging helpers - - - begin
 ;
-;         ldx #<videoram
-;         stx util_mlm
-;         ldx #>videoram
-;         stx util_mlm + 1
-;         ldx #$ab
-;         jsr wrt_code         
+;util_mlm = $fd          ; utility, pointer for machine language monitor, etc.
+;videoram = $8000
 ;
-;endif ;MT_DEBUG
-
-; used in debug mode, only:
+;;; how to output a byte as hexadec. number to some address (e.g. the screen):
+;;;
+;;         ldx #<videoram
+;;         stx util_mlm
+;;         ldx #>videoram
+;;         stx util_mlm + 1
+;;         ldx #$ab
+;;         jsr wrt_code         
 ;
-if MT_DEBUG = 1
-
-; ***************************************************************************
-; *** write byte in register x as hex. value in petscii/ascii/screen code ***
-; *** to address stored in zero-page. two bytes will be written,          ***
-; *** most-significant (!) nibble's byte first.                           ***
-; ***************************************************************************
-; *** address to write to is stored in util_mlm.                          ***
-; ***************************************************************************
-; *** modifies register a, x and y.                                       ***
-; ***************************************************************************
-
-wrt_code txa
-         lsr
-         lsr
-         lsr
-         lsr
-         jsr get_code
-         ldy #0
-         sta (util_mlm),y
-
-         txa
-         and #$0f
-         jsr get_code
-         iny
-         sta (util_mlm),y
-
-         rts
-
-; **********************************************************************
-; *** convert byte in register a into petscii / ascii / screen code. ***
-; **********************************************************************
-; *** modifies register a.                                           ***
-; **********************************************************************
-; *** e.g.: 0-9 => 48-57, a-f => 65-70, anything else not supported. ***
-; **********************************************************************
-
-get_code sed
-         clc
-         adc #$90
-         adc #$40
-         cld
-         rts
-
-endif ;MT_DEBUG
+;; ***************************************************************************
+;; *** write byte in register x as hex. value in petscii/ascii/screen code ***
+;; *** to address stored in zero-page. two bytes will be written,          ***
+;; *** most-significant (!) nibble's byte first.                           ***
+;; ***************************************************************************
+;; *** address to write to is stored in util_mlm.                          ***
+;; ***************************************************************************
+;; *** modifies register a, x and y.                                       ***
+;; ***************************************************************************
+;
+;wrt_code txa
+;         lsr
+;         lsr
+;         lsr
+;         lsr
+;         jsr get_code
+;         ldy #0
+;         sta (util_mlm),y
+;
+;         txa
+;         and #$0f
+;         jsr get_code
+;         iny
+;         sta (util_mlm),y
+;
+;         rts
+;
+;; **********************************************************************
+;; *** convert byte in register a into petscii / ascii / screen code. ***
+;; **********************************************************************
+;; *** modifies register a.                                           ***
+;; **********************************************************************
+;; *** e.g.: 0-9 => 48-57, a-f => 65-70, anything else not supported. ***
+;; **********************************************************************
+;
+;get_code sed
+;         clc
+;         adc #$90
+;         adc #$40
+;         cld
+;         rts
+;
+; - - - debugging helpers - - - end
 
 cpy_lim
