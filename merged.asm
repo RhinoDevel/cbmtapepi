@@ -1,6 +1,4 @@
 
-; TODO: Fix BUG: "CD " command does not return to BASIC (at least in release mode)!
-
 ; 2020.01.15
 ;
 ; marcel timm, rhinodevel
