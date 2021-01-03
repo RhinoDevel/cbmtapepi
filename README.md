@@ -1,13 +1,13 @@
-*Status update: **Fast loader** is working, but has at least one bug and could still be made a lot faster.*
+*Status update: **Fast load/save/etc. via wedge** is working fine, but needs a way to get loaded into machine faster (working on it).*
 
-# CBM Tape Pi v1.6.1
+# CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2020, [rhinodevel.com](http://rhinodevel.com/)*
 
 ![CBM Tape Pi hardware](./docs/title.jpg)
 
 Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 
-- Video: [CBM 3032 (please excuse the cuts, there is no fast loader, yet..)](https://youtu.be/CkLR3lkHjh4)
+- Video: [CBM 3032 (please excuse the cuts, there was no fast loader, yet..)](https://youtu.be/CkLR3lkHjh4)
 
 - Latest release: [CBM Tape Pi v1.6.1](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1)
 
@@ -32,12 +32,13 @@ Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
 - Use simplest and cheapest way to built such an interface.
 - Use as few hardware components as possible.
 - Use a Raspberry Pi and one of its mass storage devices.
+- Fast load (and save).
+- Custom commands (via wedge) instead of (mis-)using Commodore SAVE command.
 
 ### To-do
 
+- Integrate fast load/save/etc. via wedge into next official release.
 - Support loading PRG files with filenames longer than 12 characters.
-- Fast load (and save).
-- Custom commands (via wedge) instead of (mis-)using Commodore SAVE command.
 - "Real"/complete tape drive emulation.
 - MAYBE IMPOSSIBLE (kernel module?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 

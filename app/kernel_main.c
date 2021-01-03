@@ -67,8 +67,6 @@ enum led_state
     led_state_blink
 };
 
-static char const * const s_fastload_pet4 = "!pet4";
-
 static enum led_state s_led_state = led_state_off;
 
 /** IRQ interrupt handler.
@@ -139,7 +137,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         if(ret_val == 0)
         {
             console_deb_writeline(
-                "wait_for_save : Error: Receive from commodore failed!");
+                "wait_for_save : Error: Receive from Commodore failed!");
 
             s_led_state = led_state_blink;
             //
@@ -286,37 +284,37 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             console_writeline("\".");
 #endif //NDEBUG
 
-            if(mode == mode_type_save && str_starts_with(name, s_fastload_pet4))
-            {
-                struct tape_input * ti_create = petload_create();
-
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-
-                s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
-
-                cbm_send_data(ti_create, 0);
-
-                console_writeline("cmd_enter : Switching to PET 4 fastload..");
-                mode = mode_type_pet4;
-                //
-                // Wait for motor signal at least to be on its way to LOW
-                // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
-                // MOTOR signal to LOW again):
-                //
-                petload_wait_for_data_ready_val(false, false);
-
-                tape_input_free(ti_create);
-                ti_create = 0;
-
-                s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-            }
-            else if(cmd_exec(name, ti, &o))
+            // if(mode == mode_type_save && str_starts_with(name, "!pet4"))
+            // {
+            //     struct tape_input * ti_create = petload_create();
+            //
+            //     armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+            //
+            //     s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
+            //
+            //     cbm_send_data(ti_create, 0);
+            //
+            //     console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
+            //     mode = mode_type_pet4;
+            //     //
+            //     // Wait for motor signal at least to be on its way to LOW
+            //     // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
+            //     // MOTOR signal to LOW again):
+            //     //
+            //     petload_wait_for_data_ready_val(false, false);
+            //
+            //     tape_input_free(ti_create);
+            //     ti_create = 0;
+            //
+            //     s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+            // }
+            // else 
+            //
+            if(cmd_exec(name, ti, &o))
             {
                 if(o != 0) // Something to send back to CBM.
                 {
-                    s_led_state = led_state_off;
-                    //
-                    // Indicates LOAD mode (IRQ).
+                    s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
 
                     switch(mode)
                     {
@@ -328,10 +326,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
                             // TODO: Implement correctly:
                             //
-//#ifndef NDEBUG
                             if(str_are_equal(o->name, "petpi4ba.prg"))
                             {
-                                console_writeline("cmd_enter : Switching to PET 4 fastload..");
+                                console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
                                 mode = mode_type_pet4;
                                 //
                                 // Wait for motor signal at least to be on its way to LOW
@@ -340,7 +337,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                                 //
                                 petload_wait_for_data_ready_val(false, false);
                             }
-//#endif //NDEBUG
+
                             break;
                         }
                         case mode_type_pet4:

@@ -54,6 +54,6 @@ void console_writeline(char const * const buf);
         { \
             console_writeline(buf); \
         } \
-    }while(0);
+    }while(0)
 
 #endif //MT_CONSOLE

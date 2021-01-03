@@ -412,6 +412,7 @@ bool cmd_exec(
     {
         return exec_save(command, ti);
     }
+
 #ifndef NDEBUG
     if(str_starts_with(command, s_load_ymodem))
     {
