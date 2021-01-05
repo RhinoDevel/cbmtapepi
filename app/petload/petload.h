@@ -13,11 +13,11 @@
 void petload_wait_for_data_ready_val(
     bool const wait_for_val, bool const do_make_sure);
 
-/** Return PET fast loader.
+/** Return PET fast loader for BASIC v4.
  *
  * - Caller takes ownership of returned object.
  */
-struct tape_input * petload_create();
+struct tape_input * petload_create_v4();
 
 /**
  * - It does NOT matter, if CBM is sending data and waiting for ACK first or if

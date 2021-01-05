@@ -254,6 +254,37 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     //     }
     // }
 
+    // static void send_petload()
+    // {
+    //     struct tape_input * ti = petload_create_v4();
+    //
+    //     armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+    //
+    //     s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
+    //
+    //     cbm_send_data(ti, 0);
+    //
+    //     tape_input_free(ti);
+    //     s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+    // }
+    // static void send_petload_loop()
+    // {
+    //     while(true)
+    //     {
+    //         send_petload();
+    //
+    //         armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+    //         if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
+    //         {
+    //             armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s - too long / overdone.
+    //             if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
+    //             {
+    //                 return;
+    //             }
+    //         }
+    //     }
+    // }
+
     static void cmd_enter()
     {
         enum mode_type mode = mode_type_save;//get_mode_to_use(); // TODO: Implement correct usage before enabling this!
@@ -284,33 +315,31 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             console_writeline("\".");
 #endif //NDEBUG
 
-            // if(mode == mode_type_save && str_starts_with(name, "!pet4"))
-            // {
-            //     struct tape_input * ti_create = petload_create();
-            //
-            //     armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-            //
-            //     s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
-            //
-            //     cbm_send_data(ti_create, 0);
-            //
-            //     console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
-            //     mode = mode_type_pet4;
-            //     //
-            //     // Wait for motor signal at least to be on its way to LOW
-            //     // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
-            //     // MOTOR signal to LOW again):
-            //     //
-            //     petload_wait_for_data_ready_val(false, false);
-            //
-            //     tape_input_free(ti_create);
-            //     ti_create = 0;
-            //
-            //     s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-            // }
-            // else 
-            //
-            if(cmd_exec(name, ti, &o))
+            if(mode == mode_type_save && str_starts_with(name, "!pet4"))
+            {
+                struct tape_input * ti_create = petload_create_v4();
+            
+                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+            
+                s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
+            
+                cbm_send_data(ti_create, 0);
+            
+                console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
+                mode = mode_type_pet4;
+                //
+                // Wait for motor signal at least to be on its way to LOW
+                // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
+                // MOTOR signal to LOW again):
+                //
+                petload_wait_for_data_ready_val(false, false);
+            
+                tape_input_free(ti_create);
+                ti_create = 0;
+            
+                s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+            }
+            else if(cmd_exec(name, ti, &o))
             {
                 if(o != 0) // Something to send back to CBM.
                 {
@@ -517,6 +546,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     ui_enter();
 #else //MT_INTERACTIVE
+    //send_petload_loop();
+
     // "File system and control" mode:
     //
     cmd_enter();

@@ -1,5 +1,6 @@
 
 #include "petload.h"
+#include "petload_pet4.h"
 #include "../config.h"
 #include "../cbm/cbm_send.h"
 #include "../tape/tape_input.h"
@@ -14,8 +15,6 @@
 #endif //NDEBUG
 
 #include <stdint.h>
-
-static char const * const s_name = "petload";
 
 // Motor signal rise and fall times,
 // measured these with attached Raspberry Pi 1 and running CBM Tape Pi
@@ -58,11 +57,9 @@ static bool s_send_expected_data_ack_level = false;
 // Number of characters currently stored in keyboard buffer.
 
 //static uint16_t const s_addr_key_buf = 623/*0x026F*/; // Keyboard buffer.
-static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
+//static uint16_t const s_addr_tape_buf_one = 634/*0x027A*/; // Tape #1 buffer.
 
 // *** ***
-
-static uint16_t const s_addr_offset = 5 + MT_TAPE_INPUT_NAME_LEN; // Magic.
 
 /** Wait for logic level change on data-ack. line.
  *
@@ -203,37 +200,83 @@ void petload_wait_for_data_ready_val(
             : 0);
 }
 
-struct tape_input * petload_create()
+struct tape_input * petload_create_v4()
 {
-    struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
-    uint32_t len_buf = 0;
-    int i = 0;
+    assert(s_petload_pet4[0] == 0x80);
+    assert(s_petload_pet4[1] == 0x02);
 
-    cbm_send_fill_name(ret_val->name, s_name);
+    static int const src_byte_count =
+        (int)(sizeof s_petload_pet4 / sizeof *s_petload_pet4)
+        - 2; // For leading PRG start address bytes.
+    static int const dest_byte_count =
+        MT_TAPE_INPUT_NAME_LEN 
+        - 1 // For leading blank character.
+        + MT_TAPE_INPUT_ADD_BYTES_LEN
+        + 192; // Tape buffer #2 length.
+
+#ifndef NDEBUG
+    console_write("petload_create_v4 : Needed/source byte count: ");
+    console_write_dword_dec((uint32_t)src_byte_count);
+    console_writeline(".");
+
+    console_write("petload_create_v4 : Available destination byte count: ");
+    console_write_dword_dec((uint32_t)dest_byte_count);
+    console_writeline(".");
+#endif //NDEBUG
+    assert(src_byte_count <= dest_byte_count);
+
+    struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
+    int i = 0,
+        src_pos = 2; // Skip leading PRG start address bytes.
+
+    ret_val->name[0] = 0x20; // PETSCII blank. => No file name.
+
+    for(i = 1;i < MT_TAPE_INPUT_NAME_LEN;++i)
+    {
+        ret_val->name[i] = s_petload_pet4[src_pos];
+        
+        ++src_pos;
+    }
+    console_deb_writeline("petload_create_v4 : Header name filled.");
+    assert(src_pos == 2 + MT_TAPE_INPUT_NAME_LEN - 1);
+
+    for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
+    {
+        ret_val->add_bytes[i] = s_petload_pet4[src_pos];
+
+        ++src_pos;
+    }
+    console_deb_writeline("petload_create_v4 : Header add. bytes filled.");
+    assert(
+        src_pos == 2 + MT_TAPE_INPUT_NAME_LEN - 1
+            + MT_TAPE_INPUT_ADD_BYTES_LEN);
+    ret_val->addr = (uint16_t)(0x0280 + src_pos - 2);
+
+    int const tape_buf_two_used_byte_count = src_byte_count - src_pos + 2;
+
+#ifndef NDEBUG
+    console_write("petload_create_v4 : Address: ");
+    console_write_word(ret_val->addr);
+    console_writeline(".");
+
+    console_write("petload_create_v4 : Used tape buffer #2 byte count: ");
+    console_write_dword_dec((uint32_t)tape_buf_two_used_byte_count);
+    console_writeline(".");
+#endif //NDEBUG
+
+    ret_val->len = (uint16_t)tape_buf_two_used_byte_count;
+
+    ret_val->bytes = alloc_alloc((uint32_t)tape_buf_two_used_byte_count);
+    for(i = 0;i < tape_buf_two_used_byte_count;++i)
+    {
+        ret_val->bytes[i] = s_petload_pet4[src_pos];
+
+        ++src_pos;
+    }
+    console_deb_writeline("petload_create_v4 : Bytes array filled.");
+    assert(src_pos == 2 + src_byte_count);
 
     ret_val->type = tape_filetype_relocatable; // Correct for PET.
-
-    ret_val->addr = MT_BASIC_ADDR_PET;
-    ret_val->bytes = basic_get_sys(
-        ret_val->addr,
-        s_addr_tape_buf_one + s_addr_offset,
-        true,
-        &len_buf);
-
-    assert(len_buf > 0 && len_buf <= 0x0000FFFF);
-
-    ret_val->len = (uint16_t)len_buf;
-
-    ret_val->add_bytes[i++] = 169; // Immediate LDA.
-    ret_val->add_bytes[i++] = 83; // Heart symbol (yes, it is romantic).
-    ret_val->add_bytes[i++] = 141; // Absolute STA.
-    ret_val->add_bytes[i++] = 0; // Lower byte of 32768 (0x8000 - PET video RAM start).
-    ret_val->add_bytes[i++] = 128; // Higher byte of 32768.
-    ret_val->add_bytes[i++] = 96; // RTS.
-    while(i < MT_TAPE_INPUT_ADD_BYTES_LEN)
-    {
-        ret_val->add_bytes[i++] = 0;
-    }
 
     return ret_val;
 }
