@@ -202,16 +202,17 @@ void petload_wait_for_data_ready_val(
 
 struct tape_input * petload_create_v4()
 {
-    assert(s_petload_pet4[0] == 0x80);
+    assert(s_petload_pet4[0] == 0x8f);
     assert(s_petload_pet4[1] == 0x02);
+    assert(0x028f == 655);
+    //                               "1234567890123456"
+    static char const * const name = "FASTMODE: SYS655";
 
     static int const src_byte_count =
         (int)(sizeof s_petload_pet4 / sizeof *s_petload_pet4)
         - 2; // For leading PRG start address bytes.
     static int const dest_byte_count =
-        MT_TAPE_INPUT_NAME_LEN 
-        - 1 // For leading blank character.
-        + MT_TAPE_INPUT_ADD_BYTES_LEN
+        MT_TAPE_INPUT_ADD_BYTES_LEN
         + 192; // Tape buffer #2 length.
 
 #ifndef NDEBUG
@@ -229,16 +230,11 @@ struct tape_input * petload_create_v4()
     int i = 0,
         src_pos = 2; // Skip leading PRG start address bytes.
 
-    ret_val->name[0] = 0x20; // PETSCII blank. => No file name.
-
-    for(i = 1;i < MT_TAPE_INPUT_NAME_LEN;++i)
+    for(i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        ret_val->name[i] = s_petload_pet4[src_pos];
-        
-        ++src_pos;
+        ret_val->name[i] = (uint8_t)name[i];
     }
     console_deb_writeline("petload_create_v4 : Header name filled.");
-    assert(src_pos == 2 + MT_TAPE_INPUT_NAME_LEN - 1);
 
     for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
     {
@@ -247,15 +243,13 @@ struct tape_input * petload_create_v4()
         ++src_pos;
     }
     console_deb_writeline("petload_create_v4 : Header add. bytes filled.");
-    assert(
-        src_pos == 2 + MT_TAPE_INPUT_NAME_LEN - 1
-            + MT_TAPE_INPUT_ADD_BYTES_LEN);
-    ret_val->addr = (uint16_t)(0x0280 + src_pos - 2);
+    assert(src_pos == 2 + MT_TAPE_INPUT_ADD_BYTES_LEN);
+    ret_val->addr = (uint16_t)(0x028f + src_pos - 2);
 
     int const tape_buf_two_used_byte_count = src_byte_count - src_pos + 2;
 
 #ifndef NDEBUG
-    console_write("petload_create_v4 : Address: ");
+    console_write("petload_create_v4 : Address: 0x");
     console_write_word(ret_val->addr);
     console_writeline(".");
 
