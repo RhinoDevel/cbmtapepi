@@ -257,37 +257,47 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     // static void send_petload()
     // {
     //     struct tape_input * ti = petload_create_v4();
-    //
-    //     armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-    //
+    
+    //     //armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
+    
     //     s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
-    //
+    
     //     cbm_send_data(ti, 0);
-    //
+    
     //     tape_input_free(ti);
     //     s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
     // }
     // static void send_petload_loop()
     // {
+    //     assert(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE));
+
     //     while(true)
     //     {
     //         send_petload();
-    //
-    //         armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-    //         if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
+
+    //         // Check, if write signal changed:
+    //         //
+    //         if(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE))
     //         {
-    //             armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s - too long / overdone.
-    //             if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
-    //             {
-    //                 return;
-    //             }
+    //             console_deb_writeline(
+    //                 "send_petload_loop : Write still HIGH, continuing loop..");
+    //             continue;
     //         }
+
+    //         // Write value changed, (hopefully) caused by fast mode installer.
+
+    //         console_deb_writeline(
+    //             "send_petload_loop : Write value is LOW, breaking loop..");
+
+    //         return;
     //     }
     // }
 
     static void cmd_enter()
     {
         enum mode_type mode = mode_type_save;//get_mode_to_use(); // TODO: Implement correct usage before enabling this!
+
+        console_deb_writeline("cmd_enter : Entered function.");
 
         cmd_reinit(save_mode_by_name, MT_FILESYS_ROOT);
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
