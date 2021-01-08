@@ -97,12 +97,15 @@ addr     = chrget + 4 ; 2 bytes.
 ; 1)   1 byte  = $027a - $027a, tape filetype (probably).
 ; 2)   2 bytes = $027b - $027c, prg start address.
 ; 3)   2 bytes = $027d - $027e, address after last byte of prg [(3) - (2) = prg byte count].
-; 4)  16 bytes = $027f -   ..., file name (petscii, padded with blanks/$20).
-; 5) 171 bytes =                additional bytes.
+; 4)  16 bytes = $027f - $028e, file name (petscii, padded with blanks/$20).
+; 5) 171 bytes = $028f - $0339, additional bytes.
 ;
-; file name = $20 => 
-;    186 bytes = $0280 - $0339, source code in tape buffer #1.
+; file name = "fastmode: sys655" => 
+;    171 bytes = $028f - $0339, source code in tape buffer #1.
 ;    192 bytes = $033a - $03f9, source code in tape buf. #2 (192 bytes avail.).
+;
+;    =>
+;    363 bytes available.
 ;
 ;                (over-)write the following for basic loader usage:
 ;
@@ -115,10 +118,10 @@ addr     = chrget + 4 ; 2 bytes.
 ;
 ;                $0401,         start of basic.
 
-* = $0280 ; (see explanation above)
+* = $028f ; (see explanation above)
 
 ; ***********************
-; *** wedge installer *** (space reused after installation for cmd. string)
+; *** wedge installer *** (space partially reused after install for cmd. string)
 ; ***********************
 
 str      lda #$4c       ; jmp
@@ -127,8 +130,17 @@ str      lda #$4c       ; jmp
          sta chrget + 1
          lda #>wedge
          sta chrget + 2
+         ;rts
+         ;byte 0,0,0
+
+         ;lda cas_wrt    ; set write line level to low.
+         ;and #%11110111 ;
+         ;sta cas_wrt    ;
+         ;
+         lda #%11110111  ; ok, because by default set to %11111111
+         sta cas_wrt     ; (saving 3 bytes, just 2 bytes unused).
+
          rts
-         byte 0,0,0
 
 ; *****************
 ; *** the wedge ***
@@ -426,3 +438,24 @@ readadd  ror temp0      ; put read bit from c flag into byte buffer.
 ;         rts
 ;
 ; - - - debugging helpers - - - end
+
+;timer1_low = $e844
+;timer1_high = $e845
+;via_ifr = $e84d ; via's interrupt flag register.
+;
+;         ; delay:
+;         ;
+;         ; $ffff =   65535us
+;         ;
+;         ;    5s = 5000000us
+;         ;
+;         ;         5000000us / 65535us = ~77
+;         ;
+;         ldy #77
+;delay    lda #$ff
+;         sta timer1_low ; (reading would also clear interrupt flag)
+;         sta timer1_high ; clears interrupt flag and starts timer.
+;timeout  bit via_ifr ; did timer one time out?
+;         bvc timeout
+;         dey
+;         bne delay
