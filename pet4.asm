@@ -137,8 +137,8 @@ str      lda #$4c       ; jmp
          ;and #%11110111 ;
          ;sta cas_wrt    ;
          ;
-         lda #%11110111  ; ok, because by default set to %11111111
-         sta cas_wrt     ; (saving 3 bytes, just 2 bytes unused).
+         lda #%11110111 ; ok, because by default set to %11111111
+         sta cas_wrt    ; (saving 3 bytes, just 2 bytes unused).
 
          rts
 
