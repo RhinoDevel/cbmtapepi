@@ -199,6 +199,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 return true;
             }
 
+            // TODO: Support BASIC v2:
+            //
             case mode_type_pet2: // (falls through) // (not supported, yet)
             //
             case mode_type_err: // (falls through)
@@ -240,63 +242,81 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     {
         return save_mode(get_mode(name));
     }
-    // static enum mode_type get_mode_to_use()
-    // {
-    //     enum mode_type mode = mode_load();
-    //
-    //     if(is_mode_supported(mode))
-    //     {
-    //         return mode;
-    //     }
-    //     else
-    //     {
-    //         return mode_type_save; // The default mode.
-    //     }
-    // }
-
-    // static void send_petload()
-    // {
-    //     struct tape_input * ti = petload_create_v4();
-    
-    //     //armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-    
-    //     s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
-    
-    //     cbm_send_data(ti, 0);
-    
-    //     tape_input_free(ti);
-    //     s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-    // }
-    // static void send_petload_loop()
-    // {
-    //     assert(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE));
-
-    //     while(true)
-    //     {
-    //         send_petload();
-
-    //         // Check, if write signal changed:
-    //         //
-    //         if(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE))
-    //         {
-    //             console_deb_writeline(
-    //                 "send_petload_loop : Write still HIGH, continuing loop..");
-    //             continue;
-    //         }
-
-    //         // Write value changed, (hopefully) caused by fast mode installer.
-
-    //         console_deb_writeline(
-    //             "send_petload_loop : Write value is LOW, breaking loop..");
-
-    //         return;
-    //     }
-    // }
-
-    static void cmd_enter()
+    static enum mode_type get_mode_to_use()
     {
-        enum mode_type mode = mode_type_save;//get_mode_to_use(); // TODO: Implement correct usage before enabling this!
+        enum mode_type mode = mode_load();
+    
+        if(is_mode_supported(mode))
+        {
+            return mode;
+        }
+        else
+        {
+            return mode_type_save; // The default mode.
+        }
+    }
 
+    static void send_petload(enum mode_type const mode)
+    {
+        assert(mode == mode_type_pet2 || mode == mode_type_pet4);
+
+        struct tape_input * ti = petload_create_v4(); // TODO: Hard-coded to BASIC v4. Add BASIC v2 support!
+    
+        s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
+    
+        cbm_send_data(ti, 0);
+    
+        tape_input_free(ti);
+        s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+    }
+    static void send_petload_loop(enum mode_type const mode)
+    {
+        // TODO: Change back to change detection (also on CBM side) to be able
+        //       to toggle to fastmode without reset (also check, if this is
+        //       really not bad for the connections)?
+        //
+        assert(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE));
+
+        while(true)
+        {
+            send_petload(mode);
+
+            // Check, if write signal changed:
+            //
+            if(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE))
+            {
+                console_deb_writeline(
+                    "send_petload_loop : Write still HIGH, continuing loop..");
+
+                // If LOAD routine ran on CBM (does not matter, if successful or
+                // quit via RUN/STOP keypress) the MOTOR is getting disabled by
+                // Commmodore OS, even if SENSE is still LOW.
+                //
+                // The MOTOR will be restarted by CBM's ISR only after SENSE got
+                // toggled from LOW to HIGH and then back again to LOW
+                // (with a real tape the user would have to release all buttons
+                // and press the play button again).
+                //
+                // Wait long enough to let CBM detect that SENSE got toggled to
+                // HIGH state:
+                //
+                // - 50 Hz machine. => ISR called every 20ms.
+                //
+                armtimer_busywait_microseconds(10 * 20 * 1000); // 10 * 20ms.
+                continue;
+            }
+
+            // Write value changed, (hopefully) caused by fast mode installer.
+
+            console_deb_writeline(
+                "send_petload_loop : Write value is LOW, breaking loop..");
+
+            return;
+        }
+    }
+
+    static void cmd_enter(enum mode_type const mode)
+    {
         console_deb_writeline("cmd_enter : Entered function.");
 
         cmd_reinit(save_mode_by_name, MT_FILESYS_ROOT);
@@ -325,31 +345,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             console_writeline("\".");
 #endif //NDEBUG
 
-            if(mode == mode_type_save && str_starts_with(name, "!pet4"))
-            {
-                struct tape_input * ti_create = petload_create_v4();
-            
-                armtimer_busywait_microseconds(1 * 1000 * 1000); // 1s
-            
-                s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
-            
-                cbm_send_data(ti_create, 0);
-            
-                console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
-                mode = mode_type_pet4;
-                //
-                // Wait for motor signal at least to be on its way to LOW
-                // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
-                // MOTOR signal to LOW again):
-                //
-                petload_wait_for_data_ready_val(false, false);
-            
-                tape_input_free(ti_create);
-                ti_create = 0;
-            
-                s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-            }
-            else if(cmd_exec(name, ti, &o))
+            if(cmd_exec(name, ti, &o))
             {
                 if(o != 0) // Something to send back to CBM.
                 {
@@ -363,22 +359,24 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
                             cbm_send(o->bytes, o->name, o->count, 0);
 
-                            // TODO: Implement correctly:
+                            // How to toggle mode by loading file directly:
                             //
-                            if(str_are_equal(o->name, "petpi4ba.prg"))
-                            {
-                                console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
-                                mode = mode_type_pet4;
-                                //
-                                // Wait for motor signal at least to be on its way to LOW
-                                // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
-                                // MOTOR signal to LOW again):
-                                //
-                                petload_wait_for_data_ready_val(false, false);
-                            }
+                            // if(str_are_equal(o->name, "petpi4ba.prg"))
+                            // {
+                            //     console_deb_writeline("cmd_enter : Switching to PET 4 fastload..");
+                            //     mode = mode_type_pet4;
+                            //     //
+                            //     // Wait for motor signal at least to be on its way to LOW
+                            //     // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
+                            //     // MOTOR signal to LOW again):
+                            //     //
+                            //     petload_wait_for_data_ready_val(false, false);
+                            // }
 
                             break;
                         }
+
+                        case mode_type_pet2: // (falls through)
                         case mode_type_pet4:
                         {
                             petload_send(o->bytes, o->count);
@@ -556,10 +554,22 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     ui_enter();
 #else //MT_INTERACTIVE
-    //send_petload_loop();
+    {
+        enum mode_type mode = get_mode_to_use();
 
-    // "File system and control" mode:
-    //
-    cmd_enter();
+#ifndef NDEBUG
+        console_write("kernel_main : Mode to use has value ");
+        console_write_byte_dec((uint8_t)mode);
+        console_writeline(".");
+#endif //NDEBUG
+        if(mode == mode_type_pet2 || mode == mode_type_pet4)
+        {
+            send_petload_loop(mode);
+        }
+
+        // "File system and control" mode:
+        //
+        cmd_enter(mode);
+    }
 #endif //MT_INTERACTIVE
 }
