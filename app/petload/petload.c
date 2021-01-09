@@ -7,6 +7,7 @@
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/basic/basic_addr.h"
 #include "../../lib/basic/basic.h"
+#include "../../lib/petasc/petasc.h"
 #include "../../lib/assert.h"
 #include "../../hardware/gpio/gpio.h"
 #include "../../hardware/armtimer/armtimer.h"
@@ -232,7 +233,8 @@ struct tape_input * petload_create_v4()
 
     for(i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        ret_val->name[i] = (uint8_t)name[i];
+        ret_val->name[i] = (uint8_t)petasc_get_petscii(
+            name[i], MT_PETSCII_REPLACER);
     }
     console_deb_writeline("petload_create_v4 : Header name filled.");
 
