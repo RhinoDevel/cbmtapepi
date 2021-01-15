@@ -271,11 +271,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     }
     static void send_petload_loop(enum mode_type const mode)
     {
-        // TODO: Change back to change detection (also on CBM side) to be able
-        //       to toggle to fastmode without reset (also check, if this is
-        //       really not bad for the connections)?
-        //
-        assert(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE));
+        bool const org_write = gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE);
 
         while(true)
         {
@@ -283,10 +279,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
             // Check, if write signal changed:
             //
-            if(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE))
+            if(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE) == org_write)
             {
                 console_deb_writeline(
-                    "send_petload_loop : Write still HIGH, continuing loop..");
+                    "send_petload_loop : Write not changed, continuing loop..");
 
                 // If LOAD routine ran on CBM (does not matter, if successful or
                 // quit via RUN/STOP keypress) the MOTOR is getting disabled by
@@ -309,7 +305,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             // Write value changed, (hopefully) caused by fast mode installer.
 
             console_deb_writeline(
-                "send_petload_loop : Write value is LOW, breaking loop..");
+                "send_petload_loop : Write value changed, breaking loop..");
 
             return;
         }
