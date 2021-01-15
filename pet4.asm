@@ -133,12 +133,9 @@ str      lda #$4c       ; jmp
          ;rts
          ;byte 0,0,0
 
-         ;lda cas_wrt    ; set write line level to low.
-         ;and #%11110111 ;
-         ;sta cas_wrt    ;
-         ;
-         lda #%11110111 ; ok, because by default set to %11111111
-         sta cas_wrt    ; (saving 3 bytes, just 2 bytes unused).
+         lda cas_wrt    ; toggle write line level (5 bytes wasted).
+         eor #%00001000 ;
+         sta cas_wrt    ;
 
          rts
 
