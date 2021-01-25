@@ -1,4 +1,4 @@
-*Status update: **Fast mode for CBM/PET via wedge** is implemented, currently preparing next release!*
+*Status update: **Fast mode for CBM/PET via wedge** is implemented, currently checking and reconfiguring all the hardware connections for more safety!*
 
 # CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2021, [rhinodevel.com](http://rhinodevel.com/)*
