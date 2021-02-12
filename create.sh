@@ -11,6 +11,10 @@
 # wget https://mirror.checkdomain.de/gnu/binutils/binutils-2.31.1.tar.bz2
 # wget https://ftp.gnu.org/gnu/gcc/gcc-8.2.0/gcc-8.2.0.tar.xz
 #
+# Eventually necessary for GCC (if not already installed):
+# --------------------------------------------------------
+#
+# sudo apt-get install libmpc-dev
 #
 #export PREFIX="$HOME/Documents/pios/cross/result"
 #export TARGET=arm-none-eabi
