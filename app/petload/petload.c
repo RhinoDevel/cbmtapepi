@@ -82,10 +82,17 @@ static void wait_for_data_ack(bool const is_even_bit)
 
     gpio_wait_for(
         s_data_ack_from_pet,
-        s_send_expected_data_ack_level,
+
+        !s_send_expected_data_ack_level,
+        //
+        // (inverted, because circuit inverts signal from CBM)
+
         is_even_bit
             ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
-            : (s_send_expected_data_ack_level
+            : (!s_send_expected_data_ack_level
+            //
+            // (inverted, because circuit inverts signal to CBM)
+
                 ? pause_rise_microseconds
                 : pause_fall_microseconds));
 
@@ -98,11 +105,19 @@ static void send_data_ack_pulse()
 {
     static uint32_t const pulse_microseconds = 5;
 
-    //assert(gpio_read(s_data_ack_to_pet) == s_data_ack_to_pet_default_level);
+    //assert(gpio_read(s_data_ack_to_pet) == !s_data_ack_to_pet_default_level);
+    //
+    // (inverted, because circuit inverts signal to CBM)
 
-    gpio_set_output(s_data_ack_to_pet, !s_data_ack_to_pet_default_level);
-    armtimer_busywait_microseconds(pulse_microseconds);
     gpio_set_output(s_data_ack_to_pet, s_data_ack_to_pet_default_level);
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    armtimer_busywait_microseconds(pulse_microseconds);
+    
+    gpio_set_output(s_data_ack_to_pet, !s_data_ack_to_pet_default_level);
+    //
+    // (inverted, because circuit inverts signal to CBM)
 }
 
 /**
@@ -136,7 +151,9 @@ static uint8_t retrieve_bit(int const bit_nr)
         even_bit); // Make sure on rise (faster than fall time),
                    // no need to make sure on fall.
 
-    s_send_expected_data_ack_level = !gpio_read(s_data_from_pet);
+    s_send_expected_data_ack_level = gpio_read(s_data_from_pet);
+    //
+    // (inverted, because circuit inverts signal from CBM)
     //
     // (because data-from-pet line used here during retrieval
     //  and data-ack.-from-pet line used during send are both using WRITE)
@@ -150,7 +167,9 @@ static uint8_t retrieve_bit(int const bit_nr)
 
 static void send_bit(uint8_t const bit, bool const is_even_bit)
 {
-    gpio_set_output(s_data_to_pet, (bool)bit);
+    gpio_set_output(
+        s_data_to_pet,
+        !(bool)bit); // (inverted, because circuit inverts signal to CBM)
 
     send_data_ready_pulse();
 
@@ -292,10 +311,16 @@ struct tape_input * petload_retrieve()
 
 #ifndef NDEBUG
     console_write("petload_retrieve : Setting data-ack. line to ");
+    
     console_write(s_data_ack_to_pet_default_level ? "HIGH" : "LOW");
-    console_writeline("..");
+    
+    console_writeline(" at CBM..");
 #endif //NDEBUG
-    gpio_set_output(s_data_ack_to_pet, s_data_ack_to_pet_default_level);
+    gpio_set_output(
+        s_data_ack_to_pet,
+        !s_data_ack_to_pet_default_level);
+        //
+        // (inverted, because circuit inverts signal to CBM)
 
 #ifndef NDEBUG
     console_writeline("petload_retrieve : Retrieving \"name\"..");
@@ -369,7 +394,10 @@ struct tape_input * petload_retrieve()
     console_writeline("petload_retrieve : Done.");
 #endif //NDEBUG
 
-    assert(gpio_read(s_data_ack_to_pet) == s_data_ack_to_pet_default_level);
+    assert(gpio_read(s_data_ack_to_pet) != s_data_ack_to_pet_default_level);
+    //
+    // (inverted, because circuit inverts signal to CBM)
+    //
     // (motor / data-ready from pet line may be low OR on its way to low)
 
     return ret_val;
@@ -387,8 +415,10 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     //s_send_expected_data_ack_level
 #ifndef NDEBUG
     console_write("petload_send : Expecting first data-ack. value to be ");
+
     console_write(s_send_expected_data_ack_level ? "HIGH" : "LOW");
-    console_writeline(".");
+
+    console_writeline(" at CBM.");
 #endif //NDEBUG
 
     // Data-ready-to-PET level is expected to be on its default value,
@@ -398,7 +428,10 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
     assert(s_data_ready_to_pet == s_data_ack_to_pet);
     assert(s_data_ready_to_pet_default_level
         == s_data_ack_to_pet_default_level);
-    assert(gpio_read(s_data_ready_to_pet) == s_data_ready_to_pet_default_level);
+
+    assert(gpio_read(s_data_ready_to_pet) != s_data_ready_to_pet_default_level);
+    //
+    // (inverted, because circuit inverts signal to CBM)
 
     uint16_t const payload_len = count - 2;
 
@@ -448,7 +481,11 @@ void petload_send(uint8_t const * const bytes, uint32_t const count)
 
     console_deb_writeline(
         "petload_send : Setting data line back to default value..");
-    gpio_set_output(s_data_to_pet, s_data_to_pet_default_level);
+    gpio_set_output(
+        s_data_to_pet,
+        !s_data_to_pet_default_level);
+        //
+        // (inverted, because circuit inverts signal to CBM)
 
     console_deb_writeline("petload_send : Done.");
 }

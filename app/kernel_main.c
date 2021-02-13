@@ -271,18 +271,31 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     }
     static void send_petload_loop(enum mode_type const mode)
     {
-        bool const org_write = gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE);
+        // Starting up PET causes WRITE value to change, this is why we wait for
+        // WRITE being HIGH at CBM (which happens at start-up of CBM/PET):
+
+        console_deb_writeline(
+            "send_petload_loop : Waiting for write getting HIGH at CBM..");
+
+        gpio_wait_for(
+            MT_TAPE_GPIO_PIN_NR_WRITE,
+            !true, // (inverted, because circuit inverts signal from CBM)
+            500); // Microseconds. Just for safety.
+
+        console_deb_writeline(
+            "send_petload_loop : Write was set to HIGH at CBM, entering loop..");
 
         while(true)
         {
             send_petload(mode);
 
-            // Check, if write signal changed:
+            // Check, if write signal changed
+            // (inverted, because circuit inverts signal from CBM):
             //
-            if(gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE) == org_write)
+            if(!gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE))
             {
                 console_deb_writeline(
-                    "send_petload_loop : Write not changed, continuing loop..");
+                    "send_petload_loop : Write still HIGH at CBM, continuing loop..");
 
                 // If LOAD routine ran on CBM (does not matter, if successful or
                 // quit via RUN/STOP keypress) the MOTOR is getting disabled by
@@ -305,8 +318,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             // Write value changed, (hopefully) caused by fast mode installer.
 
             console_deb_writeline(
-                "send_petload_loop : Write value changed, breaking loop..");
-
+                "send_petload_loop : Write value got LOW at CBM, breaking loop..");
+                
             return;
         }
     }

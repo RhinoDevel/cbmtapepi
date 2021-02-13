@@ -164,11 +164,11 @@ bool tape_receive_buf(
     // *** Sync: ***
     // *************
 
-    // Wait for low:
+    // Wait for LOW at CBM (circuit inverts signal from CBM):
     //
-    while(gpio_read(gpio_pin_nr_write))
+    while(!gpio_read(gpio_pin_nr_write))
     {
-        // Pin is HIGH.
+        // Pin at CBM is LOW (circuit inverts signal from CBM).
 
         if(is_stop_requested != 0 && is_stop_requested())
         {
@@ -176,30 +176,20 @@ bool tape_receive_buf(
         }
     }
     //
-    // => Next high should be the start of a pulse.
+    // => Next HIGH at CBM (circuit inverts signal from CBM) should be the start
+    //    of a pulse.
 
     // Skip some initial level changes (because sometimes there is a preceding
     // level change that is NOT a sync pulse, because it is too long):
     //
     for(int i = 0;i < skip_count;++i)
     {
-        // LOW, wait for start of (next) SAVE sync pulse:
-
-        while(!gpio_read(gpio_pin_nr_write))
-        {
-            // Pin is LOW.
-
-            if(is_stop_requested != 0 && is_stop_requested())
-            {
-                return false;
-            }
-        }
-
-        // HIGH <=> A SAVE sync pulse has started.
+        // LOW at CBM (circuit inverts signal from CBM),
+        // wait for start of (next) SAVE sync pulse:
 
         while(gpio_read(gpio_pin_nr_write))
         {
-            // Pin is HIGH.
+            // Pin at CBM is HIGH (circuit inverts signal from CBM).
 
             if(is_stop_requested != 0 && is_stop_requested())
             {
@@ -207,32 +197,33 @@ bool tape_receive_buf(
             }
         }
 
-        // HIGH half of sync pulse finished.
+        // HIGH at CBM (circuit inverts signal from CBM).
+        // <=> A SAVE sync pulse has started.
+
+        while(!gpio_read(gpio_pin_nr_write))
+        {
+            // Pin at CBM is HIGH (circuit inverts signal from CBM).
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
+
+        // HIGH at CBM (circuit inverts signal from CBM) half of sync pulse
+        // finshed.
     }
 
     // Sum up the tick lengths of some half sync pulses:
     //
     for(int i = 0;i < sync_count;++i)
     {
-        // LOW, wait for start of (next) SAVE sync pulse:
-
-        while(!gpio_read(gpio_pin_nr_write))
-        {
-            // Pin is LOW.
-
-            if(is_stop_requested != 0 && is_stop_requested())
-            {
-                return false;
-            }
-        }
-
-        // HIGH <=> A SAVE sync pulse has started.
-
-        start_tick = s_timer_get_tick();
+        // LOW at CBM (circuit inverts signal from CBM),
+        // wait for start of (next) SAVE sync pulse:
 
         while(gpio_read(gpio_pin_nr_write))
         {
-            // Pin is HIGH.
+            // Pin at CBM is HIGH (circuit inverts signal from CBM).
 
             if(is_stop_requested != 0 && is_stop_requested())
             {
@@ -240,7 +231,25 @@ bool tape_receive_buf(
             }
         }
 
-        // HIGH half of sync pulse finished.
+        // HIGH at CBM (circuit inverts signal from CBM).
+        // <=> A SAVE sync pulse has started.
+
+        start_tick = s_timer_get_tick();
+
+        // (circuit inverts signal from CBM)
+        //
+        while(!gpio_read(gpio_pin_nr_write))
+        {
+            // Pin at CBM is HIGH (circuit inverts signal from CBM).
+
+            if(is_stop_requested != 0 && is_stop_requested())
+            {
+                return false;
+            }
+        }
+
+        // HIGH half of sync pulse (at CBM) finished
+        // (circuit inverts signal from CBM).
 
         ticks_short += s_timer_get_tick() - start_tick;
 
@@ -262,14 +271,17 @@ bool tape_receive_buf(
     {
         bool timeout_reached = false;
 
-        // LOW, wait for start of (next) SAVE pulse:
+        // LOW at CBM (circuit inverts signal from CBM),
+        // wait for start of (next) SAVE pulse:
 
         start_tick = s_timer_get_tick();
         while(true)
         {
-            if(gpio_read(gpio_pin_nr_write))
+            // (circuit inverts signal from CBM)
+            //
+            if(!gpio_read(gpio_pin_nr_write))
             {
-                break; // HIGH
+                break; // HIGH at CBM (circuit inverts signal from CBM).
             }
             if(s_timer_get_tick() - start_tick >= ticks_timeout)
             {
@@ -282,13 +294,16 @@ bool tape_receive_buf(
             break; // Done (or unhandled error).
         }
 
-        // HIGH <=> A SAVE pulse has started.
+        // HIGH at CBM (circuit inverts signal from CBM)
+        // <=> A SAVE pulse has started.
 
         start_tick = s_timer_get_tick();
 
-        while(gpio_read(gpio_pin_nr_write))
+        // (circuit inverts signal from CBM)
+        //
+        while(!gpio_read(gpio_pin_nr_write))
         {
-            // Pin is HIGH.
+            // Pin at CBM is HIGH (circuit inverts signal from CBM).
 
             if(is_stop_requested != 0 && is_stop_requested())
             {
@@ -296,7 +311,7 @@ bool tape_receive_buf(
             }
         }
 
-        // HIGH half of pulse finished.
+        // HIGH half of pulse at CBM finished (circuit inverts signal from CBM).
 
         pulse_type[pulse_type_index] = get_pulse_type(
             s_timer_get_tick() - start_tick);

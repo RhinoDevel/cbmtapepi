@@ -39,9 +39,9 @@ static void (*s_timer_busywait_microseconds)(uint32_t const microseconds) = 0;
 
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
-    gpio_write(gpio_pin_nr, false);
+    gpio_write(gpio_pin_nr, !false); // (to-be-inverted by circuit)
     s_timer_busywait_microseconds(micro);
-    gpio_write(gpio_pin_nr, true);
+    gpio_write(gpio_pin_nr, !true); // (to-be-inverted by circuit)
     s_timer_busywait_microseconds(micro);
 }
 

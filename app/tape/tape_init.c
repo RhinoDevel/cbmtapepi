@@ -20,14 +20,18 @@ void tape_init(
 
     tape_send_buf_init(timer_busywait_microseconds);
 
-    console_deb_writeline("tape_init: Setting sense output line to HIGH..");
-    gpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, true);
+    console_deb_writeline("tape_init: Setting sense output line to HIGH at CBM..");
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, !true);
+    //
+    // (inverted, because circuit inverts signal to CBM)
 
     console_deb_writeline("tape_init: Setting motor line to input with pull-down..");
     gpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_MOTOR);
 
-    console_deb_writeline("tape_init: Setting tape read output line to HIGH..");
-    gpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, true);
+    console_deb_writeline("tape_init: Setting tape read output line to HIGH at CBM..");
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, !true);
+    //
+    // (inverted, because circuit inverts signal to CBM)
 
     console_deb_writeline(
         "tape_init: Setting tape write line to input with pull-down..");
