@@ -4,7 +4,7 @@ Sense, tape read, motor line and tape write GPIO pins at Pi are all by default
 inputs (as all GPIO pins are) with pull-down resistors (selected this way for
 CBM Tape Pi).
 
-1) CBM Tape Pi initializes:
+1) kernel_main(): CBM Tape Pi initializes:
 
 Setting sense output line to HIGH at CBM (circuit inverts signal).
 Setting tape read output line to HIGH at CBM (circuit inverts signal).
@@ -47,30 +47,3 @@ Setting tape write line to input with pull-down (circuit does invert signal).
 2)b)1)3) Entering command loop (with fast mode enabled).
 
 --- WORK IN PROGRESS ---
-
-2) Fast mode is active.
-
-PI: Call petload_retrieve():
-
-- PI: Request first data bit: data-req / SENSE = LOW
-
-- PI: Waiting for data-ready toggle from HIGH to LOW
-      [wait_for_data_ready_pulse()].
-
-[=> CBM (OS): MOTOR goes HIGH]
-
-CBM: User: (Fast mode) command execution:
-
-- CBM: Disable interrupts, make sure that MOTOR is set to HIGH).
-
-* CBM: Waits for data-req / SENSE to get LOW. <=> Already LOW.
-
-- CBM: Set current bit to data line.
-
-- CBM: MOTOR pulse HIGH -> LOW -> HIGH.
-
-=> PI: Read bit from data line, request next bit (go to * above).
-
->>> At some point, all bits are transferred. <<<
-
-CBM: Toggle to Pi -> CBM transfer mode.
