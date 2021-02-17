@@ -21,11 +21,11 @@
 // measured these with attached Raspberry Pi 1 and running CBM Tape Pi
 // transfer at a CBM 3032 as:
 //
-// - Rise time = ~25us.
-// - Fall time = ~50us.
+// - Rise time = ~20us.
+// - Fall time = ~40us.
 //
-static uint32_t const s_motor_rise_microseconds = 25; // Measured ~25us.
-static uint32_t const s_motor_fall_microseconds = 50; // Measured ~50us.
+static uint32_t const s_motor_rise_microseconds = 20; // Measured ~20us.
+static uint32_t const s_motor_fall_microseconds = 40; // Measured ~40us.
 
 // Retrieve:
 //
