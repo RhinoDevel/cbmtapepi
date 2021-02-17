@@ -1,8 +1,28 @@
-1) Normal mode is active.
+0) On power-on or soft-reset:
 
-CBM: User: Uses SAVE and LOAD to enable fast mode.
+Sense, tape read, motor line and tape write GPIO pins at Pi are all by default
+inputs with pull-down resistors.
 
-=>
+1) CBM Tape Pi initializes:
+
+Setting sense output line to HIGH at CBM.
+Setting tape read output line to HIGH at CBM.
+Setting motor line to input with pull-down.
+Setting tape write line to input with pull-down.
+
+2) Reading configuration file and either entering SAVE or one of the fast modes:
+
+2)a) SAVE mode:
+
+Setting sense line to LOW at CBM (simulating user pressing button).
+
+Waiting for data from CBM.
+
+Interpreting data, acting on it and maybe sending data back.
+
+2)b) One of the fast modes (each "machine" has its own fast mode):
+
+--- WORK IN PROGRESS ---
 
 2) Fast mode is active.
 
