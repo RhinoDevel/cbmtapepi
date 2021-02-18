@@ -1,4 +1,4 @@
-*Status update: **Preparing update with fast mode for CBM/PET via wedge**, please come back soon to check out v1.7.0!
+*Status update: **Preparing update with fast mode for CBM/PET via wedge**, please come back soon to check out v1.7.0!*
 
 # CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2021, [rhinodevel.com](http://rhinodevel.com/)*
