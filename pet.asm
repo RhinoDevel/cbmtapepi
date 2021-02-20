@@ -5,10 +5,40 @@
 
 ; cbm pet
 
-; configured for basic v4.
+bas_ver = 4; pet basic version to assemble for. can be set to 1, 2 or 4.
+
+if bas_ver = 1
+
+; basic version 1.
 ;
-; if an address in basic v2 is different, the basic v2 address is included as
-; commented-out value directly after the basic v4 value.
+bas_rstxclr = $0000 ; TODO: set correctly!
+;bas_rstx    = $0000 ; TODO: set correctly!
+bas_rechain = $0000 ; TODO: set correctly!
+bas_ready    = $0000 ; TODO: set correctly!
+;
+; TODO: add other stuff that is different!
+
+else
+if bas_ver = 2
+
+; basic version 2.
+;
+bas_rstxclr = $c572
+;bas_rstx    = $c5a7
+bas_rechain = $c442
+bas_ready    = $c389
+
+else
+
+; assuming basic version 4.
+;
+bas_rstxclr = $b5e9
+;bas_rstx    = $b622
+bas_rechain = $b4b6
+bas_ready    = $b3ff
+
+endif
+endif
 
 ; ---------------
 ; system pointers
@@ -30,10 +60,10 @@ buf      = $0200        ; basic input buffer's address.
 
 chrget   = $70
 chrgot   = $76
-rstxclr  = $b5e9;$c572  ; reset txtptr and perform basic clr command.
-;rstx    = $b622;$c5a7   ; (just) reset txtptr.
-rechain  = $b4b6;$c442  ; rechain basic program in memory.
-ready    = $b3ff;$c389  ; print return, "ready.", return and waits for basic
+rstxclr  = bas_rstxclr  ; reset txtptr and perform basic clr command.
+;rstx    = bas_rstx      ; (just) reset txtptr.
+rechain  = bas_rechain  ; rechain basic program in memory.
+ready    = bas_ready    ; print return, "ready.", return and waits for basic
                         ; line or direct command.
 ; ----------
 ; peripheral
