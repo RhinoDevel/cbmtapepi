@@ -1,5 +1,6 @@
 
 #include "petload.h"
+#include "petload_pet2.h"
 #include "petload_pet4.h"
 #include "../config.h"
 #include "../cbm/cbm_send.h"
@@ -200,6 +201,83 @@ static void send_byte(uint8_t const byte)
     }
 }
 
+static struct tape_input * create(
+    uint8_t const * const bytes, int const count)
+{
+    assert(bytes[0] == 0x8f);
+    assert(bytes[1] == 0x02);
+    assert(0x028f == 655);
+    //                               "1234567890123456"
+    static char const * const name = "FASTMODE: SYS655";
+    static int const dest_byte_count =
+        MT_TAPE_INPUT_ADD_BYTES_LEN
+        + 192; // Tape buffer #2 length.
+
+    int const src_byte_count =
+        count
+        - 2; // For leading PRG start address bytes.
+
+#ifndef NDEBUG
+    console_write("petload/create : Needed/source byte count: ");
+    console_write_dword_dec((uint32_t)src_byte_count);
+    console_writeline(".");
+
+    console_write("petload/create : Available destination byte count: ");
+    console_write_dword_dec((uint32_t)dest_byte_count);
+    console_writeline(".");
+#endif //NDEBUG
+    assert(src_byte_count <= dest_byte_count);
+
+    struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
+    int i = 0,
+        src_pos = 2; // Skip leading PRG start address bytes.
+
+    for(i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
+    {
+        ret_val->name[i] = (uint8_t)petasc_get_petscii(
+            name[i], MT_PETSCII_REPLACER);
+    }
+    console_deb_writeline("petload/create : Header name filled.");
+
+    for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
+    {
+        ret_val->add_bytes[i] = s_petload_pet4[src_pos];
+
+        ++src_pos;
+    }
+    console_deb_writeline("petload/create : Header add. bytes filled.");
+    assert(src_pos == 2 + MT_TAPE_INPUT_ADD_BYTES_LEN);
+    ret_val->addr = (uint16_t)(0x028f + src_pos - 2);
+
+    int const tape_buf_two_used_byte_count = src_byte_count - src_pos + 2;
+
+#ifndef NDEBUG
+    console_write("petload/create : Address: 0x");
+    console_write_word(ret_val->addr);
+    console_writeline(".");
+
+    console_write("petload/create : Used tape buffer #2 byte count: ");
+    console_write_dword_dec((uint32_t)tape_buf_two_used_byte_count);
+    console_writeline(".");
+#endif //NDEBUG
+
+    ret_val->len = (uint16_t)tape_buf_two_used_byte_count;
+
+    ret_val->bytes = alloc_alloc((uint32_t)tape_buf_two_used_byte_count);
+    for(i = 0;i < tape_buf_two_used_byte_count;++i)
+    {
+        ret_val->bytes[i] = s_petload_pet4[src_pos];
+
+        ++src_pos;
+    }
+    console_deb_writeline("petload/create : Bytes array filled.");
+    assert(src_pos == 2 + src_byte_count);
+
+    ret_val->type = tape_filetype_relocatable; // Correct for PET.
+
+    return ret_val;
+}
+
 void petload_wait_for_data_ready_val(
     bool const wait_for_val, bool const do_make_sure)
 {
@@ -220,80 +298,16 @@ void petload_wait_for_data_ready_val(
             : 0);
 }
 
+struct tape_input * petload_create_v2()
+{
+    return create(
+        s_petload_pet2, (int)(sizeof s_petload_pet2 / sizeof *s_petload_pet2));
+}
+
 struct tape_input * petload_create_v4()
 {
-    assert(s_petload_pet4[0] == 0x8f);
-    assert(s_petload_pet4[1] == 0x02);
-    assert(0x028f == 655);
-    //                               "1234567890123456"
-    static char const * const name = "FASTMODE: SYS655";
-
-    static int const src_byte_count =
-        (int)(sizeof s_petload_pet4 / sizeof *s_petload_pet4)
-        - 2; // For leading PRG start address bytes.
-    static int const dest_byte_count =
-        MT_TAPE_INPUT_ADD_BYTES_LEN
-        + 192; // Tape buffer #2 length.
-
-#ifndef NDEBUG
-    console_write("petload_create_v4 : Needed/source byte count: ");
-    console_write_dword_dec((uint32_t)src_byte_count);
-    console_writeline(".");
-
-    console_write("petload_create_v4 : Available destination byte count: ");
-    console_write_dword_dec((uint32_t)dest_byte_count);
-    console_writeline(".");
-#endif //NDEBUG
-    assert(src_byte_count <= dest_byte_count);
-
-    struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
-    int i = 0,
-        src_pos = 2; // Skip leading PRG start address bytes.
-
-    for(i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
-    {
-        ret_val->name[i] = (uint8_t)petasc_get_petscii(
-            name[i], MT_PETSCII_REPLACER);
-    }
-    console_deb_writeline("petload_create_v4 : Header name filled.");
-
-    for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
-    {
-        ret_val->add_bytes[i] = s_petload_pet4[src_pos];
-
-        ++src_pos;
-    }
-    console_deb_writeline("petload_create_v4 : Header add. bytes filled.");
-    assert(src_pos == 2 + MT_TAPE_INPUT_ADD_BYTES_LEN);
-    ret_val->addr = (uint16_t)(0x028f + src_pos - 2);
-
-    int const tape_buf_two_used_byte_count = src_byte_count - src_pos + 2;
-
-#ifndef NDEBUG
-    console_write("petload_create_v4 : Address: 0x");
-    console_write_word(ret_val->addr);
-    console_writeline(".");
-
-    console_write("petload_create_v4 : Used tape buffer #2 byte count: ");
-    console_write_dword_dec((uint32_t)tape_buf_two_used_byte_count);
-    console_writeline(".");
-#endif //NDEBUG
-
-    ret_val->len = (uint16_t)tape_buf_two_used_byte_count;
-
-    ret_val->bytes = alloc_alloc((uint32_t)tape_buf_two_used_byte_count);
-    for(i = 0;i < tape_buf_two_used_byte_count;++i)
-    {
-        ret_val->bytes[i] = s_petload_pet4[src_pos];
-
-        ++src_pos;
-    }
-    console_deb_writeline("petload_create_v4 : Bytes array filled.");
-    assert(src_pos == 2 + src_byte_count);
-
-    ret_val->type = tape_filetype_relocatable; // Correct for PET.
-
-    return ret_val;
+    return create(
+        s_petload_pet4, (int)(sizeof s_petload_pet4 / sizeof *s_petload_pet4));
 }
 
 struct tape_input * petload_retrieve()
