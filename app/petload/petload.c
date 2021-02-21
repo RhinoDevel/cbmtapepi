@@ -241,7 +241,7 @@ static struct tape_input * create(
 
     for(i = 0;i < MT_TAPE_INPUT_ADD_BYTES_LEN;++i)
     {
-        ret_val->add_bytes[i] = s_petload_pet4[src_pos];
+        ret_val->add_bytes[i] = bytes[src_pos];
 
         ++src_pos;
     }
@@ -266,7 +266,7 @@ static struct tape_input * create(
     ret_val->bytes = alloc_alloc((uint32_t)tape_buf_two_used_byte_count);
     for(i = 0;i < tape_buf_two_used_byte_count;++i)
     {
-        ret_val->bytes[i] = s_petload_pet4[src_pos];
+        ret_val->bytes[i] = bytes[src_pos];
 
         ++src_pos;
     }
