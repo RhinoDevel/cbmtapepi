@@ -23,6 +23,7 @@ if bas_ver = 2
 
 ; basic version 2.
 ;
+bas_new = $c55d ; new is at $c55b, but this is without leading syntax check.
 bas_rstxclr = $c572
 ;bas_rstx    = $c5a7
 bas_rechain = $c442
@@ -32,6 +33,7 @@ else
 
 ; assuming basic version 4.
 ;
+bas_new = $b5d4 ; new is at $b5d2, but this is without leading syntax check.
 bas_rstxclr = $b5e9
 ;bas_rstx    = $b622
 bas_rechain = $b4b6
@@ -60,6 +62,7 @@ buf      = $0200        ; basic input buffer's address.
 
 chrget   = $70
 chrgot   = $76
+new      = bas_new
 rstxclr  = bas_rstxclr  ; reset txtptr and perform basic clr command.
 ;rstx    = bas_rstx      ; (just) reset txtptr.
 rechain  = bas_rechain  ; rechain basic program in memory.
@@ -167,7 +170,8 @@ str      lda #$4c       ; jmp
          eor #%00001000 ;
          sta cas_wrt    ;
 
-         rts
+         jmp new ; repairs start-of-variables pointer, etc., these were changed
+                 ; by loading into tape buffer(-s).
 
 ; *****************
 ; *** the wedge ***
@@ -337,7 +341,7 @@ r_finchk lda addr                 ; check, if end is reached.
 
 exit     cli
 
-         jsr rstxclr    ; equals preparations after basic load at $c439.
+         jsr rstxclr    ; equals preparations after basic load at $b4ad/$c439.
          jsr rechain    ;
 
          jmp ready
