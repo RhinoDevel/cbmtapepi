@@ -194,15 +194,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         switch(mode)
         {
             case mode_type_save: // (falls through)
+            case mode_type_pet2: // (falls through)
             case mode_type_pet4:
             {
                 return true;
             }
 
-            // TODO: Support BASIC v2:
-            //
-            case mode_type_pet2: // (falls through) // (not supported, yet)
-            //
             case mode_type_err: // (falls through)
             default:
             {
@@ -260,8 +257,28 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     {
         assert(mode == mode_type_pet2 || mode == mode_type_pet4);
 
-        struct tape_input * ti = petload_create_v4(); // TODO: Hard-coded to BASIC v4. Add BASIC v2 support!
+        struct tape_input * ti = 0;
     
+        switch(mode)
+        {
+            case mode_type_pet2:
+            {
+                ti = petload_create_v2();
+                break;
+            }
+            case mode_type_pet4:
+            {
+                ti = petload_create_v4();
+                break;
+            }
+
+            default: // Must not happen.
+            {
+                assert(false);
+                break;
+            }
+        }
+
         s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
     
         cbm_send_data(ti, 0);

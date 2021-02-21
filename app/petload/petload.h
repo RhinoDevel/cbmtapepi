@@ -19,6 +19,12 @@ void petload_wait_for_data_ready_val(
  */
 struct tape_input * petload_create_v4();
 
+/** Return PET fast loader for BASIC v2.
+ *
+ * - Caller takes ownership of returned object.
+ */
+struct tape_input * petload_create_v2();
+
 /**
  * - It does NOT matter, if CBM is sending data and waiting for ACK first or if
  *   Pi is waiting for data [petload_retrieve() already called] first.
