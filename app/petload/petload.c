@@ -1,5 +1,6 @@
 
 #include "petload.h"
+#include "petload_pet1.h"
 #include "petload_pet2.h"
 #include "petload_pet4.h"
 #include "../config.h"
@@ -296,6 +297,12 @@ void petload_wait_for_data_ready_val(
                 ? pause_rise_microseconds
                 : pause_fall_microseconds)
             : 0);
+}
+
+struct tape_input * petload_create_v1()
+{
+    return create(
+        s_petload_pet1, (int)(sizeof s_petload_pet1 / sizeof *s_petload_pet1));
 }
 
 struct tape_input * petload_create_v2()

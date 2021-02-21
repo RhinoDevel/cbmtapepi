@@ -29,6 +29,7 @@ bool mode_save(enum mode_type const type)
     switch(type)
     {
         case mode_type_save: // (falls through)
+        case mode_type_pet1: // (falls through)
         case mode_type_pet2: // (falls through)
         case mode_type_pet4: // (falls through)
         {
