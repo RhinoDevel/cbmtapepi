@@ -163,11 +163,11 @@ str      lda #$4c       ; jmp
          sta chrget + 1
          lda #>wedge
          sta chrget + 2
-         ;rts
-         ;byte 0,0,0
+         ;jmp new
+         ;byte 0
 
-         lda cas_wrt    ; toggle write line level (5 bytes wasted).
-         eor #%00001000 ;
+         lda cas_wrt    ; set write line level to high (7 bytes "wasted",
+         ora #oudmask   ; because not used later by fast mode wedge).
          sta cas_wrt    ;
 
          jmp new ; repairs start-of-variables pointer, etc., these were changed
