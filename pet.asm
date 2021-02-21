@@ -5,39 +5,56 @@
 
 ; cbm pet
 
-bas_ver = 4; pet basic version to assemble for. can be set to 1, 2 or 4.
+bas_ver = 1; pet basic version to assemble for. can be set to 1, 2 or 4.
 
 if bas_ver = 1
 
 ; basic version 1.
 ;
-bas_rstxclr = $0000 ; TODO: set correctly!
-;bas_rstx    = $0000 ; TODO: set correctly!
-bas_rechain = $0000 ; TODO: set correctly!
-bas_ready    = $0000 ; TODO: set correctly!
+bas_buf     = $000a
+bas_sobptr  = $7a
+bas_sovptr  = $7c
+bas_txtptr  = $c9
 ;
-; TODO: add other stuff that is different!
+bas_new     = $c553 ; new is at $c551, but this is without leading syntax check.
+bas_rstxclr = $c567
+;bas_rstx    = $0000 ; TODO: set correctly!
+bas_rechain = $c433
+bas_ready   = $c38b
 
-else
+endif
+
 if bas_ver = 2
 
 ; basic version 2.
 ;
-bas_new = $c55d ; new is at $c55b, but this is without leading syntax check.
+bas_buf     = $0200
+bas_sobptr  = $28
+bas_sovptr  = $2a
+bas_txtptr  = $77
+;
+bas_new     = $c55d ; new is at $c55b, but this is without leading syntax check.
 bas_rstxclr = $c572
 ;bas_rstx    = $c5a7
 bas_rechain = $c442
-bas_ready    = $c389
+bas_ready   = $c389
 
-else
+endif
 
-; assuming basic version 4.
+if bas_ver = 4
+
+; basic version 4.
 ;
-bas_new = $b5d4 ; new is at $b5d2, but this is without leading syntax check.
+bas_buf     = $0200
+bas_sobptr  = $28
+bas_sovptr  = $2a
+bas_txtptr  = $77
+;
+bas_new     = $b5d4 ; new is at $b5d2, but this is without leading syntax check.
 bas_rstxclr = $b5e9
 ;bas_rstx    = $b622
 bas_rechain = $b4b6
-bas_ready    = $b3ff
+bas_ready   = $b3ff
 
 endif
 endif
@@ -46,10 +63,10 @@ endif
 ; system pointers
 ; ---------------
 
-basstptr = $28          ; pointer to start of basic program.
-varstptr = $2a          ; pointer to start of basic variables.
-txtptr   = $77          ; two bytes.
-buf      = $0200        ; basic input buffer's address.
+sobptr   = bas_sobptr   ; pointer to start of basic program.
+sovptr   = bas_sovptr   ; pointer to start of basic variables.
+txtptr   = bas_txtptr   ; two bytes.
+buf      = bas_buf      ; basic input buffer's address.
 
 ; used to store program and data:
 
@@ -187,10 +204,18 @@ save_y   sty temp0      ; temporarily save original y register contents.
          cpy #>buf      ; original basic functionality of cmd. char. must still
          bne skip       ; work (e.g. pi symbol as constant).
          ldy txtptr
+if bas_ver = 1
+         cpy #<buf
+else ; assuming v2 or v4.
          ;cpy #<buf     ; hard-coded: commented-out for "buf" = $??00, only!
+endif 
          bne skip
 
+if bas_ver = 1
+         ldy #0
+else ; assuming v2 or v4.
          ;ldy #0        ; hard-coded: commented-out for "buf" = $??00, only!
+endif
          lda (txtptr),y ; check, if current character is the command sign.
          cmp #cmd_char
          bne skip
@@ -225,12 +250,12 @@ skip     ldy temp0      ; restore saved register y value and let basic handle
 
 main     sei
 
-         ; commented-out, because directly using varstptr during send and
+         ; commented-out, because directly using sovptr during send and
          ; retrieve:
          ;
-         ;lda varstptr
+         ;lda sovptr
          ;sta lim
-         ;lda varstptr + 1
+         ;lda sovptr + 1
          ;sta lim + 1
 
          lda #0
@@ -243,9 +268,9 @@ main     sei
          cmp #sav_char
          bne addrlim_rdy
 
-         lda basstptr
+         lda sobptr
          sta addr
-         lda basstptr + 1
+         lda sobptr + 1
          sta addr + 1
 addrlim_rdy
 
@@ -274,12 +299,12 @@ strnext  ldy str,x
          lda addr + 1
          beq retrieve
 
-send_lim ldy varstptr;lim         ; send first address above payload ("limit").
+send_lim ldy sovptr;lim ; send first address above payload ("limit").
          jsr sendbyte
-         ldy varstptr + 1;lim + 1
+         ldy sovptr + 1;lim + 1
          jsr sendbyte
 
-s_next   ;ldy #0        ; (y is always 0 after sendbyte) ; send payload.
+s_next   ;ldy #0         ; (y is always 0 after sendbyte) ; send payload.
          lda (addr),y
          tay
          jsr sendbyte
@@ -287,10 +312,10 @@ s_next   ;ldy #0        ; (y is always 0 after sendbyte) ; send payload.
          bne s_finchk
          inc addr + 1
 s_finchk lda addr       ; check, if end is reached.
-         cmp varstptr;lim
+         cmp sovptr;lim
          bne s_next
          lda addr + 1
-         cmp varstptr + 1;lim + 1
+         cmp sovptr + 1;lim + 1
          bne s_next
 
 ; >>> retrieve bytes: <<<
@@ -317,9 +342,9 @@ retrieve jsr readbyte  ; read address.
          beq exit      ; todo: overdone and maybe unwanted (see label)!
 
 read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
-         sta varstptr;lim
+         sta sovptr;lim
          jsr readbyte
-         sta varstptr + 1;lim + 1
+         sta sovptr + 1;lim + 1
 
 r_next   jsr readbyte   ; retrieve payload.
          ;ldx #0        ; [x is always 0 after readbyte()]
@@ -327,22 +352,22 @@ r_next   jsr readbyte   ; retrieve payload.
          inc addr       ; increment to next (write) address.
          bne r_finchk
          inc addr + 1
-r_finchk lda addr                 ; check, if end is reached.
-         cmp varstptr;lim
+r_finchk lda addr       ; check, if end is reached.
+         cmp sovptr;lim
          bne r_next
          lda addr + 1
-         cmp varstptr + 1;lim + 1
+         cmp sovptr + 1;lim + 1
          bne r_next
 
          ;;lda addr + 1
-         ;sta varstptr + 1 ; set basic variables start pointer to behind loaded
-         ;lda addr         ; payload.
-         ;sta varstptr     ;
+         ;sta sovptr + 1 ; set basic variables start pointer to behind loaded
+         ;lda addr       ; payload.
+         ;sta sovptr     ;
 
 exit     cli
 
-         jsr rstxclr    ; equals preparations after basic load at $b4ad/$c439.
-         jsr rechain    ;
+         jsr rstxclr    ; equals preparations after basic load at
+         jsr rechain    ; $c430/$c439/$b4ad.
 
          jmp ready
 
