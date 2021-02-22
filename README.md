@@ -44,13 +44,17 @@ You need:
 - 1x SD card (I am using an old 64MB card).
 - Optional: A push button (to be able to soft-reset the Raspberry Pi).
 
+## Warning and disclaimer
+
+- When using CBM Tape Pi, **don't** toggle the Commodore datassette connector ports that are (by Commodore default) used as inputs into output mode and vice versa (e.g. via POKEs), because that can cause damage to your Raspberry Pi or even to your precious Commodore (this is nothing special, it should also never be done, if a real datassette device is attached)!
+- **I take no responsibility** for any damage caused by using CBM Tape Pi. But: I am sure that, if you follow this README and make no mistakes, there will be **no** damage.
+
 ## How to use in fast mode
 
 *Description coming soon.*
 
 ## How to use in compatibility mode
 
-- **Warning**: When using CBM Tape Pi, don't toggle the Commodore datassette connector ports that are (by Commodore default) used as inputs into output mode and vice versa (e.g. via POKEs), because that can cause damage to your Raspberry Pi or even to your precious Commodore (this is nothing special, it should also never be done, if a real datassette device is attached)!
 - Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
 - Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1) on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
 - Delete (if existing) config.txt and cmdline.txt from boot partition.
