@@ -1,15 +1,15 @@
-*Status update: **Preparing update with fast mode for CBM/PET via wedge**, please come back soon to check out v1.7.0!*
+***Warning**: This README is **work-in-progress**, I am currently in the middle of updating for CBM/PET fast mode support via wedge, please come back soon to check out v1.7.0!*
 
 # CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2021, [rhinodevel.com](http://rhinodevel.com/)*
 
 ![CBM Tape Pi hardware](./docs/title.jpg)
 
-Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
+Use a Raspberry Pi as storage device with your Commodore 8-bit computer via tape port connector!
 
-- Video (compatibility mode): [CBM 3032 (please excuse the cuts, there was no fast mode, yet..)](https://youtu.be/CkLR3lkHjh4)
+- Older video (compatibility mode, v1.6.1): [CBM 3032 (please excuse the cuts, there was no fast mode, yet..)](https://youtu.be/CkLR3lkHjh4)
 
-- Latest release: [CBM Tape Pi v1.6.1](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1)
+- Latest release: CBM Tape Pi v1.7.0 **coming soon!**
 
 ## Features
 
@@ -19,29 +19,12 @@ Use a Raspberry Pi as datassette drive with your Commodore 8-bit computer!
   - Traverse directories.
   - List current directory's content.
   - Delete files.
-  - Fast mode (currently for CBM/PET machines with BASIC v2 and v4, only).
+  - **Fast mode** via wedge (currently implemented for CBM/PET machines).
   - Compatibility mode for CBM/PET, VIC-20, C64, etc.
 
-- Simple as possible, easy to build hardware interface:
+- Easy to build hardware interface:
   - No ICs, just a minimum amount of discrete components.
   - Only five connections need to be soldered (wires on the tape port plug).
-
-## Project goals
-
-### Done
-
-- Load and save PRG files for "all" Commodore 8-bit machines without the need for extra software on Commodore machine.
-- Use simplest and cheapest way to built such an interface.
-- Use as few hardware components as possible.
-- Use a Raspberry Pi and one of its mass storage devices.
-- Fast load and save (currently for CBM/PET machines with BASIC v2 and v4, only).
-- Custom commands (via wedge) instead of (mis-)using Commodore SAVE command.
-
-### To-do
-
-- Support loading PRG files with filenames longer than 12 characters.
-- Read/write from/to tape storage files like TAP, etc.
-- MAYBE IMPOSSIBLE (kernel module?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ## Requirements
 
@@ -50,18 +33,21 @@ You need:
 - Some cables (not that many, if you want to solder).
 - 1x breadboard (if you do not want to solder) or a circuit board.
 - 1x LED.
-- 1x NPN transistor (e.g. a PN2222A or a BC547).
-- 2x 10k Ohm resistors.
-- 1x 11k Ohm resistor (e.g. use a 10k Ohm and a 1k Ohm resistor in series).
-- 1x 16k Ohm resistor (you can also put this one together by using multiple resistors).
-- 1x 1k Ohm resistor.
+- 3x NPN transistor (e.g. a BC547 or a PN2222A).
+- 1x PNP transistor (e.g. a BC557).
+- 10x 10k Ohm resistors (two of these are used to get a 20k Ohm resistor).
 - 1x Commodore cassette port plug.
 - 1x Raspberry Pi 1, Zero or 2 (more recent models may work, not tested, yet).
 - 1x SD card (I am using an old 64MB card).
+- Optional: A push button (to be able to soft-reset the Raspberry Pi).
+
+## How to use in fast mode
+
+*Description coming soon.*
 
 ## How to use in compatibility mode
 
-- **Warning**: When using CBM Tape Pi, don't toggle the Commodore datassette connector ports that are (by Commodore default) used as inputs into output mode (e.g. via POKEs), because the 5V from the Commodore may harm the connected Raspberry Pi GPIO pins (max. of 3.3V allowed)!
+- **Warning**: When using CBM Tape Pi, don't toggle the Commodore datassette connector ports that are (by Commodore default) used as inputs into output mode and vice versa (e.g. via POKEs), because that can cause damage to your Raspberry Pi or even to your precious Commodore (this is nothing special, it should also never be done, if a real datassette device is attached)!
 - Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
 - Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1) on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
 - Delete (if existing) config.txt and cmdline.txt from boot partition.
@@ -109,6 +95,11 @@ You need:
   ```
       SAVE"RM OLDFILE.PRG"
   ```
+- **MODE**: Toggle mode (to be entered during start-up), e.g. to CBM/PET BASIC v4 fast mode:
+
+  ```
+      SAVE"MODE PET4"
+  ```
 
 ## Connections
 Connect Raspberry Pi and Commodore machine this way:
@@ -130,5 +121,13 @@ Connect Raspberry Pi and Commodore machine this way:
 - Raspberry Pi 2 (v1.2 excluded).
 - Raspberry Pi Zero.
 - Other Raspberry Pis (not tested, yet).
+
+## Next project goals
+
+- Support loading PRG files with filenames longer than 12 characters.
+- List directory content without erasing possibly existing PRG in memory.
+- Optionally select top of RAM for storing the fast mode wedge.
+- Read/write from/to tape storage files like TAP, etc.
+- Probably impossible, at least for compatibility mode (kernel module?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ![RhinoDevel](./data/rhino.bmp)
