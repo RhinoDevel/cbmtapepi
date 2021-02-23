@@ -7,8 +7,7 @@
 
 Use a Raspberry Pi as storage device with your Commodore 8-bit computer via tape port connector!
 
-The project's priority definitely is to deliver a **fast mass storage device for the CBM/PET machines** (check out the fast mode via wedge),
-because there is no other datassette-port-only solution for them (as far as I know).
+The project's priority definitely is to deliver a **fast mass storage device for the CBM/PET machines** (check out the fast mode via wedge) using just the datassette port, a very simple hardware interface and Open Source software, only.
 
 - Older video (compatibility mode, v1.6.1): [CBM 3032 (please excuse the cuts, there was no fast mode, yet..)](https://youtu.be/CkLR3lkHjh4)
 
