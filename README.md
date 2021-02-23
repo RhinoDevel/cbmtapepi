@@ -49,21 +49,28 @@ You need:
 - When using CBM Tape Pi, **don't** toggle the Commodore datassette connector ports that are (by Commodore default) used as inputs into output mode and vice versa (e.g. via POKEs), because that can cause damage to your Raspberry Pi or even to your precious Commodore (this is nothing special, it should also never be done, if a real datassette device is attached)!
 - **I take no responsibility** for any damage caused by using CBM Tape Pi. But: I am sure that, if you follow this README and make no mistakes, there will be **no** damage.
 
-## How to use in fast mode
+## Preparations
+
+- Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
+- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from **latest release** *(coming soon!)* on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
+- Delete (if existing) config.txt and cmdline.txt from boot partition.
+- Overwrite fixup.dat, start.elf and bootcode.bin with the files having the same names from [Raspberry Pi firmware release 1.20171029](https://github.com/raspberrypi/firmware/tree/1.20171029/boot).
+
+## The LEDs
+
+- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
+- The interface's LED will be on, if waiting for commands.
+- The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
+- The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
+
+## How to enter and use fast mode
 
 *Description coming soon.*
 
-## How to use in compatibility mode
+## How to use compatibility mode
 
-- Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
-- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from [latest release](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.6.1) on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
-- Delete (if existing) config.txt and cmdline.txt from boot partition.
-- Overwrite fixup.dat, start.elf and bootcode.bin with the files having the same names from [Raspberry Pi firmware release 1.20171029](https://github.com/raspberrypi/firmware/tree/1.20171029/boot).
-- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
-- The interface's LED will be on, if waiting for commands (via SAVE).
-- The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
-- The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
-- Currently, the commands to the Pi will be send via Commodore SAVE command, if you have a (big) PRG loaded in memory, consider executing ```NEW``` before ```SAVE```, to avoid that the PRG will unnecessarily be sent to the Pi.
+- The commands to the Pi will be send via Commodore SAVE command.
+- If you have a (big) PRG loaded in memory, consider executing ```NEW``` before ```SAVE```, to avoid that the PRG will unnecessarily be sent to the Pi.
 - **LOAD**: E.g. a PRG file named ```mycbmapp.prg```:
 
   ```
