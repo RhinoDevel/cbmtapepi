@@ -9,6 +9,9 @@
 
 #include "gpio_params.h"
 
+#define HIGH true
+#define LOW false
+
 // GPIO pin functions:
 //
 enum gpio_func
