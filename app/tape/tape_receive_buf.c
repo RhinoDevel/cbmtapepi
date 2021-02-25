@@ -135,15 +135,16 @@ bool tape_receive_buf(
     uint8_t * const buf,
     bool (*is_stop_requested)())
 {
-    static int const skip_count = 64; //
-    static int const sync_count = 32; // (there are more than 1000 sync pulses)
+    static int const skip_count = 128; //
+    static int const sync_count = 64; // (there are more than 1000 sync pulses)
     static uint32_t const ticks_timeout = 3000000; // 3 seconds.
 
     assert(sync_count % 2 == 0);
 
     uint32_t start_tick,
         ticks_short = 0,
-        pulse_type[2];
+        pulse_type[2],
+        high_ticks_timeout;
     int pos = 0,
         pulse_type_index = 0,
         sync_workaround_count = 0;
@@ -181,16 +182,24 @@ bool tape_receive_buf(
     // *** Sync: ***
     // *************
 
+    // Wait for HIGH at CBM:
+    //
+    if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
+    {
+        return false;
+    }
+    //
     // Wait for LOW at CBM:
     //
     if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
     {
         return false;
     }
+    //
+    // => Enough time before next HIGH at CBM and the next HIGH should be the
+    //    start of a(-nother) pulse.
 
     // LOW at CBM.
-
-    // => Next HIGH at CBM should be the start of a pulse.
 
     // Skip some initial level changes (because sometimes there is a preceding
     // level change that is NOT a sync pulse, because it is too long):
@@ -219,6 +228,8 @@ bool tape_receive_buf(
 
         // HIGH half of sync pulse at CBM is finished.
     }
+
+    // Still LOW at CBM.
 
     // Sum up the tick lengths of some half sync pulses:
     //
@@ -264,6 +275,45 @@ bool tape_receive_buf(
 
     set_tick_limits(ticks_short);
 
+    high_ticks_timeout = 2 * tick_lim_medium_long;
+
+#ifndef NDEBUG
+    console_write("tape_receive_buf: Short tick count: ");
+    console_write_dword_dec(ticks_short);
+    console_writeline("");
+
+    console_write("tape_receive_buf: Short/medium limit: ");
+    console_write_dword_dec(tick_lim_short_medium);
+    console_writeline("");
+    console_write("tape_receive_buf: Medium/long limit: ");
+    console_write_dword_dec(tick_lim_medium_long);
+    console_writeline("");
+    console_write("tape_receive_buf: HIGH timeout: ");
+    console_write_dword_dec(high_ticks_timeout);
+    console_writeline("");
+#endif //NDEBUG
+
+    // Make sure that signal is LOW at CBM with enough time before HIGH
+    // (maybe not necessary):
+    //
+    // Wait for HIGH at CBM:
+    //
+    if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
+    {
+        return false;
+    }
+    // Wait for LOW at CBM:
+    //
+    if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
+    {
+        return false;
+    }
+    //
+    // LOW at CBM.
+    //
+    // => Enough time before next HIGH at CBM and the next HIGH should be the
+    //    start of a(-nother) pulse.
+
     while(true)
     {
         bool timeout_reached = false;
@@ -289,13 +339,13 @@ bool tape_receive_buf(
             if(ctrl_tick - start_tick >= ticks_timeout)
             {
 #ifndef NDEBUG
-                console_write("tape_receive_buf: Timeout 0x");
+                console_write("tape_receive_buf: Static LOW timeout 0x");
                 console_write_dword(ticks_timeout);
                 console_write(" reached between start tick at 0x");
                 console_write_dword(start_tick);
                 console_write(" and control tick at 0x");
                 console_write_dword(ctrl_tick);
-                console_writeline(".");
+                console_writeline(" while LOW at CBM.");
 #endif //NDEBUG
                 timeout_reached = true;
                 break; // Timeout reached.
@@ -311,10 +361,36 @@ bool tape_receive_buf(
         // <=> A SAVE pulse has started.
 
         start_tick = s_timer_get_tick();
-
-        if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
+        while(true)
         {
-            return false;
+            // (circuit inverts signal from CBM)
+            //
+            if(gpio_read(gpio_pin_nr_write))
+            {
+                break; // LOW at CBM (circuit inverts signal from CBM).
+            }
+
+            // Still HIGH at CBM.
+
+            ctrl_tick = s_timer_get_tick();
+            if(ctrl_tick - start_tick >= high_ticks_timeout)
+            {
+#ifndef NDEBUG
+                console_write("tape_receive_buf: Dynamic HIGH timeout 0x");
+                console_write_dword(high_ticks_timeout);
+                console_write(" reached between start tick at 0x");
+                console_write_dword(start_tick);
+                console_write(" and control tick at 0x");
+                console_write_dword(ctrl_tick);
+                console_writeline(" while HIGH at CBM.");
+#endif //NDEBUG
+                timeout_reached = true;
+                break; // Timeout reached.
+            }
+        }
+        if(timeout_reached)
+        {
+            break; // DONE (or unhandled error).
         }
 
         // LOW at CBM.
@@ -351,17 +427,6 @@ bool tape_receive_buf(
     //++pos;
 
 #ifndef NDEBUG
-    console_write("tape_receive_buf: Short tick count: ");
-    console_write_dword_dec(ticks_short);
-    console_writeline("");
-
-    console_write("tape_receive_buf: Short/medium limit: ");
-    console_write_dword_dec(tick_lim_short_medium);
-    console_writeline("");
-    console_write("tape_receive_buf: Medium/long limit: ");
-    console_write_dword_dec(tick_lim_medium_long);
-    console_writeline("");
-
     console_write("tape_receive_buf: Min. tick count that was interpreted as short pulse: ");
     console_write_dword_dec(tick_short_min);
     console_writeline("");
