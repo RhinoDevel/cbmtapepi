@@ -152,6 +152,8 @@ static uint8_t* get_payload_from_transmit_data(
 
         if(cur == tape_symbol_done)
         {
+            console_deb_writeline("get_payload_from_transmit_data : Error: Expected symbol could not be found!");
+
             return 0; // Expected symbol could not be found.
         }
 
@@ -240,6 +242,7 @@ static bool consume_transmit_block_gap(
 {
     if(buf[*pos] != tape_symbol_end)
     {
+        console_deb_writeline("consume_transmit_block_gap : Error: Not the expected end symbol!");
         return false;
     }
 
@@ -360,10 +363,14 @@ static bool extract_headerdatablock(
     data = get_data_following_sync(buf, pos, &len);
     if(data == 0)
     {
+        console_deb_writeline(
+            "extract_headerdatablock: Error: Failed to get data following sync!");
         return false;
     }
     if(len != header_data_byte_count)
     {
+        console_deb_writeline(
+            "extract_headerdatablock: Error: Unexpected header data byte count!");
         alloc_free(data);
         return false;
     }
@@ -448,6 +455,8 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
 
     if(!extract_headerdatablock(buf, &i, input))
     {
+        console_deb_writeline(
+            "tape_extract_buf: Error: Failed to extract header data block!");
         alloc_free(input);
         return 0;
     }
@@ -461,6 +470,8 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
 
     if(!extract_contentdatablock(buf, &i, input))
     {
+        console_deb_writeline(
+            "tape_extract_buf: Error: Failed to extract content data block!");
         alloc_free(input);
         return 0;
     }
