@@ -141,13 +141,12 @@ bool tape_receive_buf(
 
     assert(sync_count % 2 == 0);
 
-    uint32_t start_tick,
-        ticks_short = 0,
-        pulse_type[2],
-        high_ticks_timeout;
+    uint32_t ticks_short = 0,
+        pulse_type[2];
     int pos = 0,
         pulse_type_index = 0,
         sync_workaround_count = 0;
+    bool flipLevel = false;
 
 #ifndef NDEBUG
     tick_short_min = UINT32_MAX;
@@ -165,6 +164,14 @@ bool tape_receive_buf(
 
         console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
     }
+
+#ifndef NDEBUG
+    console_write("tape_receive_buf: Write line at CBM is ");
+    console_write(
+        !gpio_read(gpio_pin_nr_write) // (circuit inverts signal from CBM) 
+            ? "HIGH" : "LOW");
+    console_writeline(".");
+#endif //NDEBUG
 
     // 1 MHz <=> 1,000,000 ticks per second.
     //
@@ -248,7 +255,7 @@ bool tape_receive_buf(
 
         // <=> A SAVE sync pulse has started.
 
-        start_tick = s_timer_get_tick();
+        uint32_t const sync_start_tick = s_timer_get_tick();
 
         if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
         {
@@ -259,7 +266,7 @@ bool tape_receive_buf(
 
         // HIGH half of sync pulse (at CBM) finished.
 
-        ticks_short += s_timer_get_tick() - start_tick;
+        ticks_short += s_timer_get_tick() - sync_start_tick;
 
         // Not necessary, but for completeness:
         //
@@ -275,21 +282,15 @@ bool tape_receive_buf(
 
     set_tick_limits(ticks_short);
 
-    high_ticks_timeout = 2 * tick_lim_medium_long;
-
 #ifndef NDEBUG
     console_write("tape_receive_buf: Short tick count: ");
     console_write_dword_dec(ticks_short);
     console_writeline("");
-
     console_write("tape_receive_buf: Short/medium limit: ");
     console_write_dword_dec(tick_lim_short_medium);
     console_writeline("");
     console_write("tape_receive_buf: Medium/long limit: ");
     console_write_dword_dec(tick_lim_medium_long);
-    console_writeline("");
-    console_write("tape_receive_buf: HIGH timeout: ");
-    console_write_dword_dec(high_ticks_timeout);
     console_writeline("");
 #endif //NDEBUG
 
@@ -302,6 +303,7 @@ bool tape_receive_buf(
     {
         return false;
     }
+    //
     // Wait for LOW at CBM:
     //
     if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
@@ -314,37 +316,54 @@ bool tape_receive_buf(
     // => Enough time before next HIGH at CBM and the next HIGH should be the
     //    start of a(-nother) pulse.
 
+    // TODO: Debugging: This still needs to be enabled for supporting PET BASIC v1:
+    //
+#ifndef NDEBUG
+    flipLevel = true;
+    // Wait for HIGH at CBM:
+    //
+    if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
+    {
+        return false;
+    }
+#endif //NDEBUG
+
     while(true)
     {
         bool timeout_reached = false;
-        uint32_t ctrl_tick;
 
         // Still LOW at CBM.
 
         // Wait for start of (next) SAVE pulse:
 
-        start_tick = s_timer_get_tick();
+        uint32_t const low_start_tick = s_timer_get_tick();
+        //
+        // (if this is not the first iteration, the low level maybe was reached
+        //  a while ago, but that does not matter, because it is just used to
+        //  stop the reading, when the very long timeout is reached)
+
         while(true)
         {
             // (circuit inverts signal from CBM)
             //
-            if(!gpio_read(gpio_pin_nr_write))
+            if(gpio_read(gpio_pin_nr_write) == flipLevel)
             {
                 break; // HIGH at CBM (circuit inverts signal from CBM).
             }
 
             // Still LOW at CBM.
 
-            ctrl_tick = s_timer_get_tick();
-            if(ctrl_tick - start_tick >= ticks_timeout)
+            uint32_t const cur_tick = s_timer_get_tick();
+
+            if(cur_tick - low_start_tick >= ticks_timeout)
             {
 #ifndef NDEBUG
                 console_write("tape_receive_buf: Static LOW timeout 0x");
                 console_write_dword(ticks_timeout);
-                console_write(" reached between start tick at 0x");
-                console_write_dword(start_tick);
-                console_write(" and control tick at 0x");
-                console_write_dword(ctrl_tick);
+                console_write(" reached between low \"start\" tick at 0x");
+                console_write_dword(low_start_tick);
+                console_write(" and current tick at 0x");
+                console_write_dword(cur_tick);
                 console_writeline(" while LOW at CBM.");
 #endif //NDEBUG
                 timeout_reached = true;
@@ -360,37 +379,20 @@ bool tape_receive_buf(
         
         // <=> A SAVE pulse has started.
 
-        start_tick = s_timer_get_tick();
+        uint32_t const high_start_tick = s_timer_get_tick();
+
+        // Wait for LOW at CBM:
+        //
         while(true)
         {
             // (circuit inverts signal from CBM)
             //
-            if(gpio_read(gpio_pin_nr_write))
+            if(gpio_read(gpio_pin_nr_write) != flipLevel)
             {
                 break; // LOW at CBM (circuit inverts signal from CBM).
             }
 
             // Still HIGH at CBM.
-
-            ctrl_tick = s_timer_get_tick();
-            if(ctrl_tick - start_tick >= high_ticks_timeout)
-            {
-#ifndef NDEBUG
-                console_write("tape_receive_buf: Dynamic HIGH timeout 0x");
-                console_write_dword(high_ticks_timeout);
-                console_write(" reached between start tick at 0x");
-                console_write_dword(start_tick);
-                console_write(" and control tick at 0x");
-                console_write_dword(ctrl_tick);
-                console_writeline(" while HIGH at CBM.");
-#endif //NDEBUG
-                timeout_reached = true;
-                break; // Timeout reached.
-            }
-        }
-        if(timeout_reached)
-        {
-            break; // DONE (or unhandled error).
         }
 
         // LOW at CBM.
@@ -398,7 +400,7 @@ bool tape_receive_buf(
         // HIGH half of pulse at CBM finished.
 
         pulse_type[pulse_type_index] = get_pulse_type(
-            s_timer_get_tick() - start_tick);
+            s_timer_get_tick() - high_start_tick);
 
         if(pulse_type_index == 1)
         {
