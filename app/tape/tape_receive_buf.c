@@ -92,10 +92,6 @@ static enum tape_symbol get_symbol(
         return tape_symbol_end;
     }
 
-    // Unhandled error (must not happen):
-    //
-    assert(false);
-
 #ifndef NDEBUG
     console_write("get_symbol: Error: Unsupported pulse combination (");
     console_write_dword_dec(f);
@@ -165,9 +161,12 @@ bool tape_receive_buf(
         console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
     }
 
-    assert(!gpio_read(gpio_pin_nr_write));
+    // Wait for HIGH at CBM (not always HIGH, here - e.g. if former error):
     //
-    // Must be HIGH at CBM (circuit inverts signal from CBM).
+    if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
+    {
+        return false;
+    }
 
     // 1 MHz <=> 1,000,000 ticks per second.
     //
@@ -185,7 +184,7 @@ bool tape_receive_buf(
     // *** Sync: ***
     // *************
 
-    // Wait for LOW at CBM (must be HIGH at CBM, here - see assertion above):
+    // Wait for LOW at CBM (must be HIGH at CBM, here - see above):
     //
     if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
     {
@@ -211,18 +210,14 @@ bool tape_receive_buf(
             return false;
         }
 
-        // Just got HIGH at CBM.
-
-        // <=> A SAVE sync pulse has started.
+        // Just got HIGH at CBM. <=> A SAVE sync pulse has started.
 
         if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
         {
             return false;
         }
 
-        // Just got LOW at CBM.
-
-        // HIGH half of sync pulse at CBM is finished.
+        // Just got LOW at CBM. <=> HIGH half of sync pulse at CBM is finished.
     }
 
     // Still just got LOW at CBM.
@@ -240,9 +235,7 @@ bool tape_receive_buf(
             return false;
         }
 
-        // Just got HIGH at CBM.
-
-        // <=> A SAVE sync pulse has started.
+        // Just got HIGH at CBM. <=> A SAVE sync pulse has started.
 
         uint32_t const sync_start_tick = s_timer_get_tick();
 
@@ -251,9 +244,7 @@ bool tape_receive_buf(
             return false;
         }
 
-        // Just got LOW at CBM.
-
-        // HIGH half of sync pulse (at CBM) finished.
+        // Just got LOW at CBM. <=> HIGH half of sync pulse (at CBM) finished.
 
         ticks_short += s_timer_get_tick() - sync_start_tick;
 
