@@ -14,6 +14,8 @@ if bas_ver = 1
 bas_buf     = $000a
 bas_sobptr  = $7a
 bas_sovptr  = $7c
+bas_chrget  = $c2
+bas_chrgot  = $c8
 bas_txtptr  = $c9
 ;
 bas_new     = $c553 ; new is at $c551, but this is without leading syntax check.
@@ -31,6 +33,8 @@ if bas_ver = 2
 bas_buf     = $0200
 bas_sobptr  = $28
 bas_sovptr  = $2a
+bas_chrget  = $70
+bas_chrgot  = $76
 bas_txtptr  = $77
 ;
 bas_new     = $c55d ; new is at $c55b, but this is without leading syntax check.
@@ -48,6 +52,8 @@ if bas_ver = 4
 bas_buf     = $0200
 bas_sobptr  = $28
 bas_sovptr  = $2a
+bas_chrget  = $70
+bas_chrgot  = $76
 bas_txtptr  = $77
 ;
 bas_new     = $b5d4 ; new is at $b5d2, but this is without leading syntax check.
@@ -77,8 +83,8 @@ buf      = bas_buf      ; basic input buffer's address.
 ; system functions
 ; ----------------
 
-chrget   = $70
-chrgot   = $76
+chrget   = bas_chrget
+chrgot   = bas_chrgot
 new      = bas_new
 rstxclr  = bas_rstxclr  ; reset txtptr and perform basic clr command.
 ;rstx    = bas_rstx      ; (just) reset txtptr.
