@@ -161,7 +161,7 @@ bool tape_receive_buf(
         console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
     }
 
-    // Wait for HIGH at CBM (not always HIGH, here - e.g. if former error):
+    // Wait for HIGH at CBM (not always HIGH, here - e.g. after former error):
     //
     if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
     {
@@ -179,12 +179,20 @@ bool tape_receive_buf(
     // => At least 352 ticks for each Commodore pulse, 176 for half a pulse.
     //
     s_timer_start_one_mhz();
+    //
+    // Does not reset to zero, but OK, because of modular arithmetic that (e.g.)
+    // will be applied when subtracting one unsigned from another unsigned
+    // integer (of the same size). This is working like a clock (e.g. 9 o'clock
+    // plus 4 hours equals 1 o'clock and 1 o'clock less 4 hours equals
+    // 9 o'clock).
 
     // *************
     // *** Sync: ***
     // *************
 
-    // Wait for LOW at CBM (must be HIGH at CBM, here - see above):
+    // Still HIGH at CBM.
+
+    // Wait for LOW at CBM:
     //
     if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
     {
