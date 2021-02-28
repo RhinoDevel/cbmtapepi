@@ -256,15 +256,8 @@ bool tape_receive_buf(
 
         ticks_short += s_timer_get_tick() - sync_start_tick;
 
-        // Not necessary, but for completeness:
-        //
-        if(i % 2 == 1)
-        {
-            buf[pos] = tape_symbol_sync; // Each symbol represents TWO pulses.
-            ++pos;
-        }
+        // (do not add sync symbols to output buffer)
     }
-    assert(pos == sync_count / 2);
 
     ticks_short = ticks_short / sync_count; // Calculate average value.
 
@@ -283,119 +276,6 @@ bool tape_receive_buf(
 #endif //NDEBUG
     
     // Still LOW at CBM.
-
-    // TODO: Debugging: This does not work to determine, if flip is necessary:
-    //
-#if 0
-    {
-        uint32_t pulse_type = 0,
-            low_start_tick = 0;
-
-        assert(gpio_read(gpio_pin_nr_write));
-        //
-        // Must be still LOW at CBM (circuit inverts signal from CBM).
-
-        do
-        {
-            // Wait for HIGH at CBM:
-            //
-            if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
-            {
-                return false;
-            }
-
-            // Just got HIGH at CBM. <=> A SAVE pulse has started.
-
-            uint32_t const high_start_tick = s_timer_get_tick();
-
-            // Wait for LOW at CBM:
-            //
-            if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
-            {
-                return false;
-            }
-
-            // Just got LOW at CBM. <=> HIGH half of pulse at CBM finished.
-
-            low_start_tick = s_timer_get_tick();
-
-            uint32_t const high_to_low_ticks = low_start_tick - high_start_tick;
-
-            if(high_to_low_ticks > tick_long_max)
-            {
-                // console_write("tape_receive_buf: Skipping high pulse of length ");
-                // console_write_dword_dec(high_to_low_ticks);
-                // console_writeline(" (a pause?)..");
-                pulse_type = micro_short; // (just to get to next iteration)
-                continue;
-            }
-
-            pulse_type = get_pulse_type(high_to_low_ticks);
-        }while(pulse_type == micro_short);
-
-        assert(pulse_type == micro_long);
-        //
-        // Beginning of new-data marker (part 1).
-
-        // Still just got LOW at CBM.
-
-        // Wait for HIGH at CBM:
-        //
-        if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
-        {
-            return false;
-        }
-
-        // Just got HIGH at CBM.
-
-        uint32_t const high_start_tick = s_timer_get_tick(), 
-            inverse_follower_pulse_type = get_pulse_type(
-                high_start_tick - low_start_tick);
-
-        flipLevel = inverse_follower_pulse_type != micro_long;
-
-        if(flipLevel)
-        {
-            console_deb_writeline("tape_receive_buf: Flipping!");
-
-            // Measured the wrong part of the first pulse.
-
-            // Flipping to measure from high->low to low->high changes.
-
-            assert(inverse_follower_pulse_type == micro_medium);
-            //
-            // Beginning of new-data marker (part 2).
-
-            buf[pos] = get_symbol(pulse_type, inverse_follower_pulse_type);
-
-            assert(buf[pos] == tape_symbol_new);
-
-            ++pos;
-        }
-        else
-        {
-            console_deb_writeline("tape_receive_buf: NOT flipping.");
-
-            // Measuring from low->high to high->low changes is correct!
-
-            // Assuming new-data symbol (see assert, above):
-            //
-            buf[pos] = tape_symbol_new;
-            ++pos;
-
-            // Wait for LOW at CBM:
-            //
-            if(!wait_for(gpio_pin_nr_write, LOW, true, is_stop_requested))
-            {
-                return false;
-            }
-
-            assert(
-                get_pulse_type(s_timer_get_tick() - high_start_tick)
-                    == micro_medium);
-        }
-    }
-#endif //0
     
     // TODO: Debugging: This still needs to be enabled for supporting PET BASIC v1:
     //
@@ -409,6 +289,7 @@ bool tape_receive_buf(
 //     }
 // #endif //NDEBUG
 
+    assert(pos == 0);
     while(true)
     {
         bool timeout_reached = false;
@@ -439,13 +320,9 @@ bool tape_receive_buf(
             if(cur_tick - low_start_tick >= ticks_timeout)
             {
 #ifndef NDEBUG
-                console_write("tape_receive_buf: Static LOW timeout 0x");
-                console_write_dword(ticks_timeout);
-                console_write(" reached between low \"start\" tick at 0x");
-                console_write_dword(low_start_tick);
-                console_write(" and current tick at 0x");
-                console_write_dword(cur_tick);
-                console_writeline(" while LOW at CBM.");
+                console_write("tape_receive_buf: Static LOW timeout ");
+                console_write_dword_dec(ticks_timeout);
+                console_writeline(" reached while HIGH at CBM.");
 #endif //NDEBUG
                 timeout_reached = true;
                 break; // Timeout reached.
@@ -478,6 +355,13 @@ bool tape_receive_buf(
 
         pulse_type[pulse_type_index] = get_pulse_type(
             s_timer_get_tick() - high_start_tick);
+
+        if(pos == 0 
+            && pulse_type_index == 0 
+            && pulse_type[pulse_type_index] == micro_short)
+        {
+            continue; // Skips all leading sync pulses.
+        }
 
         if(pulse_type_index == 1)
         {
