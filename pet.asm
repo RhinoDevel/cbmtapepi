@@ -5,7 +5,7 @@
 
 ; cbm pet
 
-bas_ver = 1; pet basic version to assemble for. can be set to 1, 2 or 4.
+bas_ver = 1 ; pet basic version to assemble for. can be set to 1, 2 or 4.
 
 if bas_ver = 1
 
@@ -22,7 +22,7 @@ bas_new     = $c553 ; new is at $c551, but this is without leading syntax check.
 bas_rstxclr = $c567
 ;bas_rstx    = $0000 ; TODO: set correctly!
 bas_rechain = $c433
-bas_ready   = $c38b
+bas_ready   = $c38b ; TODO: does not print anything ($c389, too).
 
 endif
 
