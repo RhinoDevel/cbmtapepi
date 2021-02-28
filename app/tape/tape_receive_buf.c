@@ -138,11 +138,12 @@ bool tape_receive_buf(
     assert(sync_count % 2 == 0);
 
     uint32_t ticks_short = 0,
+        ticks_long_timeout = 0,
         pulse_type[2];
     int pos = 0,
         pulse_type_index = 0,
         sync_workaround_count = 0;
-    bool flipLevel = false;
+    bool dyn_low_timeout_reached_once = false;
 
 #ifndef NDEBUG
     tick_short_min = UINT32_MAX;
@@ -263,6 +264,8 @@ bool tape_receive_buf(
 
     set_tick_limits(ticks_short);
 
+    ticks_long_timeout = 2 * tick_lim_medium_long;
+
 #ifndef NDEBUG
     console_write("tape_receive_buf: Short tick count: ");
     console_write_dword_dec(ticks_short);
@@ -273,56 +276,57 @@ bool tape_receive_buf(
     console_write("tape_receive_buf: Medium/long limit: ");
     console_write_dword_dec(tick_lim_medium_long);
     console_writeline("");
+
+    console_write("tape_receive_buf: Dynamic long tick timeout: ");
+    console_write_dword_dec(ticks_long_timeout);
+    console_writeline("");
 #endif //NDEBUG
     
     // Still LOW at CBM.
-    
-    // TODO: Debugging: This still needs to be enabled for supporting PET BASIC v1:
+
+    // From here on, we are measuring the length of the cycles' LOW parts,
+    // and no longer the HIGH parts (was necessary for additional PET BASIC v1
+    // support):
+
+    // Wait for HIGH at CBM:
     //
-// #ifndef NDEBUG
-//     flipLevel = true;
-//     // Wait for HIGH at CBM:
-//     //
-//     if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
-//     {
-//         return false;
-//     }
-// #endif //NDEBUG
+    if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
+    {
+        return false;
+    }
 
     assert(pos == 0);
     while(true)
     {
         bool timeout_reached = false;
 
-        // Still LOW at CBM.
+        // Still HIGH at CBM.
 
-        // Wait for start of (next) SAVE pulse:
-
-        uint32_t const low_start_tick = s_timer_get_tick();
+        uint32_t const high_start_tick = s_timer_get_tick();
         //
-        // (the low level maybe was reached a while ago,
+        // (the high level maybe was reached a while ago,
         //  but that does not matter, because it is just used to
         //  stop the reading, when the very long timeout is reached)
 
+        // Wait for start of (next) LOW at CBM:
+
         while(true)
         {
-            // (circuit inverts signal from CBM)
-            //
-            if(gpio_read(gpio_pin_nr_write) == flipLevel)
+            if(gpio_read(gpio_pin_nr_write))
             {
-                break; // HIGH at CBM (circuit inverts signal from CBM).
+                break; // LOW at CBM (circuit inverts signal from CBM).
             }
 
-            // Still LOW at CBM.
+            // Still HIGH at CBM.
 
             uint32_t const cur_tick = s_timer_get_tick();
 
-            if(cur_tick - low_start_tick >= ticks_timeout)
+            if(cur_tick - high_start_tick >= ticks_timeout)
             {
 #ifndef NDEBUG
-                console_write("tape_receive_buf: Static LOW timeout ");
+                console_write("tape_receive_buf: Static HIGH-at-CBM timeout ");
                 console_write_dword_dec(ticks_timeout);
-                console_writeline(" reached while HIGH at CBM.");
+                console_writeline(" reached.");
 #endif //NDEBUG
                 timeout_reached = true;
                 break; // Timeout reached.
@@ -333,28 +337,61 @@ bool tape_receive_buf(
             break; // DONE (or unhandled error).
         }
 
-        // Just got HIGH at CBM. <=> A SAVE pulse has started.
+        // Just got LOW at CBM. <=> A SAVE pulse's low part has started.
 
-        uint32_t const high_start_tick = s_timer_get_tick();
+        uint32_t const low_start_tick = s_timer_get_tick();
 
-        // Wait for LOW at CBM:
+        // Wait for HIGH at CBM:
         //
         while(true)
         {
-            // (circuit inverts signal from CBM)
-            //
-            if(gpio_read(gpio_pin_nr_write) != flipLevel)
+            if(!gpio_read(gpio_pin_nr_write))
             {
-                break; // LOW at CBM (circuit inverts signal from CBM).
+                break; // HIGH at CBM (circuit inverts signal from CBM).
             }
 
-            // Still HIGH at CBM.
+            // Still LOW at CBM.
+
+            uint32_t const cur_tick = s_timer_get_tick();
+
+            if(cur_tick - low_start_tick >= ticks_long_timeout)
+            {
+#ifndef NDEBUG
+                console_write("tape_receive_buf: Dynamic LOW-at-CBM timeout ");
+                console_write_dword_dec(ticks_long_timeout);
+                console_writeline(" reached.");
+#endif //NDEBUG
+                timeout_reached = true;
+                break; // Timeout reached.
+            }
+        }
+        if(timeout_reached)
+        {
+            if(dyn_low_timeout_reached_once)
+            {
+                console_deb_writeline(
+                    "tape_receive_buf: It was the second dynamic LOW timeout, breaking loop (hopefully DONE)..");
+                break;
+            }
+            dyn_low_timeout_reached_once = true;
+
+            // Ignore current LOW level "pulse" (just once):
+
+            // Wait for HIGH at CBM:
+            //
+            if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
+            {
+                return false;
+            }
+            console_deb_writeline(
+                "tape_receive_buf: HIGH at CBM again (ignoring last LOW).");
+            continue;
         }
 
-        // Just got LOW at CBM. <=> HIGH half of pulse at CBM finished.
+        // Just got HIGH at CBM. <=> LOW half at CBM finished.
 
         pulse_type[pulse_type_index] = get_pulse_type(
-            s_timer_get_tick() - high_start_tick);
+            s_timer_get_tick() - low_start_tick);
 
         if(pos == 0 
             && pulse_type_index == 0 
