@@ -63,7 +63,6 @@ bas_rechain = $b4b6
 bas_ready   = $b3ff
 
 endif
-endif
 
 ; ---------------
 ; system pointers
