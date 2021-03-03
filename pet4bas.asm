@@ -122,7 +122,7 @@ addr     = termwili
          byte zer_char + dec_addr4
          byte ":"
          byte $8f; rem token
-         text " (c) 2020, rhinodevel"
+         text " (c) 2021, rhinodevel"
          byte 0
 bas_next word 0
 
