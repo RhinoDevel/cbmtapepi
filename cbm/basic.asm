@@ -5,13 +5,14 @@
 
 ; cbm pet
 
-bas_ver = 1 ; pet basic version to assemble for. can be set to 1, 2 or 4.
+bas_ver = 4 ; pet basic version to assemble for. can be set to 1, 2 or 4.
 
 if bas_ver = 1
 
 ; basic version 1.
 ;
 bas_buf     = $000a
+bas_sob     = $0401
 bas_sobptr  = $7a
 bas_sovptr  = $7c
 bas_chrget  = $c2
@@ -31,6 +32,7 @@ if bas_ver = 2
 ; basic version 2.
 ;
 bas_buf     = $0200
+bas_sob     = $0401
 bas_sobptr  = $28
 bas_sovptr  = $2a
 bas_chrget  = $70
@@ -50,6 +52,7 @@ if bas_ver = 4
 ; basic version 4.
 ;
 bas_buf     = $0200
+bas_sob     = $0401
 bas_sobptr  = $28
 bas_sovptr  = $2a
 bas_chrget  = $70
