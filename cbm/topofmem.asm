@@ -28,19 +28,29 @@ bas_next word 0
 ; *** install by copying to destination address ***
 ; *************************************************
 
-cpy_inst  lda #<cpy_src
-          sta move_bot
-          lda #>cpy_src
-          sta move_bot + 1
+cpy_inst  
 
-          lda #<cpy_lim
+          ; source bottom/start of area:
+          ;
+src_bot = cpy_src
+          ;
+          lda #<src_bot
+          sta move_bot
+          lda #>src_bot
+          sta move_bot + 1
+ 
+          ; source top/end of area +1:
+          ;
+src_top = cpy_lim
+          ;
+          lda #<src_top
           sta move_src
-          lda #>cpy_lim
+          lda #>src_top
           sta move_src + 1
 
-          ; hard-coded destination top of area +1:
-          ;          
-dst_top = cas_buf1 + cpy_lim - cpy_src;cpy_dst + cpy_lim - cpy_src
+          ; destination top/end of area +1:
+          ;
+dst_top = cas_buf1 + cpy_lim - cpy_src
           ;
           lda #<dst_top
           sta move_dst
@@ -51,10 +61,8 @@ dst_top = cas_buf1 + cpy_lim - cpy_src;cpy_dst + cpy_lim - cpy_src
 
           ; hard-coded destination address:
           ;
-          jmp cas_buf1;cpy_dst    ; done, jump to wedge installer.
+          jmp cas_buf1 ; done, jump to wedge installer.
 
 cpy_src ; source address to begin copying to destination address.
 
 Relocate $027a;cas_buf1 ; hard-coded: assembler does not support constant, here.
-
-cpy_dst ; destination address to copy from source address to.
