@@ -14,9 +14,9 @@ sovptr   = bas_sovptr   ; pointer to start of basic variables.
 txtptr   = bas_txtptr   ; two bytes.
 buf      = bas_buf      ; basic input buffer's address.
 sob      = bas_sob      ; start of basic program address.
-move_dst = $55          ; pointer to top of area to be moved to +1.
-move_src = $57          ; pointer to top of area to be moved +1.
-move_bot = $5c          ; pointer to bottom of area to be moved.
+move_dst = bas_move_dst ; pointer to top of area to be moved to +1.
+move_src = bas_move_src ; pointer to top of area to be moved +1.
+move_bot = bas_move_bot ; pointer to bottom of area to be moved.
 cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 
 ; used to store program and data:
@@ -28,7 +28,7 @@ cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 ; system functions
 ; ----------------
 
-memmove  = $b357;$c2d4  ; move (copy?) memory.
+memmove  = bas_memmove  ; move (copy?) memory.
 chrget   = bas_chrget
 chrgot   = bas_chrgot
 new      = bas_new

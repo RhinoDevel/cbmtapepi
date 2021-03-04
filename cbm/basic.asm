@@ -18,7 +18,11 @@ bas_sovptr  = $7c
 bas_chrget  = $c2
 bas_chrgot  = $c8
 bas_txtptr  = $c9
+bas_move_dst = $a7
+bas_move_src = $a9
+bas_move_bot = $ae
 ;
+bas_memmove = $c2e1
 bas_new     = $c553 ; new is at $c551, but this is without leading syntax check.
 bas_rstxclr = $c567
 ;bas_rstx    = $0000 ; TODO: set correctly!
@@ -38,7 +42,11 @@ bas_sovptr  = $2a
 bas_chrget  = $70
 bas_chrgot  = $76
 bas_txtptr  = $77
+bas_move_dst = $55
+bas_move_src = $57
+bas_move_bot = $5c
 ;
+bas_memmove = $c2df
 bas_new     = $c55d ; new is at $c55b, but this is without leading syntax check.
 bas_rstxclr = $c572
 ;bas_rstx    = $c5a7
@@ -58,7 +66,11 @@ bas_sovptr  = $2a
 bas_chrget  = $70
 bas_chrgot  = $76
 bas_txtptr  = $77
+bas_move_dst = $55
+bas_move_src = $57
+bas_move_bot = $5c
 ;
+bas_memmove = $b357
 bas_new     = $b5d4 ; new is at $b5d2, but this is without leading syntax check.
 bas_rstxclr = $b5e9
 ;bas_rstx    = $b622
