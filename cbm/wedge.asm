@@ -42,7 +42,7 @@ endif
          inc txtptr     ; save at most "str_len" count of characters from input.
 next_i   lda (txtptr),y ; copy from buffer to "str".
          beq fill_i
-         sta str,y
+str2     sta str,y
          iny
          cpy #str_len
          bne next_i
@@ -54,7 +54,7 @@ next_i   lda (txtptr),y ; copy from buffer to "str".
 fill_i   lda #spc_char  ; fill remaining places in "str" array with spaces.
 next_f   cpy #str_len
          beq main
-         sta str,y
+str3     sta str,y
          iny
          bne next_f     ; always branches (saves one byte by not using jmp).
 

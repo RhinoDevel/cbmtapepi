@@ -37,7 +37,12 @@ endif
 
 main     sei
 
-         jmp exit ; TODO: debugging!
+         ; debugging!
+         ;
+;         cli
+;         jsr rstxclr    ; equals preparations after basic load at
+;         jsr rechain    ; $c430/$c439/$b4ad.
+;         jmp ready
 
          ; commented-out, because directly using sovptr during send and
          ; retrieve:
@@ -53,7 +58,7 @@ main     sei
          
          tax ; (for sending command string, below)
 
-         lda str
+str1     lda str
          cmp #sav_char
          bne addrlim_rdy
 

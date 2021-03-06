@@ -42,7 +42,23 @@ tom_wedg_offset = cpy_lim - wedge    ; offset from wedge to byte following the
           sbc #>tom_wedg_offset
           sta install_high + 1
 
-          ; TODO: fix str (and more?)!
+          ; correct addresses of str:
+          ;
+tom_str_offset = cpy_lim - str       ; offset from str to byte following the
+                                     ; last byte.
+          sec
+          lda tomptr
+          sbc #<tom_str_offset
+          sta str1 + 1
+          sta strnext + 1
+          sta str2 + 1
+          sta str3 + 1
+          lda tomptr + 1
+          sbc #>tom_str_offset
+          sta str1 + 2
+          sta strnext + 2
+          sta str2 + 2
+          sta str3 + 2
 
           ; source bottom/start of area:
           ;
