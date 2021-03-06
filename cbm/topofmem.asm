@@ -59,6 +59,48 @@ tom_str_offset = cpy_lim - str       ; offset from str to byte following the
           sta strnext + 2
           sta str2 + 2
           sta str3 + 2
+  
+          ; correct sendbyte() address:
+          ;
+tom_send_offset = cpy_lim - sendbyte ; offset from sendbyte() to byte following
+                                     ; the last byte.
+          sec
+          lda tomptr
+          sbc #<tom_send_offset
+          sta send1 + 1
+          sta send2 + 1
+          sta send3 + 1
+          sta send4 + 1
+          sta send5 + 1
+          sta send6 + 1
+          lda tomptr + 1
+          sbc #>tom_send_offset
+          sta send1 + 2
+          sta send2 + 2
+          sta send3 + 2
+          sta send4 + 2
+          sta send5 + 2
+          sta send6 + 2
+
+          ; correct readbyte() address:
+          ;
+tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
+                                     ; the last byte.
+          sec
+          lda tomptr
+          sbc #<tom_read_offset
+          sta retrieve + 1
+          sta read1 + 1
+          sta read_lim + 1
+          sta read2 + 1
+          sta r_next + 1
+          lda tomptr + 1
+          sbc #>tom_read_offset
+          sta retrieve + 2
+          sta read1 + 2
+          sta read_lim + 2
+          sta read2 + 2
+          sta r_next + 2
 
           ; source bottom/start of area:
           ;
@@ -96,14 +138,6 @@ tom_copy_offset = cpy_lim - cpy_src  ; offset from start of program to byte
           sbc #>tom_copy_offset
           sta tomptr + 1
 
-          ; TODO: replace marker & offset in jsr addresses with dynamically
-          ;       calculated addresses of readbyte() and sendbyte().
-
           jmp (tomptr) ; done, jump to wedge installer.
-
-tom_send_offset = cpy_lim - sendbyte ; offset from sendbyte() to byte following
-                                     ; the last byte.
-tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
-                                     ; the last byte.
 
 cpy_src ; source address to begin copying to destination address.
