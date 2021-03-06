@@ -11,6 +11,7 @@
 
 sobptr   = bas_sobptr   ; pointer to start of basic program.
 sovptr   = bas_sovptr   ; pointer to start of basic variables.
+tomptr   = bas_tomptr   ; pointer to top of memory (e.g. $8000).
 txtptr   = bas_txtptr   ; two bytes.
 buf      = bas_buf      ; basic input buffer's address.
 sob      = bas_sob      ; start of basic program address.
