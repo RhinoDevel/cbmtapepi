@@ -5,8 +5,6 @@
 
 ; cbm pet
 
-bas_ver = 4 ; pet basic version to assemble for. can be set to 1, 2 or 4.
-
 if bas_ver = 1
 
 ; basic version 1.
