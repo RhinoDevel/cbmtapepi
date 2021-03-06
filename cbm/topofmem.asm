@@ -30,39 +30,64 @@ bas_next word 0
 
 cpy_inst  
 
+          ; correct address of wedge to jump to from chrget routine:
+          ;
+tom_wedg_offset = cpy_lim - wedge    ; offset from wedge to byte following the
+                                     ; last byte.
+          sec
+          lda tomptr
+          sbc #<tom_wedg_offset
+          sta install_low + 1
+          lda tomptr + 1
+          sbc #>tom_wedg_offset
+          sta install_high + 1
+
+          ; TODO: fix str (and more?)!
+
           ; source bottom/start of area:
           ;
-src_bot = cpy_src
-          ;
-          lda #<src_bot
+          lda #<cpy_src
           sta move_bot
-          lda #>src_bot
+          lda #>cpy_src
           sta move_bot + 1
  
           ; source top/end of area +1:
           ;
-src_top = cpy_lim
-          ;
-          lda #<src_top
+          lda #<cpy_lim
           sta move_src
-          lda #>src_top
+          lda #>cpy_lim
           sta move_src + 1
-
+          
           ; destination top/end of area +1:
           ;
-dst_top = cas_buf1 + cpy_lim - cpy_src
-          ;
-          lda #<dst_top
+          lda tomptr
           sta move_dst
-          lda #>dst_top
+          lda tomptr + 1
           sta move_dst + 1
 
           jsr memmove
 
-          ; hard-coded destination address:
+          ; calculate destination bottom/start of area
+          ; and update top of memory pointer for basic:
           ;
-          jmp cas_buf1 ; done, jump to wedge installer.
+tom_copy_offset = cpy_lim - cpy_src  ; offset from start of program to byte
+                                     ; following the last byte.
+          sec
+          lda tomptr
+          sbc #<tom_copy_offset
+          sta tomptr
+          lda tomptr + 1
+          sbc #>tom_copy_offset
+          sta tomptr + 1
+
+          ; TODO: replace marker & offset in jsr addresses with dynamically
+          ;       calculated addresses of readbyte() and sendbyte().
+
+          jmp (tomptr) ; done, jump to wedge installer.
+
+tom_send_offset = cpy_lim - sendbyte ; offset from sendbyte() to byte following
+                                     ; the last byte.
+tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
+                                     ; the last byte.
 
 cpy_src ; source address to begin copying to destination address.
-
-Relocate $027a;cas_buf1 ; hard-coded: assembler does not support constant, here.

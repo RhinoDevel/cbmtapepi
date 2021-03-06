@@ -5,6 +5,30 @@
 
 ; cbm pet
 
+; ************** 
+; *** macros ***
+; **************
+
+defm     call_sendbyte
+if tom_install = 1
+         byte $20 ; jsr
+         byte $00 ; marker (together with preceding jsr).
+         byte tom_send_offset
+else
+         jsr sendbyte
+endif
+         endm
+
+defm     call_readbyte
+if tom_install = 1
+         byte $20 ; jsr
+         byte $00 ; marker (together with preceding jsr).
+         byte tom_read_offset
+else
+         jsr readbyte
+endif
+         endm
+
 ; ************
 ; *** main ***
 ; ************
@@ -12,6 +36,8 @@
          ; (byte at temp0 can be reused from here on)
 
 main     sei
+
+         jmp exit ; TODO: debugging!
 
          ; commented-out, because directly using sovptr during send and
          ; retrieve:
@@ -47,15 +73,15 @@ addrlim_rdy
 
          ;ldx #0        ; send command string.
 strnext  ldy str,x
-         jsr sendbyte
+         call_sendbyte
          inx
          cpx #str_len
          bne strnext
 
          ldy addr       ; send address.
-         jsr sendbyte
+         call_sendbyte
          ldy addr + 1
-         jsr sendbyte
+         call_sendbyte
 
          lda addr       ; address is zero => no limit and payload to send.
          bne send_lim
@@ -63,14 +89,14 @@ strnext  ldy str,x
          beq retrieve
 
 send_lim ldy sovptr;lim ; send first address above payload ("limit").
-         jsr sendbyte
+         call_sendbyte
          ldy sovptr + 1;lim + 1
-         jsr sendbyte
+         call_sendbyte
 
 s_next   ;ldy #0         ; (y is always 0 after sendbyte) ; send payload.
          lda (addr),y
          tay
-         jsr sendbyte
+         call_sendbyte
          inc addr       ; increment to next (read) address.
          bne s_finchk
          inc addr + 1
@@ -91,9 +117,10 @@ s_finchk lda addr       ; check, if end is reached.
 ;
 ; cas_wrt  = data-ack. output. current level was decided by sending done, above.
 
-retrieve jsr readbyte  ; read address.
+retrieve 
+         call_readbyte  ; read address.
          sta addr
-         jsr readbyte
+         call_readbyte
          sta addr + 1
          
          ; [cmp #0 is not necessary, because of last lda temp0 in readbyte()]
@@ -104,12 +131,14 @@ retrieve jsr readbyte  ; read address.
          lda addr
          beq exit      ; todo: overdone and maybe unwanted (see label)!
 
-read_lim jsr readbyte  ; read payload "limit" (first addr. above payload).
+read_lim
+         call_readbyte  ; read payload "limit" (first addr. above payload).
          sta sovptr;lim
-         jsr readbyte
+         call_readbyte
          sta sovptr + 1;lim + 1
 
-r_next   jsr readbyte   ; retrieve payload.
+r_next
+         call_readbyte   ; retrieve payload.
          ;ldx #0        ; [x is always 0 after readbyte()]
          sta (addr,x)   ; store byte at current address.
          inc addr       ; increment to next (write) address.
