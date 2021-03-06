@@ -11,8 +11,10 @@
 
 str      lda #$4c       ; jmp
          sta chrget
+install_low
          lda #<wedge
          sta chrget + 1
+install_high
          lda #>wedge
          sta chrget + 2
          ;jmp new
