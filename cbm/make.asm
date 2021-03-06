@@ -5,14 +5,16 @@
 
 ; cbm pet
 
+tom_install = 0 ; 1 = install to top of memory, 0 = install in tape buffers.
+
 Incasm "basic.asm"
 Incasm "defines.asm"
 
-; choose one file to either install into top of memory via basic loader,
-; or to install into tape buffers via directly loading into tape buffers:
-;
-;Incasm "topofmem.asm" ; TODO: currently installs into tape buffers, too.
-Incasm "tapebuf.asm"
+if tom_install = 1
+    Incasm "topofmem.asm"
+else
+    Incasm "tapebuf.asm"
+endif
 
 Incasm "install.asm"
 Incasm "wedge.asm"
