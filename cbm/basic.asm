@@ -22,6 +22,7 @@ bas_txtptr  = $c9
 bas_move_dst = $a7
 bas_move_src = $a9
 bas_move_bot = $ae
+bas_termwili = $06
 ;
 bas_memmove = $c2e1
 bas_new     = $c553 ; new is at $c551, but this is without leading syntax check.
@@ -47,6 +48,7 @@ bas_txtptr  = $77
 bas_move_dst = $55
 bas_move_src = $57
 bas_move_bot = $5c
+bas_termwili = $0f
 ;
 bas_memmove = $c2df
 bas_new     = $c55d ; new is at $c55b, but this is without leading syntax check.
@@ -72,6 +74,7 @@ bas_txtptr  = $77
 bas_move_dst = $55
 bas_move_src = $57
 bas_move_bot = $5c
+bas_termwili = $0f
 ;
 bas_memmove = $b357
 bas_new     = $b5d4 ; new is at $b5d2, but this is without leading syntax check.

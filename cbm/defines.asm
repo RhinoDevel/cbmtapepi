@@ -22,8 +22,8 @@ cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 
 ; used to store program and data:
 
-;termwili = $0f          ; term. width & lim. for scanning src. columns
-;                        ; (2 unused bytes).
+termwili = bas_termwili ; term. width & lim. for scanning src. columns
+                        ; (2 unused bytes).
 
 ; ----------------
 ; system functions
