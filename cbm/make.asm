@@ -9,9 +9,11 @@
 ; *** configuration ***
 ; *********************
 
-bas_ver = 4 ; pet basic version to assemble for. can be set to 1, 2 or 4.
+bas_ver = 4 ; pet basic version to assemble for. can be set to 1, 2 or 4,
+             ; set to 20 for vic 20 assembly.
 
-tom_install = 0 ; 1 = install to top of memory, 0 = install in tape buffers.
+tom_install = 0 ; 1 = install to top of memory, 0 = install in tape buffers
+                ;     (which is possible for pet machines, only).
 
 ; *********************
 

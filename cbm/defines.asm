@@ -20,11 +20,6 @@ move_src = bas_move_src ; pointer to top of area to be moved +1.
 move_bot = bas_move_bot ; pointer to bottom of area to be moved.
 cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 
-; used to store program and data:
-
-termwili = bas_termwili ; term. width & lim. for scanning src. columns
-                        ; (2 unused bytes).
-
 ; ----------------
 ; system functions
 ; ----------------
@@ -63,11 +58,20 @@ cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
 
 ; for the basic loader to install at top of memory:
 ;
+if sob = 1025 ; pet
 dec_addr = 1060;cpy_inst
 dec_addr1 = 1;dec_addr / 1000
 dec_addr2 = 0;(dec_addr / 100) MOD 10
 dec_addr3 = 6;(dec_addr / 10) MOD 10
 dec_addr4 = 0;dec_addr MOD 10
+endif
+if sob = 4097 ; vic 20
+dec_addr = 4132;cpy_inst
+dec_addr1 = 4;dec_addr / 1000
+dec_addr2 = 1;(dec_addr / 100) MOD 10
+dec_addr3 = 3;(dec_addr / 10) MOD 10
+dec_addr4 = 2;dec_addr MOD 10
+endif
 
 str_len  = 16           ; size of command string stored at label "str".
 
@@ -98,4 +102,4 @@ ordmask  = %00001000 ; out-data-ready mask for cas_moto, bit 3.
 temp0    = chrget + 3
 addr     = chrget + 4 ; 2 bytes.
 
-;lim      = termwili
+;lim      = <add address of some "unused" 2 byte long place in zero-page, here>
