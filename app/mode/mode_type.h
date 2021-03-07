@@ -17,8 +17,8 @@ enum mode_type
 
     // Fast loading and saving for CBM/PET with wedge at top of memory:
     //
-    //mode_type_pet1tom = 1 + 0x10, // For BASIC v1.
-    //mode_type_pet2tom = 2 + 0x10, // For BASIC v2.
+    mode_type_pet1tom = 1 + 0x10, // For BASIC v1.
+    mode_type_pet2tom = 2 + 0x10, // For BASIC v2.
     mode_type_pet4tom = 4 + 0x10, // For BASIC v4.
 };
 

@@ -25,11 +25,23 @@ struct tape_input * petload_create_v4tom();
  */
 struct tape_input * petload_create_v4();
 
+/** Return PET fast loader for BASIC v2, stored at top of memory.
+ *
+ * - Caller takes ownership of returned object.
+ */
+struct tape_input * petload_create_v2tom();
+
 /** Return PET fast loader for BASIC v2.
  *
  * - Caller takes ownership of returned object.
  */
 struct tape_input * petload_create_v2();
+
+/** Return PET fast loader for BASIC v1, stored at top of memory.
+ *
+ * - Caller takes ownership of returned object.
+ */
+struct tape_input * petload_create_v1tom();
 
 /** Return PET fast loader for BASIC v1.
  *

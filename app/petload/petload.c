@@ -1,7 +1,9 @@
 
 #include "petload.h"
 #include "petload_pet1.h"
+#include "petload_pet1tom.h"
 #include "petload_pet2.h"
+#include "petload_pet2tom.h"
 #include "petload_pet4.h"
 #include "petload_pet4tom.h"
 #include "../config.h"
@@ -340,11 +342,23 @@ struct tape_input * petload_create_v1()
     return create(
         s_petload_pet1, (int)(sizeof s_petload_pet1 / sizeof *s_petload_pet1));
 }
+struct tape_input * petload_create_v1tom()
+{
+    return create_tom(
+        s_petload_pet1tom,
+        (int)(sizeof s_petload_pet1tom / sizeof *s_petload_pet1tom));
+}
 
 struct tape_input * petload_create_v2()
 {
     return create(
         s_petload_pet2, (int)(sizeof s_petload_pet2 / sizeof *s_petload_pet2));
+}
+struct tape_input * petload_create_v2tom()
+{
+    return create_tom(
+        s_petload_pet2tom,
+        (int)(sizeof s_petload_pet2tom / sizeof *s_petload_pet2tom));
 }
 
 struct tape_input * petload_create_v4()
@@ -352,7 +366,6 @@ struct tape_input * petload_create_v4()
     return create(
         s_petload_pet4, (int)(sizeof s_petload_pet4 / sizeof *s_petload_pet4));
 }
-
 struct tape_input * petload_create_v4tom()
 {
     return create_tom(

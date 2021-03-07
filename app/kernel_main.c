@@ -160,7 +160,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 return wait_for_save();
             }
             case mode_type_pet1: // (falls through)
+            case mode_type_pet1tom: // (falls through)
             case mode_type_pet2: // (falls through)
+            case mode_type_pet2tom: // (falls through)
             case mode_type_pet4: // (falls through)
             case mode_type_pet4tom:
             {
@@ -185,10 +187,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
         // Get CBM out of waiting-for-response mode:
         //
-        if(mode == mode_type_pet1
-            || mode == mode_type_pet2 
-                || mode == mode_type_pet4
-                    || mode == mode_type_pet4tom)
+        if(mode == mode_type_pet1 || mode == mode_type_pet1tom
+            || mode == mode_type_pet2 || mode == mode_type_pet2tom
+            || mode == mode_type_pet4 || mode == mode_type_pet4tom)
         {
             petload_send_nop();
         }
@@ -200,7 +201,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         {
             case mode_type_save: // (falls through)
             case mode_type_pet1: // (falls through)
+            case mode_type_pet1tom: // (falls through)
             case mode_type_pet2: // (falls through)
+            case mode_type_pet2tom: // (falls through)
             case mode_type_pet4: // (falls through)
             case mode_type_pet4tom:
             {
@@ -224,12 +227,20 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         {
             return mode_type_save;
         }
-        
+
+        if(str_starts_with(name, "pet1tom"))
+        {
+            return mode_type_pet1tom;
+        }
         if(str_starts_with(name, "pet1"))
         {
             return mode_type_pet1;
         }
 
+        if(str_starts_with(name, "pet2tom"))
+        {
+            return mode_type_pet2tom;
+        }
         if(str_starts_with(name, "pet2"))
         {
             return mode_type_pet2;
@@ -274,10 +285,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     static void send_petload(enum mode_type const mode)
     {
-        assert(mode == mode_type_pet1
-                || mode == mode_type_pet2 
-                    || mode == mode_type_pet4
-                        || mode == mode_type_pet4tom);
+        assert(mode == mode_type_pet1 || mode == mode_type_pet1tom
+            || mode == mode_type_pet2 || mode == mode_type_pet2tom
+            || mode == mode_type_pet4 || mode == mode_type_pet4tom);
 
         struct tape_input * ti = 0;
     
@@ -288,11 +298,23 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 ti = petload_create_v1();
                 break;
             }
+            case mode_type_pet1tom:
+            {
+                ti = petload_create_v1tom();
+                break;
+            }
+
             case mode_type_pet2:
             {
                 ti = petload_create_v2();
                 break;
             }
+            case mode_type_pet2tom:
+            {
+                ti = petload_create_v2tom();
+                break;
+            }
+            
             case mode_type_pet4:
             {
                 ti = petload_create_v4();
@@ -435,7 +457,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                         }
 
                         case mode_type_pet1: // (falls through)
+                        case mode_type_pet1tom: // (falls through)
                         case mode_type_pet2: // (falls through)
+                        case mode_type_pet2tom: // (falls through)
                         case mode_type_pet4: // (falls through)
                         case mode_type_pet4tom:
                         {
@@ -452,10 +476,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 }
                 else // Nothing to send back to CBM.
                 {
-                    if(mode == mode_type_pet4tom
-                        || mode == mode_type_pet4 
-                            || mode == mode_type_pet2
-                                || mode == mode_type_pet1)
+                    if(mode == mode_type_pet1 || mode == mode_type_pet1tom
+                        || mode == mode_type_pet2 || mode == mode_type_pet2tom
+                        || mode == mode_type_pet4 || mode == mode_type_pet4tom)
                     {
                         // Get CBM out of waiting-for-response mode:
                         //
@@ -625,10 +648,9 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         console_write_byte_dec((uint8_t)mode);
         console_writeline(".");
 #endif //NDEBUG
-        if(mode == mode_type_pet1 
-            || mode == mode_type_pet2 
-                || mode == mode_type_pet4 
-                    || mode == mode_type_pet4tom)
+        if(mode == mode_type_pet1 || mode == mode_type_pet1tom
+            || mode == mode_type_pet2 || mode == mode_type_pet2tom
+            || mode == mode_type_pet4 || mode == mode_type_pet4tom)
         {
             send_petload_loop(mode);
         }
