@@ -82,3 +82,30 @@ bas_rechain = $b4b6
 bas_ready   = $b3ff
 
 endif
+
+if bas_ver = 20
+
+; vic 20.
+;
+bas_buf     = $0200
+bas_sob     = $1001
+bas_sobptr  = $2b
+bas_sovptr  = $2d
+bas_tomptr  = $37
+bas_chrget  = $73
+bas_chrgot  = $79
+bas_txtptr  = $7a
+bas_move_dst = $58
+bas_move_src = $5a
+bas_move_bot = $5f
+
+bas_termwili = $
+;
+bas_memmove = $c3bf
+bas_new     = $ ; new is at $, but this is without leading syntax check.
+bas_rstxclr = $
+;bas_rstx    = $
+bas_rechain = $
+bas_ready   = $
+
+endif
