@@ -23,17 +23,13 @@ save_y   sty temp0      ; temporarily save original y register contents.
          cpy #>buf      ; original basic functionality of cmd. char. must still
          bne skip       ; work (e.g. pi symbol as constant).
          ldy txtptr
-if bas_ver = 1
+if buf <> $0200 ; better would be (the syntax does not work, here): #<buf <> 0
          cpy #<buf
-else ; assuming v2 or v4.
-         ;cpy #<buf     ; hard-coded: commented-out for "buf" = $??00, only!
-endif 
+endif
          bne skip
 
-if bas_ver = 1
+if buf <> $0200 ; better would be (the syntax does not work, here): #<buf <> 0
          ldy #0
-else ; assuming v2 or v4.
-         ;ldy #0        ; hard-coded: commented-out for "buf" = $??00, only!
 endif
          lda (txtptr),y ; check, if current character is the command sign.
          cmp #cmd_char
