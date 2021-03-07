@@ -3,6 +3,7 @@
 #include "petload_pet1.h"
 #include "petload_pet2.h"
 #include "petload_pet4.h"
+#include "petload_pet4tom.h"
 #include "../config.h"
 #include "../cbm/cbm_send.h"
 #include "../tape/tape_input.h"
@@ -202,6 +203,8 @@ static void send_byte(uint8_t const byte)
     }
 }
 
+/** Create tape input object for PRG getting loaded to tape buffer(-s).
+ */
 static struct tape_input * create(
     uint8_t const * const bytes, int const count)
 {
@@ -279,6 +282,39 @@ static struct tape_input * create(
     return ret_val;
 }
 
+/** Create tape input object for PRG getting loaded to its start address.
+ */
+static struct tape_input * create_tom(
+    uint8_t const * const bytes, int const count)
+{
+    //                               "1234567890123456"
+    static char const * const name = "FASTMODE: RUN   ";
+
+    struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
+    int i = 0;
+
+    for(i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
+    {
+        ret_val->name[i] = (uint8_t)petasc_get_petscii(
+            name[i], MT_PETSCII_REPLACER);
+    }
+
+    tape_input_fill_add_bytes(ret_val->add_bytes);
+
+    ret_val->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
+    ret_val->len = (uint16_t)(count - 2);
+
+    ret_val->bytes = alloc_alloc((uint32_t)ret_val->len);
+    for(i = 0;i < ret_val->len;++i)
+    {
+        ret_val->bytes[i] = bytes[i + 2];
+    }
+
+    ret_val->type = tape_filetype_relocatable; // Correct for PET.
+
+    return ret_val;
+}
+
 void petload_wait_for_data_ready_val(
     bool const wait_for_val, bool const do_make_sure)
 {
@@ -315,6 +351,13 @@ struct tape_input * petload_create_v4()
 {
     return create(
         s_petload_pet4, (int)(sizeof s_petload_pet4 / sizeof *s_petload_pet4));
+}
+
+struct tape_input * petload_create_v4tom()
+{
+    return create_tom(
+        s_petload_pet4tom,
+        (int)(sizeof s_petload_pet4tom / sizeof *s_petload_pet4tom));
 }
 
 struct tape_input * petload_retrieve()
