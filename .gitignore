@@ -1,5 +1,7 @@
 .vscode
 
+cbm/bak
+
 *.o
 *.elf
 *.img
