@@ -140,8 +140,8 @@ Connect Raspberry Pi and Commodore machine this way:
 - Support loading PRG files with filenames longer than 12 characters.
 - List directory content without erasing possibly existing PRG in memory when using fast mode.
 - Show destination memory addresses and sizes of PRG files in directory listing.
+- Increase loading speed for fast mode wedges, if top-of-memory shall be used.
 - Show a result text on Commodore machine for at least some commands in fast mode. 
-- Optionally select top of RAM for storing the fast mode wedge (to be able to load PRGs into tape buffer/-s).
 - Read/write from/to tape storage files like TAP, etc.
 - Probably impossible, at least for compatibility mode (kernel module?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
