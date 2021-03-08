@@ -20,9 +20,14 @@ install_high
          ;jmp new
          ;byte 0
 
+if bas_ver = 20
+         jsr new
+         byte 0,0,0,0,0,0,0,0 ; TODO: replace (above jump..)!
+else
          lda cas_wrt    ; set write line level to low (7 bytes "wasted",
          and #oudmaskn  ; because not used later by fast mode wedge).
          sta cas_wrt    ;
-
+         
          jmp new ; repairs start-of-variables pointer, etc., these were changed
                  ; by loading into tape buffer(-s).
+endif
