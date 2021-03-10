@@ -98,6 +98,7 @@ bas_move_bot = $5f
 
 bas_memmove = $c3bf
 bas_new     = $c644 ; new is at $c642, but this is without leading syntax check.
+                    ; does not seem to work via jmp (use jsr? wrong address?)!
 bas_rstxclr = $c659
 ;bas_rstx    = $0000 ; TODO: set correctly!
 bas_rechain = $c533
