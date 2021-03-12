@@ -3,8 +3,6 @@
 ;
 ; marcel timm, rhinodevel
 
-; cbm pet
-
 ; ----------------
 ; system addresses
 ; ----------------
@@ -18,7 +16,6 @@ sob      = bas_sob      ; start of basic program address.
 move_dst = bas_move_dst ; pointer to top of area to be moved to +1.
 move_src = bas_move_src ; pointer to top of area to be moved +1.
 move_bot = bas_move_bot ; pointer to bottom of area to be moved.
-cas_buf1 = $027a        ; cassette buffer 1 and 2 start here (384 bytes).
 
 ; ----------------
 ; system functions
@@ -29,7 +26,6 @@ chrget   = bas_chrget
 chrgot   = bas_chrgot
 new      = bas_new
 rstxclr  = bas_rstxclr  ; reset txtptr and perform basic clr command.
-;rstx    = bas_rstx      ; (just) reset txtptr.
 rechain  = bas_rechain  ; rechain basic program in memory.
 ready    = bas_ready    ; print return, "ready.", return and waits for basic
                         ; line or direct command.
@@ -37,36 +33,31 @@ ready    = bas_ready    ; print return, "ready.", return and waits for basic
 ; peripheral
 ; ----------
 
-; using tape #1 port for transfer:
-
-cas_sens = $e810        ; bit 4.
-;
-; pia 1, port a (59408, tested => correct, 5v/1 when no key pressed or
-;                unconnected, "0v"/0 when key pressed).
-
-cas_read = $e811        ; bit 7 is high-to-low flag. pia 1, ctrl.reg. a (59409).
-
-cas_wrt  = $e840        ; bit 3.
-;
-; via, port b (59456, tested => correct, 5v for 1, 0v output for 0).
-
-cas_moto = $e813        ; bit 3 (0 = motor on, 1 = motor off).
+cas_sens = bas_cas_sens
+cas_read = bas_cas_read
+cas_wrt  = bas_cas_wrt
+cas_moto = bas_cas_moto
 
 ; -----------
 ; "constants"
 ; -----------
 
+; start of basic locations:
+;
+sob_pet = 1025
+sob_vic = 4097
+
 ; for the basic loader to install at top of memory:
 ;
-if sob = 1025 ; pet
-dec_addr = 1060;cpy_inst
+if sob = sob_pet ; pet
+;dec_addr = 1060;cpy_inst
 dec_addr1 = 1;dec_addr / 1000
 dec_addr2 = 0;(dec_addr / 100) MOD 10
 dec_addr3 = 6;(dec_addr / 10) MOD 10
 dec_addr4 = 0;dec_addr MOD 10
 endif
-if sob = 4097 ; vic 20
-dec_addr = 4132;cpy_inst
+if sob = sob_vic ; vic 20
+;dec_addr = 4132;cpy_inst
 dec_addr1 = 4;dec_addr / 1000
 dec_addr2 = 1;(dec_addr / 100) MOD 10
 dec_addr3 = 3;(dec_addr / 10) MOD 10
@@ -75,23 +66,22 @@ endif
 
 str_len  = 16           ; size of command string stored at label "str".
 
-cmd_char = $21;$ff      ; command symbol. $21 = "!".
+cmd_char = $21          ; command symbol. $21 = "!".
 sav_char = "+"          ; to save a file (e.g. like "!+myfile.prg").
 spc_char = $20          ; "empty" character to be used in string.
 zer_char = $30          ; zero character for basic loader. $30 = "0".
 
 ; retrieve bytes:
 ;
-indamask = %00010000 ; in-data mask for cas_sens, bit 4.
-ackmask  = %00001000 ; out-data-ack. mask for cas_wrt, bit 3.
+indamask = bas_indamask ; in-data mask for cas_sens.
+ackmask  = bas_ackmask  ; out-data-ack. mask for cas_wrt.
 
 ; send bytes:
 ;
-oudmask  = %00001000 ; out-data mask for cas_wrt, bit 3 = 1 <=> send high.
-oudmaskn = %11110111 ; inverted out-data mask for cas_wrt,
-                     ; bit 3 = 0 <=> send low.
-ordmask  = %00001000 ; out-data-ready mask for cas_moto, bit 3.
-                     ; bit 3 = 1 <=> motor off, bit 3 = 0 <=> motor on.
+oudmask  = bas_oudmask  ; out-data mask for cas_wrt.
+oudmaskn = bas_oudmaskn ; inverted out-data mask for cas_wrt.
+ordmask  = bas_ordmask  ; out-data-ready mask for cas_moto.
+                        ; 1 <=> motor off, 0 <=> motor on.
 
 ; -----------
 ; "variables"
