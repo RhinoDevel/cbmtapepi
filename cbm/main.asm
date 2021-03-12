@@ -13,13 +13,6 @@
 
 main     sei
 
-         ; debugging!
-         ;
-;         cli
-;         jsr rstxclr    ; equals preparations after basic load at
-;         jsr rechain    ; $c430/$c439/$b4ad.
-;         jmp ready
-
          ; commented-out, because directly using sovptr during send and
          ; retrieve:
          ;
@@ -138,6 +131,6 @@ r_finchk lda addr       ; check, if end is reached.
 exit     cli
 
          jsr rstxclr    ; equals preparations after basic load at
-         jsr rechain    ; $c430/$c439/$b4ad.
+         jsr rechain    ; $c430/$c439/$b4ad/...
 
          jmp ready
