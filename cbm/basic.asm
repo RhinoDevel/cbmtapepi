@@ -164,22 +164,20 @@ bas_rstxclr = $c659
 bas_rechain = $c533
 bas_ready   = $c474
 
-bas_indamask = % ; bit .
-bas_ackmask  = % ; bit .
-bas_oudmask  = % ; bit = 1.
-bas_oudmaskn = % ; bit 3 = 0.
-bas_ordmask  = % ; bit .
+bas_indamask = %01000000 ; bit 6.
+bas_ackmask  = %00001000 ; bit 3.
+bas_oudmask  = %00001000 ; bit 3 = 1.
+bas_oudmaskn = %11110111 ; bit 3 = 0.
+bas_ordmask  = %00000010 ; bit 1.
 
-bas_cas_sens = $        ; bit .
-;
-; ia , port  ().
+bas_cas_sens = $9111 ; bit 6. via 1, port a (37137).
 
-bas_cas_read = $        ; bit  is high-to-low flag. ia 1, ctrl.reg.  ().
+bas_cas_read = $912d ; bit 1 is high-to-low flag. via 2, interrupt flag reg.
+                     ; (37165).
 
-bas_cas_wrt  = $        ; bit .
-;
-; ia, port  ().
+bas_cas_wrt  = $9120 ; bit 3. via 2, port b (37152).
 
-bas_cas_moto = $        ; bit  (0 = motor on, 1 = motor off).
+bas_cas_moto = $911c ; bit 1. via 2, peripheral control reg. (0 = motor on,
+                     ; 1 = motor off).
 
 endif
