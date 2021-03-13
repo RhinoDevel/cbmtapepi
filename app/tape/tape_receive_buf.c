@@ -125,42 +125,18 @@ static bool wait_for(
     return true; // Pin is at wanted level.
 }
 
-bool tape_receive_buf(
-    uint32_t const gpio_pin_nr_motor,
-    uint32_t const gpio_pin_nr_write,
-    uint8_t * const buf,
-    bool (*is_stop_requested)())
+/**
+ * - Timer must already be running [s_timer_start_one_mhz()].
+ */
+static uint32_t get_ticks_short_average(
+    uint32_t const gpio_pin_nr_write, bool (*is_stop_requested)())
 {
     static int const skip_count = 128; //
-    static int const sync_count = 64; // (there are more than 1000 sync pulses)
-    static uint32_t const ticks_timeout = 3000000; // 3 seconds.
+    static int const sync_count = 64;  // (there are more than 1000 sync pulses)
 
     assert(sync_count % 2 == 0);
 
-    uint32_t ticks_short = 0,
-        ticks_long_timeout = 0,
-        pulse_type[2];
-    int pos = 0,
-        pulse_type_index = 0,
-        sync_workaround_count = 0;
-    bool dyn_low_timeout_reached_once = false;
-
-#ifndef NDEBUG
-    tick_short_min = UINT32_MAX;
-    tick_long_max = 0;
-#endif //NDEBUG
-
-    if(!gpio_read(gpio_pin_nr_motor))
-    {
-        console_deb_writeline("tape_receive_buf: Motor is OFF, waiting..");
-
-        if(!wait_for(gpio_pin_nr_motor, HIGH, false, is_stop_requested))
-        {
-            return false;
-        }
-
-        console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
-    }
+    uint32_t ticks_short = 0;
 
     // Wait for HIGH at CBM (not always HIGH, here - e.g. after former error):
     //
@@ -168,24 +144,6 @@ bool tape_receive_buf(
     {
         return false;
     }
-
-    // 1 MHz <=> 1,000,000 ticks per second.
-    //
-    // 32 bit wide counter <=> 2^32 values.
-    //
-    // => More than 71 minutes until wrap-around.
-    //
-    // Fastest Commodore pulse frequency is 2840 Hz. <=> T = 352 microseconds.
-    //
-    // => At least 352 ticks for each Commodore pulse, 176 for half a pulse.
-    //
-    s_timer_start_one_mhz();
-    //
-    // Does not reset to zero, but OK, because of modular arithmetic that (e.g.)
-    // will be applied when subtracting one unsigned from another unsigned
-    // integer (of the same size). This is working like a clock (e.g. 9 o'clock
-    // plus 4 hours equals 1 o'clock and 1 o'clock less 4 hours equals
-    // 9 o'clock).
 
     // *************
     // *** Sync: ***
@@ -260,7 +218,73 @@ bool tape_receive_buf(
         // (do not add sync symbols to output buffer)
     }
 
-    ticks_short = ticks_short / sync_count; // Calculate average value.
+    return ticks_short / sync_count; // Calculate and return average value.
+}
+
+bool tape_receive_buf(
+    uint32_t const gpio_pin_nr_motor,
+    uint32_t const gpio_pin_nr_write,
+    uint8_t * const buf,
+    bool (*is_stop_requested)())
+{
+    static uint32_t const ticks_timeout = 3000000; // 3 seconds.
+
+    uint32_t ticks_short = 0,
+        ticks_long_timeout = 0,
+        pulse_type[2];
+    int pos = 0,
+        pulse_type_index = 0,
+        sync_workaround_count = 0;
+    bool dyn_low_timeout_reached_once = false;
+
+#ifndef NDEBUG
+    tick_short_min = UINT32_MAX;
+    tick_long_max = 0;
+#endif //NDEBUG
+
+    if(!gpio_read(gpio_pin_nr_motor))
+    {
+        console_deb_writeline("tape_receive_buf: Motor is OFF, waiting..");
+
+        if(!wait_for(gpio_pin_nr_motor, HIGH, false, is_stop_requested))
+        {
+            return false;
+        }
+
+        console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
+    }
+
+    // 1 MHz <=> 1,000,000 ticks per second.
+    //
+    // 32 bit wide counter <=> 2^32 values.
+    //
+    // => More than 71 minutes until wrap-around.
+    //
+    // Fastest Commodore pulse frequency is 2840 Hz. <=> T = 352 microseconds.
+    //
+    // => At least 352 ticks for each Commodore pulse, 176 for half a pulse.
+    //
+    s_timer_start_one_mhz();
+    //
+    // Does not reset to zero, but OK, because of modular arithmetic that (e.g.)
+    // will be applied when subtracting one unsigned from another unsigned
+    // integer (of the same size). This is working like a clock (e.g. 9 o'clock
+    // plus 4 hours equals 1 o'clock and 1 o'clock less 4 hours equals
+    // 9 o'clock).
+
+    // Using loop, because VIC 20 also uses WRITE line for keyboard scanning
+    // (great..!):
+    //
+    do
+    {
+        ticks_short = get_ticks_short_average(gpio_pin_nr_write, is_stop_requested);
+
+#ifndef NDEBUG
+        console_write("tape_receive_buf: Maybe invalid short tick count: ");
+        console_write_dword_dec(ticks_short);
+        console_writeline("");
+#endif //NDEBUG
+    }while(ticks_short >= 2 * micro_short);
 
     set_tick_limits(ticks_short);
 
