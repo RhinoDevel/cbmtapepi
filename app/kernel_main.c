@@ -164,7 +164,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_pet2: // (falls through)
             case mode_type_pet2tom: // (falls through)
             case mode_type_pet4: // (falls through)
-            case mode_type_pet4tom:
+            case mode_type_pet4tom: // (falls through)
+            case mode_type_vic20tom:
             {
                 return petload_retrieve(); // (must never return 0)
             }
@@ -189,7 +190,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         //
         if(mode == mode_type_pet1 || mode == mode_type_pet1tom
             || mode == mode_type_pet2 || mode == mode_type_pet2tom
-            || mode == mode_type_pet4 || mode == mode_type_pet4tom)
+            || mode == mode_type_pet4 || mode == mode_type_pet4tom
+            || mode == mode_type_vic20tom)
         {
             petload_send_nop();
         }
@@ -205,7 +207,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_pet2: // (falls through)
             case mode_type_pet2tom: // (falls through)
             case mode_type_pet4: // (falls through)
-            case mode_type_pet4tom:
+            case mode_type_pet4tom: // (falls through)
+            case mode_type_vic20tom:
             {
                 return true;
             }
@@ -255,6 +258,11 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             return mode_type_pet4;
         }
 
+        if(str_starts_with(name, "vic20"))
+        {
+            return mode_type_vic20tom;
+        }
+
         return mode_type_err;
     }
     static bool save_mode(enum mode_type const mode)
@@ -287,7 +295,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     {
         assert(mode == mode_type_pet1 || mode == mode_type_pet1tom
             || mode == mode_type_pet2 || mode == mode_type_pet2tom
-            || mode == mode_type_pet4 || mode == mode_type_pet4tom);
+            || mode == mode_type_pet4 || mode == mode_type_pet4tom
+            || mode == mode_type_vic20tom);
 
         struct tape_input * ti = 0;
     
@@ -323,6 +332,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_pet4tom:
             {
                 ti = petload_create_v4tom();
+                break;
+            }
+
+            case mode_type_vic20tom:
+            {
+                ti = petload_create_vic20tom();
                 break;
             }
 
@@ -461,7 +476,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                         case mode_type_pet2: // (falls through)
                         case mode_type_pet2tom: // (falls through)
                         case mode_type_pet4: // (falls through)
-                        case mode_type_pet4tom:
+                        case mode_type_pet4tom: // (falls through)
+                        case mode_type_vic20tom:
                         {
                             petload_send(o->bytes, o->count);
                             break;
@@ -478,7 +494,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                 {
                     if(mode == mode_type_pet1 || mode == mode_type_pet1tom
                         || mode == mode_type_pet2 || mode == mode_type_pet2tom
-                        || mode == mode_type_pet4 || mode == mode_type_pet4tom)
+                        || mode == mode_type_pet4 || mode == mode_type_pet4tom
+                        || mode == mode_type_vic20tom)
                     {
                         // Get CBM out of waiting-for-response mode:
                         //
@@ -650,7 +667,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
 #endif //NDEBUG
         if(mode == mode_type_pet1 || mode == mode_type_pet1tom
             || mode == mode_type_pet2 || mode == mode_type_pet2tom
-            || mode == mode_type_pet4 || mode == mode_type_pet4tom)
+            || mode == mode_type_pet4 || mode == mode_type_pet4tom
+            || mode == mode_type_vic20tom)
         {
             send_petload_loop(mode);
         }

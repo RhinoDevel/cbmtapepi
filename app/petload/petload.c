@@ -6,6 +6,7 @@
 #include "petload_pet2tom.h"
 #include "petload_pet4.h"
 #include "petload_pet4tom.h"
+#include "petload_vic20tom.h"
 #include "../config.h"
 #include "../cbm/cbm_send.h"
 #include "../tape/tape_input.h"
@@ -371,6 +372,13 @@ struct tape_input * petload_create_v4tom()
     return create_tom(
         s_petload_pet4tom,
         (int)(sizeof s_petload_pet4tom / sizeof *s_petload_pet4tom));
+}
+
+struct tape_input * petload_create_vic20tom()
+{
+    return create_tom(
+        s_petload_vic20tom,
+        (int)(sizeof s_petload_vic20tom / sizeof *s_petload_vic20tom));
 }
 
 struct tape_input * petload_retrieve()

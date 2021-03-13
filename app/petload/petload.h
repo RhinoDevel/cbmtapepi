@@ -13,6 +13,12 @@
 void petload_wait_for_data_ready_val(
     bool const wait_for_val, bool const do_make_sure);
 
+/** Return VIC 20 fast loader, stored at top of memory.
+ *
+ * - Caller takes ownership of returned object.
+ */
+struct tape_input * petload_create_vic20tom();
+
 /** Return PET fast loader for BASIC v4, stored at top of memory.
  *
  * - Caller takes ownership of returned object.
