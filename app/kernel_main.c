@@ -291,6 +291,75 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         }
     }
 
+    /*
+    [TAPE: Tmin = 352us, Tmax = 672us]
+    WRITE: Trise < 2us, Tfall < 4us
+    SCNKEY (at VIC 20 via ISR): T60Hz = 16667us, T50Hz = 20000us
+    =>
+    SIGNAL (from fast mode installer to server):
+    Tape does not matter, because there must be no SAVE attempt from CBM during fast
+    mode installer sequence.
+    => Write << Signal << scnkey.
+    => T = ~500us,
+    CBM must toggle every ~250us (fast mode installer PRG, the timing is not
+    precise, if just counting cycles, because some machines use 50Hz,
+    others 60Hz),
+    server's ARM timer based ISR can be entered every Tarm = ~500us / 5.
+
+    * TEST, if this ISR-calling does not interfere with compatible mode tape LOAD
+        and/or save!
+
+    Each time server's ISR is called it checks, if WRITE got toggled.
+    If there are at least x toggles in Tx, the signal is detected.
+
+    Tscnkey >> Tx > T
+
+    E.g.: T    =                          ~500us
+            Tarm = T / 5  =                  100us (Tarm >> Trise and Tfall)
+            Tx   = 10 * T = 10 * 5 * Tarm = 5000us
+            x    =                            10
+
+    FIRST STEP: Implementation in loop, without ISR!
+    */
+    ///
+    /** Tries to detect a 50% duty cycle, logic level changing signal on GPIO
+     *  port with given nr.
+     * 
+     * - Takes almost 5ms (depends on values below).
+     */
+    static bool is_signal_detected(uint32_t const gpio_pin_nr)
+    {
+        static int const t_cycle = 500; // Microseconds <=> 2kHz fastmode freq.
+        static int const per_cycle = 5; // Count of measure points per fastmode
+                                        // installer signal cycle.
+        static int const t_measure = t_cycle / per_cycle; // <=> 10kHz sampling.
+        static int const cycles = 10; // Count of fastmode cycles for measuring.
+        static int const measurements = cycles * per_cycle; // Count of samples.
+        static int const min_toggles = 10; // Count of min. level changes.
+
+        uint32_t toggles = 0; // Level changes counted in measurement timespan.
+        bool last = gpio_read(gpio_pin_nr); // Store last read logic level.
+
+        for(int i = 1;i < measurements; ++i) // (first sample taken above)
+        {
+            armtimer_busywait_microseconds(t_measure);
+
+            if(gpio_read(gpio_pin_nr) != last)
+            {
+                ++toggles;
+                last = !last;
+            }
+        }
+        
+#ifndef NDEBUG
+        console_write("is_fastmode_installer_waiting : Counted ");
+        console_write_dword_dec(toggles);
+        console_writeline(" level changes.");
+#endif //NDEBUG
+
+        return toggles >= min_toggles;
+    }
+
     static void send_petload(enum mode_type const mode)
     {
         assert(mode == mode_type_pet1 || mode == mode_type_pet1tom
@@ -357,56 +426,44 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     }
     static void send_petload_loop(enum mode_type const mode)
     {
-        // Starting up PET causes WRITE value to change, this is why we wait for
-        // WRITE being HIGH at CBM (which happens at start-up of CBM/PET):
-
-        console_deb_writeline(
-            "send_petload_loop : Waiting for write getting HIGH at CBM..");
-
-        gpio_wait_for(
-            MT_TAPE_GPIO_PIN_NR_WRITE,
-            !true, // (inverted, because circuit inverts signal from CBM)
-            500); // Microseconds. Just for safety.
-
-        console_deb_writeline(
-            "send_petload_loop : Write was set to HIGH at CBM, entering loop..");
+        // (a VIC's WRITE line will change between HIGH and LOW infinitely,
+        //  because VIA's port used for tape WRITE is used for keyboard scan,
+        //  too..)
 
         while(true)
         {
             send_petload(mode);
 
-            // Check, if write signal changed
-            // (inverted, because circuit inverts signal from CBM):
+            // Wait to let CBM fastmode installer enough time to detect that
+            // SENSE got set to HIGH at CBM, which triggers infinite sending of
+            // signal we want to detect: 
             //
-            if(!gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE))
+            armtimer_busywait_microseconds(100);
+
+            if(is_signal_detected(MT_TAPE_GPIO_PIN_NR_WRITE))
             {
-                console_deb_writeline(
-                    "send_petload_loop : Write still HIGH at CBM, continuing loop..");
-
-                // If LOAD routine ran on CBM (does not matter, if successful or
-                // quit via RUN/STOP keypress) the MOTOR is getting disabled by
-                // Commmodore OS, even if SENSE is still LOW.
-                //
-                // The MOTOR will be restarted by CBM's ISR only after SENSE got
-                // toggled from LOW to HIGH and then back again to LOW
-                // (with a real tape the user would have to release all buttons
-                // and press the play button again).
-                //
-                // Wait long enough to let CBM detect that SENSE got toggled to
-                // HIGH state:
-                //
-                // - 50 Hz machine. => ISR called every 20ms.
-                //
-                armtimer_busywait_microseconds(10 * 20 * 1000); // 10 * 20ms.
-                continue;
+                console_deb_writeline("send_petload_loop : Breaking loop..");
+                return;
             }
-
-            // Write value changed, (hopefully) caused by fast mode installer.
-
+            
             console_deb_writeline(
-                "send_petload_loop : Write value got LOW at CBM, breaking loop..");
-                
-            return;
+                "send_petload_loop : No signal detected, continuing loop..");
+
+            // If LOAD routine ran on CBM (does not matter, if successful or
+            // quit via RUN/STOP keypress) the MOTOR is getting disabled by
+            // Commmodore OS, even if SENSE is still LOW.
+            //
+            // The MOTOR will be restarted by CBM's ISR only after SENSE got
+            // toggled from LOW to HIGH and then back again to LOW
+            // (with a real tape the user would have to release all buttons
+            // and press the play button again).
+            //
+            // Wait long enough to let CBM detect that SENSE got toggled to
+            // HIGH state [done by send_petload() called above]:
+            //
+            // - 50 Hz machine. => ISR called every 20ms.
+            //
+            armtimer_busywait_microseconds(10 * 20 * 1000); // 10 * 20ms.
         }
     }
 
