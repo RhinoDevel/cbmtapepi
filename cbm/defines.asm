@@ -82,6 +82,7 @@ oudmask  = bas_oudmask  ; out-data mask for cas_wrt.
 oudmaskn = bas_oudmaskn ; inverted out-data mask for cas_wrt.
 ordmask  = bas_ordmask  ; out-data-ready mask for cas_moto.
                         ; 1 <=> motor off, 0 <=> motor on.
+ordmaskn = bas_ordmaskn
 
 ; -----------
 ; "variables"
