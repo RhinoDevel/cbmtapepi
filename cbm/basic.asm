@@ -31,6 +31,7 @@ bas_ackmask  = %00001000 ; bit 3.
 bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00001000 ; bit 3.
+bas_ordmaskn = %11110111
 
 ; using tape #1 port for transfer:
 
@@ -77,6 +78,7 @@ bas_ackmask  = %00001000 ; bit 3.
 bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00001000 ; bit 3.
+bas_ordmaskn = %11110111
 
 ; using tape #1 port for transfer:
 
@@ -123,6 +125,7 @@ bas_ackmask  = %00001000 ; bit 3.
 bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00001000 ; bit 3.
+bas_ordmaskn = %11110111
 
 ; using tape #1 port for transfer:
 
@@ -169,6 +172,7 @@ bas_ackmask  = %00001000 ; bit 3.
 bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00000010 ; bit 1.
+bas_ordmaskn = %11111101
 
 bas_cas_sens = $9111 ; bit 6. via 1, port a (37137).
 
