@@ -35,6 +35,7 @@ ready    = bas_ready    ; print return, "ready.", return and waits for basic
 
 cas_sens = bas_cas_sens
 cas_read = bas_cas_read
+cas_read_reset = bas_cas_read_reset
 cas_wrt  = bas_cas_wrt
 cas_moto = bas_cas_moto
 
@@ -83,6 +84,7 @@ oudmaskn = bas_oudmaskn ; inverted out-data mask for cas_wrt.
 ordmask  = bas_ordmask  ; out-data-ready mask for cas_moto.
                         ; 1 <=> motor off, 0 <=> motor on.
 ordmaskn = bas_ordmaskn
+inackmask = bas_inackmask
 
 ; -----------
 ; "variables"
