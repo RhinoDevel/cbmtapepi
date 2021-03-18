@@ -40,7 +40,10 @@ sen_wait lda cas_sens
          ;
          ; - assuming 1mhz cpu frequency <=> 1us per cpu cycle.
 
-         ldy #$ff       ;   255 * ~252us = ~64ms for server to detect signal.
+         ;lda #10        ;   10 * ~64ms = ~640ms for server to detect signal.
+         ;sta temp0      ;
+
+starty   ldy #$ff       ;   255 * ~252us = ~64ms for server to detect signal.
 
 startlvl lda cas_wrt    ;   4! toggle level on write line to generage frequency
          eor #ackmask   ;   2! signaling to server that fastmode wedge is
@@ -54,6 +57,9 @@ keep_lvl dex            ;   2:
 
          dey            ;   2!
          bne startlvl   ;   3!
+
+         ;dec temp0
+         ;bne starty
 
          cli
 
