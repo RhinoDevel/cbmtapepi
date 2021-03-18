@@ -26,10 +26,16 @@ senddata sta cas_wrt    ; set data bit.
          eor #ordmask   ;
          sta cas_moto   ;
 
-sendwait bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
-         bpl sendwait   ; branch, if n is 0 ("positive").
+sendwait lda cas_read
+         and #inackmask
+         beq sendwait
+         ;
+         ; this could be used alternatively for pet machines:
+         ;
+         ;bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
+         ;bpl sendwait   ; branch, if n is 0 ("positive").
 
-         bit cas_read-1 ; resets "toggle" bit by read operation (see pia doc.).
+         bit cas_read_reset ; resets "toggle" bit by read operation (see docs).
 
          dey
          bne sendloop   ; last bit read?

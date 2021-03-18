@@ -13,10 +13,16 @@
 
 readbyte ldx #8         ; (read bit) counter.
 
-readwait bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
-         bpl readwait   ; branch, if n is 0 ("positive").
+readwait lda cas_read
+         and #inackmask
+         beq readwait
+         ;
+         ; this could be used alternatively for pet machines:
+         ;
+         ;bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
+         ;bpl readwait   ; branch, if n is 0 ("positive").
 
-         bit cas_read-1 ; resets "toggle" bit by read operation (see pia doc.).
+         bit cas_read_reset ; resets "toggle" bit by read operation (see docs).
 
          lda cas_sens   ; load actual data (bit 4) into c flag.
          and #indamask  ; sets z flag to 1, if bit 4 is 0.
