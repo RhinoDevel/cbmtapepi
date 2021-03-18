@@ -8,6 +8,7 @@
 #define MT_CMD
 
 #include "cmd_output.h"
+#include "../mode/mode_type.h"
 #include "../tape/tape_input.h"
 
 #include <stdbool.h>
@@ -16,6 +17,7 @@
  * - Caller takes ownership of object "returned" via output pointer.
  */
 bool cmd_exec(
+    enum mode_type const mode,
     char const * const command,
     struct tape_input const * const ti,
     struct cmd_output * * const output);

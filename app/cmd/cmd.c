@@ -3,6 +3,7 @@
 
 #include "cmd.h"
 #include "../config.h"
+#include "../mode/mode_type.h"
 #include "../tape/tape_input.h"
 #include "../../lib/assert.h"
 #include "../../lib/alloc/alloc.h"
@@ -40,6 +41,7 @@ static char const * const s_cd   = "cd "; // Supports "..", too.
 #ifndef NDEBUG
     static char const * const s_load_ymodem = "y*";
 #endif //NDEBUG
+// static char const * const s_md   =    "md "; // Create a directory.
 // static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
 // static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
@@ -70,7 +72,7 @@ static struct dir_entry * * create_dir_entry_arr(int * const entry_count)
     return ret_val;
 }
 
-static struct cmd_output * exec_dir()
+static struct cmd_output * exec_dir(enum mode_type const mode)
 {
     struct cmd_output * ret_val = alloc_alloc(sizeof *ret_val);
     int entry_count = -1;
@@ -92,7 +94,13 @@ static struct cmd_output * exec_dir()
 
     ret_val->name = str_create_copy("DIRECTORY");
     ret_val->bytes = basic_get_prints(
-        MT_BASIC_ADDR_PET, // (should also be OK for VIC20, C64, etc.)
+
+        // TODO: Don't do this in such a hard-coded way:
+        //
+        mode == mode_type_vic20tom
+            ? MT_BASIC_ADDR_VIC
+            : MT_BASIC_ADDR_PET,
+
         (char const * *)name_arr,
         name_count,
         MT_PETSCII_REPLACER,
@@ -380,6 +388,7 @@ static bool exec_save(
 }
 
 bool cmd_exec(
+    enum mode_type const mode,
     char const * const command,
     struct tape_input const * const ti,
     struct cmd_output * * const output)
@@ -397,7 +406,7 @@ bool cmd_exec(
     }
     if(str_starts_with(command, s_dir))
     {
-        *output = exec_dir();
+        *output = exec_dir(mode);
         return true;
     }
     if(str_starts_with(command, s_rm))

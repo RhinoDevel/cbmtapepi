@@ -434,12 +434,17 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         {
             send_petload(mode);
 
+            // TODO: Probably unnecessary:
+            //
             // Wait to let CBM fastmode installer enough time to detect that
             // SENSE got set to HIGH at CBM, which triggers infinite sending of
             // signal we want to detect: 
             //
-            armtimer_busywait_microseconds(100);
+            armtimer_busywait_microseconds(10);
 
+            // TODO: Does not work with using <shift> + <run/stop>
+            //       (sense detection??):
+            //
             if(is_signal_detected(MT_TAPE_GPIO_PIN_NR_WRITE))
             {
                 console_deb_writeline("send_petload_loop : Breaking loop..");
@@ -497,7 +502,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             console_writeline("\".");
 #endif //NDEBUG
 
-            if(cmd_exec(name, ti, &o))
+            if(cmd_exec(mode, name, ti, &o))
             {
                 if(o != 0) // Something to send back to CBM.
                 {
