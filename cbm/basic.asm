@@ -32,6 +32,7 @@ bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00001000 ; bit 3.
 bas_ordmaskn = %11110111
+bas_inackmask = %10000000 ; bit 7.
 
 ; using tape #1 port for transfer:
 
@@ -41,6 +42,7 @@ bas_cas_sens = $e810        ; bit 4.
 ;                unconnected, "0v"/0 when key pressed).
 
 bas_cas_read = $e811        ; bit 7 is high-to-low flag. pia 1, ctrl.reg. a (59409).
+bas_cas_read_reset = $e810  ; pia 1, port a (59408).
 
 bas_cas_wrt  = $e840        ; bit 3.
 ;
@@ -79,6 +81,7 @@ bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00001000 ; bit 3.
 bas_ordmaskn = %11110111
+bas_inackmask = %10000000 ; bit 7.
 
 ; using tape #1 port for transfer:
 
@@ -88,6 +91,7 @@ bas_cas_sens = $e810        ; bit 4.
 ;                unconnected, "0v"/0 when key pressed).
 
 bas_cas_read = $e811        ; bit 7 is high-to-low flag. pia 1, ctrl.reg. a (59409).
+bas_cas_read_reset = $e810  ; pia 1, port a (59408).
 
 bas_cas_wrt  = $e840        ; bit 3.
 ;
@@ -126,6 +130,7 @@ bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00001000 ; bit 3.
 bas_ordmaskn = %11110111
+bas_inackmask = %10000000 ; bit 7.
 
 ; using tape #1 port for transfer:
 
@@ -135,6 +140,7 @@ bas_cas_sens = $e810        ; bit 4.
 ;                unconnected, "0v"/0 when key pressed).
 
 bas_cas_read = $e811        ; bit 7 is high-to-low flag. pia 1, ctrl.reg. a (59409).
+bas_cas_read_reset = $e810  ; pia 1, port a (59408).
 
 bas_cas_wrt  = $e840        ; bit 3.
 ;
@@ -173,11 +179,13 @@ bas_oudmask  = %00001000 ; bit 3 = 1.
 bas_oudmaskn = %11110111 ; bit 3 = 0.
 bas_ordmask  = %00000010 ; bit 1.
 bas_ordmaskn = %11111101
+bas_inackmask = %00000010 ; bit 1.
 
 bas_cas_sens = $9111 ; bit 6. via 1, port a (37137).
 
 bas_cas_read = $912d ; bit 1 is high-to-low flag. via 2, interrupt flag reg.
                      ; (37165).
+bas_cas_read_reset = $9121  ; via 2, port a (37153).
 
 bas_cas_wrt  = $9120 ; bit 3. via 2, port b (37152).
 
