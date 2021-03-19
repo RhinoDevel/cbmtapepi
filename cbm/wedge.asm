@@ -13,6 +13,8 @@
 ; *** the wedge ***
 ; *****************
 
+; 16 bytes from the label "str" on will be reused for cmd. string by wedge!
+
 wedge    inc txtptr     ; increment here, because of code overwritten at chrget
          bne save_y     ; with jump to wedge.
          inc txtptr + 1

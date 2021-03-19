@@ -6,13 +6,10 @@
 ; cbm pet
 
 ; ***********************
-; *** wedge installer *** (space reused after installation for cmd. string)
+; *** wedge installer ***
 ; ***********************
 
-; 16 bytes (from str label on) are reused for cmd. string by wedge, but the
-; other bytes can be used for something else (currently wasted..)!
-;
-str      lda #$4c       ; jmp
+         lda #$4c       ; jmp
          sta chrget
 install_low
          lda #<wedge
@@ -50,6 +47,13 @@ sen_whig lda cas_sens
          ;sta temp0      ;
 
 starty   ldy #$ff       ;   255 * ~252us = ~64ms for server to detect signal.
+
+; ******************************************************************************
+; *** hard-coded: there must be at least 16 bytes from here to "wedge" label ***
+; ***             (preferably exactly 16 bytes to waste no space)!           ***
+; ******************************************************************************
+;
+str ; 16 bytes from here on will be reused for cmd. string by wedge!
 
 startlvl lda cas_wrt    ;   4! toggle level on write line to generage frequency
          eor #ackmask   ;   2! signaling to server that fastmode wedge is

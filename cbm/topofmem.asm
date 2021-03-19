@@ -28,6 +28,8 @@ bas_next word 0
 ; *** install by copying to destination address ***
 ; *************************************************
 
+; TODO: do this with using less bytes (using loop and markers?)!
+
 cpy_inst  
 
           ; correct address of wedge to jump to from chrget routine:
@@ -128,8 +130,8 @@ tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
           ; calculate destination bottom/start of area
           ; and update top of memory pointer for basic:
           ;
-tom_copy_offset = cpy_lim - cpy_src  ; offset from start of program to byte
-                                     ; following the last byte.
+tom_copy_offset = str - cpy_src  ; offset from start of cmd. string buffer to
+                                 ; byte following the last byte.
           sec
           lda tomptr
           sbc #<tom_copy_offset
