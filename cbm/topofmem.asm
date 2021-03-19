@@ -30,7 +30,7 @@ bas_next word 0
 
 ; TODO: do this with using less bytes (using loop and markers?)!
 
-cpy_inst  
+;cpy_inst  
 
           ; correct address of wedge to jump to from chrget routine:
           ;
@@ -106,9 +106,9 @@ tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
 
           ; source bottom/start of area:
           ;
-          lda #<cpy_src
+          lda #<wedge
           sta move_bot
-          lda #>cpy_src
+          lda #>wedge
           sta move_bot + 1
  
           ; source top/end of area +1:
@@ -130,7 +130,7 @@ tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
           ; calculate destination bottom/start of area
           ; and update top of memory pointer for basic:
           ;
-tom_copy_offset = str - cpy_src  ; offset from start of cmd. string buffer to
+tom_copy_offset = cpy_lim - str  ; offset from start of cmd. string buffer to
                                  ; byte following the last byte.
           sec
           lda tomptr
@@ -140,6 +140,3 @@ tom_copy_offset = str - cpy_src  ; offset from start of cmd. string buffer to
           sbc #>tom_copy_offset
           sta tomptr + 1
 
-          jmp (tomptr) ; done, jump to wedge installer.
-
-cpy_src ; source address to begin copying to destination address.
