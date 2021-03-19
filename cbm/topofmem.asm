@@ -28,26 +28,16 @@ bas_next word 0
 ; *** install by copying to destination address ***
 ; *************************************************
 
-; TODO: do this with using less bytes (using loop and markers?)!
+; TODO: do this with less bytes (using loop and markers to copy and replace?)!
 
 ;cpy_inst  
 
-          ldx tomptr
-          ldy tomptr + 1
+          ; *** correct some addresses in source code and top-of-memory ptr. ***
 
-          ; correct address of wedge to jump to from chrget routine:
-          ;
-tom_wedg_offset = cpy_lim - wedge    ; offset from wedge to byte following the
-                                     ; last byte.
-          sec
-          txa
-          sbc #<tom_wedg_offset
-          sta install_low + 1
-          tya
-          sbc #>tom_wedg_offset
-          sta install_high + 1
+          ldx tomptr                 ; store original top-of-memory address for
+          ldy tomptr + 1             ; usage (because tom ptr. will be changed).
 
-          ; correct addresses of str and updat top-of-memory pointer:
+          ; correct addresses of str and update top-of-memory pointer:
           ;
 tom_str_offset = cpy_lim - str       ; offset from str to byte following the
                                      ; last byte.
@@ -66,6 +56,18 @@ tom_str_offset = cpy_lim - str       ; offset from str to byte following the
           sta str2 + 2
           sta str3 + 2
           sta tomptr + 1
+
+          ; correct address of wedge to jump to from chrget routine:
+          ;
+tom_wedg_offset = cpy_lim - wedge    ; offset from wedge to byte following the
+                                     ; last byte.
+          sec
+          txa
+          sbc #<tom_wedg_offset
+          sta install_low + 1
+          tya
+          sbc #>tom_wedg_offset
+          sta install_high + 1
 
           ; correct sendbyte() address:
           ;
@@ -108,6 +110,8 @@ tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
           sta read_lim + 2
           sta read2 + 2
           sta r_next + 2
+
+          ; *** copy modified code to top of memory ***
 
           ; source bottom/start of area:
           ;
