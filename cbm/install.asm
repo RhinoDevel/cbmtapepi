@@ -20,6 +20,10 @@ install_high
 
          sei
 
+         ; TODO: try to use interrupt on server for frequency-signal detection
+         ;       and be able to immediately break fast mode installer loop and
+         ;       remove the following motor, sense stuff:
+
          ; set motor to high (otherwise compatibility mode that sends the
          ; fast mode installer in an infinite loop may gets stuck):
          ;
