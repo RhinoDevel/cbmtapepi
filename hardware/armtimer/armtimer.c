@@ -99,6 +99,30 @@ static void start_timer(
     bool const irq_enable,
     bool const busy_wait)
 {
+    // Example to find out timespan by given values:
+    //
+    // fcpu      = 250Mhz (assumed)
+    // start_val = 250000 (given)
+    // divider   = 250    (given)
+    //
+    // => t = ?
+    //
+    // fcpu / divider = 250MHz / 250 = 1MHz = 1000000 / 1s = start_val / t
+    //
+    // => t = start_val * 1s / 1000000 = 250000s / 1000000 = 25s / 100 = 0.25s 
+    //
+    // t         = 0.25s
+
+    // Example to find out values to setup for a wanted timespan:
+    //
+    // t         = 100us  (given)
+    // fcpu      = 250MHz (assumed)
+    // divider   = 250    (given/guessed)
+    //
+    // => start_val = t * fcpu / divider = 100us * 250MHz / 250
+    //
+    // start_val = 100
+
     uint32_t buf;
 
     disable_timer_and_interrupt();
