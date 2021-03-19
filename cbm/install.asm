@@ -30,11 +30,17 @@ install_high
          and #bas_ordmaskn
          sta cas_moto
 
+         ; wait for sense to be low:
+         ;
+sen_wlow lda cas_sens
+         and #indamask
+         bne sen_wlow
+
          ; wait for sense to be high:
          ;
-sen_wait lda cas_sens
+sen_whig lda cas_sens
          and #indamask
-         beq sen_wait
+         beq sen_whig
 
          ; toggle logic level all ~250us (see kernel_main.c):
          ;
