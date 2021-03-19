@@ -13,11 +13,13 @@
 ; *** the wedge ***
 ; *****************
 
-; 16 bytes from the label "str" on will be reused for cmd. string by wedge!
+; 16 bytes before the label "wedge" will be reused for cmd. string by wedge!
 
 wedge    inc txtptr     ; increment here, because of code overwritten at chrget
          bne save_y     ; with jump to wedge.
          inc txtptr + 1
+
+str = wedge - str_len ; start of cmd. string buffer in use by wedge.
 
 save_y   sty temp0      ; temporarily save original y register contents.
 

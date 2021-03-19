@@ -48,13 +48,6 @@ sen_whig lda cas_sens
 
 starty   ldy #$ff       ;   255 * ~252us = ~64ms for server to detect signal.
 
-; ******************************************************************************
-; *** hard-coded: there must be at least 16 bytes from here to "wedge" label ***
-; ***             (preferably exactly 16 bytes to waste no space)!           ***
-; ******************************************************************************
-;
-str ; 16 bytes from here on will be reused for cmd. string by wedge!
-
 startlvl lda cas_wrt    ;   4! toggle level on write line to generage frequency
          eor #ackmask   ;   2! signaling to server that fastmode wedge is
          sta cas_wrt    ;   4! installed at cbm.
