@@ -125,10 +125,8 @@ tom_read_offset = cpy_lim - readbyte ; offset from readbyte() to byte following
           
           ; destination top/end of area +1:
           ;
-          txa
-          sta move_dst
-          tya
-          sta move_dst + 1
+          stx move_dst
+          sty move_dst + 1
 
           jsr memmove
 
