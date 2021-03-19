@@ -6,13 +6,10 @@
 ; cbm pet
 
 ; ***********************
-; *** wedge installer *** (space reused after installation for cmd. string)
+; *** wedge installer ***
 ; ***********************
 
-; 16 bytes (from str label on) are reused for cmd. string by wedge, but the
-; other bytes can be used for something else (currently wasted..)!
-;
-str      lda #$4c       ; jmp
+         lda #$4c       ; jmp
          sta chrget
 install_low
          lda #<wedge
@@ -23,6 +20,10 @@ install_high
 
          sei
 
+         ; TODO: try to use interrupt on server for frequency-signal detection
+         ;       and be able to immediately break fast mode installer loop and
+         ;       remove the following motor, sense stuff:
+
          ; set motor to high (otherwise compatibility mode that sends the
          ; fast mode installer in an infinite loop may gets stuck):
          ;
@@ -30,11 +31,17 @@ install_high
          and #bas_ordmaskn
          sta cas_moto
 
+         ; wait for sense to be low:
+         ;
+sen_wlow lda cas_sens
+         and #indamask
+         bne sen_wlow
+
          ; wait for sense to be high:
          ;
-sen_wait lda cas_sens
+sen_whig lda cas_sens
          and #indamask
-         beq sen_wait
+         beq sen_whig
 
          ; toggle logic level all ~250us (see kernel_main.c):
          ;
