@@ -67,25 +67,43 @@ enum led_state
     led_state_blink
 };
 
+// For fast mode installer ready-signal detection (it has a frequency):
+//
+static int const s_t_cycle = 500; // Microseconds <=> 2kHz fastmode freq.
+static int const s_per_cycle = 5; // Count of measure points per fastmode
+                                // installer signal cycle.
+static int const s_t_measure = s_t_cycle / s_per_cycle; // <=> 10kHz sampling.
+static int const s_cycles = 10; // Count of fastmode cycles for measuring.
+static int const s_measurements = s_cycles * s_per_cycle; // Count of samples.
+static int const s_min_toggles = 10; // Count of min. level changes.
+
 static enum led_state s_led_state = led_state_off;
 
 /** IRQ interrupt handler.
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
 {
-    static bool timer_irq_state = false;
+    static const uint32_t blink_interval = 250000; // 0.25s
+    static const uint32_t act_interval = 500000; // 0.5s
+    static const uint32_t blink_count = blink_interval / s_t_measure;
+    static const uint32_t act_count = act_interval / s_t_measure;
+
+    static bool blink_state = false;
     static bool act_state = false;
-    static int act_count = 0;
+    static uint32_t counter = 0;
 
     armtimer_irq_clear();
 
-    timer_irq_state = !timer_irq_state;
+    ++counter;
 
-    ++act_count;
-    if(act_count == 2)
+    if(counter % blink_count == 0)
+    {
+        blink_state = !blink_state;
+    }
+
+    if(counter % act_count == 0)
     {
         act_state = !act_state;
-        act_count = 0;
         gpio_set_output(GPIO_PIN_NR_ACT, act_state);
     }
 
@@ -105,7 +123,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         case led_state_blink: // (falls through)
         default:
         {
-            gpio_set_output(MT_GPIO_PIN_NR_LED, timer_irq_state);
+            gpio_set_output(MT_GPIO_PIN_NR_LED, blink_state);
             break;
         }
     }
@@ -329,20 +347,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
      */
     static bool is_signal_detected(uint32_t const gpio_pin_nr)
     {
-        static int const t_cycle = 500; // Microseconds <=> 2kHz fastmode freq.
-        static int const per_cycle = 5; // Count of measure points per fastmode
-                                        // installer signal cycle.
-        static int const t_measure = t_cycle / per_cycle; // <=> 10kHz sampling.
-        static int const cycles = 10; // Count of fastmode cycles for measuring.
-        static int const measurements = cycles * per_cycle; // Count of samples.
-        static int const min_toggles = 10; // Count of min. level changes.
-
         uint32_t toggles = 0; // Level changes counted in measurement timespan.
         bool last = gpio_read(gpio_pin_nr); // Store last read logic level.
 
-        for(int i = 1;i < measurements; ++i) // (first sample taken above)
+        for(int i = 1;i < s_measurements; ++i) // (first sample taken above)
         {
-            armtimer_busywait_microseconds(t_measure);
+            armtimer_busywait_microseconds(s_t_measure);
 
             if(gpio_read(gpio_pin_nr) != last)
             {
@@ -357,7 +367,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         console_writeline(" level changes.");
 #endif //NDEBUG
 
-        return toggles >= min_toggles;
+        return toggles >= s_min_toggles;
     }
 
     static void send_petload(enum mode_type const mode)
@@ -648,11 +658,12 @@ static void irq_armtimer_init()
 
     irqcontroller_irq_enable();
 
-    // Timer counts down 250.000 times in one second (with 250 kHz):
+    armtimer_start((uint32_t)s_t_measure, 250);
     //
-    armtimer_start(250000 * 1, 250);
+    assert(s_t_measure == 100);
     //
-    // 0.25 seconds, hard-coded for 250MHz clock.
+    // 100us / 10kHz, hard-coded for 250MHz clock [see explanation at function
+    // definition of start_timer()].
 }
 
 /**
