@@ -41,9 +41,9 @@ addrlim_rdy
 
          ; motor signal must already be low or on its way to low, here.      
 
-         bit cas_read-1 ; maybe not needed: makes sure that flag raised by
-                        ;                   high-to-low on read line is not
-                        ;                   raised (see pia documentation).
+         bit cas_read_reset ; maybe not needed: makes sure that flag raised by
+                            ;                   high-to-low on read line is not
+                            ;                   raised (see pia documentation).
 
          ;ldx #0        ; send command string.
 strnext  ldy str,x
