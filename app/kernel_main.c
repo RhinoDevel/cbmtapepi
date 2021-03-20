@@ -83,6 +83,16 @@ static enum led_state s_led_state = led_state_off;
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
 {
+//     // For the debug output, below:
+//     //
+// #ifndef NDEBUG
+//     static uint32_t deb_last_beg = 0;
+//     uint32_t const deb_beg = armtimer_get_tick();
+//
+//     static int const deb_count_lim = 25;
+//     static int deb_count = 0;
+// #endif //NDEBUG
+
     static const uint32_t blink_interval = 250000; // 0.25s
     static const uint32_t act_interval = 500000; // 0.5s
     static const uint32_t blink_count = blink_interval / s_t_measure;
@@ -127,6 +137,26 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             break;
         }
     }
+
+//     // Use this via video output and do not output too much to influence
+//     // measurement results (second number output must equal the wanted interrupt
+//     // interval in ticks).
+//     //
+// #ifndef NDEBUG
+//     uint32_t const deb_end = armtimer_get_tick();
+//
+//     if(deb_count < deb_count_lim)
+//     {
+//         ++deb_count;
+//
+//         console_write_dword_dec(deb_end - deb_beg);
+//         console_write(" ");
+//         console_write_dword_dec(deb_beg - deb_last_beg);
+//         console_writeline("");
+//
+//         deb_last_beg = deb_beg;
+//     }
+// #endif //NDEBUG
 }
 
 #ifndef MT_INTERACTIVE
@@ -654,6 +684,12 @@ static void init_console()
 
 static void irq_armtimer_init()
 {
+    // Just for the debug output in IRQ handler (maybe not necessary):
+    //
+#ifndef NEBUG
+    armtimer_start_one_mhz();
+#endif //DEBUG
+
     irqcontroller_irq_src_enable_armtimer();
 
     irqcontroller_irq_enable();
