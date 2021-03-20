@@ -95,10 +95,6 @@ static void init_gpio()
     //
     gpio_init((struct gpio_params){
         .wait_microseconds = timer_wait_microseconds,
-
-        .mem_read = mem_read,
-        .mem_write = mem_write,
-
         .peri_base = PERI_BASE
     });
 }

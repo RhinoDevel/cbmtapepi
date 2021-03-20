@@ -51,6 +51,7 @@
 
 #include "gpio.h"
 #include "gpio_params.h"
+#include "../../lib/mem/mem.h"
 
 static uint32_t const s_offset_from_peribase = 0x00200000;
 
@@ -82,8 +83,6 @@ static uint32_t const s_offset_pudclk0 = 0x98;
 //
 static uint32_t s_addr_base = 0;
 static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
-static uint32_t (*s_mem_read)(uint32_t const addr);
-static void (*s_mem_write)(uint32_t const addr, uint32_t const val);
 
 /** Return address of GPFSEL register responsible for pin with given nr.
  */
@@ -181,16 +180,16 @@ void gpio_set_pud(uint32_t const pin_nr, enum gpio_pud const val)
 
     // Set pull-up/-down mode:
     //
-    s_mem_write(pud, val);
+    mem_write(pud, val);
     s_wait_microseconds(1);
 
-    s_mem_write(pudclk, get_pin_mask(pin_nr));
+    mem_write(pudclk, get_pin_mask(pin_nr));
     s_wait_microseconds(1);
 
     // Maybe not necessary:
     //
-    s_mem_write(pud, gpio_pud_off);
-    s_mem_write(pudclk, 0);
+    mem_write(pud, gpio_pud_off);
+    mem_write(pudclk, 0);
 }
 
 void gpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
@@ -198,12 +197,12 @@ void gpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
     uint32_t const fsel = get_fsel(pin_nr),
         shift = (pin_nr % 10) * 3,
         clear_mask = ~(7 << shift);
-    uint32_t val = s_mem_read(fsel);
+    uint32_t val = mem_read(fsel);
 
     val &= clear_mask;
     val |= (uint32_t)func << shift;
 
-    s_mem_write(fsel, val);
+    mem_write(fsel, val);
 }
 
 void gpio_write(uint32_t const pin_nr, bool const high)
@@ -212,15 +211,15 @@ void gpio_write(uint32_t const pin_nr, bool const high)
 
     if(high)
     {
-        s_mem_write(get_set(pin_nr), pin_mask);
+        mem_write(get_set(pin_nr), pin_mask);
         return;
     }
-    s_mem_write(get_clr(pin_nr), pin_mask);
+    mem_write(get_clr(pin_nr), pin_mask);
 }
 
 bool gpio_read(uint32_t const pin_nr)
 {
-    return (s_mem_read(get_lev(pin_nr)) & get_pin_mask(pin_nr)) != 0;
+    return (mem_read(get_lev(pin_nr)) & get_pin_mask(pin_nr)) != 0;
 }
 
 void gpio_wait_for_low(uint32_t const pin_nr)
@@ -311,6 +310,4 @@ void gpio_init(struct gpio_params const p)
 #endif //MT_LINUX
 
     s_wait_microseconds = p.wait_microseconds;
-    s_mem_read = p.mem_read;
-    s_mem_write = p.mem_write;
 }

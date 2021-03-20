@@ -10,10 +10,6 @@
 struct gpio_params
 {
     void (*wait_microseconds)(uint32_t const microseconds);
-
-    uint32_t (*mem_read)(uint32_t const addr);
-    void (*mem_write)(uint32_t const addr, uint32_t const val);
-
     uint32_t peri_base; // Peripheral base address.
 };
 

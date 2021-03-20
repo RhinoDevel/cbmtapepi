@@ -696,10 +696,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     gpio_init((struct gpio_params){
         .wait_microseconds = armtimer_busywait_microseconds,
-
-        .mem_read = mem_read,
-        .mem_write = mem_write,
-
         .peri_base = PERI_BASE
     });
 

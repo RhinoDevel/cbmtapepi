@@ -10,11 +10,13 @@
 
 /** Read at given address from memory.
  */
-uint32_t mem_read(uint32_t const addr);
+//uint32_t mem_read(uint32_t const addr);
+#define mem_read(ADDR) (*(volatile uint32_t const *)(ADDR))
 
 /** Write value given to memory at given address.
  */
-void mem_write(uint32_t const addr, uint32_t const val);
+//void mem_write(uint32_t const addr, uint32_t const val);
+#define mem_write(ADDR, VAL) (*(volatile uint32_t *)(ADDR) = (VAL))
 
 /** Return true, if len bytes from given addresses on are equal,
  *  otherwise false.
