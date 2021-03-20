@@ -106,37 +106,16 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     ++counter;
 
-    if(counter % blink_count == 0)
-    {
-        blink_state = !blink_state;
-    }
+    act_state ^= counter % act_count == 0;
+    gpio_set_output( // Overdone, but should be OK and to avoid branching.
+        GPIO_PIN_NR_ACT, act_state);
 
-    if(counter % act_count == 0)
-    {
-        act_state = !act_state;
-        gpio_set_output(GPIO_PIN_NR_ACT, act_state);
-    }
+    blink_state ^= counter % blink_count == 0;
 
-    switch(s_led_state)
-    {
-        case led_state_on:
-        {
-            gpio_set_output(MT_GPIO_PIN_NR_LED, true);
-            break;
-        }
-        case led_state_off:
-        {
-            gpio_set_output(MT_GPIO_PIN_NR_LED, false);
-            break;
-        }
-
-        case led_state_blink: // (falls through)
-        default:
-        {
-            gpio_set_output(MT_GPIO_PIN_NR_LED, blink_state);
-            break;
-        }
-    }
+    gpio_set_output( // Overdone, but should be OK and to avoid branching.
+        MT_GPIO_PIN_NR_LED, 
+        s_led_state == led_state_on
+            || (s_led_state != led_state_off && blink_state));
 
 //     // Use this via video output and do not output too much to influence
 //     // measurement results (second number output must equal the wanted interrupt
