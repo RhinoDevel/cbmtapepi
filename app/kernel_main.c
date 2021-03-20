@@ -48,15 +48,15 @@
 #include "mode/mode.h"
 #include "mode/mode_type.h"
 
-// #if PERI_BASE == PERI_BASE_PI1
-//     #define VIDEO_SUPPORT 1
-// #else //PERI_BASE == PERI_BASE_PI1
-//     #define VIDEO_SUPPORT 0
-// #endif //PERI_BASE == PERI_BASE_PI1
-//
-// #if VIDEO_SUPPORT
-//     #include "../lib/video/video.h"
-// #endif //VIDEO_SUPPORT
+#if PERI_BASE == PERI_BASE_PI1
+    #define VIDEO_SUPPORT 1
+#else //PERI_BASE == PERI_BASE_PI1
+    #define VIDEO_SUPPORT 0
+#endif //PERI_BASE == PERI_BASE_PI1
+
+#if VIDEO_SUPPORT
+    #include "../lib/video/video.h"
+#endif //VIDEO_SUPPORT
 
 extern uint32_t __heap; // See memmap.ld.
 
@@ -625,13 +625,13 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     }
 #endif //MT_INTERACTIVE
 
-// #if VIDEO_SUPPORT
-// #else //VIDEO_SUPPORT
-//     static void dummy_write(uint8_t const byte)
-//     {
-//         (void)byte; // Doing nothing.
-//     }
-// #endif //VIDEO_SUPPORT
+#if VIDEO_SUPPORT
+#else //VIDEO_SUPPORT
+    static void dummy_write(uint8_t const byte)
+    {
+        (void)byte; // Doing nothing.
+    }
+#endif //VIDEO_SUPPORT
 
 /** Connect console (singleton) to wanted in-/output.
  */
@@ -656,13 +656,13 @@ static void init_console()
     //
     p.write_newline_with_cr = true;
     //
-// #if VIDEO_SUPPORT
-//     p.write_byte = video_write_byte;
-// #else //VIDEO_SUPPORT
-//     p.write_byte = dummy_write;
-// #endif //VIDEO_SUPPORT
-//     //
-//     p.write_newline_with_cr = false;
+#if VIDEO_SUPPORT
+    p.write_byte = video_write_byte;
+#else //VIDEO_SUPPORT
+    p.write_byte = dummy_write;
+#endif //VIDEO_SUPPORT
+    //
+    p.write_newline_with_cr = false;
 
     miniuart_init();
 
@@ -728,13 +728,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     //
     init_console();
 
-//     // Does not work for Raspberry Pi 2, yet:
-//     //
-//     // Initialize video:
-//     //
-// #if VIDEO_SUPPORT
-//     video_init();
-// #endif //VIDEO_SUPPORT
+    // Does not work for Raspberry Pi 2, yet:
+    //
+    // Initialize video:
+    //
+#if VIDEO_SUPPORT
+    video_init();
+#endif //VIDEO_SUPPORT
 
 #ifndef NDEBUG
     int const result_sdcard_init = sdcard_init();
