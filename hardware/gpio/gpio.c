@@ -97,19 +97,22 @@ static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
 // }
 #define get_fsel(PIN_NR) (s_addr_base + OFFSET_FSEL0 + 4 * ((uint32_t)(PIN_NR) / 10))
 
-static uint32_t get_set(uint32_t const pin_nr)
-{
-    return s_addr_base + OFFSET_SET0 + 4 * (pin_nr / 32);
-    //
-    // 4 bytes for 32 pins.
-}
+// static uint32_t get_set(uint32_t const pin_nr)
+// {
+//     return s_addr_base + OFFSET_SET0 + 4 * (pin_nr / 32);
+//     //
+//     // 4 bytes for 32 pins.
+// }
+#define get_set(PIN_NR) (s_addr_base + OFFSET_SET0 + 4 * ((uint32_t)(PIN_NR) / 32))
 
-static uint32_t get_clr(uint32_t const pin_nr)
-{
-    return s_addr_base + OFFSET_CLR0 + 4 * (pin_nr / 32);
-    //
-    // 4 bytes for 32 pins.
-}
+// static uint32_t get_clr(uint32_t const pin_nr)
+// {
+//     return s_addr_base + OFFSET_CLR0 + 4 * (pin_nr / 32);
+//     //
+//     // 4 bytes for 32 pins.
+// }
+#define get_clr(PIN_NR) (s_addr_base + OFFSET_CLR0 + 4 * ((uint32_t)(PIN_NR) / 32))
+
 static uint32_t get_lev(uint32_t const pin_nr)
 {
     return s_addr_base + s_offset_lev0 + 4 * (pin_nr / 32);
