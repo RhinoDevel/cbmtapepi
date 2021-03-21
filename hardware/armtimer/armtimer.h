@@ -23,6 +23,11 @@ void armtimer_busywait_microseconds(uint32_t const microseconds);
  */
 void armtimer_start_one_mhz();
 
+/** Call this once during timer interrupt initialization [see armtimer_start()]
+ *  and from the IRQ service routine when entered.
+ * 
+ *  DON'T call this from anywhere else!
+ */
 void armtimer_irq_clear();
 
 /**
