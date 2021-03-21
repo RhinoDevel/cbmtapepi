@@ -70,7 +70,8 @@ static uint32_t const s_offset_from_peribase = 0x00200000;
 //
 // [clr1 will dynamically be used with the help of function get_clr()]
 
-static uint32_t const s_offset_lev0 = 0x34; // GPIO pin level 0.
+//static uint32_t const s_offset_lev0 = 0x34; // GPIO pin level 0.
+#define OFFSET_LEV0 ((uint32_t)0x34) // GPIO pin level 0.
 //
 // [lev1 will dynamically be used with the help of function get_lev()]
 
@@ -113,12 +114,13 @@ static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
 // }
 #define get_clr(PIN_NR) (s_addr_base + OFFSET_CLR0 + 4 * ((uint32_t)(PIN_NR) / 32))
 
-static uint32_t get_lev(uint32_t const pin_nr)
-{
-    return s_addr_base + s_offset_lev0 + 4 * (pin_nr / 32);
-    //
-    // 4 bytes for 32 pins.
-}
+// static uint32_t get_lev(uint32_t const pin_nr)
+// {
+//     return s_addr_base + OFFSET_LEV0 + 4 * (pin_nr / 32);
+//     //
+//     // 4 bytes for 32 pins.
+// }
+#define get_lev(PIN_NR) (s_addr_base + OFFSET_LEV0 + 4 * ((uint32_t)(PIN_NR) / 32))
 
 /** Return address of GPPUDCLK register responsible for pin with given nr.
  */
