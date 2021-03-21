@@ -129,10 +129,11 @@ static uint32_t get_pudclk(uint32_t const pin_nr)
     // 4 bytes for 32 pins.
 }
 
-static uint32_t get_pin_mask(uint32_t const pin_nr)
-{
-    return 1 << (pin_nr % 32);
-}
+// static uint32_t get_pin_mask(uint32_t const pin_nr)
+// {
+//     return 1 << (pin_nr % 32);
+// }
+#define get_pin_mask(PIN_NR) (1 << ((uint32_t)(PIN_NR)) % 32)
 
 #ifdef MT_LINUX
 /**
