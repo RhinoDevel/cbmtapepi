@@ -87,7 +87,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //     //
 // #ifndef NDEBUG
 //     static uint32_t deb_last_beg = 0;
-//     uint32_t const deb_beg = armtimer_get_tick();
+//     uint32_t const deb_beg = systimer_get_tick();
 //
 //     static int const deb_count_lim = 25;
 //     static int deb_count = 0;
@@ -125,7 +125,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //     // interval in ticks).
 //     //
 // #ifndef NDEBUG
-//     uint32_t const deb_end = armtimer_get_tick();
+//     uint32_t const deb_end = systimer_get_tick();
 //
 //     if(deb_count < deb_count_lim)
 //     {
@@ -666,12 +666,6 @@ static void init_console()
 
 static void irq_armtimer_init()
 {
-    // Just for the debug output in IRQ handler (maybe not necessary):
-    //
-#ifndef NDEBUG
-    armtimer_start_one_mhz();
-#endif //DEBUG
-
     // Setup LED GPIO ports [to be able to just call gpio_write() from ISR]:
     //
     gpio_set_func(GPIO_PIN_NR_ACT, gpio_func_output);
