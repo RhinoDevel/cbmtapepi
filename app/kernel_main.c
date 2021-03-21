@@ -107,12 +107,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     ++counter;
 
     act_state ^= counter % act_count == 0;
-    gpio_set_output( // Overdone, but should be OK and to avoid branching.
+    gpio_write( // Overdone, but should be OK and to avoid branching.
         GPIO_PIN_NR_ACT, act_state);
 
     blink_state ^= counter % blink_count == 0;
 
-    gpio_set_output( // Overdone, but should be OK and to avoid branching.
+    gpio_write( // Overdone, but should be OK and to avoid branching.
         MT_GPIO_PIN_NR_LED, 
         s_led_state == led_state_on
             || (s_led_state != led_state_off && blink_state));
@@ -645,7 +645,7 @@ static void init_console()
 
     miniuart_init();
 
-    // // Initialize console via PL011 UART (use this for QEMU):
+    // // Initialize console via PL011 UARTGPIO_PIN_NR_LED (use this for QEMU):
     //
     // p.read_byte = pl011uart_read_byte;
     //
@@ -665,9 +665,14 @@ static void irq_armtimer_init()
 {
     // Just for the debug output in IRQ handler (maybe not necessary):
     //
-#ifndef NEBUG
+#ifndef NDEBUG
     armtimer_start_one_mhz();
 #endif //DEBUG
+
+    // Setup LED GPIO ports [to be able to just call gpio_write() from ISR]:
+    //
+    gpio_set_func(GPIO_PIN_NR_ACT, gpio_func_output);
+    gpio_set_func(MT_GPIO_PIN_NR_LED, gpio_func_output);
 
     irqcontroller_irq_src_enable_armtimer();
 
@@ -734,7 +739,7 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         armtimer_get_tick,
         armtimer_busywait_microseconds);
 
-    irq_armtimer_init(); // Needs GPIO.
+    irq_armtimer_init(); // Needs GPIO, initializes LED GPIOs, too.
 
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
