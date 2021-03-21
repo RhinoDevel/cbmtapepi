@@ -60,11 +60,13 @@ static uint32_t const s_offset_from_peribase = 0x00200000;
 //
 // [fsel1 will dynamically be used with the help of function get_fsel()]
 
-static uint32_t const s_offset_set0 = 0x1C; // GPIO pin output set 0.
+//static uint32_t const s_offset_set0 = 0x1C; // GPIO pin output set 0.
+#define OFFSET_SET0 0x1C // GPIO pin output set 0.
 //
 // [set1 will dynamically be used with the help of function get_set()]
 
-static uint32_t const s_offset_clr0 = 0x28; // GPIO pin output clear 0.
+//static uint32_t const s_offset_clr0 = 0x28; // GPIO pin output clear 0.
+#define OFFSET_CLR0 0x28 // GPIO pin output clear 0.
 //
 // [clr1 will dynamically be used with the help of function get_clr()]
 
@@ -97,13 +99,14 @@ static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
 
 static uint32_t get_set(uint32_t const pin_nr)
 {
-    return s_addr_base + s_offset_set0 + 4 * (pin_nr / 32);
+    return s_addr_base + OFFSET_SET0 + 4 * (pin_nr / 32);
     //
     // 4 bytes for 32 pins.
 }
+
 static uint32_t get_clr(uint32_t const pin_nr)
 {
-    return s_addr_base + s_offset_clr0 + 4 * (pin_nr / 32);
+    return s_addr_base + OFFSET_CLR0 + 4 * (pin_nr / 32);
     //
     // 4 bytes for 32 pins.
 }
