@@ -55,7 +55,8 @@
 
 static uint32_t const s_offset_from_peribase = 0x00200000;
 
-static uint32_t const s_offset_fsel0 = 0; // GPIO function select 0.
+//static uint32_t const s_offset_fsel0 = 0; // GPIO function select 0.
+#define OFFSET_FSEL0 0 // GPIO function select 0.
 //
 // [fsel1 will dynamically be used with the help of function get_fsel()]
 
@@ -86,12 +87,13 @@ static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
 
 /** Return address of GPFSEL register responsible for pin with given nr.
  */
-static uint32_t get_fsel(uint32_t const pin_nr)
-{
-    return s_addr_base + s_offset_fsel0 + 4 * (pin_nr / 10);
-    //
-    // 4 bytes for 10 pins.
-}
+// static uint32_t get_fsel(uint32_t const pin_nr)
+// {
+//     return s_addr_base + s_offset_fsel0 + 4 * (pin_nr / 10);
+//     //
+//     // 4 bytes for 10 pins.
+// }
+#define get_fsel(PIN_NR) (s_addr_base + OFFSET_FSEL0 + 4 * ((PIN_NR) / 10))
 
 static uint32_t get_set(uint32_t const pin_nr)
 {
