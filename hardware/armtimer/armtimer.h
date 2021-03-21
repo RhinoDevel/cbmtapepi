@@ -6,6 +6,15 @@
 
 #include <stdint.h>
 
+#include "../peribase.h"
+
+// ARM Timer (based on an SP804 - NOT an "AP804" -, see page 196):
+//
+#define ARM_TIMER_BASE (PERI_BASE + 0xB000)
+// (see C file for other addresses)
+#define ARM_TIMER_CLI (ARM_TIMER_BASE + 0x40C) // IRQ clear/ACK (write only).
+// (see C file for other addresses)
+
 /**
  * - Uses free running counter.
  */
@@ -28,7 +37,8 @@ void armtimer_start_one_mhz();
  * 
  *  DON'T call this from anywhere else!
  */
-void armtimer_irq_clear();
+//void armtimer_irq_clear();
+#define armtimer_irq_clear() (mem_write(ARM_TIMER_CLI, 0))
 
 /**
  * - Does NOT use free running counter, but timer.

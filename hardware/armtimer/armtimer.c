@@ -8,18 +8,17 @@
 // together with that document!
 
 #include "armtimer.h"
-#include "../peribase.h"
 #include "../../lib/mem/mem.h"
 
 #include <stdbool.h>
 
 // ARM Timer (based on an SP804 - NOT an "AP804" -, see page 196):
 //
-#define ARM_TIMER_BASE (PERI_BASE + 0xB000)
+// ARM_TIMER_BASE is defined in header file.
 #define ARM_TIMER_LOD (ARM_TIMER_BASE + 0x400) // Load
 #define ARM_TIMER_VAL (ARM_TIMER_BASE + 0x404) // Value (read only).
 #define ARM_TIMER_CTL (ARM_TIMER_BASE + 0x408) // Control
-#define ARM_TIMER_CLI (ARM_TIMER_BASE + 0x40C) // IRQ clear/ACK (write only).
+// ARM_TIMER_CLI is defined in header file.
 #define ARM_TIMER_RIS (ARM_TIMER_BASE + 0x410) // Raw IRQ (read only).
 #define ARM_TIMER_MIS (ARM_TIMER_BASE + 0x414) // Masked IRQ (read only).
 #define ARM_TIMER_RLD (ARM_TIMER_BASE + 0x418) // Reload
@@ -33,10 +32,10 @@ uint32_t armtimer_get_tick()
     return mem_read(ARM_TIMER_CNT);
 }
 
-void armtimer_irq_clear()
-{
-    mem_write(ARM_TIMER_CLI, 0);
-}
+// void armtimer_irq_clear()
+// {
+//     mem_write(ARM_TIMER_CLI, 0);
+// }
 
 void armtimer_start_one_mhz()
 {
