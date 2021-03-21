@@ -56,17 +56,17 @@
 static uint32_t const s_offset_from_peribase = 0x00200000;
 
 //static uint32_t const s_offset_fsel0 = 0; // GPIO function select 0.
-#define OFFSET_FSEL0 0 // GPIO function select 0.
+#define OFFSET_FSEL0 ((uint32_t)0) // GPIO function select 0.
 //
 // [fsel1 will dynamically be used with the help of function get_fsel()]
 
 //static uint32_t const s_offset_set0 = 0x1C; // GPIO pin output set 0.
-#define OFFSET_SET0 0x1C // GPIO pin output set 0.
+#define OFFSET_SET0 ((uint32_t)0x1C) // GPIO pin output set 0.
 //
 // [set1 will dynamically be used with the help of function get_set()]
 
 //static uint32_t const s_offset_clr0 = 0x28; // GPIO pin output clear 0.
-#define OFFSET_CLR0 0x28 // GPIO pin output clear 0.
+#define OFFSET_CLR0 ((uint32_t)0x28) // GPIO pin output clear 0.
 //
 // [clr1 will dynamically be used with the help of function get_clr()]
 
