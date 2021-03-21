@@ -106,6 +106,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     ++counter;
 
+    // It is OK to call gpio_write() from ISR ("atomic" considerations)
+    // - see implementation of gpio_write()!
+
     act_state ^= counter % act_count == 0;
     gpio_write( // Overdone, but should be OK and to avoid branching.
         GPIO_PIN_NR_ACT, act_state);
