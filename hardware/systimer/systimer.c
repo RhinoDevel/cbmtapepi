@@ -8,22 +8,20 @@
 // together with that document!
 
 #include "systimer.h"
-#include "../peribase.h"
-#include "../../lib/mem/mem.h"
 
 #include <stdbool.h>
 
 // System timer (see page 172):
 //
-#define SYS_TIMER_BASE (PERI_BASE + 0x3000)
-#define SYS_TIMER_CS (SYS_TIMER_BASE + 0) // Control/status
-#define SYS_TIMER_CLO (SYS_TIMER_BASE + 4) // Lower 32 bits of counter.
+// SYS_TIMER_BASE is defined in header file.
+// ...
+// SYS_TIMER_CLO is defined in header file.
 // ...
 
-uint32_t systimer_get_tick()
-{
-    return mem_read(SYS_TIMER_CLO);
-}
+// uint32_t systimer_get_tick()
+// {
+//     return mem_read(SYS_TIMER_CLO);
+// }
 
 void systimer_busywait_microseconds(uint32_t const microseconds)
 {
