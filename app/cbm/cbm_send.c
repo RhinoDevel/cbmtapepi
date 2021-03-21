@@ -49,7 +49,6 @@ void cbm_send_fill_name(
 bool cbm_send_data(
     struct tape_input * const data, bool (*is_stop_requested)())
 {
-    bool ret_val = false;
     struct tape_send_params p;
     uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
 
@@ -59,7 +58,7 @@ bool cbm_send_data(
     p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
     p.data = data;
 
-    ret_val = tape_send(&p, mem_addr);
+    bool const ret_val = tape_send(&p, mem_addr);
 
     alloc_free(mem_addr);
     return ret_val;
