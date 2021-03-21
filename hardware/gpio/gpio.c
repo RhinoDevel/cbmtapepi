@@ -95,7 +95,7 @@ static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
 //     //
 //     // 4 bytes for 10 pins.
 // }
-#define get_fsel(PIN_NR) (s_addr_base + OFFSET_FSEL0 + 4 * ((PIN_NR) / 10))
+#define get_fsel(PIN_NR) (s_addr_base + OFFSET_FSEL0 + 4 * ((uint32_t)(PIN_NR) / 10))
 
 static uint32_t get_set(uint32_t const pin_nr)
 {
