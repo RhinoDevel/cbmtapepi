@@ -445,7 +445,6 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             || mode == mode_type_pet4 || mode == mode_type_pet4tom
             || mode == mode_type_vic20tom);
 
-        bool ret_val = true;
         struct tape_input * ti = 0;
     
         switch(mode)
@@ -503,17 +502,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         //              return false is that the fastmode installer signal got
         //              retrieved by the interrupt handler:
         //
-        ret_val = cbm_send_data(ti, did_signal_exist);
+        bool const ret_val = cbm_send_data(ti, did_signal_exist);
     
         tape_input_free(ti);
         s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
-
-        // TODO: Does not seem to work?!
-        //
-        // Wait for signal from installer:
-        //
-        armtimer_busywait_microseconds(100 * 1000); // 100ms.
-        ret_val = !did_signal_exist();
 
         return ret_val;
     }

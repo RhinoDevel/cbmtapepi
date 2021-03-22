@@ -101,6 +101,11 @@ bool tape_send_buf(
             }
         }
 
+        if(is_stop_requested != 0 && is_stop_requested())
+        {
+            return false;
+        }
+
         switch(buf[i])
         {
             case tape_symbol_zero:
