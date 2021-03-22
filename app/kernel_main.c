@@ -812,6 +812,11 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
             || mode == mode_type_pet4 || mode == mode_type_pet4tom
             || mode == mode_type_vic20tom)
         {
+            // Wait some time for user to power-on CBM and push
+            // <shift> + <run/stop> for loading:
+            //
+            armtimer_busywait_microseconds(10 * 1000 * 1000); // 10s
+
             send_petload_loop(mode);
         }
 
