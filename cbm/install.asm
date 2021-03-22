@@ -20,29 +20,6 @@ install_high
 
          sei
 
-         ; TODO: try to use interrupt on server for frequency-signal detection
-         ;       and be able to immediately break fast mode installer loop and
-         ;       remove the following motor, sense stuff:
-
-         ; set motor to high (otherwise compatibility mode that sends the
-         ; fast mode installer in an infinite loop may gets stuck):
-         ;
-         lda cas_moto
-         and #bas_ordmaskn
-         sta cas_moto
-
-         ; wait for sense to be low:
-         ;
-sen_wlow lda cas_sens
-         and #indamask
-         bne sen_wlow
-
-         ; wait for sense to be high:
-         ;
-sen_whig lda cas_sens
-         and #indamask
-         beq sen_whig
-
          ; toggle logic level all ~250us (see kernel_main.c):
          ;
          ; - assuming 1mhz cpu frequency <=> 1us per cpu cycle.
@@ -69,8 +46,6 @@ keep_lvl dex            ;   2:
          ;bne starty
 
          cli
-
-         ; (isr will set motor back to low)
 
 if tom_install = 1
          rts
