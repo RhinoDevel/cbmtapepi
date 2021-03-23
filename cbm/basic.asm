@@ -193,3 +193,47 @@ bas_cas_moto = $911c ; bit 1. via 2, peripheral control reg. (0 = motor on,
                      ; 1 = motor off).
 
 endif
+
+if bas_ver = 64
+
+; c64.
+
+bas_buf     = $0200
+bas_sob     = $0801
+bas_sobptr  = $2b
+bas_sovptr  = $2d
+bas_tomptr  = $37 ; c64 default value: $A000 (40960)
+bas_chrget  = $73
+bas_chrgot  = $79
+bas_txtptr  = $7a
+
+bas_move_dst = $58
+bas_move_src = $5a
+bas_move_bot = $5f
+
+bas_memmove = $a3bf
+bas_new     = $a644
+bas_rstxclr = $a659
+bas_rechain = $a533
+bas_ready   = $a474
+
+bas_indamask = %00010000 ; bit 4.
+bas_ackmask  = %00001000 ; bit 3.
+bas_oudmask  = %00001000 ; bit 3 = 1.
+bas_oudmaskn = %11110111 ; bit 3 = 0.
+
+bas_ordmask  = %00100000 ; bit 5.
+bas_ordmaskn = %11011111
+bas_inackmask = %00010000 ; bit 4.
+
+bas_cas_sens = $01 ; bit 4. 6510.
+
+bas_cas_read = $dc0d ; bit 4 is high-to-low flag. cia 1, interrupt control reg.
+                     ; (56333).
+bas_cas_read_reset = $dc0d ; immediately clears on first read (see above)!
+
+bas_cas_wrt  = $01 ; bit 3. 6510.
+
+bas_cas_moto = $01 ; bit 5. 6510 (0 = motor on, 1 = motor off).
+
+endif

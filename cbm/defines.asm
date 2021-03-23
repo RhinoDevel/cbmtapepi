@@ -47,6 +47,7 @@ cas_moto = bas_cas_moto
 ;
 sob_pet = 1025
 sob_vic = 4097
+sob_c64 = 2049
 
 ; for the basic loader to install at top of memory:
 ;
@@ -63,6 +64,13 @@ dec_addr1 = 4;dec_addr / 1000
 dec_addr2 = 1;(dec_addr / 100) MOD 10
 dec_addr3 = 3;(dec_addr / 10) MOD 10
 dec_addr4 = 2;dec_addr MOD 10
+endif
+if sob = sob_c64 ; c64
+;dec_addr = 2084;cpy_inst
+dec_addr1 = 2;dec_addr / 1000
+dec_addr2 = 0;(dec_addr / 100) MOD 10
+dec_addr3 = 8;(dec_addr / 10) MOD 10
+dec_addr4 = 4;dec_addr MOD 10
 endif
 
 str_len  = 16           ; size of command string stored at label "str".
@@ -84,7 +92,7 @@ oudmaskn = bas_oudmaskn ; inverted out-data mask for cas_wrt.
 ordmask  = bas_ordmask  ; out-data-ready mask for cas_moto.
                         ; 1 <=> motor off, 0 <=> motor on.
 ordmaskn = bas_ordmaskn
-inackmask = bas_inackmask
+inackmask = bas_inackmask ; cas_read
 
 ; -----------
 ; "variables"

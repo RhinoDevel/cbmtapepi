@@ -47,9 +47,9 @@ keep_lvl dex            ;   2:
 
          cli
 
-if tom_install = 1
-         rts
-else
+if tom_install = 0
          jmp new ; repairs start-of-variables pointer, etc., these were changed
                  ; by loading into tape buffer(-s).
+else
+         rts
 endif
