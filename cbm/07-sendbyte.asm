@@ -35,7 +35,10 @@ sendwait lda cas_read
          ;bit cas_read   ; wait for data-ack. high-low (writes bit 7 to n flag).
          ;bpl sendwait   ; branch, if n is 0 ("positive").
 
-         bit cas_read_reset ; resets "toggle" bit by read operation (see docs).
+if cas_read <> cas_read_reset
+         bit cas_read_reset ; resets "toggle" bit by read operation (see docs,
+                            ; not necessary for cia of c64).
+endif
 
          dey
          bne sendloop   ; last bit read?

@@ -19,7 +19,10 @@ wedge    inc txtptr     ; increment here, because of code overwritten at chrget
          bne save_y     ; with jump to wedge.
          inc txtptr + 1
 
-str = wedge - str_len ; start of cmd. string buffer in use by wedge.
+; relocation via assembler does not include str, if done this way
+; (that is why the str label is not used):
+;
+;str = wedge - str_len ; start of cmd. string buffer in use by wedge.
 
 save_y   sty temp0      ; temporarily save original y register contents.
 
@@ -42,7 +45,7 @@ endif
          inc txtptr     ; save at most "str_len" count of characters from input.
 next_i   lda (txtptr),y ; copy from buffer to "str".
          beq fill_i
-str2     sta str,y
+str2     sta wedge - str_len,y
          iny
          cpy #str_len
          bne next_i
@@ -54,7 +57,7 @@ str2     sta str,y
 fill_i   lda #spc_char  ; fill remaining places in "str" array with spaces.
 next_f   cpy #str_len
          beq main
-str3     sta str,y
+str3     sta wedge - str_len,y
          iny
          bne next_f     ; always branches (saves one byte by not using jmp).
 

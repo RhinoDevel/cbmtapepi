@@ -28,8 +28,11 @@ bas_next word 0
 ; *** install by copying to destination address ***
 ; *************************************************
 
+topofree  = $d000 ; top of highest free memory on c64 ($c000-$cfff).
 cpy_bytes = cpy_lim - installer
-cpy_addr  = $d000 - cpy_bytes
+cpy_addr  = topofree - cpy_bytes
+cpy_src = jmptoinst + 3 ; to avoid unwanted relocation.
+cpy_lim_to_use = cpy_src + cpy_bytes
 
           ; *** copy code to top of free memory ***
 
@@ -49,18 +52,13 @@ cpy_addr  = $d000 - cpy_bytes
           
           ; destination top/end of area +1:
           ;
-          lda #$d0
+          lda #<topofree
           sta move_dst
-          lda #$00
-          sty move_dst + 1
+          lda #>topofree
+          sta move_dst + 1
 
           jsr memmove
 
 jmptoinst jmp installer
 
-cpy_src = jmptoinst + 3 ; to avoid unwanted relocation.
-cpy_lim_to_use = cpy_src + cpy_bytes
-
-; TODO: fix str address!
-
-Relocate $cecc;cpy_addr ; hard-coded!
+Relocate $ced2;cpy_addr ; hard-coded!

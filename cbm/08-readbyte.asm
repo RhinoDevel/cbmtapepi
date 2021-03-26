@@ -22,7 +22,10 @@ readwait lda cas_read
          ;bit cas_read   ; wait for data-ready toggling (writes bit 7 to n flag).
          ;bpl readwait   ; branch, if n is 0 ("positive").
 
-         bit cas_read_reset ; resets "toggle" bit by read operation (see docs).
+if cas_read <> cas_read_reset
+         bit cas_read_reset ; resets "toggle" bit by read operation (see docs,
+                            ; not necessary for cia of c64).
+endif
 
          lda cas_sens   ; load actual data (bit 4) into c flag.
          and #indamask  ; sets z flag to 1, if bit 4 is 0.

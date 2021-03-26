@@ -27,7 +27,7 @@ main     sei
          
          tax ; (for sending command string, below)
 
-str1     lda str
+str1     lda wedge - str_len
          cmp #sav_char
          bne addrlim_rdy
 
@@ -46,7 +46,7 @@ addrlim_rdy
                             ;                   raised (see pia documentation).
 
          ;ldx #0        ; send command string.
-strnext  ldy str,x
+strnext  ldy wedge - str_len,x
 
 send1    jsr sendbyte
          inx
