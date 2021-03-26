@@ -30,7 +30,7 @@ if tom_install = 1
     Incasm "03-topofmem.asm"
 endif
 if tom_install = 2
-    Incasm "03-topofree.asm"
+    Incasm "03-topofree.asm" ; you may need to upd. hard-coded relocated addr.!
 endif
 
 Incasm "04-install.asm"
@@ -38,6 +38,6 @@ Incasm "05-wedge.asm"
 Incasm "06-main.asm"
 Incasm "07-sendbyte.asm"
 Incasm "08-readbyte.asm"
-Incasm "09-deb.asm"
+Incasm "09-debug.asm"
 
 Generateto cbmtapepi.prg

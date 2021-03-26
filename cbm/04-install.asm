@@ -9,6 +9,7 @@
 ; *** wedge installer ***
 ; ***********************
 
+installer
          lda #$4c       ; jmp
          sta chrget
 install_low
