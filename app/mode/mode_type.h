@@ -21,7 +21,10 @@ enum mode_type
     mode_type_pet2tom = 2 + 0x10, // For BASIC v2.
     mode_type_pet4tom = 4 + 0x10, // For BASIC v4.
 
-    mode_type_vic20tom = 0x20
+    mode_type_vic20tom = 0x20,
+
+    mode_type_c64tof = 0x64 + 0x00, // Top of free high memory install.
+    mode_type_c64tom = 0x64 + 0x01  // Top of (BASIC) memory install. 
 };
 
 #endif //MT_MODE_TYPE

@@ -35,7 +35,9 @@ bool mode_save(enum mode_type const type)
         case mode_type_pet2tom: // (falls through)
         case mode_type_pet4: // (falls through)
         case mode_type_pet4tom: // (falls through)
-        case mode_type_vic20tom:
+        case mode_type_vic20tom: // (falls through)
+        case mode_type_c64tof: // (falls through)
+        case mode_type_c64tom:
         {
             return cfg_save(s_dir_path, s_filename, (uint8_t)type);
         }

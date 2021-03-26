@@ -97,9 +97,11 @@ static struct cmd_output * exec_dir(enum mode_type const mode)
 
         // TODO: Don't do this in such a hard-coded way:
         //
-        mode == mode_type_vic20tom
-            ? MT_BASIC_ADDR_VIC
-            : MT_BASIC_ADDR_PET,
+        mode == mode_type_c64tof || mode_type_c64tom
+            ? MT_BASIC_ADDR_C64
+            : (mode_type_vic20tom
+                ? MT_BASIC_ADDR_VIC
+                : MT_BASIC_ADDR_PET),
 
         (char const * *)name_arr,
         name_count,

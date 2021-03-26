@@ -7,6 +7,8 @@
 #include "petload_pet4.h"
 #include "petload_pet4tom.h"
 #include "petload_vic20tom.h"
+#include "petload_c64tof.h"
+#include "petload_c64tom.h"
 #include "../config.h"
 #include "../cbm/cbm_send.h"
 #include "../tape/tape_input.h"
@@ -379,6 +381,20 @@ struct tape_input * petload_create_vic20tom()
     return create_tom(
         s_petload_vic20tom,
         (int)(sizeof s_petload_vic20tom / sizeof *s_petload_vic20tom));
+}
+
+struct tape_input * petload_create_c64tof()
+{
+    return create_tom( // (OK, even if not installed in top of BASIC memory)
+        s_petload_c64tof,
+        (int)(sizeof s_petload_c64tof / sizeof *s_petload_c64tof));
+}
+
+struct tape_input * petload_create_c64tom()
+{
+    return create_tom(
+        s_petload_c64tom,
+        (int)(sizeof s_petload_c64tom / sizeof *s_petload_c64tom));
 }
 
 struct tape_input * petload_retrieve()

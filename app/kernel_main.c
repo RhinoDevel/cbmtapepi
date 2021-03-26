@@ -243,7 +243,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_pet2tom: // (falls through)
             case mode_type_pet4: // (falls through)
             case mode_type_pet4tom: // (falls through)
-            case mode_type_vic20tom:
+            case mode_type_vic20tom: // (falls through)
+            case mode_type_c64tof: // (falls through)
+            case mode_type_c64tom:
             {
                 return petload_retrieve(); // (must never return 0)
             }
@@ -269,7 +271,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         if(mode == mode_type_pet1 || mode == mode_type_pet1tom
             || mode == mode_type_pet2 || mode == mode_type_pet2tom
             || mode == mode_type_pet4 || mode == mode_type_pet4tom
-            || mode == mode_type_vic20tom)
+            || mode == mode_type_vic20tom
+            || mode == mode_type_c64tof || mode == mode_type_c64tom)
         {
             petload_send_nop();
         }
@@ -286,7 +289,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_pet2tom: // (falls through)
             case mode_type_pet4: // (falls through)
             case mode_type_pet4tom: // (falls through)
-            case mode_type_vic20tom:
+            case mode_type_vic20tom: // (falls through)
+            case mode_type_c64tof: // (falls through)
+            case mode_type_c64tom:
             {
                 return true;
             }
@@ -339,6 +344,15 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         if(str_starts_with(name, "vic20"))
         {
             return mode_type_vic20tom;
+        }
+
+        if(str_starts_with(name, "c64tom"))
+        {
+            return mode_type_c64tom;
+        }
+        if(str_starts_with(name, "c64"))
+        {
+            return mode_type_c64tof;
         }
 
         return mode_type_err;
@@ -443,7 +457,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         assert(mode == mode_type_pet1 || mode == mode_type_pet1tom
             || mode == mode_type_pet2 || mode == mode_type_pet2tom
             || mode == mode_type_pet4 || mode == mode_type_pet4tom
-            || mode == mode_type_vic20tom);
+            || mode == mode_type_vic20tom
+            || mode == mode_type_c64tof || mode == mode_type_c64tom);
 
         struct tape_input * ti = 0;
     
@@ -485,6 +500,17 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_vic20tom:
             {
                 ti = petload_create_vic20tom();
+                break;
+            }
+
+            case mode_type_c64tof:
+            {
+                ti = petload_create_c64tof();
+                break;
+            }
+            case mode_type_c64tom:
+            {
+                ti = petload_create_c64tom();
                 break;
             }
 
@@ -613,7 +639,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                         case mode_type_pet2tom: // (falls through)
                         case mode_type_pet4: // (falls through)
                         case mode_type_pet4tom: // (falls through)
-                        case mode_type_vic20tom:
+                        case mode_type_vic20tom: // (falls through)
+                        case mode_type_c64tof: // (falls through)
+                        case mode_type_c64tom:
                         {
                             petload_send(o->bytes, o->count);
                             break;
@@ -631,7 +659,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                     if(mode == mode_type_pet1 || mode == mode_type_pet1tom
                         || mode == mode_type_pet2 || mode == mode_type_pet2tom
                         || mode == mode_type_pet4 || mode == mode_type_pet4tom
-                        || mode == mode_type_vic20tom)
+                        || mode == mode_type_vic20tom
+                        || mode == mode_type_c64tof || mode_type_c64tom)
                     {
                         // Get CBM out of waiting-for-response mode:
                         //
@@ -810,12 +839,13 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
         if(mode == mode_type_pet1 || mode == mode_type_pet1tom
             || mode == mode_type_pet2 || mode == mode_type_pet2tom
             || mode == mode_type_pet4 || mode == mode_type_pet4tom
-            || mode == mode_type_vic20tom)
+            || mode == mode_type_vic20tom
+            || mode == mode_type_c64tof || mode == mode_type_c64tom)
         {
             // Wait some time for user to power-on CBM and push
             // <shift> + <run/stop> for loading:
             //
-            armtimer_busywait_microseconds(10 * 1000 * 1000); // 10s
+            armtimer_busywait_microseconds(5 * 1000 * 1000); // 5s
 
             send_petload_loop(mode);
         }
