@@ -20,24 +20,24 @@ tom_install = 0 ; 0 = install in tape buffers
 
 ; *********************
 
-Incasm "basic.asm"
-Incasm "defines.asm"
+Incasm "01-basic.asm"
+Incasm "02-defines.asm"
 
 if tom_install = 0
-    Incasm "tapebuf.asm"
+    Incasm "03-tapebuf.asm"
 endif
 if tom_install = 1
-    Incasm "topofmem.asm"
+    Incasm "03-topofmem.asm"
 endif
 if tom_install = 2
-    Incasm "topofree.asm"
+    Incasm "03-topofree.asm"
 endif
 
-Incasm "install.asm"
-Incasm "wedge.asm"
-Incasm "main.asm"
-Incasm "sendbyte.asm"
-Incasm "readbyte.asm"
-Incasm "deb.asm"
+Incasm "04-install.asm"
+Incasm "05-wedge.asm"
+Incasm "06-main.asm"
+Incasm "07-sendbyte.asm"
+Incasm "08-readbyte.asm"
+Incasm "09-deb.asm"
 
 Generateto cbmtapepi.prg
