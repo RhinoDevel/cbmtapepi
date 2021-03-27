@@ -3,8 +3,6 @@
 ;
 ; marcel timm, rhinodevel
 
-; cbm pet
-
 ; **********************
 ; *** basic "loader" ***
 ; **********************
@@ -39,7 +37,7 @@ bas_next word 0
 
           ; correct addresses of str and update top-of-memory pointer:
           ;
-tom_str_offset = cpy_lim - wedge - str_len ; offset from str to byte following
+tom_str_offset = cpy_lim - wedge + str_len ; offset from str to byte following
                                            ; the last byte.
           sec
           txa
