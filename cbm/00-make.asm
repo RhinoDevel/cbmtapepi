@@ -3,8 +3,6 @@
 ;
 ; marcel timm, rhinodevel
 
-; cbm pet
-
 ; *********************
 ; *** configuration ***
 ; *********************
@@ -16,7 +14,18 @@ tom_install = 0 ; 0 = install in tape buffers
                 ;     (which is possible for pet machines, only).
                 ; 1 = install to top of memory.
                 ; 2 = install at top of highest free memory (c64, only).
-                
+                ;
+                ;     ALWAYS TO-DO FOR install at top of highest free memory:
+                ;     *******************************************************
+                ;     1) Check, if relocate address is correct (must be
+                ;        hard-coded, as assembler does not seem to support a
+                ;        label with Relocate..).
+                ;     2) Uncomment Relocate (must be done, because assembler
+                ;        seems to ignore conditional assembly with Relocate..).
+                ;
+                ;     ALWAYS TO-DO FOR other install options:
+                ;     ***************************************
+                ;     1) Comment-out Relocate (see comment, above).
 
 ; *********************
 
@@ -30,7 +39,8 @@ if tom_install = 1
     Incasm "03-topofmem.asm"
 endif
 if tom_install = 2
-    Incasm "03-topofree.asm" ; you may need to upd. hard-coded relocated addr.!
+    Incasm "03-topofree.asm"
+    ;Relocate $ced2;cpy_addr ; see ALWAYS TO-DO list, above!
 endif
 
 Incasm "04-install.asm"

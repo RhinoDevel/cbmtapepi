@@ -60,5 +60,3 @@ cpy_lim_to_use = cpy_src + cpy_bytes
           jsr memmove
 
 jmptoinst jmp installer
-
-Relocate $ced2;cpy_addr ; hard-coded!
