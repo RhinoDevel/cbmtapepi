@@ -22,37 +22,6 @@
 //
 _start:
 
-    // Interrupt vector table (must be copied to 0x00000000, followed by
-    // constants below, because LDR uses relative adressing):
-    //
-    ldr pc, _vector_arm_reset // Also jumps to reset handler on start-up.
-    ldr pc, _vector_undefined_instruction
-    ldr pc, _vector_swi
-    ldr pc, _vector_abort_prefetch
-    ldr pc, _vector_abort_data
-    ldr pc, _vector_addr_exception
-    ldr pc, _vector_irq
-    ldr pc, _vector_fiq
-
-    // Constants for interrupt vector table:
-    //
-_vector_arm_reset:
-    .word _handler_arm_reset
-_vector_undefined_instruction:
-    .word handler_undefined_instruction
-_vector_swi:
-    .word handler_swi
-_vector_abort_prefetch:
-    .word handler_abort_prefetch
-_vector_abort_data:
-    .word handler_abort_data
-_vector_addr_exception:
-    .word handler_addr_exception
-_vector_irq:
-    .word handler_irq
-_vector_fiq:
-    .word handler_fiq
-
 _handler_arm_reset:
 
 /*
@@ -84,14 +53,14 @@ _handler_arm_reset:
 //    add r3, pc, #4
 //    msr ELR_hyp, r3
 //    eret
-
+    //
 setup_ivt:
 */
 
     // Copy interrupt vector table and constants into position:
 
-    ldr r3, =__start ; This is where the vector table starts, too.
-    mov r4, #0 ; Copy to 0x00000000.
+    ldr r3, =ivt_src
+    mov r4, #0 // Copy to 0x00000000.
 
     // Vector table:
     //
@@ -153,3 +122,36 @@ setup_ivt:
 halt:
 	wfe // Wait for event (hint).
 	b halt
+
+ivt_src:
+
+    // Interrupt vector table (must be copied to 0x00000000, followed by
+    // constants below, because LDR uses relative adressing):
+    //
+    ldr pc, _vector_arm_reset // Also jumps to reset handler on start-up.
+    ldr pc, _vector_undefined_instruction
+    ldr pc, _vector_swi
+    ldr pc, _vector_abort_prefetch
+    ldr pc, _vector_abort_data
+    ldr pc, _vector_addr_exception
+    ldr pc, _vector_irq
+    ldr pc, _vector_fiq
+
+    // Constants for interrupt vector table:
+    //
+_vector_arm_reset:
+    .word _handler_arm_reset
+_vector_undefined_instruction:
+    .word handler_undefined_instruction
+_vector_swi:
+    .word handler_swi
+_vector_abort_prefetch:
+    .word handler_abort_prefetch
+_vector_abort_data:
+    .word handler_abort_data
+_vector_addr_exception:
+    .word handler_addr_exception
+_vector_irq:
+    .word handler_irq
+_vector_fiq:
+    .word handler_fiq
