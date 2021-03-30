@@ -12,12 +12,13 @@
 #include "../hardware/peribase.h"
 #include "../hardware/armtimer/armtimer.h"
 #include "../hardware/irqcontroller/irqcontroller.h"
+//#include "../hardware/barrier.h"
 #include "../hardware/miniuart/miniuart.h"
 //#include "../hardware/pl011uart/pl011uart.h"
 #include "../hardware/gpio/gpio_params.h"
 #include "../hardware/gpio/gpio.h"
 #ifndef NDEBUG
-//    #include "../hardware/systimer/systimer.h"
+    #include "../hardware/systimer/systimer.h"
     #include "../hardware/sdcard/sdcard.h"
 #endif //NDEBUG
 
@@ -95,16 +96,33 @@ static void init_signal_stuff()
     s_level_index = 0;
     s_signal_existed = false;
 
+
+    // For the debug output, below:
+    //
+#ifndef NDEBUG
+    uint32_t const deb_beg = systimer_get_tick();
+#endif //NDEBUG
+
     for(int i = 0; i < s_measurements; ++i)
     {
         s_levels[i] = 0;
     }
+
+#ifndef NDEBUG
+    console_write("init_signal_stuff : Loop over ");
+    console_write_dword_dec(s_measurements);
+    console_write(" items took 0x");
+    console_write_dword(systimer_get_tick() - deb_beg);
+    console_writeline(" (1 MHz) ticks.");
+#endif //NDEBUG
 }
 
 /** IRQ interrupt handler.
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
 {
+    //barrier_datasync();
+
 //     // For the debug output, below:
 //     //
 // #ifndef NDEBUG
@@ -123,6 +141,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     static bool blink_state = false;
     static bool act_state = false;
     static uint32_t counter = 0;
+
+    int c = 0;
 
     armtimer_irq_clear();
 
@@ -151,19 +171,19 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     // - see implementation of gpio_read()!
 
     s_levels[s_level_index] = gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE);
-    for(int i = 0, c = 0;i < s_measurements; ++i)
+    for(int i = 0;i < s_measurements; ++i)
     {
         int const cur_index = 
                     (s_level_index - i + s_measurements) % s_measurements,
                 pre_index = (cur_index + s_measurements - 1) % s_measurements;
 
         c += (int)(s_levels[cur_index] != s_levels[pre_index]);
-        if(c == s_min_toggles)
-        {
-            s_signal_existed = true;
-            break;
-        }
     }
+
+    s_signal_existed = s_signal_existed || c > s_min_toggles;
+    //
+    // (not doing this in loop with immediate break to avoid branches)
+
     s_level_index = (s_level_index + 1) % s_measurements;
 
     // *************************
@@ -179,14 +199,16 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //     {
 //         ++deb_count;
 //
-//         console_write_dword_dec(deb_end - deb_beg);
+//         console_write_dword(deb_end - deb_beg);
 //         console_write(" ");
-//         console_write_dword_dec(deb_beg - deb_last_beg);
+//         console_write_dword(deb_beg - deb_last_beg);
 //         console_writeline("");
 //
 //         deb_last_beg = deb_beg;
 //     }
 // #endif //NDEBUG
+
+    //barrier_datasync();
 }
 
 #ifndef MT_INTERACTIVE
