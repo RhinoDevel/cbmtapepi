@@ -23,12 +23,21 @@
 _start:
 
 _handler_arm_reset:
-
 /*
     // *************************************
-    // *** Uncomment for PERI_BASE_PI2!  ***
+    // *** Uncomment for PERI_BASE_PI2!  *** START
     // *************************************
 
+    // Return CPU ID (0, 1, 2 or 3) of the CPU currently executing this code:
+    //
+    mrc     p15, 0, r3, c0, c0, 5 // R3 = Multiprocessor affinity register (MPIDR).
+    ands    r3, #3 // R3 = CPU ID (Bits 0 and 1).
+    beq     go_supervisor // If CPU ID is not 0, branch to infinite loop.
+
+core_loop: // Infinite loop for cores 1, 2 and 3.
+    b core_loop
+
+go_supervisor:
     // Switch from hypervisor to supervisor mode, if necessary:
     //
     .arch_extension virt
@@ -53,9 +62,13 @@ _handler_arm_reset:
 //    add r3, pc, #4
 //    msr ELR_hyp, r3
 //    eret
-    //
+
 setup_ivt:
 */
+
+    // *************************************
+    // *** Uncomment for PERI_BASE_PI2!  *** END
+    // *************************************
 
     // Copy interrupt vector table and constants into position:
 
