@@ -20,9 +20,10 @@
 //
 _start:
 
-    // Setup interrupt vector table at start (should be at 0x00008000):
+    // Interrupt vector table (must be copied to 0x00000000, followed by
+    // constants below, because LDR uses relative adressing):
     //
-    ldr pc, _vector_arm_reset
+    ldr pc, _vector_arm_reset // Also jumps to reset handler on start-up.
     ldr pc, _vector_undefined_instruction
     ldr pc, _vector_swi
     ldr pc, _vector_abort_prefetch
@@ -50,15 +51,13 @@ _vector_irq:
 _vector_fiq:
     .word handler_fiq
 
-    // "Fall through" to reset handler.
-
 _handler_arm_reset:
 
 /*
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  ***
     // *************************************
-    //
+
     // Switch from hypervisor to supervisor mode, if necessary:
     //
     .arch_extension virt
@@ -89,8 +88,8 @@ setup_ivt:
 
     // Copy interrupt vector table and constants into position:
 
-    ldr r3, =__start
-    mov r4, #0
+    ldr r3, =__start ; This is where the vector table starts, too.
+    mov r4, #0 ; Copy to 0x00000000.
 
     // Vector table:
     //
