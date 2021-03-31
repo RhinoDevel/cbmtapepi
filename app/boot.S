@@ -28,9 +28,11 @@ _handler_arm_reset:
     // *** Uncomment for PERI_BASE_PI2!  *** START
     // *************************************
 
+    // TODO: Test, if this code works (also see kernel_main.c):
+
     // Return CPU ID (0, 1, 2 or 3) of the CPU currently executing this code:
     //
-    mrc     p15, 0, r3, c0, c0, 5 // R3 = Multiprocessor affinity register (MPIDR).
+    mrc     p15, #0, r3, c0, c0, #5 // R3 <= Multiprocessor affinity register (MPIDR).
     ands    r3, #3 // R3 = CPU ID (Bits 0 and 1).
     beq     go_supervisor // If CPU ID is not 0, branch to infinite loop.
 
@@ -62,6 +64,15 @@ go_supervisor:
 //    add r3, pc, #4
 //    msr ELR_hyp, r3
 //    eret
+
+    // On a Raspberry Pi 2, at least some of this is necessary for speed
+    // (without it, e.g a simple loop counting from 0 <= 50 takes ~16us!):
+    //
+    mrc p15, #0, r3, c1, c0, #0 // R3 <= System Control Register
+    orr r3, #0x0800 // Branch prediction (bit 11).
+    orr r3, #0x1000 // L1 instruction caches (Bit 12).
+    orr r3, #0x0004 // L1 data cache (bit 2).
+    mcr p15, #0, r3, c1, c0, #0 // System Control Register <= R3
 
 setup_ivt:
 */
@@ -104,9 +115,6 @@ setup_ivt:
     //
 	mov sp, #0x03700000 // Above 32kB address.
     //ldr sp, =0x04000000 // Above 64MB address.
-
-    // TODO: Enable branch prediction, data cache and instruction cache
-    //       (maybe some stuff already is enabled for PERI_BASE_PI2..)?
 
 	// Set whole BSS section to zero (it is optional, but C standard):
 

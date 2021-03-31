@@ -12,7 +12,7 @@
 #include "../hardware/peribase.h"
 #include "../hardware/armtimer/armtimer.h"
 #include "../hardware/irqcontroller/irqcontroller.h"
-//#include "../hardware/barrier.h"
+#include "../hardware/barrier.h"
 #include "../hardware/miniuart/miniuart.h"
 //#include "../hardware/pl011uart/pl011uart.h"
 #include "../hardware/gpio/gpio_params.h"
@@ -61,6 +61,8 @@
 
 extern uint32_t __heap; // See memmap.ld.
 
+void _start(); // See boot.S.
+
 enum led_state
 {
     led_state_off,
@@ -96,7 +98,6 @@ static void init_signal_stuff()
     s_level_index = 0;
     s_signal_existed = false;
 
-
     // For the debug output, below:
     //
 #ifndef NDEBUG
@@ -109,10 +110,12 @@ static void init_signal_stuff()
     }
 
 #ifndef NDEBUG
+    uint32_t const deb_end = systimer_get_tick();
+
     console_write("init_signal_stuff : Loop over ");
     console_write_dword_dec(s_measurements);
     console_write(" items took 0x");
-    console_write_dword(systimer_get_tick() - deb_beg);
+    console_write_dword(deb_end - deb_beg);
     console_writeline(" (1 MHz) ticks.");
 #endif //NDEBUG
 }
@@ -121,7 +124,7 @@ static void init_signal_stuff()
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
 {
-    //barrier_datasync();
+    barrier_datasync(); // Necessary (also see below)?
 
 //     // For the debug output, below:
 //     //
@@ -188,10 +191,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     // *************************
 
-//     // Use this via video output and do not output too much to influence
-//     // measurement results (second number output must equal the wanted interrupt
-//     // interval in ticks).
-//     //
+    // Use this via video output and do not output too much to influence
+    // second measurement result (second number output must equal the wanted
+    // interrupt interval in ticks - will be more, if serial console is used).
+    //
 // #ifndef NDEBUG
 //     uint32_t const deb_end = systimer_get_tick();
 //
@@ -208,7 +211,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //     }
 // #endif //NDEBUG
 
-    //barrier_datasync();
+    barrier_datasync(); // Necessary (also see above)?
 }
 
 #ifndef MT_INTERACTIVE
@@ -786,6 +789,26 @@ static void irq_armtimer_init()
     // definition of start_timer()].
 }
 
+// TODO: Check, if this code works (also see boot.S):
+//
+static void init_secondary_cores()
+{
+#if PERI_BASE != PERI_BASE_PI1
+    for(uint32_t core_nr = 1;core_nr <= 3;++core_nr)
+    {
+        // ARM_LOCAL_BASE = 0x40000000 for Pi 2 and 3.
+        // ARM_LOCAL_BASE = 0xFF800000 for Pi 4.
+        //
+        static uint32_t const base = 0x4000008C; // ARM_LOCAL_MAILBOX3_SET0
+        static uint32_t const factor = 16;
+
+        uint32_t const addr = base + factor * core_nr;
+
+        mem_write(addr, (uint32_t)(&_start));
+    }
+#endif //PERI_BASE != PERI_BASE_PI1
+}
+
 /**
  * - Entry point (see boot.S).
  */
@@ -796,6 +819,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     (void)r0;
     (void)r1;
     (void)r2;
+
+    init_secondary_cores();
 
     // Initialize GPIO singleton:
     //
