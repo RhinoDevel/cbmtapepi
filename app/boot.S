@@ -23,7 +23,7 @@
 _start:
 
 _handler_arm_reset:
-/*
+///*
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  *** START
     // *************************************
@@ -65,7 +65,7 @@ go_supervisor:
 //    msr ELR_hyp, r3
 //    eret
 
-    // On a Raspberry Pi 2, at least some of this is necessary for speed
+    // On a Raspberry Pi 2, at least L1 instruction cache is necessary for speed
     // (without it, e.g a simple loop counting from 0 <= 50 takes ~16us!):
     //
     mrc p15, #0, r3, c1, c0, #0 // R3 <= System Control Register
@@ -75,7 +75,7 @@ go_supervisor:
     mcr p15, #0, r3, c1, c0, #0 // System Control Register <= R3
 
 setup_ivt:
-*/
+//*/
 
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  *** END
