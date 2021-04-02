@@ -242,6 +242,8 @@ bool tape_receive_buf(
     tick_long_max = 0;
 #endif //NDEBUG
 
+    
+
     if(!gpio_read(gpio_pin_nr_motor))
     {
         console_deb_writeline("tape_receive_buf: Motor is OFF, waiting..");
