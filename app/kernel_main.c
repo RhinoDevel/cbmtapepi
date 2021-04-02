@@ -1,4 +1,8 @@
 
+// TODO: Make sure that SAVE does not set s_signal_existed to true
+//       (needs atomic setting of all "signal stuff", or are SAVE frequencies
+//        low enough?)!
+
 // Marcel Timm, RhinoDevel, 2018dec11
 
 // Pages mentioned in source code comments can be found in the document
@@ -82,22 +86,16 @@ enum led_state
 //
 // Will be intialized in init_signal_stuff():
 //
-static bool s_levels[s_measurements];
-static int s_level_index = 0;
-
-/*
- * - Set to false by init_signal_stuff() and send_petload_loop(),
- *   set to true by IRQ handler.
- */
+static uint32_t s_toggles[s_measurements];
+//
+// - Set to true by IRQ handler.
+//
 static bool s_signal_existed = false;
 
 static enum led_state s_led_state = led_state_off;
 
 static void init_signal_stuff()
 {
-    s_level_index = 0;
-    s_signal_existed = false;
-
     // For the debug output, below:
     //
 #ifndef NDEBUG
@@ -106,7 +104,7 @@ static void init_signal_stuff()
 
     for(int i = 0; i < s_measurements; ++i)
     {
-        s_levels[i] = 0;
+        s_toggles[i] = 0;
     }
 
 #ifndef NDEBUG
@@ -145,8 +143,6 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     static bool act_state = false;
     static uint32_t counter = 0;
 
-    int c = 0;
-
     armtimer_irq_clear();
 
     ++counter;
@@ -166,35 +162,59 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             || (s_led_state != led_state_off && blink_state));
 
     // *** SIGNAL DETECTION: ***
-
+    //
     // If there are at least the minimum amount of level changes between the
     // last measurements, set a flag.
-
+    //
     // It is OK to call gpio_read() from ISR ("atomic" considerations)
     // - see implementation of gpio_read()!
-
-    s_levels[s_level_index] = gpio_read(MT_TAPE_GPIO_PIN_NR_WRITE);
-    for(int i = 0;i < s_measurements; ++i)
+    //
     {
-        int const cur_index = 
-                    (s_level_index - i + s_measurements) % s_measurements,
-                pre_index = (cur_index + s_measurements - 1) % s_measurements;
+        static uint32_t toggle_index = 0;
+        static uint32_t last_signal_val = 0;
+        static uint32_t toggle_count = 0;
+        
+        uint32_t const cur_signal_val = (uint32_t)gpio_read(
+                                            MT_TAPE_GPIO_PIN_NR_WRITE);
 
-        c += (int)(s_levels[cur_index] != s_levels[pre_index]);
+        uint32_t const is_toggled = last_signal_val ^ cur_signal_val;
+        
+        // Wanted:
+        //
+        //  s_toggles[toggle_index]| is_toggled || toggle_count
+        // ------------------------------------------------
+        //                       0 |          0 || = toggle_count        
+        //                       0 |          1 || += 1
+        //                       1 |          0 || -= 1
+        //                       1 |          1 || = toggle_count
+        //
+        // Implementation:
+        //
+        // toggle_count = toggle_count - (s_toggles[toggle_index] - is_toggled)
+        //
+        // E.g. with toggle_count == 0xFFFFFFFE:
+        //
+        // toggle_count = 0xFFFFFFFE - (0 - 0) = 0xFFFFFFFE
+        // toggle_count = 0xFFFFFFFE - (0 - 1) = 0xFFFFFFFE - 0xFFFFFFFF
+        //                                     = 0xFFFFFFFF
+        // toggle_count = 0xFFFFFFFE - (1 - 0) = 0xFFFFFFFD
+        // toggle_count = 0xFFFFFFFE - (1 - 1) = 0xFFFFFFFE
+        //
+        toggle_count = toggle_count - (s_toggles[toggle_index] - is_toggled);
+
+        assert(toggle_count == 0 || toggle_count <= s_measurements);
+
+        s_signal_existed = s_signal_existed || toggle_count >= s_min_toggles;
+
+        last_signal_val = cur_signal_val;
+        s_toggles[toggle_index] = is_toggled;
+        toggle_index = (toggle_index + 1) % s_measurements;
     }
 
-    s_signal_existed = s_signal_existed || c > s_min_toggles;
-    //
-    // (not doing this in loop with immediate break to avoid branches)
-
-    s_level_index = (s_level_index + 1) % s_measurements;
-
-    // *************************
-
-    // Use this via video output and do not output too much to influence
-    // second measurement result (second number output must equal the wanted
-    // interrupt interval in ticks - will be more, if serial console is used).
-    //
+//     // Use this via video output and do not output too much to influence
+//     // second measurement result (second number output must equal the wanted
+//     // interrupt interval in ticks - will be more, if serial console is used).
+//     //
 // #ifndef NDEBUG
 //     uint32_t const deb_end = systimer_get_tick();
 //
@@ -443,6 +463,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //      *  port with given nr.
 //      * 
 //      * - Takes almost 5ms (depends on values below).
+//      *
+//      * * TODO: Simplify (see ISR implementation)!
 //      */
 //     static bool is_signal_detected(uint32_t const gpio_pin_nr)
 //     {
@@ -565,8 +587,6 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         // (a VIC's WRITE line will change between HIGH and LOW infinitely,
         //  because VIA's port used for tape WRITE is used for keyboard scan,
         //  too..)
-
-        s_signal_existed = false;
 
         while(true)
         {
