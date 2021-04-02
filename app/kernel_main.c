@@ -84,18 +84,28 @@ enum led_state
 #define s_measurements (s_cycles * s_per_cycle) // Count of samples.
 #define s_min_toggles 10 // Count of min. level changes.
 //
+static bool s_measure_signal = false;
+//
 // Will be intialized in init_signal_stuff():
 //
 static uint32_t s_toggles[s_measurements];
-//
-// - Set to true by IRQ handler.
-//
+static uint32_t s_toggle_index = 0;
+static uint32_t s_last_signal_val = 0;
+static uint32_t s_toggle_count = 0;
 static bool s_signal_existed = false;
 
 static enum led_state s_led_state = led_state_off;
 
 static void init_signal_stuff()
 {
+    s_measure_signal = false; // Disable measuring.
+
+    s_toggle_index = 0;
+    s_last_signal_val = 0;
+    s_toggle_count = 0;
+
+    s_signal_existed = false;
+
     // For the debug output, below:
     //
 #ifndef NDEBUG
@@ -122,7 +132,7 @@ static void init_signal_stuff()
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
 {
-    barrier_datasync(); // Necessary (also see below)?
+    barrier_datasync();
 
 //     // For the debug output, below:
 //     //
@@ -169,46 +179,43 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     // It is OK to call gpio_read() from ISR ("atomic" considerations)
     // - see implementation of gpio_read()!
     //
-    {
-        static uint32_t toggle_index = 0;
-        static uint32_t last_signal_val = 0;
-        static uint32_t toggle_count = 0;
-        
+    if(s_measure_signal)
+    {   
         uint32_t const cur_signal_val = (uint32_t)gpio_read(
                                             MT_TAPE_GPIO_PIN_NR_WRITE);
 
-        uint32_t const is_toggled = last_signal_val ^ cur_signal_val;
+        uint32_t const is_toggled = s_last_signal_val ^ cur_signal_val;
         
         // Wanted:
         //
-        //  s_toggles[toggle_index]| is_toggled || toggle_count
-        // ------------------------------------------------
-        //                       0 |          0 || = toggle_count        
-        //                       0 |          1 || += 1
-        //                       1 |          0 || -= 1
-        //                       1 |          1 || = toggle_count
+        //  s_toggles[s_toggle_index]| is_toggled ||   s_toggle_count
+        // -----------------------------------------------------------
+        //                         0 |          0 || = s_toggle_count        
+        //                         0 |          1 || += 1
+        //                         1 |          0 || -= 1
+        //                         1 |          1 || = s_toggle_count
         //
         // Implementation:
         //
-        // toggle_count = toggle_count - (s_toggles[toggle_index] - is_toggled)
+        // s_toggle_count = s_toggle_count - (s_toggles[s_toggle_index] - is_toggled)
         //
-        // E.g. with toggle_count == 0xFFFFFFFE:
+        // E.g. with s_toggle_count == 0xFFFFFFFE:
         //
-        // toggle_count = 0xFFFFFFFE - (0 - 0) = 0xFFFFFFFE
-        // toggle_count = 0xFFFFFFFE - (0 - 1) = 0xFFFFFFFE - 0xFFFFFFFF
+        // s_toggle_count = 0xFFFFFFFE - (0 - 0) = 0xFFFFFFFE
+        // s_toggle_count = 0xFFFFFFFE - (0 - 1) = 0xFFFFFFFE - 0xFFFFFFFF
         //                                     = 0xFFFFFFFF
-        // toggle_count = 0xFFFFFFFE - (1 - 0) = 0xFFFFFFFD
-        // toggle_count = 0xFFFFFFFE - (1 - 1) = 0xFFFFFFFE
+        // s_toggle_count = 0xFFFFFFFE - (1 - 0) = 0xFFFFFFFD
+        // s_toggle_count = 0xFFFFFFFE - (1 - 1) = 0xFFFFFFFE
         //
-        toggle_count = toggle_count - (s_toggles[toggle_index] - is_toggled);
+        s_toggle_count = s_toggle_count - (s_toggles[s_toggle_index] - is_toggled);
 
-        assert(toggle_count == 0 || toggle_count <= s_measurements);
+        assert(s_toggle_count == 0 || s_toggle_count <= s_measurements);
 
-        s_signal_existed = s_signal_existed || toggle_count >= s_min_toggles;
+        s_signal_existed = s_signal_existed || s_toggle_count >= s_min_toggles;
 
-        last_signal_val = cur_signal_val;
-        s_toggles[toggle_index] = is_toggled;
-        toggle_index = (toggle_index + 1) % s_measurements;
+        s_last_signal_val = cur_signal_val;
+        s_toggles[s_toggle_index] = is_toggled;
+        s_toggle_index = (s_toggle_index + 1) % s_measurements;
     }
 
 //     // Use this via video output and do not output too much to influence
@@ -216,22 +223,29 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //     // interrupt interval in ticks - will be more, if serial console is used).
 //     //
 // #ifndef NDEBUG
-//     uint32_t const deb_end = systimer_get_tick();
-//
-//     if(deb_count < deb_count_lim)
+//     if(s_measure_signal)
 //     {
-//         ++deb_count;
+//         uint32_t const deb_end = systimer_get_tick();
 //
-//         console_write_dword(deb_end - deb_beg);
-//         console_write(" ");
-//         console_write_dword(deb_beg - deb_last_beg);
-//         console_writeline("");
+//         if(deb_count < deb_count_lim)
+//         {
+//             ++deb_count;
 //
-//         deb_last_beg = deb_beg;
+//             console_write_dword(deb_end - deb_beg);
+//             console_write(" ");
+//             console_write_dword(deb_beg - deb_last_beg);
+//             console_writeline("");
+//
+//             deb_last_beg = deb_beg;
+//         }
+//     }
+//     else
+//     {
+//         deb_count = 0;
 //     }
 // #endif //NDEBUG
 
-    barrier_datasync(); // Necessary (also see above)?
+    barrier_datasync();
 }
 
 #ifndef MT_INTERACTIVE
@@ -588,10 +602,16 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         //  because VIA's port used for tape WRITE is used for keyboard scan,
         //  too..)
 
+        // (Re-)start measuring of signal:
+        //
+        init_signal_stuff();
+        s_measure_signal = true;
+
         while(true)
         {
             if(!send_petload(mode))
             {
+                s_measure_signal = false; // Stop measuring.
                 console_deb_writeline("send_petload_loop : Breaking loop..");
                 return;
             }
