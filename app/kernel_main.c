@@ -128,6 +128,32 @@ static void init_signal_stuff()
 #endif //NDEBUG
 }
 
+// TODO: Debugging:
+//
+// void enable_act_led()
+// {
+//     bool state = true;
+//
+//     while(true)
+//     {
+//         barrier_datasync();
+//         //state = !state;
+//         //gpio_write(GPIO_PIN_NR_ACT, state);
+//         //armtimer_busywait_microseconds(250000);
+//
+//         uint32_t const pin_mask = 1 << ((uint32_t)(GPIO_PIN_NR_ACT)) % 32;
+//
+//         if(state)
+//         {
+//             mem_write((PERI_BASE + 0x00200000 + ((uint32_t)0x1C) + 4 * ((uint32_t)(GPIO_PIN_NR_ACT) / 32)), pin_mask);
+//             return;
+//         }
+//         mem_write((PERI_BASE + 0x00200000 + ((uint32_t)0x28) + 4 * ((uint32_t)(GPIO_PIN_NR_ACT) / 32)), pin_mask);
+//
+//         barrier_datasync();
+//     }
+// }
+
 /** IRQ interrupt handler.
  */
 void __attribute__((interrupt("IRQ"))) handler_irq()
@@ -836,6 +862,8 @@ static void init_secondary_cores()
 #if PERI_BASE != PERI_BASE_PI1
     for(uint32_t core_nr = 1;core_nr <= 3;++core_nr)
     {
+        // Hard-coded:
+        //
         // ARM_LOCAL_BASE = 0x40000000 for Pi 2 and 3.
         // ARM_LOCAL_BASE = 0xFF800000 for Pi 4.
         //
@@ -859,8 +887,6 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     (void)r0;
     (void)r1;
     (void)r2;
-
-    init_secondary_cores();
 
     // Initialize GPIO singleton:
     //
@@ -909,6 +935,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     irq_armtimer_init(); // Needs GPIO, initializes LED GPIOs, too.
                          // Also needs tape_init() and init_signal_stuff()
                          // to already have been called.
+
+    init_secondary_cores();
 
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
