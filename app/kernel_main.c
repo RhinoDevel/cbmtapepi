@@ -52,29 +52,48 @@ void _start(); // See boot.S.
 
 // TODO: Debugging:
 //
-// void enable_act_led()
-// {
-//     bool state = true;
-//
-//     while(true)
-//     {
-//         barrier_datasync();
-//         //state = !state;
-//         //gpio_write(GPIO_PIN_NR_ACT, state);
-//         //armtimer_busywait_microseconds(250000);
-//
-//         uint32_t const pin_mask = 1 << ((uint32_t)(GPIO_PIN_NR_ACT)) % 32;
-//
-//         if(state)
-//         {
-//             mem_write((PERI_BASE + 0x00200000 + ((uint32_t)0x1C) + 4 * ((uint32_t)(GPIO_PIN_NR_ACT) / 32)), pin_mask);
-//             return;
-//         }
-//         mem_write((PERI_BASE + 0x00200000 + ((uint32_t)0x28) + 4 * ((uint32_t)(GPIO_PIN_NR_ACT) / 32)), pin_mask);
-//
-//         barrier_datasync();
-//     }
-// }
+void enable_act_led()
+{
+    bool state = false;
+
+    while(true)
+    {
+        barrier_datasync();
+
+        gpio_set_output(GPIO_PIN_NR_ACT, state);
+        armtimer_busywait_microseconds(250000);
+        state = !state;
+
+        barrier_datasync();
+    }
+
+    // while(true)
+    // {
+    //     static uint32_t const pin_mask = 1 << (uint32_t)GPIO_PIN_NR_ACT % 32;
+    //     static uint32_t const addr_true = PERI_BASE + 0x00200000 + (uint32_t)0x1C + 4 * ((uint32_t)GPIO_PIN_NR_ACT / 32);
+    //     static uint32_t const addr_false = PERI_BASE + 0x00200000 + (uint32_t)0x28 + 4 * ((uint32_t)GPIO_PIN_NR_ACT / 32);
+
+    //     barrier_datasync();
+
+    //     state = !state;
+
+    //     mem_write(state ? addr_true : addr_false, pin_mask);
+
+    //     {
+    //         // ~2 instructions per loop
+    //         static uint32_t const cycles = 225000000; // Hard-coded for 900MHz, wait 1/4 second.
+
+    //         uint32_t i = cycles / 2 + 1;
+        
+    //         while (--i)
+    //         {
+    //             __asm__ __volatile__(""); // Prevents optimization.
+    //         }
+    //     }
+
+    //     barrier_datasync();
+    // }
+}
 
 /** IRQ interrupt handler.
  */
@@ -92,10 +111,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 //     static int deb_count = 0;
 // #endif //NDEBUG
 
-    static const uint32_t act_interval = 500000; // 0.5s
-    static const uint32_t act_count = act_interval / s_irq_interval_us;
+    // static const uint32_t act_interval = 500000; // 0.5s
+    // static const uint32_t act_count = act_interval / s_irq_interval_us;
 
-    static bool act_state = false;
+    //static bool act_state = false;
     static uint32_t counter = 0;
 
     armtimer_irq_clear();
@@ -105,9 +124,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     // It is OK to call gpio_write() from ISR ("atomic" considerations)
     // - see implementation of gpio_write()!
 
-    act_state ^= counter % act_count == 0;
-    gpio_write( // Overdone, but should be OK and to avoid branching.
-        GPIO_PIN_NR_ACT, act_state);
+    // act_state ^= counter % act_count == 0;
+    // gpio_write( // Overdone, but should be OK and to avoid branching.
+    //     GPIO_PIN_NR_ACT, act_state);
 
 //     // Use this via video output and do not output too much to influence
 //     // second measurement result (second number output must equal the wanted
@@ -234,17 +253,42 @@ static void init_secondary_cores()
 #if PERI_BASE != PERI_BASE_PI1
     for(uint32_t core_nr = 1;core_nr <= 3;++core_nr)
     {
-        // Hard-coded:
+        static uint32_t const arm_local_base = 0x40000000; // Hard-coded!
         //
         // ARM_LOCAL_BASE = 0x40000000 for Pi 2 and 3.
         // ARM_LOCAL_BASE = 0xFF800000 for Pi 4.
+
+        static uint32_t const arm_local_mailbox3_set0 = arm_local_base + 0x8C;
+        static uint32_t const arm_local_mailbox3_clr0 = arm_local_base + 0xCC;
+
+        uint32_t const set_addr = arm_local_mailbox3_set0 + 16 * core_nr;
+        uint32_t const clr_addr = arm_local_mailbox3_clr0 + 16 * core_nr;
+
+        barrier_datasync();
+
+        // TODO: Use mailbox interface(?)!
         //
-        static uint32_t const base = 0x4000008C; // ARM_LOCAL_MAILBOX3_SET0
-        static uint32_t const factor = 16;
+        while(mem_read(clr_addr) != 0)
+        {
+            // No timeout..
 
-        uint32_t const addr = base + factor * core_nr;
+            armtimer_busywait_microseconds(1000);
+        }
 
-        mem_write(addr, (uint32_t)(&_start));
+        mem_write(set_addr, (uint32_t)(&_start));
+
+        asm volatile ("sev"); // Send event hint to all CPUs.
+
+        // Wait for CPU to start:
+
+        // TODO: Use mailbox interface(?)!
+        //
+        while(mem_read(clr_addr) != 0)
+        {
+            // No timeout..
+
+            armtimer_busywait_microseconds(1000);
+        }
     }
 #endif //PERI_BASE != PERI_BASE_PI1
 }

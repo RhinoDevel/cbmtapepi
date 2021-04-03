@@ -28,13 +28,21 @@ _handler_arm_reset:
     // *** Uncomment for PERI_BASE_PI2!  *** START
     // *************************************
 
-    // TODO: Test, if this code works (also see kernel_main.c):
-
     // Return CPU ID (0, 1, 2 or 3) of the CPU currently executing this code:
     //
     mrc     p15, #0, r3, c0, c0, #5 // R3 <= Multiprocessor affinity register (MPIDR).
-    ands    r3, #3 // R3 = CPU ID (Bits 0 and 1).
+    and     r3, r3, #3 // R3 = CPU ID (Bits 0 and 1).
+    cmp     r3, #0
     beq     go_supervisor // If CPU ID is not 0, branch to infinite loop.
+
+    cmp     r3, #1
+    bne     core_loop
+
+    // Set stack address for CPU 1 (grows downwards to address 0):
+    //
+	mov sp, #0x02F00000 // Above 32kB address. // TODO: Test / find out, if we already are in supervisor mode, here!
+    //ldr sp, =0x04000000 // Above 64MB address.
+    bal     enable_act_led
 
 core_loop: // Infinite loop for cores 1, 2 and 3.
     b core_loop
@@ -111,7 +119,7 @@ setup_ivt:
     mov r3, #0xD3 // #(0x13 | 0x80 | 0x40)  // SVR mode | IRQ inhibit | FIRQ inhibit.
     msr cpsr_c, r3
 
-	// Set stack address (grows downwards to address 0):
+	// Set stack address for CPU 0 (grows downwards to address 0):
     //
 	mov sp, #0x03700000 // Above 32kB address.
     //ldr sp, =0x04000000 // Above 64MB address.
