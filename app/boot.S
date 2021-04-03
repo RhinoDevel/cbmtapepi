@@ -28,13 +28,27 @@ _handler_arm_reset:
     // *** Uncomment for PERI_BASE_PI2!  *** START
     // *************************************
 
-    // TODO: Test, if this code works (also see kernel_main.c):
-
     // Return CPU ID (0, 1, 2 or 3) of the CPU currently executing this code:
     //
     mrc     p15, #0, r3, c0, c0, #5 // R3 <= Multiprocessor affinity register (MPIDR).
-    ands    r3, #3 // R3 = CPU ID (Bits 0 and 1).
-    beq     go_supervisor // If CPU ID is not 0, branch to infinite loop.
+    and     r3, r3, #3 // R3 = CPU ID (bits 0 and 1).
+    cmp     r3, #0
+    beq     go_supervisor // If CPU ID is 0, branch to main code.
+
+    // Code to test, if starting secondary cores worked (it works on Raspi 2):
+    //
+//    cmp     r3, #1
+//    bne     core_loop // If CPU ID is neither 0, nor 1, branch to infinite loop.
+//    //
+//    // Set stack address for CPU 1 (grows downwards to address 0):
+//    //
+//    // * TODO: Test / find out, if we already are in supervisor mode, here
+//    //         (otherwise setting SP won't work, here..)!
+//    //
+//	mov sp, #0x02F00000 // Above 32kB address.
+//    //ldr sp, =0x04000000 // Above 64MB address.
+//    //
+//    bal     act_led_blink_loop // Let CPU 1 blink ACT LED infinitely.
 
 core_loop: // Infinite loop for cores 1, 2 and 3.
     b core_loop
