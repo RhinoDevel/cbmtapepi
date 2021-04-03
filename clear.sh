@@ -25,11 +25,9 @@ rm lib/mem/mem.o
 rm lib/alloc/alloc.o
 rm lib/alloc/alloc_mem.o
 rm lib/alloc/nodemem.o
-rm lib/basic/basic.o
 rm lib/video/video.o
 rm lib/xmodem/xmodem.o
 rm lib/ymodem/ymodem.o
-rm lib/petasc/petasc.o
 rm lib/sort/sort.o
 rm lib/dir/dir.o
 rm lib/filesys/filesys.o
@@ -42,26 +40,9 @@ rm lib/ff14/source/ff.o
 rm app/boot.o
 rm app/kernel_main.o
 rm app/statetoggle/statetoggle.o
-rm app/tape/tape_fill_buf.o
-rm app/tape/tape_sample.o
-rm app/tape/tape_send.o
-rm app/tape/tape_send_buf.o
-rm app/tape/tape_init.o
-rm app/tape/tape_input.o
-rm app/tape/tape_receive_buf.o
-rm app/tape/tape_receive.o
-rm app/tape/tape_extract_buf.o
-rm app/ui/ui_send_sample.o
 rm app/ui/ui_receive_test.o
 rm app/ui/ui_send_test.o
-rm app/ui/ui_terminal_to_commodore.o
-rm app/ui/ui_commodore_to_terminal.o
 rm app/ui/ui.o
-rm app/cbm/cbm_receive.o
-rm app/cbm/cbm_send.o
-rm app/cmd/cmd.o
-rm app/petload/petload.o
-rm app/mode/mode.o
 
 # Resulting kernel files:
 

@@ -6,27 +6,16 @@
 
 #define MT_HEAP_SIZE (32 * 1024 * 1024) // 32 MB.
 
-#define MT_TAPE_GPIO_PIN_NR_READ 10
-#define MT_TAPE_GPIO_PIN_NR_SENSE 9
-#define MT_TAPE_GPIO_PIN_NR_MOTOR 22
-#define MT_TAPE_GPIO_PIN_NR_WRITE 11
-
 #define MT_GPIO_PIN_NR_LED 17
 
 #define MT_FILESYS_ROOT "/"
-
-#define MT_PETSCII_REPLACER 166
-//
-// Checkerboard
-
-#define MT_ASCII_REPLACER '_'
 
 // Comment this out for non-interactive mode,
 // otherwise a menu-based UI will be shown via serial interface
 // (it makes a lot of sense to also define NDEBUG, if MT_INTERACTIVE is
 // defined):
 //
-//#define MT_INTERACTIVE
+#define MT_INTERACTIVE
 
 // Set this additionally (for 32 bit):
 //

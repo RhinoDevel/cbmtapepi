@@ -19,8 +19,8 @@
 
 // Choose Raspi type:
 //
-#define PERI_BASE PERI_BASE_PI1
-//#define PERI_BASE PERI_BASE_PI2
+//#define PERI_BASE PERI_BASE_PI1
+#define PERI_BASE PERI_BASE_PI2
 
 #if PERI_BASE == PERI_BASE_PI1
     #define GPIO_PIN_NR_ACT 16

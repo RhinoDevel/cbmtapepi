@@ -1,14 +1,8 @@
 .vscode
 
-cbm/bak
-cbm/*.tmp
-
 *.o
 *.elf
 *.img
 *.ihx
 
 *.bak
-
-*.prg
-*.PRG

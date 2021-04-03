@@ -11,16 +11,13 @@ BAUD_RATE=115200
 # Execute script commands:
 # ------------------------
 
-echo "**************************************************************"
-echo "*** CBM Tape Pi - Send file via Raspi to Commodore machine ***"
-echo "**************************************************************"
+echo "**************************"
+echo "*** Send file to Raspi ***"
+echo "**************************"
 echo "(2019 by Marcel Timm, RhinoDevel)"
 echo
 
-echo "- Make sure that Raspi is in LOAD move (LED off)."
-echo
-
-read -s -p "Enter LOAD and press return on Commodore, then press enter key (here) to send."
+read -s -p "Trigger waiting for file on Raspi, then press enter key (here) to send."
 echo
 echo
 
@@ -35,4 +32,4 @@ echo
 sudo bash -c "sx --ymodem '${1}' < ${SERIAL_DEVICE} > ${SERIAL_DEVICE}"
 echo
 
-echo "Raspberry Pi is now forwarding file to Commodore machine. See Commodore screen."
+echo "Done."
