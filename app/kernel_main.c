@@ -1,8 +1,4 @@
 
-// TODO: Make sure that SAVE does not set s_signal_existed to true
-//       (needs atomic setting of all "signal stuff", or are SAVE frequencies
-//        low enough?)!
-
 // Marcel Timm, RhinoDevel, 2018dec11
 
 // Pages mentioned in source code comments can be found in the document
