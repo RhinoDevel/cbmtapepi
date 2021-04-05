@@ -34,12 +34,13 @@ _handler_arm_reset:
     mrc     p15, #0, r3, c0, c0, #5 // R3 <= Multiprocessor affinity register (MPIDR).
     and     r3, r3, #3 // R3 = CPU ID (bits 0 and 1).
     cmp     r3, #0
-    beq     go_supervisor // If CPU ID is 0, branch to main code.
 
+    bne     halt // If CPU ID is NOT 0, branch to infinite loop.
+    //
     // Code to test, if starting secondary cores worked (it works on Raspi 2):
     //
 //    cmp     r3, #1
-//    bne     core_loop // If CPU ID is neither 0, nor 1, branch to infinite loop.
+//    bne     halt // If CPU ID is neither 0, nor 1, branch to infinite loop.
 //    //
 //    // Set stack address for CPU 1 (grows downwards to address 0):
 //    //
@@ -51,10 +52,6 @@ _handler_arm_reset:
 //    //
 //    bal     act_led_blink_loop // Let CPU 1 blink ACT LED infinitely.
 
-core_loop: // Infinite loop for cores 1, 2 and 3.
-    b core_loop
-
-go_supervisor:
     // Switch from hypervisor to supervisor mode, if necessary:
     //
     .arch_extension virt
@@ -151,10 +148,10 @@ is_supervisor:
 	ldr r3, =kernel_main
 	blx r3
 
-	// Halt:
+	// Halt (also used for unused cores in multiprocessor system - see above):
     //
 halt:
-	wfe // Wait for event (hint).
+	wfe // Wait for event (hint). Allows a core to enter low-power state!
 	b halt
 
 ivt_src:
