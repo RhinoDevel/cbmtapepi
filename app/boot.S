@@ -57,27 +57,25 @@ go_supervisor:
     // Switch from hypervisor to supervisor mode, if necessary:
     //
     .arch_extension virt
-    mrs		r3, cpsr
-    and		r3, r3, #0x1F
-    cmp		r3, #0x13 // SVR mode.
-    beq		setup_ivt
-    mov		r3, #0x13 // SVR mode.
-    msr		spsr_cxsf, r3
-    add		r3, pc, #4
-    msr		ELR_hyp, r3
-    eret
+    mrs		r3, cpsr // Copies current program status register content to R3.
+    and		r3, r3, #0b11111//#0x1F // Get processor mode bits from CPSR-copy
+                                    // held in R3.
+    cmp		r3, #0b10011//#0x13 // Are we in SVR (supervisor) mode, yet?
+    beq		setup_ivt // We are already in SVR mode. Go on below.
     //
-// Another option to do this (always switches to SVR, assumes HYP to be active):
-//
-//    .arch_extension virt
-//    .arch_extension sec
-//    mrs r3, cpsr
-//    bic r3, r3, #0x1F
-//    orr r3, r3, #0x13 // SVR mode.
-//    msr spsr_cxsf, r3
-//    add r3, pc, #4
-//    msr ELR_hyp, r3
-//    eret
+    // We are assuming to be in hypervisor mode:
+    //
+    mov		r3, #0b10011//#0x13 // Set R3's "mode bits" to SVR mode.
+    msr		spsr_cxsf, r3 // Update whole [by adding "c" (bits 0-7), "x" (bits
+                          // 8-15), "s" (bits 16-23) and "f" (bits 24-31) as
+                          // fields - order is not important] saved program
+                          // status register with contents of R3. 
+    add		r3, pc, #4
+    msr		ELR_hyp, r3 // ELR_hyp holds the address to return to, when an
+                        // exception-taken-to-HYP.
+    eret // Return from an exception-taken-to-HYP. This instructions belongs to
+         // virtualization extensions. In HYP mode, PC will be loaded from
+         // ELR_hyp, CPSR from SPSR_hyp.
 
     // On a Raspberry Pi 2, at least L1 instruction cache is necessary for speed
     // (without it, e.g a simple loop counting from 0 <= 50 takes ~16us!):
