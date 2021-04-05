@@ -177,8 +177,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     // - see implementation of gpio_write()!
 
     act_state ^= counter % act_count == 0;
-    // gpio_write( // Overdone, but should be OK and to avoid branching.
-    //     GPIO_PIN_NR_ACT, act_state);
+    gpio_write( // Overdone, but should be OK and to avoid branching.
+        GPIO_PIN_NR_ACT, act_state);
 
     blink_state ^= counter % blink_count == 0;
 
@@ -935,6 +935,8 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
     alloc_init(&__heap, MT_HEAP_SIZE);
+
+    armtimer_start_one_mhz(); // (not sure, if necessary, here..)
 
     // Initialize for tape transfer:
     //
