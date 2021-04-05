@@ -23,6 +23,7 @@
 _start:
 
 _handler_arm_reset:
+
 ///*
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  *** START
@@ -61,7 +62,7 @@ go_supervisor:
     and		r3, r3, #0b11111//#0x1F // Get processor mode bits from CPSR-copy
                                     // held in R3.
     cmp		r3, #0b10011//#0x13 // Are we in SVR (supervisor) mode, yet?
-    beq		setup_ivt // We are already in SVR mode. Go on below.
+    beq		is_supervisor // We are already in SVR mode. Go on below.
     //
     // We are assuming to be in hypervisor mode:
     //
@@ -77,16 +78,16 @@ go_supervisor:
          // virtualization extensions. In HYP mode, PC will be loaded from
          // ELR_hyp, CPSR from SPSR_hyp.
 
+is_supervisor:
+
     // On a Raspberry Pi 2, at least L1 instruction cache is necessary for speed
     // (without it, e.g a simple loop counting from 0 <= 50 takes ~16us!):
     //
-    mrc p15, #0, r3, c1, c0, #0 // R3 <= System Control Register
+    mrc p15, #0, r3, c1, c0, #0 // R3 <= System control register
     orr r3, #0x0800 // Branch prediction (bit 11).
     orr r3, #0x1000 // L1 instruction caches (Bit 12).
     orr r3, #0x0004 // L1 data cache (bit 2).
-    mcr p15, #0, r3, c1, c0, #0 // System Control Register <= R3
-
-setup_ivt:
+    mcr p15, #0, r3, c1, c0, #0 // System control register <= R3
 //*/
 
     // *************************************
