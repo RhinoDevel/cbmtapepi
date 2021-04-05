@@ -24,7 +24,7 @@ _start:
 
 _handler_arm_reset:
 
-///*
+/*
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  *** START
     // *************************************
@@ -85,7 +85,7 @@ is_supervisor:
     orr r3, #0x1000 // L1 instruction caches (Bit 12).
     orr r3, #0x0004 // L1 data cache (bit 2).
     mcr p15, #0, r3, c1, c0, #0 // System control register <= R3
-//*/
+*/
 
     // *************************************
     // *** Uncomment for PERI_BASE_PI2!  *** END
