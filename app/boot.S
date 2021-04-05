@@ -91,6 +91,9 @@ is_supervisor:
     // *** Uncomment for PERI_BASE_PI2!  *** END
     // *************************************
 
+    // TODO: Make sure that enabled branch prediction and L1 caches (see above)
+    //       do not make problems. If not, enable them for Pi 1, too.
+
     // Copy interrupt vector table and constants into position:
 
     ldr r3, =ivt_src
