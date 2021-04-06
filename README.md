@@ -1,17 +1,17 @@
-***Warning**: This README is **work-in-progress**, I am currently in the middle of updating for CBM/PET fast mode support via wedge, please come back soon to check out v1.7.0!*
+***Warning**: This README is **work-in-progress**, I am currently creating the release that will bring you fast mode via wedge and Pi 3 support! Please come back soon to check out v1.7.0.*
 
 # CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2021, [rhinodevel.com](http://rhinodevel.com/)*
 
 ![CBM Tape Pi hardware](./docs/title.jpg)
 
-Use a Raspberry Pi as storage device with your Commodore 8-bit computer via tape port connector!
+Use a Raspberry Pi as fast storage device with your Commodore 8-bit computer (CBM/PET, VIC 20, C64, etc.) via tape port connector!
 
-The project's priority definitely is to deliver a **fast mass storage device for the CBM/PET machines** (check out the fast mode via wedge) using just the datassette port, a very simple hardware interface and Open Source software, only.
-
-- Older video (compatibility mode, v1.6.1): [CBM 3032 (please excuse the cuts, there was no fast mode, yet..)](https://youtu.be/CkLR3lkHjh4)
+CBM Tape Pi is using a very simple hardware interface and Open Source software, only.
 
 - Latest release: CBM Tape Pi v1.7.0 **coming soon!**
+
+- Older video (compatibility mode, v1.6.1): [CBM 3032 (please excuse the cuts, there was no fast mode, yet..)](https://youtu.be/CkLR3lkHjh4)
 
 ## Features
 
@@ -21,7 +21,7 @@ The project's priority definitely is to deliver a **fast mass storage device for
   - Traverse directories.
   - List current directory's content.
   - Delete files.
-  - **Fast mode** via wedge (currently implemented for CBM/PET machines).
+  - **Fast mode** via wedge for CBM/PET, VIC-20 and C64.
   - Compatibility mode for CBM/PET, VIC-20, C64, etc.
 
 - Easy to build hardware interface:
@@ -39,7 +39,7 @@ You need:
 - 1x PNP transistor (e.g. a BC557).
 - 10x 10k Ohm resistors (two of these are used to get a 20k Ohm resistor).
 - 1x Commodore cassette port plug.
-- 1x Raspberry Pi 1, Zero or 2 (more recent models may work, not tested, yet).
+- 1x Raspberry Pi 1, 2, 3 or Zero (other models may also work, not tested, yet).
 - 1x SD card (I am using an old 64MB card).
 - Optional: A push button (to be able to soft-reset the Raspberry Pi).
 
@@ -51,13 +51,13 @@ You need:
 ## Preparations
 
 - Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
-- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2) from **latest release** *(coming soon!)* on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
+- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2 and 3) from **latest release** *(coming soon!)* on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
 - Delete (if existing) config.txt and cmdline.txt from boot partition.
 - Overwrite fixup.dat, start.elf and bootcode.bin with the files having the same names from [Raspberry Pi firmware release 1.20171029](https://github.com/raspberrypi/firmware/tree/1.20171029/boot).
 
 ## The LEDs
 
-- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
+- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running (currently not enabled for Raspberry Pi 3).
 - The interface's LED will be on, if waiting for commands.
 - The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
 - The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
@@ -124,19 +124,21 @@ Connect Raspberry Pi and Commodore machine this way:
 ## Supported Commodore machines
 
 - CBM / PET computers (tested with BASIC v1, v2 & v4 on a 2001 and a 3032, tested with BASIC v4 on an 8032-SK).
-- VIC 20 / VC20.
+- VIC 20.
 - C64.
-- Other Commodore computer with tape interface (not tested, yet).
+- Other Commodore computers with tape interface (not tested, yet).
 
 ## Supported Raspberry Pis
 
 - Raspberry Pi 1.
 - Raspberry Pi 2 (v1.2 excluded).
+- Raspberry Pi 3.
 - Raspberry Pi Zero.
 - Other Raspberry Pis (not tested, yet).
 
 ## Next project goals
 
+- Enable ACT LED on Raspberry Pi 3.
 - Support loading PRG files with filenames longer than 12 characters.
 - List directory content without erasing possibly existing PRG in memory when using fast mode.
 - Show destination memory addresses and sizes of PRG files in directory listing.

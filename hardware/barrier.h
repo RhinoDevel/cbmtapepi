@@ -22,7 +22,7 @@
         )
 */
 
-#else //PERI_BASE == PERI_BASE_PI2
+#else //PERI_BASE == PERI_BASE_PI2AND3
 
     // DSB / Data synchronisation barrier acts as special kind of memory
     // barrier, where NO instructions appearing "in source code" after it

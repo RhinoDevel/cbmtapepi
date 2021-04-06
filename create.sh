@@ -71,21 +71,20 @@ export MARCH=armv6zk
 #
 # # WORKS:
 # #
-# # raspi2 / BCM2836 / Cortex-A7:
+# # raspi2 / BCM2836 / Cortex-A7 and also works for raspi3 / BCM2836:
 # #
 # export MTUNE=cortex-a7
 # export MFPU=neon-vfpv4
 # export MARCH=armv7-a
 
 export OPTIONS_GCC_ALL=" \
+    -DNDEBUG \
     -mtune=$MTUNE \
     -mfpu=$MFPU \
     -march=$MARCH \
     -mfloat-abi=hard \
     -fpic \
     -ffreestanding"
-
-#    -DNDEBUG \
 
 export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
     -O2 \

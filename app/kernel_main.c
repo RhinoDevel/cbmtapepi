@@ -1,4 +1,6 @@
 
+// TODO: Enable ACT LED usage on Pi 3!
+
 // Marcel Timm, RhinoDevel, 2018dec11
 
 // Pages mentioned in source code comments can be found in the document
@@ -136,7 +138,10 @@ static void init_signal_stuff()
 //     {
 //         barrier_datasync();
 //
+//         // Does not work for Pi 3 this way (should not even compile):
+//         //
 //         gpio_set_output(GPIO_PIN_NR_ACT, state);
+//
 //         armtimer_busywait_microseconds(250000);
 //         state = !state;
 //
@@ -161,9 +166,12 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 // #endif //NDEBUG
 
     static const uint32_t blink_interval = 250000; // 0.25s
-    static const uint32_t act_interval = 500000; // 0.5s
     static const uint32_t blink_count = blink_interval / s_t_measure;
+
+#if PERI_BASE_PI_VER < 3
+    static const uint32_t act_interval = 500000; // 0.5s
     static const uint32_t act_count = act_interval / s_t_measure;
+#endif //PERI_BASE_PI_VER < 3
 
     static bool blink_state = false;
     static bool act_state = false;
@@ -176,9 +184,11 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     // It is OK to call gpio_write() from ISR ("atomic" considerations)
     // - see implementation of gpio_write()!
 
+#if PERI_BASE_PI_VER < 3
     act_state ^= counter % act_count == 0;
     gpio_write( // Overdone, but should be OK and to avoid branching.
         GPIO_PIN_NR_ACT, act_state);
+#endif //PERI_BASE_PI_VER < 3
 
     blink_state ^= counter % blink_count == 0;
 
@@ -830,7 +840,9 @@ static void irq_armtimer_init()
 {
     // Setup LED GPIO ports [to be able to just call gpio_write() from ISR]:
     //
+#if PERI_BASE_PI_VER < 3
     gpio_set_func(GPIO_PIN_NR_ACT, gpio_func_output);
+#endif //PERI_BASE_PI_VER < 3
     gpio_set_func(MT_GPIO_PIN_NR_LED, gpio_func_output);
 
     irqcontroller_irq_src_enable_armtimer();

@@ -25,9 +25,9 @@ _start:
 _handler_arm_reset:
 
 /*
-    // *************************************
-    // *** Uncomment for PERI_BASE_PI2!  *** START
-    // *************************************
+    // ****************************************
+    // *** Uncomment for PERI_BASE_PI2AND3! *** START
+    // ****************************************
 
     // Return CPU ID (0, 1, 2 or 3) of the CPU currently executing this code:
     //
@@ -87,9 +87,9 @@ is_supervisor:
     mcr p15, #0, r3, c1, c0, #0 // System control register <= R3
 */
 
-    // *************************************
-    // *** Uncomment for PERI_BASE_PI2!  *** END
-    // *************************************
+    // *****************************************
+    // *** Uncomment for PERI_BASE_PI2AND3!  *** END
+    // *****************************************
 
     // TODO: Make sure that enabled branch prediction and L1 caches (see above)
     //       do not make problems. If not, enable them for Pi 1, too.
