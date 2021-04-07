@@ -57,7 +57,7 @@ You need:
 
 ## The LEDs
 
-- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running (currently not enabled for Raspberry Pi 3).
+- The Pi's ACT LED will flash every second to show that CBM Tape Pi is running.
 - The interface's LED will be on, if waiting for commands.
 - The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
 - The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
@@ -130,15 +130,15 @@ Connect Raspberry Pi and Commodore machine this way:
 
 ## Supported Raspberry Pis
 
-- Raspberry Pi 1.
-- Raspberry Pi 2 (v1.2 excluded).
-- Raspberry Pi 3.
-- Raspberry Pi Zero.
+- Raspberry Pi 1 (successfully tested with Pi 1 Model B).
+- Raspberry Pi 2 (successfully tested with Pi 2 Model B v1.1).
+- Raspberry Pi 3 (successfully tested with Pi 3 Model B v1.2).
+- Raspberry Pi Zero (successfully tested with Pi Zero W v1.1).
 - Other Raspberry Pis (not tested, yet).
 
 ## Next project goals
 
-- Enable ACT LED on Raspberry Pi 3.
+- Make sure that ACT LED works on Raspberry Pi Zero and 3.
 - Support loading PRG files with filenames longer than 12 characters.
 - List directory content without erasing possibly existing PRG in memory when using fast mode.
 - Show destination memory addresses and sizes of PRG files in directory listing.
