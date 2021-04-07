@@ -50,10 +50,10 @@ You need:
 
 ## Preparations
 
-- Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
-- Put compiled kernel.img (or kernel7.img for Raspberry Pi 2 and 3) from **latest release** *(coming soon!)* on an SD card's boot partition (easiest way is to use an SD card having Raspbian installed).
-- Delete (if existing) config.txt and cmdline.txt from boot partition.
-- Overwrite fixup.dat, start.elf and bootcode.bin with the files having the same names from [Raspberry Pi firmware release 1.20171029](https://github.com/raspberrypi/firmware/tree/1.20171029/boot).
+1) Setup connections (see [picture](./docs/CBM%20tape%20to%20Raspberry%20Pi%20(Marcel%20Timm%2C%20RhinoDevel).png) below).
+2) Put compiled kernel.img (or kernel7.img for Raspberry Pi 2 and 3) from **latest release** *(coming soon!)* on the first FAT32 partition on an SD card with MBR partition table (easiest way is to use an SD card having Raspbian installed).
+3) Delete (if existing) config.txt and cmdline.txt from boot partition.
+4) Overwrite fixup.dat, start.elf and bootcode.bin with the files having the same names from [Raspberry Pi firmware release 1.20171029](https://github.com/raspberrypi/firmware/tree/1.20171029/boot). 
 
 ## The LEDs
 
@@ -62,9 +62,48 @@ You need:
 - The interface's LED will be off during transfer of a PRG to Commodore (LOAD).
 - The interface's LED will flash to indicate an error that occurred during last command execution (e.g. file not found), but it will still wait for the next command from the Commodore.
 
+## How to use CBM Tape Pi
+
+1) (Always) power-on Raspberry Pi first.
+2) Power-on Commodore.
+3) Enter commands (see below for details).
+4) (Always) power-off Commodore first.
+5) Power-off Raspberry Pi. 
+
+Do not power-off the Raspberry Pi while Commodore machine is still on.
+
+If you need to reset the Raspberry Pi, I recommend to also first power-off the
+Commodore, although keeping the Commodore running during Raspberry Pi reset
+should do no harm. 
+
 ## How to enter and use fast mode
 
-*Description coming soon.*
+After the first start of CBM Tape Pi it is in compatibility mode (see below).
+
+You can toggle to another mode from compatibility mode this way:
+
+1) Enter ```SAVE"MODE <mode name>"``` where you replace ```<mode name>``` with one of the following strings:
+  - ```PET1```: CBM/PET, BASIC v1, fast mode, wedge installed in tape buffers.
+  - ```PET2```: CBM/PET, BASIC v2, fast mode, wedge installed in tape buffers.
+  - ```PET4```: CBM/PET, BASIC v4, fast mode, wedge installed in tape buffers.
+  - ```PET1TOM```: CBM/PET, BASIC v1, fast mode, wedge installed at top of BASIC memory.
+  - ```PET2TOM```: CBM/PET, BASIC v2, fast mode, wedge installed at top of BASIC memory.
+  - ```PET4TOM```: CBM/PET, BASIC v4, fast mode, wedge installed at top of BASIC memory.
+  - ```VIC20```: VIC 20, fast mode, wedge installed at top of BASIC memory.
+  - ```C64```: C64, fast mode, wedge installed at top of free high memory (right before address $D000).
+  - ```C64TOM```: C64, fast mode, wedge installed at top of BASIC memory.
+
+2) Power-off Commodore.
+3) Reset Raspberry Pi.
+4) Power-on Commodore.
+5) Enter ```LOAD```.
+6) Follow start instruction shown at Commodore (as file name) to install wedge, e.g. ```RUN``` or ```SYS 655```.
+
+- If ```RUN``` is shown, using ```<shift> + <run/stop>``` instead of ```LOAD``` followed by ```RUN``` would also have worked.
+
+**You have reached fast mode!**
+
+Feel free to enter all commands described below for compatibility mode, but now use ```!``` character followed by command (instead of using ```SAVE``` and ```LOAD```). E.g. to load a PRG: ```!MYCBMAPP.PRG```
 
 ## How to use compatibility mode
 
@@ -108,7 +147,7 @@ You need:
   ```
       SAVE"RM OLDFILE.PRG"
   ```
-- **MODE**: Toggle mode (to be entered during start-up), e.g. to CBM/PET BASIC v4 fast mode:
+- **MODE**: Toggle mode (also see options, above), e.g. to CBM/PET BASIC v4 fast mode:
 
   ```
       SAVE"MODE PET4"
