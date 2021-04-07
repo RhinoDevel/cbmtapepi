@@ -12,6 +12,7 @@
 
 // Choose a single Raspi version to compile for:
 //
+//#define PERI_BASE_PI_VER 0 // Raspberry Pi Zero.
 #define PERI_BASE_PI_VER 1
 //#define PERI_BASE_PI_VER 2
 //#define PERI_BASE_PI_VER 3
@@ -20,11 +21,14 @@
 // (these replace bus address range start 0x7E000000 in bare metal mode,
 // see page 6):
 //
-#define PERI_BASE_PI1 0x20000000 // BCM2835
+#define PERI_BASE_PI0AND1 0x20000000 // BCM2835
 #define PERI_BASE_PI2AND3 0x3F000000 // BCM2836 and BCM2837.
 
-#if PERI_BASE_PI_VER == 1
-    #define PERI_BASE PERI_BASE_PI1
+#if PERI_BASE_PI_VER == 0
+    #define PERI_BASE PERI_BASE_PI0AND1
+    #define GPIO_PIN_NR_ACT 47
+#elif PERI_BASE_PI_VER == 1
+    #define PERI_BASE PERI_BASE_PI0AND1
     #define GPIO_PIN_NR_ACT 16
 #elif PERI_BASE_PI_VER == 2
     #define PERI_BASE PERI_BASE_PI2AND3

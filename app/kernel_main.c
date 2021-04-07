@@ -52,11 +52,11 @@
 #include "mode/mode.h"
 #include "mode/mode_type.h"
 
-// #if PERI_BASE == PERI_BASE_PI1
+// #if PERI_BASE == PERI_BASE_PI0AND1
 //     #define VIDEO_SUPPORT 1
-// #else //PERI_BASE == PERI_BASE_PI1
+// #else //PERI_BASE == PERI_BASE_PI0AND1
 //     #define VIDEO_SUPPORT 0
-// #endif //PERI_BASE == PERI_BASE_PI1
+// #endif //PERI_BASE == PERI_BASE_PI0AND1
 // #if VIDEO_SUPPORT
 //     #include "../lib/video/video.h"
 // #endif //VIDEO_SUPPORT
@@ -859,7 +859,7 @@ static void irq_armtimer_init()
 
 static void init_secondary_cores()
 {
-#if PERI_BASE != PERI_BASE_PI1
+#if PERI_BASE != PERI_BASE_PI0AND1
     for(uint32_t core_nr = 1;core_nr <= 3;++core_nr)
     {
         static uint32_t const arm_local_base = 0x40000000; // Hard-coded!
@@ -899,7 +899,7 @@ static void init_secondary_cores()
             armtimer_busywait_microseconds(1000);
         }
     }
-#endif //PERI_BASE != PERI_BASE_PI1
+#endif //PERI_BASE != PERI_BASE_PI0AND1
 }
 
 /**

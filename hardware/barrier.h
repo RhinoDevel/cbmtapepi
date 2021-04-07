@@ -6,7 +6,7 @@
 
 #include "peribase.h"
 
-#if PERI_BASE == PERI_BASE_PI1
+#if PERI_BASE == PERI_BASE_PI0AND1
 
     //"mcr p15, #0, %[zero], c7, c10, #4" : : [zero] "r" (0)
     #define barrier_datasync() \
@@ -48,6 +48,6 @@
         )
 */
 
-#endif //PERI_BASE == PERI_BASE_PI1
+#endif //PERI_BASE == PERI_BASE_PI0AND1
 
 #endif //MT_BARRIER
