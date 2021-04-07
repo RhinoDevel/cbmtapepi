@@ -21,8 +21,8 @@ CBM Tape Pi is using a very simple hardware interface and Open Source software, 
   - Traverse directories.
   - List current directory's content.
   - Delete files.
-  - **Fast mode** via wedge for CBM/PET, VIC-20 and C64.
-  - Compatibility mode for CBM/PET, VIC-20, C64, etc.
+  - **Fast mode** via wedge for CBM/PET, VIC 20 and C64.
+  - Compatibility mode for CBM/PET, VIC 20, C64, etc.
 
 - Easy to build hardware interface:
   - No ICs, just a minimum amount of discrete components.
