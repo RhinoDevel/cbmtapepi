@@ -63,7 +63,7 @@ export PATH="$PREFIX/bin:$PATH"
 
 # WORKS:
 #
-# raspi1 / BCM2835 / ARM1176JZF-S:
+# raspi0 and raspi1 / BCM2835 / ARM1176JZF-S:
 #
 export MTUNE=arm1176jzf-s
 export MFPU=vfp
@@ -71,7 +71,7 @@ export MARCH=armv6zk
 #
 # # WORKS:
 # #
-# # raspi2 / BCM2836 / Cortex-A7 and also works for raspi3 / BCM2836:
+# # raspi2 / BCM2836 / Cortex-A7 and also works for raspi3 / BCM2837:
 # #
 # export MTUNE=cortex-a7
 # export MFPU=neon-vfpv4
