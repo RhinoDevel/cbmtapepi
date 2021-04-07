@@ -97,12 +97,18 @@ uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
 
     msg_buf[0] = sizeof *msg_buf * i; // Total size of buffer in byte (4 * 8).
 
+    // Is it necessary to add a data sync barrier, here [or even some cache
+    // cleaning, like "Clean and invalidate DCache entry (MVA)"]?
+
     mailbox_write(
         channel_nr,
         (0x40000000 + (uint32_t)msg_buf) // TODO: Replace hard-coded conversion to physical memory address. Assuming L2 cache to be enabled, otherwise 0xC0000000 would be correct!
             >> 4);
 
 	mailbox_read(channel_nr); // (return value ignored)
+
+    // Is it necessary to add a data sync barrier, here [or even some cache
+    // cleaning, like "Clean and invalidate DCache entry (MVA)"]?
 
 // #ifndef NDEBUG
 //     for(i = 0; i < sizeof msg_buf / sizeof *msg_buf; ++i)
