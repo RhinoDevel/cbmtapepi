@@ -31,8 +31,8 @@ static uint32_t const s_responsecode_success = 0x80000000;
 
 void mailbox_write(uint32_t const channel, uint32_t const val)
 {
-    //assert(channel >= 0 && channel < 16);
-    //assert((val <= 0x0FFFFFFF);
+    //assert(channel == 0 || channel < 16);
+    //assert(val <= 0x0FFFFFFF);
 
     while((mem_read(s_mailbox1_status) & s_status_full) != 0)
     {
@@ -43,7 +43,7 @@ void mailbox_write(uint32_t const channel, uint32_t const val)
 
 uint32_t mailbox_read(uint32_t const channel)
 {
-    //assert(channel >= 0 && channel < 16);
+    //assert(channel == 0 || channel < 16);
 
     while(true)
     {
