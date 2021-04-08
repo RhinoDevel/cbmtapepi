@@ -30,6 +30,9 @@ void mailbox_write(uint32_t const channel, uint32_t const val);
  */
 uint32_t mailbox_read(uint32_t const channel);
 
+/**
+ * - Returns UINT32_MAX on error.
+ */
 uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id);
 
 #endif //MT_MAILBOX

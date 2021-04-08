@@ -64,9 +64,6 @@ uint32_t mailbox_read(uint32_t const channel)
     //assert(false);
 }
 
-/**
- * - Returns UINT32_MAX on error.
- */
 uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
 {
     static uint32_t const channel_nr = 8; // 8 = Property channel nr.
