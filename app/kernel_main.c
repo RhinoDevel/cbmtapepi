@@ -20,6 +20,7 @@
 #include "../hardware/gpio/gpio_params.h"
 #include "../hardware/gpio/gpio.h"
 #ifndef NDEBUG
+    #include "../hardware/mailbox/mailbox.h"
     #include "../hardware/systimer/systimer.h"
     #include "../hardware/sdcard/sdcard.h"
 #endif //NDEBUG
@@ -118,7 +119,7 @@ static void init_signal_stuff()
 #ifndef NDEBUG
     uint32_t const deb_end = systimer_get_tick();
 
-    console_write("init_signal_stuff : Loop over ");
+    console_write("init_signal_stuff: Loop over ");
     console_write_dword_dec(s_measurements);
     console_write(" items took 0x");
     console_write_dword(deb_end - deb_beg);
@@ -900,6 +901,19 @@ static void init_secondary_cores()
 #endif //PERI_BASE != PERI_BASE_PI0AND1
 }
 
+#ifndef NDEBUG
+static void print_sys_infos()
+{
+    console_write("print_sys_infos: Clockrate CORE = ");
+    console_write_dword_dec(mailbox_read_clockrate(mailbox_id_clockrate_core));
+    console_writeline("");
+
+    console_write("print_sys_infos: Clockrate ARM = ");
+    console_write_dword_dec(mailbox_read_clockrate(mailbox_id_clockrate_arm));
+    console_writeline("");
+}
+#endif //NDEBUG
+
 /**
  * - Entry point (see boot.S).
  */
@@ -962,6 +976,10 @@ void kernel_main(uint32_t r0, uint32_t r1, uint32_t r2)
                          // to already have been called.
 
     init_secondary_cores();
+
+#ifndef NDEBUG
+    print_sys_infos();
+#endif //NDEBUG
 
 #ifdef MT_INTERACTIVE
     // Start user interface (via console):
