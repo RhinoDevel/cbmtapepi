@@ -172,10 +172,11 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 #if PERI_BASE_PI_VER < 3
     static const uint32_t act_interval = 500000; // 0.5s
     static const uint32_t act_count = act_interval / s_t_measure;
+
+    static bool act_state = false;
 #endif //PERI_BASE_PI_VER < 3
 
     static bool blink_state = false;
-    static bool act_state = false;
     static uint32_t counter = 0;
 
     armtimer_irq_clear();
@@ -904,6 +905,9 @@ static void init_secondary_cores()
 #ifndef NDEBUG
 static void print_sys_infos()
 {
+    // Must be at 250MHz (and stay there..!) as long as we are using the ARM
+    // timer(-s) instead of the system timer:
+    //
     console_write("print_sys_infos: Clockrate CORE = ");
     console_write_dword_dec(mailbox_read_clockrate(mailbox_id_clockrate_core));
     console_writeline("");
