@@ -8,17 +8,19 @@
 
 #include <stdint.h>
 
-static uint32_t const s_mailbox0_base = PERI_BASE + 0xB880;
+static uint32_t const s_mailbox_base = PERI_BASE + 0xB880;
 
-static uint32_t const s_mailbox0_read = s_mailbox0_base;
+static uint32_t const s_mailbox0_read = s_mailbox_base;
 //
 // Upper 28 bits hold value, lower 4 bits hold the sending channel's number.
 
-static uint32_t const s_mailbox0_status = s_mailbox0_base + 0x18;
+static uint32_t const s_mailbox0_status = s_mailbox_base + 0x18;
 
-static uint32_t const s_mailbox0_write = s_mailbox0_base + 0x20;
+static uint32_t const s_mailbox1_write = s_mailbox_base + 0x20;
 //
 // Upper 28 bits hold value, lower 4 bits hold the receiving channel's number.
+
+static uint32_t const s_mailbox1_status = s_mailbox_base + 0x38;
 
 static uint32_t const s_id_tag_getclockrate = 0x00030002;
 
@@ -32,11 +34,11 @@ void mailbox_write(uint32_t const channel, uint32_t const val)
     //assert(channel >= 0 && channel < 16);
     //assert((val <= 0x0FFFFFFF);
 
-    while((mem_read(s_mailbox0_status) & s_status_full) != 0)
+    while((mem_read(s_mailbox1_status) & s_status_full) != 0)
     {
         // Mailbox is full. Wait.
     }
-    mem_write(s_mailbox0_write, (val << 4) | channel);
+    mem_write(s_mailbox1_write, (val << 4) | channel);
 }
 
 uint32_t mailbox_read(uint32_t const channel)
