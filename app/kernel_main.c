@@ -867,16 +867,16 @@ static void init_secondary_cores()
         // ARM_LOCAL_BASE = 0x40000000 for Pi 2 and 3.
         // ARM_LOCAL_BASE = 0xFF800000 for Pi 4.
 
+        // See QA7_rev3.4.pdf, page 6 (Quad-A7 control):
+        //
         static uint32_t const arm_local_mailbox3_set0 = arm_local_base + 0x8C;
         static uint32_t const arm_local_mailbox3_clr0 = arm_local_base + 0xCC;
-
+        //
         uint32_t const set_addr = arm_local_mailbox3_set0 + 16 * core_nr;
         uint32_t const clr_addr = arm_local_mailbox3_clr0 + 16 * core_nr;
 
         barrier_datasync();
 
-        // TODO: Use mailbox interface(?)!
-        //
         while(mem_read(clr_addr) != 0)
         {
             // No timeout..
@@ -890,8 +890,6 @@ static void init_secondary_cores()
 
         // Wait for CPU to start:
 
-        // TODO: Use mailbox interface(?)!
-        //
         while(mem_read(clr_addr) != 0)
         {
             // No timeout..
