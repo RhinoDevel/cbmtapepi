@@ -1,6 +1,4 @@
 
-// TODO: Enable ACT LED usage on Pi 3!
-
 // Marcel Timm, RhinoDevel, 2018dec11
 
 // Pages mentioned in source code comments can be found in the document
@@ -12,6 +10,7 @@
 #include <stdint.h>
 
 #include "../hardware/peribase.h"
+#include "../hardware/mailbox/mailbox.h"
 #include "../hardware/armtimer/armtimer.h"
 #include "../hardware/irqcontroller/irqcontroller.h"
 #include "../hardware/barrier.h"
@@ -20,7 +19,6 @@
 #include "../hardware/gpio/gpio_params.h"
 #include "../hardware/gpio/gpio.h"
 #ifndef NDEBUG
-    #include "../hardware/mailbox/mailbox.h"
     #include "../hardware/systimer/systimer.h"
     #include "../hardware/sdcard/sdcard.h"
 #endif //NDEBUG
@@ -168,14 +166,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
     static const uint32_t blink_interval = 250000; // 0.25s
     static const uint32_t blink_count = blink_interval / s_t_measure;
-
-#if PERI_BASE_PI_VER < 3
     static const uint32_t act_interval = 500000; // 0.5s
     static const uint32_t act_count = act_interval / s_t_measure;
 
     static bool act_state = false;
-#endif //PERI_BASE_PI_VER < 3
-
     static bool blink_state = false;
     static uint32_t counter = 0;
 
@@ -188,8 +182,35 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
 #if PERI_BASE_PI_VER < 3
     act_state ^= counter % act_count == 0;
+
     gpio_write( // Overdone, but should be OK and to avoid branching.
         GPIO_PIN_NR_ACT, act_state);
+#else //PERI_BASE_PI_VER < 3
+    bool const new_act_state = act_state ^ (counter % act_count == 0);
+
+    if(new_act_state != act_state)
+    {
+        act_state = new_act_state;
+
+        // EVIL: Waiting loops (see mailbox.c) take too long and this dirty hack
+        //       seems to work:
+        //
+        //mailbox_write_gpio_actled(act_state); // (ignoring return value)
+        //
+        static volatile uint32_t msg_buf[8] __attribute__((aligned (16)));
+        msg_buf[0] = sizeof *msg_buf * 8;
+        msg_buf[1] = 0;
+	    msg_buf[2] = 0x00038041;
+	    msg_buf[3] = 2 * sizeof *msg_buf;
+        msg_buf[4] = 0;
+        msg_buf[5] = 130;
+	    msg_buf[6] = (uint32_t)act_state;
+        msg_buf[7] = 0;
+        mem_write(
+            PERI_BASE + 0xB880 + 0x20,
+            (((0x40000000 + (uint32_t)msg_buf) >> 4) << 4) | 8);
+        mem_read(PERI_BASE + 0xB880);
+    }
 #endif //PERI_BASE_PI_VER < 3
 
     blink_state ^= counter % blink_count == 0;
