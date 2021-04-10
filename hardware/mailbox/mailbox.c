@@ -203,7 +203,7 @@ uint32_t mailbox_write_gpio_actled(bool const high)
 
     // (uint8_t) value buffer starts here:
 
-    s_msg_buf[i++] = (uint32_t)s_mailbox_id_gpio_actled; // Parameter
+    s_msg_buf[i++] = s_mailbox_id_gpio_actled; // Parameter
 	s_msg_buf[i++] = high ? 1 : 0;
 
     // (uint8_t) value buffer ended here.
