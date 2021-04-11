@@ -66,9 +66,9 @@ void _start(); // See boot.S.
 
 enum led_state
 {
-    led_state_off,
-    led_state_on,
-    led_state_blink
+    led_state_off = 0,
+    led_state_on = 1,
+    led_state_blink = 2
 };
 
 // For fast mode installer ready-signal detection (it has a frequency):
@@ -218,7 +218,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
     gpio_write( // Overdone, but should be OK and to avoid branching.
         MT_GPIO_PIN_NR_LED, 
         s_led_state == led_state_on
-            || (s_led_state != led_state_off && blink_state));
+            || (s_led_state == led_state_blink && blink_state));
 
     // *** SIGNAL DETECTION: ***
     //
@@ -308,13 +308,13 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         return 0;
     }
 
-    /** Wait for SAVE (either as ctrl. cmd., or to really save).
+    /** Wait for SAVE from CBM (in compatibility mode).
      * 
      *  - Sets LED state to blinking on error.
      *  - Logs error message in debug mode.
      * 
      *  - Caller takes ownership of return value.
-     *  - Returns 0 on error.
+     *  - Returns retrieved data or 0 on error.
      */
     static struct tape_input * wait_for_save()
     {
@@ -327,12 +327,14 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
             s_led_state = led_state_blink;
             //
-            // Indicates an error occ., but still in SAVE mode (IRQ).
+            // Indicates an error occ., but still in 
+            // waiting-for-command-from-CBM "mode".
         }
         return ret_val;
     }
 
-    /** Wait for command from Commodore machine.
+    /** Wait for command from Commodore machine (in compatibility or any of the
+     *  fast modes).
      * 
      *  - Caller takes ownership of return value.
      *  - Returns 0 on error.
@@ -372,7 +374,8 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
 
         s_led_state = led_state_blink;
         //
-        // Indicates an error occurred, but still in SAVE mode (IRQ).
+        // Indicates an error occurred, but still in 
+        // waiting-for-command-from-CBM "mode".
 
         // Get CBM out of waiting-for-response mode:
         //
@@ -487,7 +490,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         }
         else
         {
-            return mode_type_save; // The default mode.
+            return mode_type_save; // The default (compatibility) mode.
         }
     }
 
@@ -631,7 +634,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             }
         }
 
-        s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
+        s_led_state = led_state_off; // Indicates sending-to-CBM "mode".
     
         // Kind of bad: False is never interpreted as error, here.
         //              It is assumed that the only reason for this function to
@@ -641,7 +644,10 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         bool const ret_val = cbm_send_data(ti, did_signal_exist);
     
         tape_input_free(ti);
-        s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+        
+        s_led_state = led_state_on; 
+        //
+        // Indicates waiting-for-command-from-CBM "mode".
 
         return ret_val;
     }
@@ -691,7 +697,11 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
         console_deb_writeline("cmd_enter : Entered function.");
 
         cmd_reinit(save_mode_by_name, MT_FILESYS_ROOT);
-        s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+
+        s_led_state = led_state_on;
+        //
+        // Indicates waiting-for-command-from-CBM "mode".
+        
         while(true)
         {
             struct cmd_output * o = 0;
@@ -720,7 +730,9 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             {
                 if(o != 0) // Something to send back to CBM.
                 {
-                    s_led_state = led_state_off; // Indicates LOAD mode (IRQ).
+                    s_led_state = led_state_off;
+                    //
+                    // Indicated sending-data-to-CBM "mode".
 
                     switch(mode)
                     {
@@ -774,7 +786,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                         || mode == mode_type_pet2 || mode == mode_type_pet2tom
                         || mode == mode_type_pet4 || mode == mode_type_pet4tom
                         || mode == mode_type_vic20tom
-                        || mode == mode_type_c64tof || mode_type_c64tom)
+                        || mode == mode_type_c64tof || mode == mode_type_c64tom)
                     {
                         // Get CBM out of waiting-for-response mode:
                         //
@@ -782,11 +794,13 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                     }
                 }
 
-                s_led_state = led_state_on; // Indicates SAVE mode (IRQ).
+                s_led_state = led_state_on;
+                //
+                // Indicates waiting-for-command-from-CBM mode.
             }
             else
             {
-                on_failed_cmd(mode);
+                on_failed_cmd(mode); // (sets LED to blinking)
             }
 
             // Deallocate memory:
