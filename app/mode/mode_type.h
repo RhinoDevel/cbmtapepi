@@ -9,7 +9,7 @@ enum mode_type
     mode_type_err = -1,
 
     mode_type_save = 0, // Default type supporting all CBM machines via usage of
-                        // OS's SAVE and LOAD commands.
+                        // OS's SAVE and LOAD commands (compatibility mode).
 
     mode_type_pet1 = 1, // Fast loading and saving for CBM/PET BASIC v1.
     mode_type_pet2 = 2, // Fast loading and saving for CBM/PET BASIC v2.
