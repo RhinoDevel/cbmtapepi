@@ -938,19 +938,84 @@ static void init_secondary_cores()
 }
 
 #ifndef NDEBUG
+
 static void print_sys_infos()
 {
+    uint32_t buf = UINT32_MAX,
+        full_mem_mb = 0;
+
+    console_write("print_sys_infos: VideoCore firmware rev.: ");
+    console_write_dword_dec(mailbox_read_vcfirmwarerev());
+    console_writeline("");
+
+    console_write("print_sys_infos: Board model: ");
+    console_write_dword_dec(mailbox_read_boardmodel());
+    console_writeline("");
+
+    console_write("print_sys_infos: Board rev.: ");
+    console_write_dword_dec(mailbox_read_boardrev());
+    console_writeline("");
+
+    console_write("print_sys_infos: ARM memory base address: 0x");
+    console_write_dword(mailbox_read_armmemory(&buf));
+    console_writeline("");
+    console_write("print_sys_infos: ARM memory byte count: ");
+    console_write_dword_dec(buf);
+    console_write(" / ");
+    buf = buf / 1024 / 1024;
+    full_mem_mb += buf;
+    console_write_dword_dec(buf);
+    console_writeline(" MB");
+
+    console_write("print_sys_infos: VideoCore memory base address: 0x");
+    console_write_dword(mailbox_read_vcmemory(&buf));
+    console_writeline("");
+    console_write("print_sys_infos: VideoCore memory byte count: ");
+    console_write_dword_dec(buf);
+    console_write(" / ");
+    buf = buf / 1024 / 1024;
+    full_mem_mb += buf;
+    console_write_dword_dec(buf);
+    console_writeline(" MB");
+
+    console_write("print_sys_infos: Full memory count: ");
+    console_write_dword_dec(full_mem_mb);
+    console_writeline(" MB");
+
+    console_write("print_sys_infos: Current/max. SoC temperature: ");
+    console_write_dword_dec(mailbox_read_soctemp());
+    console_write(" / ");
+    console_write_dword_dec(mailbox_read_socmaxtemp());
+    console_writeline(" (1/1000 degree celsius)");
+
     // Must be at 250MHz (and stay there..!) as long as we are using the ARM
     // timer(-s) instead of the system timer:
     //
-    console_write("print_sys_infos: Clockrate CORE = ");
+    console_write("print_sys_infos: Core min./max./current clockrates: ");
+    console_write_dword_dec(mailbox_read_minclockrate(mailbox_id_clockrate_core));
+    console_write(" / ");
+    console_write_dword_dec(mailbox_read_maxclockrate(mailbox_id_clockrate_core));
+    console_write(" / ");
     console_write_dword_dec(mailbox_read_clockrate(mailbox_id_clockrate_core));
     console_writeline("");
 
-    console_write("print_sys_infos: Clockrate ARM = ");
+    console_write("print_sys_infos: ARM min./max./current clockrates: ");
+    console_write_dword_dec(mailbox_read_minclockrate(mailbox_id_clockrate_arm));
+    console_write(" / ");
+    console_write_dword_dec(mailbox_read_maxclockrate(mailbox_id_clockrate_arm));
+    console_write(" / ");
     console_write_dword_dec(mailbox_read_clockrate(mailbox_id_clockrate_arm));
     console_writeline("");
+
+    console_write("print_sys_infos: EMMC min./max./current clockrates: ");
+    console_write_dword_dec(mailbox_read_minclockrate(mailbox_id_clockrate_emmc));
+    console_write(" / ");
+    console_write_dword_dec(mailbox_read_maxclockrate(mailbox_id_clockrate_emmc));
+    console_write(" / ");
+    console_write_dword_dec(mailbox_read_clockrate(mailbox_id_clockrate_emmc));
+    console_writeline("");
 }
+
 #endif //NDEBUG
 
 /**
