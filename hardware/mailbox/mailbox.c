@@ -38,11 +38,29 @@ static uint32_t const s_mailbox1_status = s_mailbox_base + 0x38;
 //             Y = Type of command (0 = get, 4 = test, 8 = set).
 //             Z = Identifies specific command.
 
-static uint32_t const s_id_tag_getclockrate = 0x00030002;
-static uint32_t const s_id_tag_setclockrate = 0x00038002;
+// 0/4:
+//
+static uint32_t const s_id_tag_getvcfirmwarerev = 0x00000001;
+static uint32_t const s_id_tag_getboardmodel    = 0x00010001;
+static uint32_t const s_id_tag_getboardrev      = 0x00010002;
 
-static uint32_t const s_id_tag_getmaxclockrate = 0x00030004;
-static uint32_t const s_id_tag_getminclockrate = 0x00030007;
+// 0/8 (two values of interest in response):
+//
+static uint32_t const s_id_tag_getarmmemory     = 0x00010005;
+static uint32_t const s_id_tag_getvcmemory      = 0x00010006;
+
+// 4/8 (first value in response is ID, second is value of interest):
+//
+static uint32_t const s_id_tag_getclockrate     = 0x00030002;
+static uint32_t const s_id_tag_getmaxclockrate  = 0x00030004;
+static uint32_t const s_id_tag_getminclockrate  = 0x00030007;
+//
+// Temperatures in thousandths of degree celsius:
+//
+static uint32_t const s_id_tag_getsoctemp       = 0x00030006; // ID = 0.
+static uint32_t const s_id_tag_getsocmaxtemp    = 0x0003000a; // ID = 0.
+
+static uint32_t const s_id_tag_setclockrate = 0x00038002;
 
 // Source: https://www.raspberrypi.org/forums/viewtopic.php?f=43&t=109137&start=100#p989907
 //
@@ -189,12 +207,84 @@ static uint32_t write_and_read(
         {
             // Hard-coded to return SECOND(!) 32-bit of returned value buffer:
             //
-		    return (uint32_t)(s_msg_buf[6]);
+		    return s_msg_buf[6];
             //
             // (works here, but value buffer is a uint8_t array)
         }
 	}
 	return UINT32_MAX;
+}
+
+static uint32_t req0resp4(uint32_t const channel_nr, uint32_t const tag_id)
+{
+    s_msg_buf[0] = sizeof *s_msg_buf * 8; // Total size of buffer in bytes.
+    s_msg_buf[1] = 0; // This is a request.
+
+    // Tag starts here:
+
+	s_msg_buf[2] = tag_id; // Tag identity.
+	s_msg_buf[3] = 1 * sizeof *s_msg_buf; // Size of value buffer in byte.
+    s_msg_buf[4] = 0; // Tag's request code (sending => zero).
+
+    // (uint8_t) value buffer starts here:
+
+    // (no parameters)
+	
+    s_msg_buf[5] = 0; // Used for response, only.
+
+    // (uint8_t) value buffer ended here.
+
+    // Tag ended here.
+
+    s_msg_buf[6] = 0; // The end tag.
+
+    s_msg_buf[7] = 0; // Padding for 16 byte alignment.
+
+    if(write_and_read(channel_nr, 4) == UINT32_MAX) // Hard-coded 4.
+    {
+        return UINT32_MAX; // Error!
+    }
+    return s_msg_buf[5];
+}
+
+static uint32_t req0resp8(
+    uint32_t const channel_nr,
+    uint32_t const tag_id,
+    uint32_t * const out_val_two)
+{
+    assert(out_val_two != 0);
+
+    s_msg_buf[0] = sizeof *s_msg_buf * 8; // Total size of buffer in bytes.
+    s_msg_buf[1] = 0; // This is a request.
+
+    // Tag starts here:
+
+	s_msg_buf[2] = tag_id; // Tag identity.
+	s_msg_buf[3] = 2 * sizeof *s_msg_buf; // Size of value buffer in byte.
+    s_msg_buf[4] = 0; // Tag's request code (sending => zero).
+
+    // (uint8_t) value buffer starts here:
+
+    // (no parameters)
+	
+    s_msg_buf[5] = 0; // Used for response, only.
+    s_msg_buf[6] = 0; // Used for response, only.
+
+    // (uint8_t) value buffer ended here.
+
+    // Tag ended here.
+
+    s_msg_buf[7] = 0; // The end tag.
+
+    // (no padding necessary, already 16 byte aligned full message)
+
+    if(write_and_read(channel_nr, 8) == UINT32_MAX) // Hard-coded 4.
+    {
+        *out_val_two = UINT32_MAX;
+        return UINT32_MAX; // Error!
+    }
+    *out_val_two = s_msg_buf[6];
+    return s_msg_buf[5];
 }
 
 static uint32_t req4resp8(
@@ -225,6 +315,30 @@ static uint32_t req4resp8(
     return write_and_read(channel_nr, 8); // Hard-coded 8.
 }
 
+uint32_t mailbox_read_vcfirmwarerev()
+{
+    return req0resp4(s_channel_nr_propertytags, s_id_tag_getvcfirmwarerev);
+}
+uint32_t mailbox_read_boardmodel()
+{
+    return req0resp4(s_channel_nr_propertytags, s_id_tag_getboardmodel);
+}
+uint32_t mailbox_read_boardrev()
+{
+    return req0resp4(s_channel_nr_propertytags, s_id_tag_getboardrev);
+}
+
+uint32_t mailbox_read_armmemory(uint32_t * const out_byte_count)
+{
+    return req0resp8(
+        s_channel_nr_propertytags, s_id_tag_getarmmemory, out_byte_count);
+}
+uint32_t mailbox_read_vcmemory(uint32_t * const out_byte_count)
+{
+    return req0resp8(
+        s_channel_nr_propertytags, s_id_tag_getvcmemory, out_byte_count);
+}
+
 uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
 {
     return req4resp8(
@@ -239,6 +353,14 @@ uint32_t mailbox_read_minclockrate(enum mailbox_id_clockrate const id)
 {
     return req4resp8(
         s_channel_nr_propertytags, s_id_tag_getminclockrate, (uint32_t)id);
+}
+uint32_t mailbox_read_soctemp()
+{
+    return req4resp8(s_channel_nr_propertytags, s_id_tag_getsoctemp, 0);
+}
+uint32_t mailbox_read_socmaxtemp()
+{
+    return req4resp8(s_channel_nr_propertytags, s_id_tag_getsocmaxtemp, 0);
 }
 
 uint32_t mailbox_write_clockrate(

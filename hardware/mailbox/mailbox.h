@@ -44,6 +44,31 @@ uint32_t mailbox_read(uint32_t const channel);
 /**
  * - Returns UINT32_MAX on error.
  */
+uint32_t mailbox_read_vcfirmwarerev();
+
+/**
+ * - Returns UINT32_MAX on error.
+ */
+uint32_t mailbox_read_boardmodel();
+
+/**
+ * - Returns UINT32_MAX on error.
+ */
+uint32_t mailbox_read_boardrev();
+
+/**
+ * - Returns UINT32_MAX and sets value at given pointer to UINT32_MAX on error.
+ */
+uint32_t mailbox_read_armmemory(uint32_t * const out_byte_count);
+
+/**
+ * - Returns UINT32_MAX and sets value at given pointer to UINT32_MAX on error.
+ */
+uint32_t mailbox_read_vcmemory(uint32_t * const out_byte_count);
+
+/**
+ * - Returns UINT32_MAX on error.
+ */
 uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id);
 
 /**
@@ -55,6 +80,16 @@ uint32_t mailbox_read_maxclockrate(enum mailbox_id_clockrate const id);
  * - Returns UINT32_MAX on error.
  */
 uint32_t mailbox_read_minclockrate(enum mailbox_id_clockrate const id);
+
+/**
+ * - Returns UINT32_MAX on error.
+ */
+uint32_t mailbox_read_soctemp();
+
+/**
+ * - Returns UINT32_MAX on error.
+ */
+uint32_t mailbox_read_socmaxtemp();
 
 /**
  * - Returns UINT32_MAX on error or actually set clock rate on success
