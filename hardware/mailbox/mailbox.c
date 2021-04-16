@@ -95,7 +95,7 @@ static volatile uint32_t s_msg_buf[MSG_BUF_SIZE] __attribute__((aligned (16)));
 
 void mailbox_write(uint32_t const channel, uint32_t const val)
 {
-    assert(s_msg_buf[0] % (16/(sizeof *s_msg_buf)) == 0);
+    assert(s_msg_buf[0] % 16 == 0);
     assert(channel == 0 || channel < 16);
     assert(val <= 0x0FFFFFFF);
 
@@ -157,7 +157,6 @@ static uint32_t write_and_read(
 //     console_writeline("write_and_read : Message buffer content before write:");
 //     deb_console_write_msg_buf();
 // #endif //NDEBUG
-
 
     // Is it necessary to add a data sync barrier, here [or even some cache
     // cleaning, like "Clean and invalidate DCache entry (MVA)"]?
