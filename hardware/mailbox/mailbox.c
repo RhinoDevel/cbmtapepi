@@ -5,9 +5,9 @@
 #include "../../lib/mem/mem.h"
 #include "../../lib/assert.h"
 
-#ifndef NDEBUG
-    #include "../../lib/console/console.h"
-#endif //NDEBUG
+// #ifndef NDEBUG
+//     #include "../../lib/console/console.h"
+// #endif //NDEBUG
 
 #include <stdint.h>
 
@@ -40,6 +40,9 @@ static uint32_t const s_mailbox1_status = s_mailbox_base + 0x38;
 
 static uint32_t const s_id_tag_getclockrate = 0x00030002;
 static uint32_t const s_id_tag_setclockrate = 0x00038002;
+
+static uint32_t const s_id_tag_getmaxclockrate = 0x00030004;
+static uint32_t const s_id_tag_getminclockrate = 0x00030007;
 
 // Source: https://www.raspberrypi.org/forums/viewtopic.php?f=43&t=109137&start=100#p989907
 //
@@ -129,25 +132,22 @@ uint32_t mailbox_read(uint32_t const channel)
     assert(false);
 }
 
-#ifndef NDEBUG
-
-static void deb_console_write_msg_buf()
-{
-    for(int i = 0;i < MSG_BUF_SIZE;++i)
-    {
-        console_write_word((uint16_t)i);
-        console_write(": ");
-        console_write_dword(s_msg_buf[i]);
-        console_writeline("");
-    }
-}
-
-#endif //NDEBUG
+// #ifndef NDEBUG
+//
+// static void deb_console_write_msg_buf()
+// {
+//     for(int i = 0;i < MSG_BUF_SIZE;++i)
+//     {
+//         console_write_word((uint16_t)i);
+//         console_write(": ");
+//         console_write_dword(s_msg_buf[i]);
+//         console_writeline("");
+//     }
+// }
+//
+// #endif //NDEBUG
 
 /**
- * - Hard-coded for supported functionality (not a universal mailbox read/write
- *   function, yet).
- * 
  * - Returns UINT32_MAX on error or SECOND(!) 32 bit of response value field.
  */
 static uint32_t write_and_read(
@@ -197,20 +197,21 @@ static uint32_t write_and_read(
 	return UINT32_MAX;
 }
 
-uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
+static uint32_t req4resp8(
+    uint32_t const channel_nr, uint32_t const tag_id, uint32_t const val_id)
 {
     s_msg_buf[0] = sizeof *s_msg_buf * 8; // Total size of buffer in bytes.
     s_msg_buf[1] = 0; // This is a request.
 
     // Tag starts here:
 
-	s_msg_buf[2] = s_id_tag_getclockrate; // Tag identity.
+	s_msg_buf[2] = tag_id; // Tag identity.
 	s_msg_buf[3] = 2 * sizeof *s_msg_buf; // Size of value buffer in byte.
     s_msg_buf[4] = 0; // Tag's request code (sending => zero).
 
     // (uint8_t) value buffer starts here:
 
-    s_msg_buf[5] = (uint32_t)id; // Parameter
+    s_msg_buf[5] = (uint32_t)val_id; // Parameter
 	s_msg_buf[6] = 0; // Used for response, too.
 
     // (uint8_t) value buffer ended here.
@@ -221,7 +222,23 @@ uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
 
     // (no padding necessary, already 16 byte aligned full message)
 
-    return write_and_read(s_channel_nr_propertytags, 8); // Hard-coded 8.
+    return write_and_read(channel_nr, 8); // Hard-coded 8.
+}
+
+uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
+{
+    return req4resp8(
+        s_channel_nr_propertytags, s_id_tag_getclockrate, (uint32_t)id);
+}
+uint32_t mailbox_read_maxclockrate(enum mailbox_id_clockrate const id)
+{
+    return req4resp8(
+        s_channel_nr_propertytags, s_id_tag_getmaxclockrate, (uint32_t)id);
+}
+uint32_t mailbox_read_minclockrate(enum mailbox_id_clockrate const id)
+{
+    return req4resp8(
+        s_channel_nr_propertytags, s_id_tag_getminclockrate, (uint32_t)id);
 }
 
 uint32_t mailbox_write_clockrate(
