@@ -46,6 +46,14 @@ uint32_t mailbox_read(uint32_t const channel);
  */
 uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id);
 
+/**
+ * - Returns UINT32_MAX on error or actually set clock rate on success
+ *   (may be different from given clock rate, if given is not supported
+ *    - seems to be using nearest supported rate, then).
+ */
+uint32_t mailbox_write_clockrate(
+    enum mailbox_id_clockrate const id, uint32_t const val);
+
 #if PERI_BASE_PI_VER == 3
 
 /**

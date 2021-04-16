@@ -35,6 +35,8 @@ static void init()
     msg_buf[7] = 0; // Y offset of virtual framebuffer.
     msg_buf[8] = 0; // Framebuffer address.
     msg_buf[9] = 0; // Framebuffer size.
+    
+    // TODO: 16 byte full messsage alignment?
 
     mailbox_write(
         channel_nr,

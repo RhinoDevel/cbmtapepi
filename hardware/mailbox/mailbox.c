@@ -3,13 +3,20 @@
 
 #include "mailbox.h"
 #include "../../lib/mem/mem.h"
-//#include "../../lib/assert.h"
+#include "../../lib/assert.h"
+
+#ifndef NDEBUG
+    #include "../../lib/console/console.h"
+#endif //NDEBUG
 
 #include <stdint.h>
 
-#define MSG_BUF_SIZE 8 // Size of message buffer in multiples of 4 bytes.
-                       // 32 bytes may not be enough for all responses from
-                       // VideoCode!
+#define MSG_BUF_SIZE 12 // Size of message buffer in multiples of 4 bytes.
+                        // 48 bytes may not be enough for all responses from
+                        // VideoCode (check documentation when necessary).
+                        //
+                        // Messages must be 16 byte aligned, meaning you might
+                        // need padding.
 
 static uint32_t const s_mailbox_base = PERI_BASE + 0xB880;
 
@@ -25,7 +32,14 @@ static uint32_t const s_mailbox1_write = s_mailbox_base + 0x20;
 
 static uint32_t const s_mailbox1_status = s_mailbox_base + 0x38;
 
+// Tag format: 0x000XYZZZ:
+//
+//             X = Identifies hardware device.
+//             Y = Type of command (0 = get, 4 = test, 8 = set).
+//             Z = Identifies specific command.
+
 static uint32_t const s_id_tag_getclockrate = 0x00030002;
+static uint32_t const s_id_tag_setclockrate = 0x00038002;
 
 // Source: https://www.raspberrypi.org/forums/viewtopic.php?f=43&t=109137&start=100#p989907
 //
@@ -69,20 +83,21 @@ static volatile uint32_t s_msg_buf[MSG_BUF_SIZE] __attribute__((aligned (16)));
  *       |            |               others are "reserved" - just set to 0).
  *       |            | - Tag data starts here -
  *     5 | May be     | Value buffer (see index 3 for its length in bytes).
- *       | multiple   |
- *       | bytes.     |
+ *       | multiple   | May be padding (use zeros) to make the value buffer
+ *       | bytes.     | 4 byte aligned.
  *       |            | - End tag starts here -
  *     ? | 0x00000000 | End tag.
  *       |            | - Padding starts here -
- *     ? | ...        | Padding to align the tag to 32 bits (might not matter,
- *       |            |  but fill with zeros).
+ *     ? | ...        | Padding to make full message 16 byte aligned (might not
+ *       |            | matter, but fill with zeros).
  * -----------------------------------------------------------------------------
  */
 
 void mailbox_write(uint32_t const channel, uint32_t const val)
 {
-    //assert(channel == 0 || channel < 16);
-    //assert(val <= 0x0FFFFFFF);
+    assert(s_msg_buf[0] % (16/(sizeof *s_msg_buf)) == 0);
+    assert(channel == 0 || channel < 16);
+    assert(val <= 0x0FFFFFFF);
 
     while((mem_read(s_mailbox1_status) & s_status_full) != 0)
     {
@@ -93,7 +108,7 @@ void mailbox_write(uint32_t const channel, uint32_t const val)
 
 uint32_t mailbox_read(uint32_t const channel)
 {
-    //assert(channel == 0 || channel < 16);
+    assert(channel == 0 || channel < 16);
 
     while(true)
     {
@@ -111,17 +126,39 @@ uint32_t mailbox_read(uint32_t const channel)
         }
     }
 
-    //assert(false);
+    assert(false);
 }
+
+#ifndef NDEBUG
+
+static void deb_console_write_msg_buf()
+{
+    for(int i = 0;i < MSG_BUF_SIZE;++i)
+    {
+        console_write_word((uint16_t)i);
+        console_write(": ");
+        console_write_dword(s_msg_buf[i]);
+        console_writeline("");
+    }
+}
+
+#endif //NDEBUG
 
 /**
  * - Hard-coded for supported functionality (not a universal mailbox read/write
  *   function, yet).
  * 
- * - Returns UINT32_MAX on error.
+ * - Returns UINT32_MAX on error or SECOND(!) 32 bit of response value field.
  */
-static uint32_t write_and_read(uint32_t channel_nr)
+static uint32_t write_and_read(
+    uint32_t channel_nr, uint32_t const expected_resp_val_len)
 {
+// #ifndef NDEBUG
+//     console_writeline("write_and_read : Message buffer content before write:");
+//     deb_console_write_msg_buf();
+// #endif //NDEBUG
+
+
     // Is it necessary to add a data sync barrier, here [or even some cache
     // cleaning, like "Clean and invalidate DCache entry (MVA)"]?
 
@@ -129,8 +166,8 @@ static uint32_t write_and_read(uint32_t channel_nr)
         channel_nr,
 
         // TODO: Replace hard-coded conversion to physical memory address.
-        //       Assuming L2 cache to be enabled, otherwise 0xC0000000 would be
-        //       correct!
+        //       Assuming L2 cache to be enabled (for VideoCore),
+        //       otherwise 0xC0000000 would be correct!
         //
         //       Also: Is this the correct address for ALL Pis?
         //
@@ -142,10 +179,17 @@ static uint32_t write_and_read(uint32_t channel_nr)
     // Is it necessary to add a data sync barrier, here [or even some cache
     // cleaning, like "Clean and invalidate DCache entry (MVA)"]?
 
+// #ifndef NDEBUG
+//     console_writeline("write_and_read : Message buffer content after read:");
+//     deb_console_write_msg_buf();
+// #endif //NDEBUG
+
 	if (s_msg_buf[1] == s_responsecode_success)
     {
-        if(s_msg_buf[4] == (s_responsecode_success | 8)) // Expecting 8 bytes.
+        if(s_msg_buf[4] == (s_responsecode_success | expected_resp_val_len))
         {
+            // Hard-coded to return SECOND(!) 32-bit of returned value buffer:
+            //
 		    return (uint32_t)(s_msg_buf[6]);
             //
             // (works here, but value buffer is a uint8_t array)
@@ -156,31 +200,62 @@ static uint32_t write_and_read(uint32_t channel_nr)
 
 uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
 {
-	uint32_t i = 1;
-
-    // (first array element will be filled, below)
-    s_msg_buf[i++] = 0; // This is a request.
+    s_msg_buf[0] = sizeof *s_msg_buf * 8; // Total size of buffer in bytes.
+    s_msg_buf[1] = 0; // This is a request.
 
     // Tag starts here:
 
-	s_msg_buf[i++] = s_id_tag_getclockrate; // Tag identity.
-	s_msg_buf[i++] = 2 * sizeof *s_msg_buf; // Size of value buffer in byte.
-    s_msg_buf[i++] = 0; // Tag's request code (sending => zero).
+	s_msg_buf[2] = s_id_tag_getclockrate; // Tag identity.
+	s_msg_buf[3] = 2 * sizeof *s_msg_buf; // Size of value buffer in byte.
+    s_msg_buf[4] = 0; // Tag's request code (sending => zero).
 
     // (uint8_t) value buffer starts here:
 
-    s_msg_buf[i++] = (uint32_t)id; // Parameter
-	s_msg_buf[i++] = 0; // Used for response, too.
+    s_msg_buf[5] = (uint32_t)id; // Parameter
+	s_msg_buf[6] = 0; // Used for response, too.
 
     // (uint8_t) value buffer ended here.
 
     // Tag ended here.
 
-    s_msg_buf[i++] = 0; // The end tag.
+    s_msg_buf[7] = 0; // The end tag.
 
-    s_msg_buf[0] = sizeof *s_msg_buf * i; // Total size of buffer in bytes.
+    // (no padding necessary, already 16 byte aligned full message)
 
-    return write_and_read(s_channel_nr_propertytags);
+    return write_and_read(s_channel_nr_propertytags, 8); // Hard-coded 8.
+}
+
+uint32_t mailbox_write_clockrate(
+    enum mailbox_id_clockrate const id, uint32_t const val)
+{
+    s_msg_buf[0] = sizeof *s_msg_buf * 12; // Total size of buffer in bytes.
+    s_msg_buf[1] = 0; // This is a request.
+
+    // Tag starts here:
+
+	s_msg_buf[2] = s_id_tag_setclockrate; // Tag identity.
+	s_msg_buf[3] = 3 * sizeof *s_msg_buf; // Size of value buffer in byte.
+    s_msg_buf[4] = 0; // Tag's request code (sending => zero).
+
+    // (uint8_t) value buffer starts here:
+
+    s_msg_buf[5] = (uint32_t)id; // Parameter
+	s_msg_buf[6] = val; // Frequency.
+    s_msg_buf[7] = 0; // Skip turbo (for setting ARM frequency above default).
+
+    // (uint8_t) value buffer ended here.
+
+    // Tag ended here.
+
+    s_msg_buf[8] = 0; // The end tag.
+
+    // Padding for 16 byte alignment of full message:
+    //
+    s_msg_buf[9] = 0;
+    s_msg_buf[10] = 0;
+    s_msg_buf[11] = 0;
+
+    return write_and_read(s_channel_nr_propertytags, 8); // Hard-coded 8.
 }
 
 #if PERI_BASE_PI_VER == 3
@@ -190,31 +265,29 @@ uint32_t mailbox_read_clockrate(enum mailbox_id_clockrate const id)
  */
 uint32_t mailbox_write_gpio_actled(bool const high)
 {
-	uint32_t i = 1;
-
-    // (first array element will be filled, below)
-    s_msg_buf[i++] = 0; // This is a request.
+    s_msg_buf[0] = sizeof *s_msg_buf * 8; // Total size of buffer in bytes.
+    s_msg_buf[1] = 0; // This is a request.
 
     // Tag starts here:
 
-	s_msg_buf[i++] = s_id_tag_setgpiostate; // Tag identity.
-	s_msg_buf[i++] = 2 * sizeof *s_msg_buf; // Size of value buffer in byte.
-    s_msg_buf[i++] = 0; // Tag's request code (sending => zero).
+	s_msg_buf[2] = s_id_tag_setgpiostate; // Tag identity.
+	s_msg_buf[3] = 2 * sizeof *s_msg_buf; // Size of value buffer in byte.
+    s_msg_buf[4] = 0; // Tag's request code (sending => zero).
 
     // (uint8_t) value buffer starts here:
 
-    s_msg_buf[i++] = s_mailbox_id_gpio_actled; // Parameter
-	s_msg_buf[i++] = high ? 1 : 0;
+    s_msg_buf[5] = s_mailbox_id_gpio_actled; // Parameter
+	s_msg_buf[6] = high ? 1 : 0;
 
     // (uint8_t) value buffer ended here.
 
     // Tag ended here.
 
-    s_msg_buf[i++] = 0; // The end tag.
+    s_msg_buf[7] = 0; // The end tag.
 
-    s_msg_buf[0] = sizeof *s_msg_buf * i; // Total size of buffer in bytes.
+    // (no padding necessary, already 16 byte aligned full message)
 
-    return write_and_read(s_channel_nr_propertytags);
+    return write_and_read(s_channel_nr_propertytags, 8); // Hard-coded 8.
 }
 
 #endif //PERI_BASE_PI_VER == 3
