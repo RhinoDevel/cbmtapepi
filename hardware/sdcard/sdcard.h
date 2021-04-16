@@ -21,6 +21,16 @@
 #define SD_ERROR_APP_CMD       9
 #define SD_ALREADY_INITIALIZED 10
 
+// This driver is hard-coded for an EMMC frequency of 250 MHz (as to-be-returned
+// by mailbox property channel message) and a divisor of 6, resulting in the
+// "real" SD card clock speed of 250MHz / 6 = ~41.67 MHz.
+//
+// Also see: 
+//
+// https://www.raspberrypi.org/forums/viewtopic.php?f=72&t=94133&p=1219463&hilit=emmc+41#p1220032
+//
+#define SD_REQ_CLOCKRATE_EMMC ((uint32_t)250000000) // 250MHz
+
 int sdcard_blocks_clear(long long address, int num);
 int sdcard_blocks_transfer(long long address, int num, unsigned char * buffer, int write);
 
@@ -29,6 +39,8 @@ int sdcard_blocks_transfer(long long address, int num, unsigned char * buffer, i
  *  - Returns non-zero value on error.
  *  - Assumes SD card to be present!
  *  - Assumes SD card NEVER getting removed/reinserted!
+ *  - Hard-coded for EMMC clock rate of SD_REQ_CLOCKRATE_EMMC MHz (as returned 
+ *    by using mailbox property channel to get clock rate).
  */
 int sdcard_init();
 

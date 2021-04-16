@@ -123,16 +123,6 @@ static struct EMMCCommand sdCommandTable[] =
     { "SEND_SCR"     , 0x33000000|CMD_RSPNS_48|CMD_IS_DATA|TM_DAT_DIR_CH   , RESP_R1 , RCA_NO  ,0},
 };
 
-// This driver is hard-coded for an EMMC frequency of 250 MHz (as to-be-returned
-// by mailbox property channel message) and a divisor of 6, resulting in the
-// "real" SD card clock speed of 250MHz / 6 = ~41.67 MHz.
-//
-// Also see: 
-//
-// https://www.raspberrypi.org/forums/viewtopic.php?f=72&t=94133&p=1219463&hilit=emmc+41#p1220032
-//
-static uint32_t const s_required_clockrate_emmc = 250000000; // = 250MHz.
-
 static bool s_is_initialized = false; // Set by sdcard_init().
 static struct SDDescriptor s_sdcard; // Prepared by sdcard_init().
 static int s_host_ver = 0; // Set by sdcard_init().
@@ -714,14 +704,14 @@ static int is_clockrate_emmc_compatible()
             "is_clockrate_emmc_compatible: Error: Failed to read EMMC clock rate!");
         return SD_ERROR;
     }
-    
+
 #ifndef NDEBUG
     console_write("is_clockrate_emmc_compatible: Rate is ");
     console_write_dword_dec(r);
     console_writeline(".");
 #endif //NDEBUG
 
-    if(r != s_required_clockrate_emmc)
+    if(r != SD_REQ_CLOCKRATE_EMMC)
     {
       console_deb_writeline(
             "is_clockrate_emmc_compatible: Error: Clock rate is not compatible!");
