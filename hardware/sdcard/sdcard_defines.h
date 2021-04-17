@@ -32,7 +32,6 @@
 #define TM_MULTI_BLOCK   0x00000020
 #define TM_DAT_DIR_HC    0x00000000
 #define TM_DAT_DIR_CH    0x00000010
-#define TM_AUTO_CMD12    0x00000004
 #define TM_BLKCNT_EN     0x00000002
 #define TM_MULTI_DATA    (CMD_IS_DATA | TM_MULTI_BLOCK | TM_BLKCNT_EN)
 
@@ -109,7 +108,6 @@
 //
 #define R3_COMPLETE    0x80000000
 #define R3_CCS         0x40000000
-#define R3_S18A        0x01000000
 
 // R6 (CMD3 SEND_REL_ADDR) used:
 //
@@ -138,7 +136,6 @@
 #define IX_SEND_IF_COND     6
 #define IX_SEND_CSD         7
 #define IX_STOP_TRANS       10
-#define IX_SEND_STATUS      11
 #define IX_SET_BLOCKLEN     13
 #define IX_READ_SINGLE      14
 #define IX_READ_MULTI       15
@@ -167,14 +164,10 @@
 //  - in V1 currents for read and write are specified
 //  - in V2 the size is 22 bits, no multiplier, no currents
 //
-#define CSD0_VERSION               0x00c00000
-#define CSD0_V1                    0x00000000
-#define CSD0_V2                    0x00400000
 
 #define CSD1VN_READ_BL_LEN         0x00000f00
 #define CSD1VN_READ_BL_LEN_SHIFT   8
 
-#define CSD3VN_WRITE_BL_LEN        0x0003c000
 #define CSD3VN_FILE_FORMAT         0x0000000c
 #define CSD3VN_FILE_FORMAT_HDD     0x00000000
 #define CSD3VN_FILE_FORMAT_DOSFAT  0x00000004
@@ -194,9 +187,6 @@
 
 // SCR flags used:
 // NOTE: SCR is big-endian, so flags appear byte-wise reversed from the spec.
-#define SCR_STRUCTURE              0x000000f0
-
-#define SCR_SD_SPEC                0x0000000f
 
 #define SCR_SD_BUS_WIDTH_1         0x00000100
 #define SCR_SD_BUS_WIDTH_4         0x00000400

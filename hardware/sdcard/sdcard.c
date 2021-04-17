@@ -826,6 +826,10 @@ static int is_clockrate_emmc_compatible()
 static void parse_csd()
 {
 // #ifndef NDEBUG
+//     #define CSD0_VERSION               0x00c00000
+//     #define CSD0_V1                    0x00000000
+//     #define CSD0_V2                    0x00400000
+//     
 //     int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
 //     unsigned long long capacity;
 //
@@ -942,6 +946,7 @@ int blockAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)addr
 // set the EMMC module automatically decreases the BLKCNT value as the data blocks
 // are transferred and stops the transfer once BLKCNT reaches 0.
 // TODO: TM_AUTO_CMD12 - is this needed?  What effect does it have?
+//#define TM_AUTO_CMD12    0x00000004
 *EMMC_BLKSIZECNT = (numBlocks << 16) | 512;
 
 if( (resp = sdSendCommandA(transferCmd,blockAddress)) ) return resp;
