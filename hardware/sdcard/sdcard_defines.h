@@ -126,21 +126,21 @@
 
 // Command indexes in the command table (just the used ones are listed, here):
 //
-#define IX_GO_IDLE_STATE    0
-#define IX_ALL_SEND_CID     1
-#define IX_SEND_REL_ADDR    2
-#define IX_CARD_SELECT      5
-#define IX_SEND_IF_COND     6
-#define IX_SEND_CSD         7
-#define IX_STOP_TRANS       10
-#define IX_SET_BLOCKLEN     13
-#define IX_READ_SINGLE      14
-#define IX_READ_MULTI       15
-#define IX_SET_BLOCKCNT     18
-#define IX_WRITE_SINGLE     19
-#define IX_WRITE_MULTI      20
-#define IX_APP_CMD          29
-#define IX_APP_CMD_RCA      30 // APP_CMD used once we have the RCA.
+#define IX_GO_IDLE_STATE     0
+#define IX_ALL_SEND_CID      1 
+#define IX_SEND_REL_ADDR     2
+#define IX_CARD_SELECT       3
+#define IX_SEND_IF_COND      4
+#define IX_SEND_CSD          5
+#define IX_STOP_TRANS        6
+#define IX_SET_BLOCKLEN      7
+#define IX_READ_SINGLE       8
+#define IX_READ_MULTI        9
+#define IX_SET_BLOCKCNT     10
+#define IX_WRITE_SINGLE     11
+#define IX_WRITE_MULTI      12
+#define IX_APP_CMD          13
+#define IX_APP_CMD_RCA      14 // APP_CMD used once we have the RCA.
 
 // Commands hereafter require APP_CMD (just the used ones are listed, here):
 //
