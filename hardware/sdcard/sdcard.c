@@ -877,45 +877,6 @@ static void parse_csd()
 // *** PUBLIC FUNCTIONS ***
 // ************************
 
-/* Clear multiple contiguous blocks.
- * Assumes that the erase operation writes zeros to the file.
- */
-int sdcard_blocks_clear( long long address, int numBlocks )
-  {
-  if( !s_is_initialized ) return SD_NO_RESP;
-
-  // Ensure that any data operation has completed before doing the transfer.
-  if( sdWaitForData() )
-  {
-      return SD_TIMEOUT;
-  }
-
-  // Address is different depending on the card type.
-  // HC pass address as block # which is just address/512.
-  // SC pass address straight through.
-  int startAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
-  int endAddress = startAddress + (s_sdcard.type == SD_TYPE_2_HC ? (numBlocks - 1) : ((numBlocks-1)*512));
-
-  int resp;
-  if( (resp = sdSendCommandA(IX_ERASE_WR_ST,startAddress)) ) return resp;
-  if( (resp = sdSendCommandA(IX_ERASE_WR_END,endAddress)) ) return resp;
-  if( (resp = sdSendCommand(IX_ERASE)) ) return resp;
-
-  // Wait for data inhibit status to drop.
-  int count = 1000000;
-  while( *EMMC_STATUS & SR_DAT_INHIBIT )
-    {
-    if( --count == 0 )
-      {
-      return SD_TIMEOUT;
-      }
-
-    armtimer_busywait_microseconds(10);
-    }
-
-  return SD_OK;
-  }
-
 /** Transfer multiple contiguous blocks between the given address on the card and the buffer.
  */
 int sdcard_blocks_transfer( long long address, int numBlocks, unsigned char* buffer, int write )

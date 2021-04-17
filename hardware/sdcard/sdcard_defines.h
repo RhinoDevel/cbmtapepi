@@ -142,9 +142,6 @@
 #define IX_SET_BLOCKCNT     18
 #define IX_WRITE_SINGLE     19
 #define IX_WRITE_MULTI      20
-#define IX_ERASE_WR_ST      25
-#define IX_ERASE_WR_END     26
-#define IX_ERASE            27
 #define IX_APP_CMD          29
 #define IX_APP_CMD_RCA      30 // APP_CMD used once we have the RCA.
 

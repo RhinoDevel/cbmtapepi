@@ -31,7 +31,6 @@
 //
 #define SD_REQ_CLOCKRATE_EMMC ((uint32_t)250000000) // 250MHz
 
-int sdcard_blocks_clear(long long address, int num);
 int sdcard_blocks_transfer(long long address, int num, unsigned char * buffer, int write);
 
 /** Initialize SD card.
