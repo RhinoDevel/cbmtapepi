@@ -53,7 +53,6 @@ struct SDDescriptor
     // Dynamic informations:
 
     unsigned int rca;
-    unsigned int cardState;
     unsigned int status;
 };
 
@@ -266,9 +265,6 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
     case RESP_R1:
     case RESP_R1b:
       s_sdcard.status = resp0;
-      // Store the card state.  Note that this is the state the card was in before the
-      // command was accepted, not the new state.
-      s_sdcard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
       return resp0 & R1_ERRORS_MASK;
 
     // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC
@@ -297,9 +293,6 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
                       ((resp0 & 0x00002000) << 6) |   // 13 maps to status 19 ERROR
                       ((resp0 & 0x00004000) << 8) |   // 14 maps to status 22 ILLEGAL_COMMAND
                       ((resp0 & 0x00008000) << 8);    // 15 maps to status 23 COM_CRC_ERROR
-      // Store the card state.  Note that this is the state the card was in before the
-      // command was accepted, not the new state.
-      s_sdcard.cardState = (resp0 & ST_CARD_STATE) >> R1_CARD_STATE_SHIFT;
       return s_sdcard.status & R1_ERRORS_MASK;
 
     // RESP0 contains voltage acceptance and check pattern, which should match
@@ -448,7 +441,166 @@ static int sdReadSCR()
   if( scr[0] & SCR_CMD_SUPP_SPEED_CLASS ) s_sdcard.support |= SD_SUPP_SPEED_CLASS;
 
   return SD_OK;
-  }
+}
+
+/* Common routine for APP_SEND_OP_COND.
+ * This is used for both SC and HC cards based on the parameter.
+ */
+static int sdAppSendOpCond( int arg )
+{
+    // Send APP_SEND_OP_COND with the given argument (for SC or HC cards).
+
+    int resp;
+
+    // Note: The host shall set ACMD41 timeout more than 1 second to abort
+    //       repeat of issuing ACMD41.
+    //
+    static uint32_t const max_tick = 1500000; // 1.5 Seconds (1 MHz clock used).
+    uint32_t const start_tick = armtimer_get_tick();
+
+    if((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)))
+    {
+        if(resp != SD_TIMEOUT )
+        {
+#ifndef NDEBUG
+            console_write("sdAppSendOpCond : Returning with code ");
+            console_write_dword_dec((uint32_t)resp);
+            console_writeline(" (1).");
+#endif //NDEBUG
+            return resp;
+        }
+    }
+
+    while(
+        !(s_sdcard.ocr & R3_COMPLETE)
+        && (armtimer_get_tick() - start_tick < max_tick))
+    {
+        if((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)))
+        {
+            if(resp != SD_TIMEOUT )
+            {
+#ifndef NDEBUG
+                console_write("sdAppSendOpCond : Returning with code ");
+                console_write_dword_dec((uint32_t)resp);
+                console_writeline(" (2).");
+#endif //NDEBUG
+                return resp;
+            }
+        }
+    }
+
+    // Return timeout error if still not busy.
+    if(!(s_sdcard.ocr & R3_COMPLETE))
+    {
+        console_deb_writeline("sdAppSendOpCond : Error: Timeout!");
+        return SD_TIMEOUT;
+    }
+
+    // Check that at least one voltage value was returned.
+    if(!(s_sdcard.ocr & ACMD41_VOLTAGE))
+    {
+        console_deb_writeline("sdAppSendOpCond : Error: Voltage!");
+        return SD_ERROR_VOLTAGE;
+    }
+
+    return SD_OK;
+}
+
+/** Initialize GPIO.
+ */
+static void sd_init_gpio()
+{
+    gpio_set_func(GPIO_DAT3, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT3, gpio_pud_up);
+
+    gpio_set_func(GPIO_DAT2, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT2, gpio_pud_up);
+
+    gpio_set_func(GPIO_DAT1, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT1, gpio_pud_up);
+
+    gpio_set_func(GPIO_DAT0, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT0, gpio_pud_up);
+
+    gpio_set_func(GPIO_CMD, gpio_func_alt3);
+    gpio_set_pud(GPIO_CMD, gpio_pud_up);
+    
+    gpio_set_func(GPIO_CLK, gpio_func_alt3);
+    gpio_set_pud(GPIO_CLK, gpio_pud_up);
+}
+
+/** Check and return, if EMMC clock rate has the expected (hard-coded) value.
+ */
+static int is_clockrate_emmc_compatible()
+{
+    uint32_t const r = mailbox_read_clockrate(mailbox_id_clockrate_emmc);
+
+    if(r == UINT32_MAX)
+    {
+        console_deb_writeline(
+            "is_clockrate_emmc_compatible: Error: Failed to read EMMC clock rate!");
+        return SD_ERROR;
+    }
+
+#ifndef NDEBUG
+    console_write("is_clockrate_emmc_compatible: Rate is ");
+    console_write_dword_dec(r);
+    console_writeline(".");
+#endif //NDEBUG
+
+    if(r != SD_REQ_CLOCKRATE_EMMC)
+    {
+      console_deb_writeline(
+            "is_clockrate_emmc_compatible: Error: Clock rate is not compatible!");
+        return SD_ERROR;
+    }
+    return SD_OK;
+}
+
+static void parse_csd()
+{
+// #ifndef NDEBUG
+//     #define CSD0_VERSION               0x00c00000
+//     #define CSD0_V1                    0x00000000
+//     #define CSD0_V2                    0x00400000
+//     
+//     int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
+//     unsigned long long capacity;
+//
+//     if(csd_ver == CSD0_V1)
+//     {
+//         int const csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
+//             ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
+//         int const mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
+//         long long const blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
+//         long long const numBlocks = (csize+1LL)*mult;
+//
+//         capacity = numBlocks * blockSize;
+//     }
+//     else
+//     {
+//         //assert(csd_ver == CSD0_V2);
+//
+//         long long const csize =
+//             (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
+//
+//         capacity = (csize+1LL)*512LL*1024LL;
+//     }
+//
+//     console_write("parse_csd : Capacity = 0x");
+//     console_write_dword((uint32_t)(capacity >> 32));
+//     console_write_dword((uint32_t)(0x00000000FFFFFFFF & capacity));
+//     console_writeline(".");
+// #endif //NDEBUG
+
+    s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
+
+// #ifndef NDEBUG
+//     console_write("parse_csd : File format = 0x");
+//     console_write_dword((uint32_t)(s_sdcard.fileFormat));
+//     console_writeline(".");
+// #endif //NDEBUG
+}
 
 static uint32_t get_raw_shift_count(uint32_t const closestDividerLessOne)
 {
@@ -685,9 +837,7 @@ static int reset_card()
 
     // Enable internal clock and set data timeout:
 
-    // TODO: Correct value for timeout?
-
-    *EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX;
+    *EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX; // Correct timeout value?
     armtimer_busywait_microseconds(10);
 
     // Set clock to setup frequency:
@@ -695,7 +845,6 @@ static int reset_card()
     if((resp = sdSetClock(FREQ_SETUP)))
     {
         console_deb_writeline("reset_card : Error: Set clock failed!");
-
         return resp;
     }
 
@@ -712,165 +861,6 @@ static int reset_card()
     s_sdcard.type = 0;
 
     return sdSendCommand(IX_GO_IDLE_STATE);
-}
-
-/* Common routine for APP_SEND_OP_COND.
- * This is used for both SC and HC cards based on the parameter.
- */
-static int sdAppSendOpCond( int arg )
-{
-    // Send APP_SEND_OP_COND with the given argument (for SC or HC cards).
-
-    int resp;
-
-    // Note: The host shall set ACMD41 timeout more than 1 second to abort
-    //       repeat of issuing ACMD41.
-    //
-    static uint32_t const max_tick = 1500000; // 1.5 Seconds (1 MHz clock used).
-    uint32_t const start_tick = armtimer_get_tick();
-
-    if((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)))
-    {
-        if(resp != SD_TIMEOUT )
-        {
-#ifndef NDEBUG
-            console_write("sdAppSendOpCond : Returning with code ");
-            console_write_dword_dec((uint32_t)resp);
-            console_writeline(" (1).");
-#endif //NDEBUG
-            return resp;
-        }
-    }
-
-    while(
-        !(s_sdcard.ocr & R3_COMPLETE)
-        && (armtimer_get_tick() - start_tick < max_tick))
-    {
-        if((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)))
-        {
-            if(resp != SD_TIMEOUT )
-            {
-#ifndef NDEBUG
-                console_write("sdAppSendOpCond : Returning with code ");
-                console_write_dword_dec((uint32_t)resp);
-                console_writeline(" (2).");
-#endif //NDEBUG
-                return resp;
-            }
-        }
-    }
-
-    // Return timeout error if still not busy.
-    if(!(s_sdcard.ocr & R3_COMPLETE))
-    {
-        console_deb_writeline("sdAppSendOpCond : Error: Timeout!");
-        return SD_TIMEOUT;
-    }
-
-    // Check that at least one voltage value was returned.
-    if(!(s_sdcard.ocr & ACMD41_VOLTAGE))
-    {
-        console_deb_writeline("sdAppSendOpCond : Error: Voltage!");
-        return SD_ERROR_VOLTAGE;
-    }
-
-    return SD_OK;
-}
-
-/** Initialize GPIO.
- */
-static void sd_init_gpio()
-{
-    gpio_set_func(GPIO_DAT3, gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT3, gpio_pud_up);
-
-    gpio_set_func(GPIO_DAT2, gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT2, gpio_pud_up);
-
-    gpio_set_func(GPIO_DAT1, gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT1, gpio_pud_up);
-
-    gpio_set_func(GPIO_DAT0, gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT0, gpio_pud_up);
-
-    gpio_set_func(GPIO_CMD, gpio_func_alt3);
-    gpio_set_pud(GPIO_CMD, gpio_pud_up);
-    
-    gpio_set_func(GPIO_CLK, gpio_func_alt3);
-    gpio_set_pud(GPIO_CLK, gpio_pud_up);
-}
-
-/** Check and return, if EMMC clock rate has the expected (hard-coded) value.
- */
-static int is_clockrate_emmc_compatible()
-{
-    uint32_t const r = mailbox_read_clockrate(mailbox_id_clockrate_emmc);
-
-    if(r == UINT32_MAX)
-    {
-        console_deb_writeline(
-            "is_clockrate_emmc_compatible: Error: Failed to read EMMC clock rate!");
-        return SD_ERROR;
-    }
-
-#ifndef NDEBUG
-    console_write("is_clockrate_emmc_compatible: Rate is ");
-    console_write_dword_dec(r);
-    console_writeline(".");
-#endif //NDEBUG
-
-    if(r != SD_REQ_CLOCKRATE_EMMC)
-    {
-      console_deb_writeline(
-            "is_clockrate_emmc_compatible: Error: Clock rate is not compatible!");
-        return SD_ERROR;
-    }
-    return SD_OK;
-}
-
-static void parse_csd()
-{
-// #ifndef NDEBUG
-//     #define CSD0_VERSION               0x00c00000
-//     #define CSD0_V1                    0x00000000
-//     #define CSD0_V2                    0x00400000
-//     
-//     int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
-//     unsigned long long capacity;
-//
-//     if(csd_ver == CSD0_V1)
-//     {
-//         int const csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
-//             ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
-//         int const mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
-//         long long const blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
-//         long long const numBlocks = (csize+1LL)*mult;
-//
-//         capacity = numBlocks * blockSize;
-//     }
-//     else
-//     {
-//         //assert(csd_ver == CSD0_V2);
-//
-//         long long const csize =
-//             (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
-//
-//         capacity = (csize+1LL)*512LL*1024LL;
-//     }
-//
-//     console_write("parse_csd : Capacity = 0x");
-//     console_write_dword((uint32_t)(capacity >> 32));
-//     console_write_dword((uint32_t)(0x00000000FFFFFFFF & capacity));
-//     console_writeline(".");
-// #endif //NDEBUG
-
-    s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
-
-// #ifndef NDEBUG
-//     console_write("parse_csd : File format = 0x");
-//     console_write_dword((uint32_t)(s_sdcard.fileFormat));
-//     console_writeline(".");
-// #endif //NDEBUG
 }
 
 // ************************
@@ -1005,14 +995,6 @@ int sdcard_init()
         return SD_ALREADY_INITIALIZED;
     }
 
-    memset(&s_sdcard, 0, sizeof (struct SDDescriptor)); // Necessary?
-
-    sd_init_gpio();
-
-    // TODO: Check version >= 1 and <= 3?
-    //
-    s_host_ver = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
-
     // Check clock rate:
     //
     resp = is_clockrate_emmc_compatible();
@@ -1020,6 +1002,14 @@ int sdcard_init()
     {
         return resp;
     }
+
+    memset(&s_sdcard, 0, sizeof (struct SDDescriptor)); // Necessary?
+
+    sd_init_gpio();
+
+    // TODO: Check version >= 1 and <= 3?
+    //
+    s_host_ver = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
 
     // Reset the card:
     //
@@ -1092,7 +1082,6 @@ int sdcard_init()
     if( (resp = sdSendCommand(IX_ALL_SEND_CID)) ) return resp;
 
     // Send SEND_REL_ADDR (CMD3)
-    // TODO: In theory, loop back to SEND_IF_COND to find additional cards.
     if( (resp = sdSendCommand(IX_SEND_REL_ADDR)) ) return resp;
 
     // From now on the card should be in standby state.

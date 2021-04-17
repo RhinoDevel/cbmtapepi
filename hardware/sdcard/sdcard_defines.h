@@ -97,10 +97,8 @@
 
 // R1 (status) values used:
 //
-#define ST_CARD_STATE        0x00001e00  // 12:9
 #define ST_APP_CMD           0x00000020  // 5
 
-#define R1_CARD_STATE_SHIFT  9
 #define R1_ERRORS_MASK       0xfff9c004  // All bits which indicate errors.
 
 // R3 (ACMD41 APP_SEND_OP_COND) used:
