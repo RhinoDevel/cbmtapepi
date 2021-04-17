@@ -19,11 +19,12 @@
 // 0x80  Extension FIFO config - what's that?
 // This register allows fine tuning the dma_req generation for paced DMA transfers when reading from the card.
 
-#include "../../lib/mem/mem.h"
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
 #include "../gpio/gpio.h"
+#include "../../lib/mem/mem.h"
 #include "../../lib/console/console.h"
+#include "../../lib/assert.h"
 #include "../peribase.h"
 
 #include "sdcard.h"
@@ -449,56 +450,150 @@ static int sdReadSCR()
   return SD_OK;
   }
 
-static int fls_long (unsigned long x) {
-	int r = 32;
-	if (!x)  return 0;
-	if (!(x & 0xffff0000u)) {
-		x <<= 16;
-		r -= 16;
-	}
-	if (!(x & 0xff000000u)) {
-		x <<= 8;
-		r -= 8;
+static uint32_t get_raw_shift_count(uint32_t const val)
+{
+    uint32_t x = val;
+    uint32_t r = 32; // = 00000000 00100000
+
+    if(x == 0)
+    {
+        return 0;
     }
-    if (!(x & 0xf0000000u)) {
-		x <<= 4;
-		r -= 4;
-	}
-	if (!(x & 0xc0000000u)) {
-		x <<= 2;
-		r -= 2;
-	}
-	if (!(x & 0x80000000u)) {
-		x <<= 1;
-		r -= 1;
-	}
-	return r;
+
+    // x is in range 1 to 0xFFFFFFFF.
+
+    if((x & (uint32_t)0xFFFF0000) == 0)
+    {
+        // x is in range 1 to 0xFFFF.
+
+        x <<= 16; // 0x0000WXYZ => 0xWXYZ0000
+        r -= 16;  // 32 => 16
+    }
+
+    if((x & (uint32_t)0xFF000000) == 0)
+    {
+        // Current content of x is in range 1 to 0x00FFFFFF.
+
+        x <<= 8; // 0x00UVWXYZ => 0xUVWXYZ00
+        r -= 8;
+    }
+    if((x & (uint32_t)0xF0000000) == 0)
+    {
+        // Current content of x is in range 1 to 0x0FFFFFFF.
+
+        x <<= 4; // 0x0TUVWXUZ => 0xTUVWXYZ0
+        r -= 4;
+    }
+    if((x & (uint32_t)0xC0000000) == 0)
+    {
+        x <<= 2;
+        r -= 2;
+    }
+    if((x & (uint32_t)0x80000000) == 0)
+    {
+        x <<= 1;
+        r -= 1;
+    }
+
+    return r;
+}
+static uint32_t get_shift_count(uint32_t const closest_divider)
+{
+    assert(s_host_ver <= HOST_SPEC_V2);
+
+    uint32_t buf = get_raw_shift_count(closest_divider - 1);
+
+    if(buf == 0)
+    {
+        return 0;
+    }
+
+    --buf; // Offset of shift by one (from specification).
+    
+    if(buf > 7)
+    {
+        return 7; // It's only 8 bits maximum on HOST_SPEC_V2.
+    }
+    return buf;
 }
 
 /* Get the clock divider for the given requested frequency.
  * This is calculated relative to the SD base clock.
  */
-static uint32_t sdGetClockDivider ( uint32_t freq )
+static uint32_t get_clock_divider(uint32_t const freq)
 {
-    uint32_t divisor;
-    uint32_t closest = 41666666 / freq; // Pi SD frequency is always 41.66667Mhz on baremetal
-    uint32_t shiftcount = fls_long(closest - 1);      // Get the raw shiftcount
-    if (shiftcount > 0) shiftcount--;               // Note the offset of shift by 1 (look at the spec)
-    if (shiftcount > 7) shiftcount = 7;               // It's only 8 bits maximum on HOST_SPEC_V2
-    if (s_host_ver > HOST_SPEC_V2) divisor = closest;   // Version 3 take closest
-      else divisor = (1 << shiftcount);            // Version 2 take power 2
+    // SD card frequency should always be ~41.667MHz, as long as EMMC frequency
+    // is at 250MHz (250Mhz / 6 = ~41.667MHz).
+    //
+    uint32_t const closest_divider = 41666666 / freq;
+    uint32_t divider = 0;
 
-    if (divisor <= 2) {                           // Too dangerous to go for divisor 1 unless you test
-      divisor = 2;                           // You can't take divisor below 2 on slow cards
-      shiftcount = 0;                           // Match shift to above just for debug notification
+    if(s_host_ver > HOST_SPEC_V2)
+    {
+        divider = closest_divider; // Version 3 takes closest divider.
+    }
+    else
+    {
+        // Version 2 takes shift count power 2.
+
+        divider = 1 << get_shift_count(closest_divider);
     }
 
-    uint32_t hi = 0;
-    if (s_host_ver > HOST_SPEC_V2) hi = (divisor & 0x300) >> 2; // Only 10 bits on Hosts specs above 2
-    uint32_t lo = (divisor & 0x0ff);               // Low part always valid
-    uint32_t cdiv = (lo << 8) + hi;                  // Join and roll to position
-    return cdiv;                              // Return cdiv
+    assert(divider != 0);
+
+    if(divider == 1)
+    {
+        // Too dangerous to go for divider one (unless you test)
+        // and you can't take divider below 2 on slow cards.
+
+        divider = 2;
+    }
+
+    uint32_t const low_shifted = (divider & 0xFF) << 8; // Always valid.
+
+    if(s_host_ver > HOST_SPEC_V2)
+    {
+        uint32_t const hi = (divider & 0x300) >> 2; // 10 bits on hosts > v2.
+
+        return low_shifted + hi;
+    }
+    return low_shifted;
 }
+//
+/*
+static int sdGetClockDivider_old( int freq )
+   {
+   // Work out the closest divider which will result in a frequency
+   // equal or less than that requested.
+   // Maximum possible divider is 1024.
+   int closest = 0;
+   if( freq > sdBaseClock ) closest = 1;
+   else
+     {
+     closest = sdBaseClock/freq;
+     if( sdBaseClock%freq ) closest++;
+     }
+   if( closest > 1024 ) closest = 1024;
+   // Now find the nearest valid divider value, again that will result in a
+   // frequency equal to or less than that requested.
+   // For V2, the divider is supposed to be a power of 2
+   // For V3, the divider is a multiple of 2, with a value of 0 indicating 1.
+   // TODO: currently only V2 algorithm appears to work.
+   int div = 1;
+   if( 0 && sdHostVer > HOST_SPEC_V2 )
+     div = closest;
+   else
+     for( div = 1; div < closest; div *= 2 );
+   div >>= 1;
+   // TODO: Don't allow divider > 15 - does not seem to work.
+   if( div > 15 ) div = 15;
+   //  printf("EMMC: Clock divider for freq %d is %d.\n",freq,div);
+   int hi = (div & 0x300) >> 2;
+   int lo = (div & 0x0ff);
+   int cdiv = (lo << 8) + hi;
+   return cdiv;
+   } 
+*/
 
 /* Set the SD clock to the given frequency.
  */
@@ -524,7 +619,15 @@ static int sdSetClock(int freq)
 
     // Request the new clock setting and enable the clock:
 
-    int const cdiv = sdGetClockDivider(freq);
+    int const cdiv = get_clock_divider(freq);
+
+#ifndef NDEBUG
+    console_write("sdSetClock: Calc. clock divider for wanted frequency val. ");
+    console_write_dword_dec((uint32_t)freq);
+    console_write(" is ");
+    console_write_dword_dec((uint32_t)cdiv);
+    console_writeline(".");
+#endif //NDEBUG
 
     *EMMC_CONTROL1 = (*EMMC_CONTROL1 & 0xFFFF003F) | cdiv;
     armtimer_busywait_microseconds(10);
