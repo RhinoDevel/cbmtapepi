@@ -450,10 +450,10 @@ static int sdReadSCR()
   return SD_OK;
   }
 
-static uint32_t get_raw_shift_count(uint32_t const val)
+static uint32_t get_raw_shift_count(uint32_t const closestDividerLessOne)
 {
-    uint32_t x = val;
-    uint32_t r = 32; // = 00000000 00100000
+    uint32_t x = closestDividerLessOne;
+    uint32_t r = 32;
 
     if(x == 0)
     {
@@ -481,7 +481,7 @@ static uint32_t get_raw_shift_count(uint32_t const val)
     {
         // Current content of x is in range 1 to 0x0FFFFFFF.
 
-        x <<= 4; // 0x0TUVWXUZ => 0xTUVWXYZ0
+        x <<= 4; // 0x0TUVWXYZ => 0xTUVWXYZ0
         r -= 4;
     }
     if((x & (uint32_t)0xC0000000) == 0)
