@@ -7,7 +7,6 @@
 // https://raw.githubusercontent.com/moizumi99/RPiHaribote/master/haribote/sdcard.c
 //
 // Includes comments by other authors, too.
-//
 // *****************************************************************************
 
 #ifndef MT_SDCARD_DEFINES
@@ -160,7 +159,6 @@
 //  - in V1 the size is 12 bits with a 3 bit multiplier
 //  - in V1 currents for read and write are specified
 //  - in V2 the size is 22 bits, no multiplier, no currents
-//
 
 #define CSD1VN_READ_BL_LEN         0x00000f00
 #define CSD1VN_READ_BL_LEN_SHIFT   8
