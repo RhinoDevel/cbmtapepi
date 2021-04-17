@@ -59,21 +59,21 @@ struct SDDescriptor
 
 // EMMC registers used:
 //
-static volatile unsigned int* const EMMC_BLKSIZECNT  = (unsigned int*)(PERI_BASE + 0x00300004);
-static volatile unsigned int* const EMMC_ARG1        = (unsigned int*)(PERI_BASE + 0x00300008);
-static volatile unsigned int* const EMMC_CMDTM       = (unsigned int*)(PERI_BASE + 0x0030000c);
-static volatile unsigned int* const EMMC_RESP0       = (unsigned int*)(PERI_BASE + 0x00300010);
-static volatile unsigned int* const EMMC_RESP1       = (unsigned int*)(PERI_BASE + 0x00300014);
-static volatile unsigned int* const EMMC_RESP2       = (unsigned int*)(PERI_BASE + 0x00300018);
-static volatile unsigned int* const EMMC_RESP3       = (unsigned int*)(PERI_BASE + 0x0030001c);
-static volatile unsigned int* const EMMC_DATA        = (unsigned int*)(PERI_BASE + 0x00300020);
-static volatile unsigned int* const EMMC_STATUS      = (unsigned int*)(PERI_BASE + 0x00300024);
-static volatile unsigned int* const EMMC_CONTROL0    = (unsigned int*)(PERI_BASE + 0x00300028);
-static volatile unsigned int* const EMMC_CONTROL1    = (unsigned int*)(PERI_BASE + 0x0030002c);
-static volatile unsigned int* const EMMC_INTERRUPT   = (unsigned int*)(PERI_BASE + 0x00300030);
-static volatile unsigned int* const EMMC_IRPT_MASK   = (unsigned int*)(PERI_BASE + 0x00300034);
-static volatile unsigned int* const EMMC_IRPT_EN     = (unsigned int*)(PERI_BASE + 0x00300038);
-static volatile unsigned int* const EMMC_SLOTISR_VER = (unsigned int*)(PERI_BASE + 0x003000fc);
+static volatile uint32_t* const EMMC_BLKSIZECNT  = (uint32_t*)(PERI_BASE + 0x00300004);
+static volatile uint32_t* const EMMC_ARG1        = (uint32_t*)(PERI_BASE + 0x00300008);
+static volatile uint32_t* const EMMC_CMDTM       = (uint32_t*)(PERI_BASE + 0x0030000c);
+static volatile uint32_t* const EMMC_RESP0       = (uint32_t*)(PERI_BASE + 0x00300010);
+static volatile uint32_t* const EMMC_RESP1       = (uint32_t*)(PERI_BASE + 0x00300014);
+static volatile uint32_t* const EMMC_RESP2       = (uint32_t*)(PERI_BASE + 0x00300018);
+static volatile uint32_t* const EMMC_RESP3       = (uint32_t*)(PERI_BASE + 0x0030001c);
+static volatile uint32_t* const EMMC_DATA        = (uint32_t*)(PERI_BASE + 0x00300020);
+static volatile uint32_t* const EMMC_STATUS      = (uint32_t*)(PERI_BASE + 0x00300024);
+static volatile uint32_t* const EMMC_CONTROL0    = (uint32_t*)(PERI_BASE + 0x00300028);
+static volatile uint32_t* const EMMC_CONTROL1    = (uint32_t*)(PERI_BASE + 0x0030002c);
+static volatile uint32_t* const EMMC_INTERRUPT   = (uint32_t*)(PERI_BASE + 0x00300030);
+static volatile uint32_t* const EMMC_IRPT_MASK   = (uint32_t*)(PERI_BASE + 0x00300034);
+static volatile uint32_t* const EMMC_IRPT_EN     = (uint32_t*)(PERI_BASE + 0x00300038);
+static volatile uint32_t* const EMMC_SLOTISR_VER = (uint32_t*)(PERI_BASE + 0x003000fc);
 
 // Command table:
 //
@@ -781,18 +781,23 @@ static int sdAppSendOpCond( int arg )
  */
 static void sd_init_gpio()
 {
-    gpio_set_func(GPIO_DAT3,gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT3,gpio_pud_up);
-    gpio_set_func(GPIO_DAT2,gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT2,gpio_pud_up);
-    gpio_set_func(GPIO_DAT1,gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT1,gpio_pud_up);
-    gpio_set_func(GPIO_DAT0,gpio_func_alt3);
-    gpio_set_pud(GPIO_DAT0,gpio_pud_up);
-    gpio_set_func(GPIO_CMD,gpio_func_alt3);
-    gpio_set_pud(GPIO_CMD,gpio_pud_up);
-    gpio_set_func(GPIO_CLK,gpio_func_alt3);
-    gpio_set_pud(GPIO_CLK,gpio_pud_up);
+    gpio_set_func(GPIO_DAT3, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT3, gpio_pud_up);
+
+    gpio_set_func(GPIO_DAT2, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT2, gpio_pud_up);
+
+    gpio_set_func(GPIO_DAT1, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT1, gpio_pud_up);
+
+    gpio_set_func(GPIO_DAT0, gpio_func_alt3);
+    gpio_set_pud(GPIO_DAT0, gpio_pud_up);
+
+    gpio_set_func(GPIO_CMD, gpio_func_alt3);
+    gpio_set_pud(GPIO_CMD, gpio_pud_up);
+    
+    gpio_set_func(GPIO_CLK, gpio_func_alt3);
+    gpio_set_pud(GPIO_CLK, gpio_pud_up);
 }
 
 /** Check and return, if EMMC clock rate has the expected (hard-coded) value.
