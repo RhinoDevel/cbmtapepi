@@ -169,9 +169,11 @@ echo Linking..
 
 # Link:
 #
-arm-none-eabi-ld \
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_C \
+    \
     -nostdlib \
-    -L $PREFIX/lib/gcc/arm-none-eabi/8.2.0 \
+    \
     -T app/memmap.ld \
     \
     app/boot.o \
