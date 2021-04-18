@@ -79,21 +79,26 @@ static volatile uint32_t* const EMMC_SLOTISR_VER = (uint32_t*)(PERI_BASE + 0x003
 //
 static struct EMMCCommand sdCommandTable[] =
 {
-    { 0x00000000|CMD_RSPNS_NO                             , RESP_NO , RCA_NO  ,0},
-    { 0x02000000|CMD_RSPNS_136                            , RESP_R2I, RCA_NO  ,0},
-    { 0x03000000|CMD_RSPNS_48                             , RESP_R6 , RCA_NO  ,0},
-    { 0x07000000|CMD_RSPNS_48B                            , RESP_R1b, RCA_YES ,0},
-    { 0x08000000|CMD_RSPNS_48                             , RESP_R7 , RCA_NO  ,100},
-    { 0x09000000|CMD_RSPNS_136                            , RESP_R2S, RCA_YES ,0},
-    { 0x0C000000|CMD_RSPNS_48B                            , RESP_R1b, RCA_NO  ,0},
-    { 0x10000000|CMD_RSPNS_48                             , RESP_R1 , RCA_NO  ,0},
-    { 0x11000000|CMD_RSPNS_48 |CMD_IS_DATA  |TM_DAT_DIR_CH, RESP_R1 , RCA_NO  ,0},
-    { 0x12000000|CMD_RSPNS_48 |TM_MULTI_DATA|TM_DAT_DIR_CH, RESP_R1 , RCA_NO  ,0},
-    { 0x17000000|CMD_RSPNS_48                             , RESP_R1 , RCA_NO  ,0},
-    { 0x18000000|CMD_RSPNS_48 |CMD_IS_DATA  |TM_DAT_DIR_HC, RESP_R1 , RCA_NO  ,0},
-    { 0x19000000|CMD_RSPNS_48 |TM_MULTI_DATA|TM_DAT_DIR_HC, RESP_R1 , RCA_NO  ,0},
-    { 0x37000000|CMD_RSPNS_NO                             , RESP_NO , RCA_NO  ,100},
-    { 0x37000000|CMD_RSPNS_48                             , RESP_R1 , RCA_YES ,0},
+    {0x00000000|CMD_RSPNS_NO                             , RESP_NO , RCA_NO  ,0},
+    {0x02000000|CMD_RSPNS_136                            , RESP_R2I, RCA_NO  ,0},
+    {0x03000000|CMD_RSPNS_48                             , RESP_R6 , RCA_NO  ,0},
+    {0x07000000|CMD_RSPNS_48B                            , RESP_R1b, RCA_YES ,0},
+    {0x08000000|CMD_RSPNS_48                             , RESP_R7 , RCA_NO  ,100},
+    {0x09000000|CMD_RSPNS_136                            , RESP_R2S, RCA_YES ,0},
+    {0x0C000000|CMD_RSPNS_48B                            , RESP_R1b, RCA_NO  ,0},
+    {0x10000000|CMD_RSPNS_48                             , RESP_R1 , RCA_NO  ,0},
+    {0x11000000|CMD_RSPNS_48 |CMD_IS_DATA  |TM_DAT_DIR_CH, RESP_R1 , RCA_NO  ,0},
+    {0x12000000|CMD_RSPNS_48 |TM_MULTI_DATA|TM_DAT_DIR_CH, RESP_R1 , RCA_NO  ,0},
+    {0x17000000|CMD_RSPNS_48                             , RESP_R1 , RCA_NO  ,0},
+    {0x18000000|CMD_RSPNS_48 |CMD_IS_DATA  |TM_DAT_DIR_HC, RESP_R1 , RCA_NO  ,0},
+    {0x19000000|CMD_RSPNS_48 |TM_MULTI_DATA|TM_DAT_DIR_HC, RESP_R1 , RCA_NO  ,0},
+    {0x37000000|CMD_RSPNS_NO                             , RESP_NO , RCA_NO  ,100},
+    {0x37000000|CMD_RSPNS_48                             , RESP_R1 , RCA_YES ,0},
+
+    // APP commands must be prefixed by an APP_CMD.
+    {0x06000000|CMD_RSPNS_48                             , RESP_R1 , RCA_NO  ,0},
+    {0x29000000|CMD_RSPNS_48                             , RESP_R3 , RCA_NO  ,1000},
+    {0x33000000|CMD_RSPNS_48|CMD_IS_DATA|TM_DAT_DIR_CH   , RESP_R1 , RCA_NO  ,0}
 };
 
 static bool s_is_initialized = false; // Set by sdcard_init().

@@ -141,13 +141,13 @@
 #define IX_WRITE_MULTI      12
 #define IX_APP_CMD          13
 #define IX_APP_CMD_RCA      14 // APP_CMD used once we have the RCA.
-
+//
 // Commands hereafter require APP_CMD (just the used ones are listed, here):
 //
-#define IX_APP_CMD_START    32
-#define IX_SET_BUS_WIDTH    32
-#define IX_APP_SEND_OP_COND 36
-#define IX_SEND_SCR         38
+#define IX_SET_BUS_WIDTH    15
+#define IX_APP_CMD_START    IX_SET_BUS_WIDTH
+#define IX_APP_SEND_OP_COND 16
+#define IX_SEND_SCR         17
 
 // CSD flags:
 //
