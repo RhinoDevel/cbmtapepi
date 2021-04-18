@@ -170,6 +170,7 @@ echo Linking..
 # Link:
 #
 arm-none-eabi-ld \
+    -L $PREFIX/lib/gcc/arm-none-eabi/8.2.0 \
     -T app/memmap.ld \
     \
     app/boot.o \
@@ -226,6 +227,8 @@ arm-none-eabi-ld \
     hardware/framebuffer/framebuffer.o \
     hardware/irqcontroller/irqcontroller.o \
     hardware/sdcard/sdcard.o \
+    \
+    -l gcc \
     \
     -o kernel.elf
 
