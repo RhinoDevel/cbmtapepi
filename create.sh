@@ -170,6 +170,7 @@ echo Linking..
 # Link:
 #
 arm-none-eabi-ld \
+    -nostdlib \
     -L $PREFIX/lib/gcc/arm-none-eabi/8.2.0 \
     -T app/memmap.ld \
     \
