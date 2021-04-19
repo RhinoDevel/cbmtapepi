@@ -69,11 +69,7 @@
 #define FREQ_SETUP           400000  // 400 Khz
 #define FREQ_NORMAL        25000000  // 25 Mhz
 
-// SLOTISR_VER values used:
-//
-#define HOST_SPEC_NUM              0x00ff0000
-#define HOST_SPEC_NUM_SHIFT        16
-#define HOST_SPEC_V2               1
+#define HOST_SPEC_V2 1
 
 // STATUS register settings used:
 //

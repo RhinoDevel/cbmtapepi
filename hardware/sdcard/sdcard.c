@@ -103,7 +103,6 @@ static struct EMMCCommand sdCommandTable[] =
 
 static bool s_is_initialized = false; // Set by sdcard_init().
 static struct SDDescriptor s_sdcard; // Prepared by sdcard_init().
-static int s_host_ver = 0; // Set by sdcard_init().
 
 /** Completely clear the interrupt register.
  */
@@ -580,75 +579,8 @@ static void parse_csd()
 // #endif //NDEBUG
 }
 
-static uint32_t get_raw_shift_count(uint32_t const closestDividerLessOne)
-{
-    uint32_t x = closestDividerLessOne;
-    uint32_t r = 32;
-
-    if(x == 0)
-    {
-        return 0;
-    }
-
-    // x is in range 1 to 0xFFFFFFFF.
-
-    if((x & (uint32_t)0xFFFF0000) == 0)
-    {
-        // x is in range 1 to 0xFFFF.
-
-        x <<= 16; // 0x0000WXYZ => 0xWXYZ0000
-        r -= 16;  // 32 => 16
-    }
-
-    if((x & (uint32_t)0xFF000000) == 0)
-    {
-        // Current content of x is in range 1 to 0x00FFFFFF.
-
-        x <<= 8; // 0x00UVWXYZ => 0xUVWXYZ00
-        r -= 8;
-    }
-    if((x & (uint32_t)0xF0000000) == 0)
-    {
-        // Current content of x is in range 1 to 0x0FFFFFFF.
-
-        x <<= 4; // 0x0TUVWXYZ => 0xTUVWXYZ0
-        r -= 4;
-    }
-    if((x & (uint32_t)0xC0000000) == 0)
-    {
-        x <<= 2;
-        r -= 2;
-    }
-    if((x & (uint32_t)0x80000000) == 0)
-    {
-        x <<= 1;
-        r -= 1;
-    }
-
-    return r;
-}
-static uint32_t get_shift_count(uint32_t const closest_divider)
-{
-    assert(s_host_ver <= HOST_SPEC_V2);
-
-    uint32_t buf = get_raw_shift_count(closest_divider - 1);
-
-    if(buf == 0)
-    {
-        return 0;
-    }
-
-    --buf; // Offset of shift by one (from specification).
-    
-    if(buf > 7)
-    {
-        return 7; // It's only 8 bits maximum on HOST_SPEC_V2.
-    }
-    return buf;
-}
-
-/* Get the clock divider for the given requested frequency.
- * This is calculated relative to the SD base clock.
+/** Get the clock divider for the given requested frequency.
+ *  This is calculated relative to the SD base clock.
  */
 static uint32_t get_clock_divider(uint32_t const freq)
 {
@@ -656,74 +588,18 @@ static uint32_t get_clock_divider(uint32_t const freq)
     // is at 250MHz (250Mhz / 6 = ~41.667MHz).
     //
     uint32_t const closest_divider = 41666666 / freq;
-    uint32_t divider = 0;
 
-    if(s_host_ver > HOST_SPEC_V2)
-    {
-        divider = closest_divider; // Version 3 takes closest divider.
-    }
-    else
-    {
-        // Version 2 takes shift count power 2.
+    // Host versions higher than 2 take closest divider (using 2 as min., here):
+    //
+    uint32_t const divider = closest_divider < 2 ? 2 : closest_divider;
 
-        divider = 1 << get_shift_count(closest_divider);
-    }
+    // 10 bits on host versions above v2:
+    //
+    uint32_t const lo = (divider & 0x000000FF) << 8; // 11111111 00000000
+    uint32_t const hi = (divider & 0x00000300) >> 2; // 00000000 11000000
 
-    assert(divider != 0);
-
-    if(divider == 1)
-    {
-        // Too dangerous to go for divider one (unless you test)
-        // and you can't take divider below 2 on slow cards.
-
-        divider = 2;
-    }
-
-    uint32_t const low_shifted = (divider & 0xFF) << 8; // Always valid.
-
-    if(s_host_ver > HOST_SPEC_V2)
-    {
-        uint32_t const hi = (divider & 0x300) >> 2; // 10 bits on hosts > v2.
-
-        return low_shifted + hi;
-    }
-    return low_shifted;
+    return lo + hi;
 }
-//
-/*
-static int sdGetClockDivider_old( int freq )
-   {
-   // Work out the closest divider which will result in a frequency
-   // equal or less than that requested.
-   // Maximum possible divider is 1024.
-   int closest = 0;
-   if( freq > sdBaseClock ) closest = 1;
-   else
-     {
-     closest = sdBaseClock/freq;
-     if( sdBaseClock%freq ) closest++;
-     }
-   if( closest > 1024 ) closest = 1024;
-   // Now find the nearest valid divider value, again that will result in a
-   // frequency equal to or less than that requested.
-   // For V2, the divider is supposed to be a power of 2
-   // For V3, the divider is a multiple of 2, with a value of 0 indicating 1.
-   // TODO: currently only V2 algorithm appears to work.
-   int div = 1;
-   if( 0 && sdHostVer > HOST_SPEC_V2 )
-     div = closest;
-   else
-     for( div = 1; div < closest; div *= 2 );
-   div >>= 1;
-   // TODO: Don't allow divider > 15 - does not seem to work.
-   if( div > 15 ) div = 15;
-   //  printf("EMMC: Clock divider for freq %d is %d.\n",freq,div);
-   int hi = (div & 0x300) >> 2;
-   int lo = (div & 0x0ff);
-   int cdiv = (lo << 8) + hi;
-   return cdiv;
-   } 
-*/
 
 /* Set the SD clock to the given frequency.
  */
@@ -985,9 +861,14 @@ int sdcard_init()
 
     sd_init_gpio();
 
-    // TODO: Check version >= 1 and <= 3?
+    uint32_t const host_ver = (*EMMC_SLOTISR_VER & 0x00FF0000) >> 16;
     //
-    s_host_ver = (*EMMC_SLOTISR_VER & HOST_SPEC_NUM) >> HOST_SPEC_NUM_SHIFT;
+    if(host_ver <= HOST_SPEC_V2)
+    {
+        console_deb_writeline(
+          "sdcard_init: Error: Unsupported host spec. version!");
+        return SD_ERROR;
+    }
 
     // Reset the card:
     //
