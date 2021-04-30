@@ -1,3 +1,5 @@
+*This is **not** a release version of the README! Please follow [this link](https://github.com/RhinoDevel/cbmtapepi/blob/v1.7.0/README.md) to get to the README of **CBM Tape Pi**'s latest stable release version ([v1.7.0](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.7.0)).*
+
 # CBM Tape Pi
 *Marcel Timm, RhinoDevel, 2021, [rhinodevel.com](http://rhinodevel.com/)*
 
