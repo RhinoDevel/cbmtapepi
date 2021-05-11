@@ -665,12 +665,12 @@ static int reset_card()
     static int const reset_type = C1_SRST_HC;
     static int const max_iter = 10000;
 
-    int resp, i = 0;
+    int resp = SD_ERROR, i = 0;
 
     // Send reset command to host controller and wait for completion:
 
     *EMMC_CONTROL0 = 0;
-    *EMMC_CONTROL1 |= reset_type;
+    *EMMC_CONTROL1 = *EMMC_CONTROL1 | reset_type;
 
     while(i < max_iter)
     {
@@ -691,12 +691,16 @@ static int reset_card()
 
     // Enable internal clock and set data timeout:
 
-    *EMMC_CONTROL1 |= C1_CLK_INTLEN | C1_TOUNIT_MAX; // Correct timeout value?
+    *EMMC_CONTROL1 = *EMMC_CONTROL1 | (C1_CLK_INTLEN | C1_TOUNIT_MAX);
+    //
+    // Correct timeout value?
+    //
     armtimer_busywait_microseconds(10);
 
     // Set clock to setup frequency:
     //
-    if((resp = sdSetClock(FREQ_SETUP)))
+    resp = sdSetClock(FREQ_SETUP);
+    if(resp != SD_OK)
     {
         console_deb_writeline("reset_card : Error: Set clock failed!");
         return resp;
