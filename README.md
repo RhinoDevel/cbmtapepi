@@ -184,6 +184,6 @@ Connect Raspberry Pi and Commodore machine this way:
 - Show a result text on Commodore machine for at least some commands in fast mode. 
 - Read/write from/to tape storage files like TAP, etc.
 - Read/write from/to USB storage device.
-- Probably impossible, at least for compatibility mode (kernel module?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
+- Probably impossible, at least for compatibility mode (kernel module - timer interrupt handler or DMA usage?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ![RhinoDevel](./data/rhino.bmp)
