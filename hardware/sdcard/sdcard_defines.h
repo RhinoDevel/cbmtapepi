@@ -186,8 +186,4 @@
 #define SD_TYPE_2_SC 3
 #define SD_TYPE_2_HC 4
 
-// SD card functions supported values.
-#define SD_SUPP_SET_BLOCK_COUNT 0x80000000
-#define SD_SUPP_BUS_WIDTH_4     0x20000000
-
 #endif //MT_SDCARD_DEFINES

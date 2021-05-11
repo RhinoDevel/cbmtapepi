@@ -44,7 +44,8 @@ struct SDDescriptor
 
     uint32_t csd3;
     uint32_t ocr;
-    uint32_t support;
+    bool supports_bus_width_4;
+    bool supports_set_block_count;
     unsigned char type;
 
     // Dynamic informations:
@@ -411,8 +412,8 @@ static int sdReadSCR()
     }
 
   // Parse out the SCR.  Only interested in values in scr[0], scr[1] is mfr specific.
-  if( scr[0] & SCR_SD_BUS_WIDTH_4 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_4;
-  if( scr[0] & SCR_CMD_SUPP_SET_BLKCNT ) s_sdcard.support |= SD_SUPP_SET_BLOCK_COUNT;
+  s_sdcard.supports_bus_width_4 = (scr[0] & SCR_SD_BUS_WIDTH_4) != 0;
+  s_sdcard.supports_set_block_count = (scr[0] & SCR_CMD_SUPP_SET_BLKCNT) != 0;
 
   return SD_OK;
 }
@@ -700,7 +701,7 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
     // send SET_BLOCK_COUNT command to indicate the number of blocks to transfer.
     int resp;
     if( numBlocks > 1 &&
-        (s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
+        s_sdcard.supports_set_block_count &&
         (resp = sdSendCommandA(IX_SET_BLOCKCNT,numBlocks)) ) return resp;
 
     // Address is different depending on the card type.
@@ -790,7 +791,7 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
 
     // For a multi-block operation, if SET_BLOCKCNT is not supported, we need to indicate
     // that there are no more blocks to be transferred.
-    if( numBlocks > 1 && !(s_sdcard.support & SD_SUPP_SET_BLOCK_COUNT) &&
+    if( numBlocks > 1 && !s_sdcard.supports_set_block_count &&
         (resp = sdSendCommand(IX_STOP_TRANS)) ) return resp;
 
     return SD_OK;
@@ -971,7 +972,7 @@ int sdcard_init()
     // Send APP_SET_BUS_WIDTH (ACMD6).
     // If supported, set 4 bit bus width and update the CONTROL0 register:
     //
-    if((s_sdcard.support & SD_SUPP_BUS_WIDTH_4) != 0)
+    if(s_sdcard.supports_bus_width_4)
     {
         resp = sdSendCommandA(IX_SET_BUS_WIDTH, s_sdcard.rca | 2);
         if(resp != SD_OK)
