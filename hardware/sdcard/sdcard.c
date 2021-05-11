@@ -842,7 +842,7 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
 
 int sdcard_init()
 {
-    int resp;
+    int resp = SD_ERROR;
 
     if(s_is_initialized)
     {
