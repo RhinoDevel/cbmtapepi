@@ -46,7 +46,6 @@ struct SDDescriptor
     unsigned int csd[4];
     unsigned int ocr;
     unsigned int support;
-    unsigned int fileFormat;
     unsigned char type;
 
     // Dynamic informations:
@@ -534,51 +533,6 @@ static int is_clockrate_emmc_compatible()
     return SD_OK;
 }
 
-static void parse_csd()
-{
-// #ifndef NDEBUG
-//     #define CSD0_VERSION               0x00c00000
-//     #define CSD0_V1                    0x00000000
-//     #define CSD0_V2                    0x00400000
-//     
-//     int const csd_ver = s_sdcard.csd[0] & CSD0_VERSION;
-//     unsigned long long capacity;
-//
-//     if(csd_ver == CSD0_V1)
-//     {
-//         int const csize = ((s_sdcard.csd[1] & CSD1V1_C_SIZEH) << CSD1V1_C_SIZEH_SHIFT) +
-//             ((s_sdcard.csd[2] & CSD2V1_C_SIZEL) >> CSD2V1_C_SIZEL_SHIFT);
-//         int const mult = 1 << (((s_sdcard.csd[2] & CSD2V1_C_SIZE_MULT) >> CSD2V1_C_SIZE_MULT_SHIFT) + 2);
-//         long long const blockSize = 1 << ((s_sdcard.csd[1] & CSD1VN_READ_BL_LEN) >> CSD1VN_READ_BL_LEN_SHIFT);
-//         long long const numBlocks = (csize+1LL)*mult;
-//
-//         capacity = numBlocks * blockSize;
-//     }
-//     else
-//     {
-//         //assert(csd_ver == CSD0_V2);
-//
-//         long long const csize =
-//             (s_sdcard.csd[2] & CSD2V2_C_SIZE) >> CSD2V2_C_SIZE_SHIFT;
-//
-//         capacity = (csize+1LL)*512LL*1024LL;
-//     }
-//
-//     console_write("parse_csd : Capacity = 0x");
-//     console_write_dword((uint32_t)(capacity >> 32));
-//     console_write_dword((uint32_t)(0x00000000FFFFFFFF & capacity));
-//     console_writeline(".");
-// #endif //NDEBUG
-
-    s_sdcard.fileFormat = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
-
-// #ifndef NDEBUG
-//     console_write("parse_csd : File format = 0x");
-//     console_write_dword((uint32_t)(s_sdcard.fileFormat));
-//     console_writeline(".");
-// #endif //NDEBUG
-}
-
 /** Get the clock divider for the given requested frequency.
  *  This is calculated relative to the SD base clock.
  */
@@ -973,9 +927,11 @@ int sdcard_init()
     {
         return resp;
     }
-    parse_csd();
-    if(s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT 
-        && s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_HDD)
+
+    uint32_t const file_format = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
+
+    if(file_format != CSD3VN_FILE_FORMAT_DOSFAT 
+        && file_format != CSD3VN_FILE_FORMAT_HDD)
     {
         console_deb_writeline(
             "sdcard_init: Error: Unsupported SD card file format!");
