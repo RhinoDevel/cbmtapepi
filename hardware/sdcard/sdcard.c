@@ -223,7 +223,7 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
   }
 
   // Get response from RESP0.
-  int resp0 = *EMMC_RESP0;
+  int const resp0 = *EMMC_RESP0;
 
   // Handle response types.
   switch(cmd->resp)
