@@ -412,9 +412,7 @@ static int sdReadSCR()
 
   // Parse out the SCR.  Only interested in values in scr[0], scr[1] is mfr specific.
   if( scr[0] & SCR_SD_BUS_WIDTH_4 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_4;
-  if( scr[0] & SCR_SD_BUS_WIDTH_1 ) s_sdcard.support |= SD_SUPP_BUS_WIDTH_1;
   if( scr[0] & SCR_CMD_SUPP_SET_BLKCNT ) s_sdcard.support |= SD_SUPP_SET_BLOCK_COUNT;
-  if( scr[0] & SCR_CMD_SUPP_SPEED_CLASS ) s_sdcard.support |= SD_SUPP_SPEED_CLASS;
 
   return SD_OK;
 }

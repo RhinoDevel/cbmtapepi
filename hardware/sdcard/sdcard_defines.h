@@ -177,11 +177,9 @@
 // SCR flags used:
 // NOTE: SCR is big-endian, so flags appear byte-wise reversed from the spec.
 
-#define SCR_SD_BUS_WIDTH_1         0x00000100
 #define SCR_SD_BUS_WIDTH_4         0x00000400
 
 #define SCR_CMD_SUPP_SET_BLKCNT    0x02000000
-#define SCR_CMD_SUPP_SPEED_CLASS   0x01000000
 
 // SD card types used:
 #define SD_TYPE_1    2
@@ -190,8 +188,6 @@
 
 // SD card functions supported values.
 #define SD_SUPP_SET_BLOCK_COUNT 0x80000000
-#define SD_SUPP_SPEED_CLASS     0x40000000
 #define SD_SUPP_BUS_WIDTH_4     0x20000000
-#define SD_SUPP_BUS_WIDTH_1     0x10000000
 
 #endif //MT_SDCARD_DEFINES
