@@ -42,7 +42,6 @@ struct SDDescriptor
 {
     // Static informations:
 
-    unsigned int cid[4];
     unsigned int csd[4];
     unsigned int ocr;
     unsigned int support;
@@ -230,7 +229,7 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
   int resp0 = *EMMC_RESP0;
 
   // Handle response types.
-  switch( cmd->resp )
+  switch(cmd->resp)
     {
     // No response.
     case RESP_NO:
@@ -243,17 +242,26 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
       s_sdcard.status = resp0;
       return resp0 & R1_ERRORS_MASK;
 
-    // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC
-    // Note: highest bits are in RESP3.
-    case RESP_R2I:
-    case RESP_R2S:
+    // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC.
+    //
+    // Note: Highest bits are in RESP3:
+    //
+    case RESP_R2I: // CID
+    {
+        s_sdcard.status = 0;
+        return SD_OK; // Not interested in CID.
+    }
+    case RESP_R2S: // CSD
+    {
       s_sdcard.status = 0;
-      unsigned int* data = cmd->resp == RESP_R2I ? s_sdcard.cid : s_sdcard.csd;
-      data[0] = *EMMC_RESP3;
-      data[1] = *EMMC_RESP2;
-      data[2] = *EMMC_RESP1;
-      data[3] = resp0;
+
+      s_sdcard.csd[0] = *EMMC_RESP3;
+      s_sdcard.csd[1] = *EMMC_RESP2;
+      s_sdcard.csd[2] = *EMMC_RESP1;
+      s_sdcard.csd[3] = resp0;
+      
       return SD_OK;
+    }
 
     // RESP0 contains OCR register
     // TODO: What is the correct time to wait for this?
