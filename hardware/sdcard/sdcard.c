@@ -42,7 +42,7 @@ struct SDDescriptor
 {
     // Static informations:
 
-    unsigned int csd[4];
+    uint32_t csd3;
     unsigned int ocr;
     unsigned int support;
     unsigned char type;
@@ -59,9 +59,6 @@ static volatile uint32_t* const EMMC_BLKSIZECNT  = (uint32_t*)(PERI_BASE + 0x003
 static volatile uint32_t* const EMMC_ARG1        = (uint32_t*)(PERI_BASE + 0x00300008);
 static volatile uint32_t* const EMMC_CMDTM       = (uint32_t*)(PERI_BASE + 0x0030000c);
 static volatile uint32_t* const EMMC_RESP0       = (uint32_t*)(PERI_BASE + 0x00300010);
-static volatile uint32_t* const EMMC_RESP1       = (uint32_t*)(PERI_BASE + 0x00300014);
-static volatile uint32_t* const EMMC_RESP2       = (uint32_t*)(PERI_BASE + 0x00300018);
-static volatile uint32_t* const EMMC_RESP3       = (uint32_t*)(PERI_BASE + 0x0030001c);
 static volatile uint32_t* const EMMC_DATA        = (uint32_t*)(PERI_BASE + 0x00300020);
 static volatile uint32_t* const EMMC_STATUS      = (uint32_t*)(PERI_BASE + 0x00300024);
 static volatile uint32_t* const EMMC_CONTROL0    = (uint32_t*)(PERI_BASE + 0x00300028);
@@ -253,14 +250,9 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
     }
     case RESP_R2S: // CSD
     {
-      s_sdcard.status = 0;
-
-      s_sdcard.csd[0] = *EMMC_RESP3;
-      s_sdcard.csd[1] = *EMMC_RESP2;
-      s_sdcard.csd[2] = *EMMC_RESP1;
-      s_sdcard.csd[3] = resp0;
-      
-      return SD_OK;
+        s_sdcard.status = 0;
+        s_sdcard.csd3 = resp0; // (interested in lowest bits, only)
+        return SD_OK;
     }
 
     // RESP0 contains OCR register
@@ -936,7 +928,7 @@ int sdcard_init()
         return resp;
     }
 
-    uint32_t const file_format = s_sdcard.csd[3] & CSD3VN_FILE_FORMAT;
+    uint32_t const file_format = s_sdcard.csd3 & CSD3VN_FILE_FORMAT;
 
     if(file_format != CSD3VN_FILE_FORMAT_DOSFAT 
         && file_format != CSD3VN_FILE_FORMAT_HDD)
