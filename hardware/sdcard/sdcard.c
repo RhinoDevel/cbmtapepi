@@ -32,7 +32,7 @@
 
 struct EMMCCommand
 {
-    unsigned int code;
+    uint32_t code;
     unsigned char resp;
     unsigned char rca;
     int delay;
@@ -43,14 +43,14 @@ struct SDDescriptor
     // Static informations:
 
     uint32_t csd3;
-    unsigned int ocr;
-    unsigned int support;
+    uint32_t ocr;
+    uint32_t support;
     unsigned char type;
 
     // Dynamic informations:
 
-    unsigned int rca;
-    unsigned int status;
+    uint32_t rca;
+    uint32_t status;
 };
 
 // EMMC registers used:
@@ -111,7 +111,7 @@ static void clear_interrupt_reg()
  * - Waits up to one second for the interrupt.
  * - Returns non-zero value on error.
  */
-static int wait_for_interrupt(unsigned int const mask)
+static int wait_for_interrupt(uint32_t const mask)
 {
     static uint32_t const max_ticks = 1000000; // 1 second, using a 1 MHz clock.
     int const waitMask = mask | INT_ERROR_MASK;
@@ -371,7 +371,7 @@ static int sdSendCommandA( int index, int arg )
  */
 static int sdReadSCR()
 {
-    unsigned int scr[2];
+    uint32_t scr[2];
 
   // SEND_SCR command is like a READ_SINGLE but for a block of 8 bytes.
   // Ensure that any data operation has completed before reading the block.
@@ -759,7 +759,7 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
       // Handle word-aligned buffers more efficiently.
       else
         {
-        unsigned int* intbuff = (unsigned int*)buffer;
+        uint32_t* intbuff = (uint32_t*)buffer;
         while( done < 128 )
           {
           if( write )
