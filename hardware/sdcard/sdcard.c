@@ -485,7 +485,7 @@ static int sdAppSendOpCond( int arg )
 
 /** Initialize GPIO.
  */
-static void sd_init_gpio()
+static void init_gpio()
 {
     gpio_set_func(GPIO_DAT3, gpio_func_alt3);
     gpio_set_pud(GPIO_DAT3, gpio_pud_up);
@@ -857,9 +857,9 @@ int sdcard_init()
         return resp;
     }
 
-    memset(&s_sdcard, 0, sizeof (struct SDDescriptor)); // Necessary?
+    memset(&s_sdcard, 0, sizeof(struct SDDescriptor)); // Necessary?
 
-    sd_init_gpio();
+    init_gpio();
 
     uint32_t const host_ver = (*EMMC_SLOTISR_VER & 0x00FF0000) >> 16;
     //
@@ -872,33 +872,37 @@ int sdcard_init()
 
     // Reset the card:
     //
-    if((resp = reset_card()))
+    resp = reset_card();
+    if(resp != SD_OK)
     {
         console_deb_writeline("sdcard_init: Error: Card reset failed!");
         return resp;
     }
 
-    // Send SEND_IF_COND,0x000001AA (CMD8) voltage range 0x1 check pattern 0xAA
-    // If voltage range and check pattern don't match, look for older card.
+    // Send SEND_IF_COND, 0x000001AA (CMD8) voltage range 0x1 check pattern
+    // 0xAA. If voltage range and check pattern don't match, look for older
+    // card:
+    //
     resp = sdSendCommandA(IX_SEND_IF_COND, 0x000001AA);
     if(resp == SD_OK)
     {
         // Card responded with voltage and check pattern.
-        // Resolve voltage and check for high capacity card.
-        if( (resp = sdAppSendOpCond(ACMD41_ARG_HC)) )
+        // Resolve voltage and check for high capacity card:
+
+        resp = sdAppSendOpCond(ACMD41_ARG_HC);
+        if(resp != SD_OK)
         {
             return resp;
         }
 
-        // Check for high or standard capacity.
-        if( s_sdcard.ocr & R3_CCS )
-          s_sdcard.type = SD_TYPE_2_HC;
-        else
-          s_sdcard.type = SD_TYPE_2_SC;
+        // Check for high or standard capacity:
+        //
+        s_sdcard.type = (s_sdcard.ocr & R3_CCS) == 0
+            ? SD_TYPE_2_SC : SD_TYPE_2_HC;
     }
     else
     {
-        if( resp == SD_BUSY )
+        if(resp == SD_BUSY)
         {
             console_deb_writeline("sdcard_init: Error: SD card is busy!");
             return resp;
@@ -908,11 +912,12 @@ int sdcard_init()
 
         // If there appears to be a command in progress, reset the card:
         //
-        if(*EMMC_STATUS & SR_CMD_INHIBIT)
+        if((*EMMC_STATUS & SR_CMD_INHIBIT) != 0)
         {
             console_deb_writeline(
                 "sdcard_init: Resetting card a second time..");
-            if((resp = reset_card()))
+            resp = reset_card();
+            if(resp != SD_OK)
             {
                 console_deb_writeline(
                     "sdcard_init: Error: Reset (because command seems to be in progress) failed!");
@@ -920,10 +925,10 @@ int sdcard_init()
             }
         }
 
-        // wait(50);
-
-        // Resolve voltage.
-        if((resp = sdAppSendOpCond(ACMD41_ARG_SC)))
+        // Resolve voltage:
+        //
+        resp = sdAppSendOpCond(ACMD41_ARG_SC);
+        if(resp != SD_OK)
         {
 #ifndef NDEBUG
             console_write(
@@ -937,50 +942,93 @@ int sdcard_init()
         s_sdcard.type = SD_TYPE_1;
     }
 
-    // Send ALL_SEND_CID (CMD2)
-    if( (resp = sdSendCommand(IX_ALL_SEND_CID)) ) return resp;
-
-    // Send SEND_REL_ADDR (CMD3)
-    if( (resp = sdSendCommand(IX_SEND_REL_ADDR)) ) return resp;
-
-    // From now on the card should be in standby state.
-    // Actually cards seem to respond in identify state at this point.
-    // Check this with a SEND_STATUS (CMD13)
-
-    // Send SEND_CSD (CMD9) and parse the result.
-    if( (resp = sdSendCommand(IX_SEND_CSD)) ) return resp;
-    parse_csd();
-    if( s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT &&
-      s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_HDD )
+    // Send ALL_SEND_CID (CMD2):
+    //
+    resp = sdSendCommand(IX_ALL_SEND_CID);
+    if(resp != SD_OK)
     {
-    return SD_ERROR;
+        return resp;
     }
 
-    // At this point, set the clock to full speed.
-    if( (resp = sdSetClock(FREQ_NORMAL)) ) return resp;
+    // Send SEND_REL_ADDR (CMD3):
+    //
+    resp = sdSendCommand(IX_SEND_REL_ADDR);
+    if(resp != SD_OK)
+    {
+        return resp;
+    }
 
-    // Send CARD_SELECT  (CMD7)
-    // TODO: Check card_is_locked status in the R1 response from CMD7 [bit 25], if so, use CMD42 to unlock
+    // From now on the card should be in stand-by state.
+    // Actually cards seem to respond in identify state at this point.
+    // Check this with a SEND_STATUS (CMD13).
+
+    // Send SEND_CSD (CMD9) and parse the result:
+    //
+    resp = sdSendCommand(IX_SEND_CSD);
+    if(resp != SD_OK)
+    {
+        return resp;
+    }
+    parse_csd();
+    if(s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_DOSFAT 
+        && s_sdcard.fileFormat != CSD3VN_FILE_FORMAT_HDD)
+    {
+        console_deb_writeline(
+            "sdcard_init: Error: Unsupported SD card file format!");
+        return SD_ERROR;
+    }
+
+    // At this point, set the clock to full speed:
+
+    resp = sdSetClock(FREQ_NORMAL);
+    if(resp != SD_OK)
+    {
+        return resp;
+    }
+
+    // Send CARD_SELECT (CMD7).
+    //
+    // TODO: Check card_is_locked status in the R1 response from CMD7 [bit 25],
+    //       if so, use CMD42 to unlock.
+    //
     // CMD42 structure [4.3.7] same as a single block write; data block includes
     // PWD setting mode, PWD len, PWD data.
-    if( (resp = sdSendCommand(IX_CARD_SELECT)) ) return resp;
+    //
+    resp = sdSendCommand(IX_CARD_SELECT);
+    if(resp != SD_OK)
+    {
+        return resp;
+    }
 
     // Get the SCR as well.
-    // Need to do this before sending ACMD6 so that allowed bus widths are known.
-    if( (resp = sdReadSCR()) ) return resp;
-
-    // Send APP_SET_BUS_WIDTH (ACMD6)
-    // If supported, set 4 bit bus width and update the CONTROL0 register.
-    if( s_sdcard.support & SD_SUPP_BUS_WIDTH_4 )
+    // Need to do this before sending ACMD6 so that allowed bus widths are
+    // known:
+    //
+    resp = sdReadSCR();
+    if(resp != SD_OK)
     {
-    if( (resp = sdSendCommandA(IX_SET_BUS_WIDTH,s_sdcard.rca|2)) ) return resp;
-    *EMMC_CONTROL0 |= C0_HCTL_DWITDH;
+        return resp;
+    }
+
+    // Send APP_SET_BUS_WIDTH (ACMD6).
+    // If supported, set 4 bit bus width and update the CONTROL0 register:
+    //
+    if((s_sdcard.support & SD_SUPP_BUS_WIDTH_4) != 0)
+    {
+        resp = sdSendCommandA(IX_SET_BUS_WIDTH, s_sdcard.rca | 2);
+        if(resp != SD_OK)
+        {
+            return resp;
+        }
+
+        *EMMC_CONTROL0 = *EMMC_CONTROL0 | C0_HCTL_DWITDH;
     }
 
     // Only needs to be set for SDSC cards.
     // For SDHC and SDXC cards block length is fixed at 512 anyway:
     //
-    if((resp = sdSendCommandA(IX_SET_BLOCKLEN, 512)))
+    resp = sdSendCommandA(IX_SET_BLOCKLEN, 512);
+    if(resp != SD_OK)
     {
         return resp;
     }
