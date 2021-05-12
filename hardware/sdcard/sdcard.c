@@ -22,7 +22,6 @@
 #include "../mailbox/mailbox.h"
 #include "../armtimer/armtimer.h"
 #include "../gpio/gpio.h"
-#include "../../lib/mem/mem.h"
 #include "../../lib/console/console.h"
 #include "../../lib/assert.h"
 #include "../peribase.h"
@@ -36,22 +35,6 @@ struct EMMCCommand
     unsigned char resp;
     unsigned char rca;
     int delay;
-};
-
-struct SDDescriptor
-{
-    // Static informations:
-
-    uint32_t csd3;
-    uint32_t ocr;
-    bool supports_bus_width_4;
-    bool supports_set_block_count;
-    unsigned char type;
-
-    // Dynamic informations:
-
-    uint32_t rca;
-    uint32_t status;
 };
 
 // EMMC registers used:
@@ -98,7 +81,19 @@ static struct EMMCCommand sdCommandTable[] =
 };
 
 static bool s_is_initialized = false; // Set by sdcard_init().
-static struct SDDescriptor s_sdcard; // Prepared by sdcard_init().
+
+// Static informations:
+//
+static uint32_t s_csd3 = 0;
+static uint32_t s_ocr = 0;
+static bool s_supports_bus_width_4 = false;
+static bool s_supports_set_block_count = false;
+static unsigned char s_type = 0;
+//
+// Dynamic informations:
+//
+static uint32_t s_rca = 0;
+static uint32_t s_status = 0;
 
 /** Completely clear the interrupt register.
  */
@@ -237,7 +232,7 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
     // Return value non-zero if any error flag in the status value.
     case RESP_R1:
     case RESP_R1b:
-      s_sdcard.status = resp0;
+      s_status = resp0;
       return resp0 & R1_ERRORS_MASK;
 
     // RESP0..3 contains 128 bit CID or CSD shifted down by 8 bits as no CRC.
@@ -246,36 +241,36 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
     //
     case RESP_R2I: // CID
     {
-        s_sdcard.status = 0;
+        s_status = 0;
         return SD_OK; // Not interested in CID.
     }
     case RESP_R2S: // CSD
     {
-        s_sdcard.status = 0;
-        s_sdcard.csd3 = resp0; // (interested in lowest bits, only)
+        s_status = 0;
+        s_csd3 = resp0; // (interested in lowest bits, only)
         return SD_OK;
     }
 
     // RESP0 contains OCR register
     // TODO: What is the correct time to wait for this?
     case RESP_R3:
-      s_sdcard.status = 0;
-      s_sdcard.ocr = resp0;
+      s_status = 0;
+      s_ocr = resp0;
       return SD_OK;
 
     // RESP0 contains RCA and status bits 23,22,19,12:0
     case RESP_R6:
-      s_sdcard.rca = resp0 & R6_RCA_MASK;
-      s_sdcard.status = ((resp0 & 0x00001fff)     ) |   // 12:0 map directly to status 12:0
+      s_rca = resp0 & R6_RCA_MASK;
+      s_status = ((resp0 & 0x00001fff)     ) |   // 12:0 map directly to status 12:0
                       ((resp0 & 0x00002000) << 6) |   // 13 maps to status 19 ERROR
                       ((resp0 & 0x00004000) << 8) |   // 14 maps to status 22 ILLEGAL_COMMAND
                       ((resp0 & 0x00008000) << 8);    // 15 maps to status 23 COM_CRC_ERROR
-      return s_sdcard.status & R1_ERRORS_MASK;
+      return s_status & R1_ERRORS_MASK;
 
     // RESP0 contains voltage acceptance and check pattern, which should match
     // the argument.
     case RESP_R7:
-      s_sdcard.status = 0;
+      s_status = 0;
       return resp0 == arg ? SD_OK : SD_ERROR;
     }
 
@@ -288,18 +283,18 @@ static int sdSendAppCommand()
   {
   int resp;
   // If no RCA, send the APP_CMD and don't look for a response.
-  if( !s_sdcard.rca )
+  if( !s_rca )
     sdSendCommandP(&sdCommandTable[IX_APP_CMD],0x00000000);
 
   // If there is an RCA, include that in APP_CMD and check card accepted it.
   else
     {
-    if( (resp = sdSendCommandP(&sdCommandTable[IX_APP_CMD_RCA],s_sdcard.rca)) )
+    if( (resp = sdSendCommandP(&sdCommandTable[IX_APP_CMD_RCA],s_rca)) )
     {
         return resp;
     }
     // Debug - check that status indicates APP_CMD accepted.
-    if( !(s_sdcard.status & ST_APP_CMD) )
+    if( !(s_status & ST_APP_CMD) )
       return SD_ERROR;
     }
 
@@ -327,14 +322,14 @@ static int sdSendCommand( int index )
   int arg = 0;
   if( cmd->rca == RCA_YES )
   {
-    arg = s_sdcard.rca;
+    arg = s_rca;
   }
     if( (resp = sdSendCommandP(cmd,arg)) )
     {
         return resp;
     }
   // Check that APP_CMD was correctly interpreted.
-  if( index >= IX_APP_CMD_START && s_sdcard.rca && !(s_sdcard.status & ST_APP_CMD) )
+  if( index >= IX_APP_CMD_START && s_rca && !(s_status & ST_APP_CMD) )
     return SD_ERROR_APP_CMD;
 
   return resp;
@@ -362,7 +357,7 @@ static int sdSendCommandA( int index, int arg )
   }
 
   // Check that APP_CMD was correctly interpreted.
-  if( index >= IX_APP_CMD_START && s_sdcard.rca && !(s_sdcard.status & ST_APP_CMD) )
+  if( index >= IX_APP_CMD_START && s_rca && !(s_status & ST_APP_CMD) )
     return SD_ERROR_APP_CMD;
 
   return resp;
@@ -412,8 +407,8 @@ static int sdReadSCR()
     }
 
   // Parse out the SCR.  Only interested in values in scr[0], scr[1] is mfr specific.
-  s_sdcard.supports_bus_width_4 = (scr[0] & SCR_SD_BUS_WIDTH_4) != 0;
-  s_sdcard.supports_set_block_count = (scr[0] & SCR_CMD_SUPP_SET_BLKCNT) != 0;
+  s_supports_bus_width_4 = (scr[0] & SCR_SD_BUS_WIDTH_4) != 0;
+  s_supports_set_block_count = (scr[0] & SCR_CMD_SUPP_SET_BLKCNT) != 0;
 
   return SD_OK;
 }
@@ -447,7 +442,7 @@ static int sdAppSendOpCond( int arg )
     }
 
     while(
-        !(s_sdcard.ocr & R3_COMPLETE)
+        !(s_ocr & R3_COMPLETE)
         && (armtimer_get_tick() - start_tick < max_tick))
     {
         if((resp = sdSendCommandA(IX_APP_SEND_OP_COND, arg)))
@@ -465,14 +460,14 @@ static int sdAppSendOpCond( int arg )
     }
 
     // Return timeout error if still not busy.
-    if(!(s_sdcard.ocr & R3_COMPLETE))
+    if(!(s_ocr & R3_COMPLETE))
     {
         console_deb_writeline("sdAppSendOpCond : Error: Timeout!");
         return SD_TIMEOUT;
     }
 
     // Check that at least one voltage value was returned.
-    if(!(s_sdcard.ocr & ACMD41_VOLTAGE))
+    if(!(s_ocr & ACMD41_VOLTAGE))
     {
         console_deb_writeline("sdAppSendOpCond : Error: Voltage!");
         return SD_ERROR_VOLTAGE;
@@ -666,10 +661,10 @@ static int reset_card()
 
     // Reset card registers:
     //
-    s_sdcard.rca = 0;
-    s_sdcard.ocr = 0;
-    s_sdcard.status = 0;
-    s_sdcard.type = 0;
+    s_rca = 0;
+    s_ocr = 0;
+    s_status = 0;
+    s_type = 0;
 
     return sdSendCommand(IX_GO_IDLE_STATE);
 }
@@ -704,13 +699,13 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
     // send SET_BLOCK_COUNT command to indicate the number of blocks to transfer.
     int resp;
     if( numBlocks > 1 &&
-        s_sdcard.supports_set_block_count &&
+        s_supports_set_block_count &&
         (resp = sdSendCommandA(IX_SET_BLOCKCNT,numBlocks)) ) return resp;
 
     // Address is different depending on the card type.
     // HC pass address as block # which is just address/512.
     // SC pass address straight through.
-    int blockAddress = s_sdcard.type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
+    int blockAddress = s_type == SD_TYPE_2_HC ? (int)(address>>9) : (int)address;
 
     // Set BLKSIZECNT to number of blocks * 512 bytes, send the read or write command.
     // Once the data transfer has started and the TM_BLKCNT_EN bit in the CMDTM register is
@@ -794,7 +789,7 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
 
     // For a multi-block operation, if SET_BLOCKCNT is not supported, we need to indicate
     // that there are no more blocks to be transferred.
-    if( numBlocks > 1 && !s_sdcard.supports_set_block_count &&
+    if( numBlocks > 1 && !s_supports_set_block_count &&
         (resp = sdSendCommand(IX_STOP_TRANS)) ) return resp;
 
     return SD_OK;
@@ -816,8 +811,6 @@ int sdcard_init()
     {
         return resp;
     }
-
-    memset(&s_sdcard, 0, sizeof(struct SDDescriptor)); // Necessary?
 
     init_gpio();
 
@@ -857,7 +850,7 @@ int sdcard_init()
 
         // Check for high or standard capacity:
         //
-        s_sdcard.type = (s_sdcard.ocr & R3_CCS) == 0
+        s_type = (s_ocr & R3_CCS) == 0
             ? SD_TYPE_2_SC : SD_TYPE_2_HC;
     }
     else
@@ -899,7 +892,7 @@ int sdcard_init()
             return resp;
         }
 
-        s_sdcard.type = SD_TYPE_1;
+        s_type = SD_TYPE_1;
     }
 
     // Send ALL_SEND_CID (CMD2):
@@ -930,7 +923,7 @@ int sdcard_init()
         return resp;
     }
 
-    uint32_t const file_format = s_sdcard.csd3 & CSD3VN_FILE_FORMAT;
+    uint32_t const file_format = s_csd3 & CSD3VN_FILE_FORMAT;
 
     if(file_format != CSD3VN_FILE_FORMAT_DOSFAT 
         && file_format != CSD3VN_FILE_FORMAT_HDD)
@@ -975,9 +968,9 @@ int sdcard_init()
     // Send APP_SET_BUS_WIDTH (ACMD6).
     // If supported, set 4 bit bus width and update the CONTROL0 register:
     //
-    if(s_sdcard.supports_bus_width_4)
+    if(s_supports_bus_width_4)
     {
-        resp = sdSendCommandA(IX_SET_BUS_WIDTH, s_sdcard.rca | 2);
+        resp = sdSendCommandA(IX_SET_BUS_WIDTH, s_rca | 2);
         if(resp != SD_OK)
         {
             return resp;
