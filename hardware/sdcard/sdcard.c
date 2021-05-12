@@ -427,8 +427,8 @@ static int sdReadSCR()
     return SD_OK;
 }
 
-/* Common routine for APP_SEND_OP_COND.
- * This is used for both SC and HC cards based on the parameter.
+/** Common routine for APP_SEND_OP_COND.
+ *  This is used for both SC and HC cards based on the parameter.
  */
 static int sdAppSendOpCond( int arg )
 {
@@ -620,7 +620,7 @@ static int sdSetClock(int freq)
     return SD_OK;
 }
 
-/* Reset card.
+/** Reset card.
  */
 static int reset_card()
 {
@@ -673,7 +673,7 @@ static int reset_card()
     *EMMC_IRPT_EN   = 0xFFFFFFFF;//INT_ALL_MASK;
     *EMMC_IRPT_MASK = 0xFFFFFFFF;//INT_ALL_MASK;
 
-    // Reset card registers:
+    // Reset card "registers":
     //
     s_rca = 0;
     s_ocr = 0;
@@ -697,8 +697,9 @@ int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buff
         return SD_NOT_INITIALIZED;
     }
 
-    // Ensure that any data operation has completed before doing the transfer.
-    if( sdWaitForData() )
+    // Ensure that any data operation has completed before doing the transfer:
+    //
+    if(sdWaitForData())
     {
         return SD_TIMEOUT;
     }
