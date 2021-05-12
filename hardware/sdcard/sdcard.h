@@ -14,12 +14,12 @@
 #define SD_ERROR               1
 #define SD_TIMEOUT             2
 #define SD_BUSY                3
-#define SD_NOT_INITIALIZED     5
-#define SD_ERROR_RESET         6
-#define SD_ERROR_CLOCK         7
-#define SD_ERROR_VOLTAGE       8
-#define SD_ERROR_APP_CMD       9
-#define SD_ALREADY_INITIALIZED 10
+#define SD_NOT_INITIALIZED     4
+#define SD_ERROR_RESET         5
+#define SD_ERROR_CLOCK         6
+#define SD_ERROR_VOLTAGE       7
+#define SD_ERROR_APP_CMD       8
+#define SD_ALREADY_INITIALIZED 9
 
 // This driver is hard-coded for an EMMC frequency of 250 MHz (as to-be-returned
 // by mailbox property channel message) and a divisor of 6, resulting in the
