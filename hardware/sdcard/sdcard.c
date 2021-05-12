@@ -683,7 +683,10 @@ static int reset_card()
  */
 int sdcard_blocks_transfer(long long address, int numBlocks, unsigned char* buffer, int write)
 {
-    if( !s_is_initialized ) return SD_NO_RESP;
+    if(!s_is_initialized)
+    {
+        return SD_NOT_INITIALIZED;
+    }
 
     // Ensure that any data operation has completed before doing the transfer.
     if( sdWaitForData() )

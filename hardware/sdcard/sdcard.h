@@ -14,7 +14,7 @@
 #define SD_ERROR               1
 #define SD_TIMEOUT             2
 #define SD_BUSY                3
-#define SD_NO_RESP             5
+#define SD_NOT_INITIALIZED     5
 #define SD_ERROR_RESET         6
 #define SD_ERROR_CLOCK         7
 #define SD_ERROR_VOLTAGE       8
