@@ -102,10 +102,10 @@ static void clear_interrupt_reg()
     *EMMC_INTERRUPT = *EMMC_INTERRUPT; // Write the bits set to 1 to clear.
 }
 
-/* Wait for interrupt.
+/** Wait for interrupt.
  *
- * - Waits up to one second for the interrupt.
- * - Returns non-zero value on error.
+ *  - Waits up to one second for the interrupt.
+ *  - Returns non-zero value on error.
  */
 static int wait_for_interrupt(uint32_t const mask)
 {
@@ -133,14 +133,12 @@ static int wait_for_interrupt(uint32_t const mask)
         || (irq_val & INT_DATA_TIMEOUT))
     {
         clear_interrupt_reg();
-
         return SD_TIMEOUT;
     }
 
     if(irq_val & INT_ERROR_MASK)
     {
         clear_interrupt_reg();
-
         return SD_ERROR;
     }
 
@@ -148,7 +146,6 @@ static int wait_for_interrupt(uint32_t const mask)
     // leaving all other (non-error) interrupts:
     //
     *EMMC_INTERRUPT = mask;
-
     return SD_OK;
 }
 
@@ -173,10 +170,10 @@ static int sdWaitForCommand()
     return SD_OK;
 }
 
-/* Wait for any data that may be in progress.
+/** Wait for any data that may be in progress.
  */
 static int sdWaitForData()
-  {
+{
   // Check for status indicating data transfer in progress.
   // Spec indicates a maximum wait of 500ms.
   // For now this is done by waiting for the DAT_INHIBIT flag to go from the status register,
@@ -191,12 +188,12 @@ static int sdWaitForData()
     }
 
   return SD_OK;
-  }
+}
 
-/* Send command and handle response.
+/** Send command and handle response.
  */
 static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
-  {
+{
   // Check for command in progress
   if( sdWaitForCommand() != 0 )
     return SD_BUSY;
@@ -275,12 +272,12 @@ static int sdSendCommandP( struct EMMCCommand * cmd, int arg )
     }
 
   return SD_ERROR;
-  }
+}
 
-/* Send APP_CMD.
+/** Send APP_CMD.
  */
 static int sdSendAppCommand()
-  {
+{
   int resp;
   // If no RCA, send the APP_CMD and don't look for a response.
   if( !s_rca )
@@ -299,14 +296,14 @@ static int sdSendAppCommand()
     }
 
   return SD_OK;
-  }
+}
 
-/* Send a command with no argument.
- * RCA automatically added if required.
- * APP_CMD sent automatically if required.
+/** Send a command with no argument.
+ *  RCA automatically added if required.
+ *  APP_CMD sent automatically if required.
  */
 static int sdSendCommand( int index )
-  {
+{
   // Issue APP_CMD if needed.
   int resp;
   if( index >= IX_APP_CMD_START)
@@ -333,13 +330,13 @@ static int sdSendCommand( int index )
     return SD_ERROR_APP_CMD;
 
   return resp;
-  }
+}
 
-/* Send a command with a specific argument.
- * APP_CMD sent automatically if required.
+/** Send a command with a specific argument.
+ *  APP_CMD sent automatically if required.
  */
 static int sdSendCommandA( int index, int arg )
-  {
+{
   // Issue APP_CMD if needed.
   int resp;
     if( index >= IX_APP_CMD_START)
@@ -361,56 +358,73 @@ static int sdSendCommandA( int index, int arg )
     return SD_ERROR_APP_CMD;
 
   return resp;
-  }
+}
 
-/* Read card's SCR
+/** Read card's SCR [called by sdcard_init()].
  */
 static int sdReadSCR()
 {
+    int resp = SD_ERROR, numRead = 0, count = 100000;
     uint32_t scr[2];
 
-  // SEND_SCR command is like a READ_SINGLE but for a block of 8 bytes.
-  // Ensure that any data operation has completed before reading the block.
-  if( sdWaitForData() )
-  {
-      return SD_TIMEOUT;
-  }
+    // SEND_SCR command is like a READ_SINGLE but for a block of 8 bytes.
+    // Ensure that any data operation has completed before reading the block.
 
-  // Set BLKSIZECNT to 1 block of 8 bytes, send SEND_SCR command
-  *EMMC_BLKSIZECNT = (1 << 16) | 8;
-  int resp;
-  if( (resp = sdSendCommand(IX_SEND_SCR)) ) return resp;
-
-  // Wait for READ_RDY interrupt.
-  if( (resp = wait_for_interrupt(INT_READ_RDY)) )
+    resp = sdWaitForData();
+    if(resp != SD_OK)
     {
-    return resp;
+        return resp;
     }
 
-  // Allow maximum of 100ms for the read operation.
-  int numRead = 0, count = 100000;
-  while( numRead < 2 )
+    // Set BLKSIZECNT to 1 block of 8 bytes, send SEND_SCR command:
+
+    *EMMC_BLKSIZECNT = (1 << 16) | 8;
+   
+    resp = sdSendCommand(IX_SEND_SCR);
+    if(resp != SD_OK)
     {
-    if( *EMMC_STATUS & SR_READ_AVAILABLE )
-      scr[numRead++] = *EMMC_DATA;
-    else
-      {
-      armtimer_busywait_microseconds(1);
-      if( --count == 0 ) break;
-      }
+        return resp;
     }
 
-  // If SCR not fully read, the operation timed out.
-  if( numRead != 2 )
+    // Wait for READ_RDY interrupt:
+    //
+    resp = wait_for_interrupt(INT_READ_RDY);
+    if(resp != SD_OK)
     {
-    return SD_TIMEOUT;
+        return resp;
     }
 
-  // Parse out the SCR.  Only interested in values in scr[0], scr[1] is mfr specific.
-  s_supports_bus_width_4 = (scr[0] & SCR_SD_BUS_WIDTH_4) != 0;
-  s_supports_set_block_count = (scr[0] & SCR_CMD_SUPP_SET_BLKCNT) != 0;
+    // Allow maximum of 100ms for the read operation.
+    //
+    while(numRead < 2)
+    {
+        if((*EMMC_STATUS & SR_READ_AVAILABLE) != 0)
+        {
+            scr[numRead++] = *EMMC_DATA;
+        }
+        else
+        {
+            armtimer_busywait_microseconds(1);
+            if(--count == 0) 
+            {
+                break;
+            }
+        }
+    }
+    //
+    // If SCR not fully read, the operation timed out:
+    //
+    if(numRead != 2)
+    {
+        return SD_TIMEOUT;
+    }
 
-  return SD_OK;
+    // Parse out the SCR. Only interested in values in scr[0],
+    // scr[1] is mfr specific:
+    //
+    s_supports_bus_width_4 = (scr[0] & SCR_SD_BUS_WIDTH_4) != 0;
+    s_supports_set_block_count = (scr[0] & SCR_CMD_SUPP_SET_BLKCNT) != 0;
+    return SD_OK;
 }
 
 /* Common routine for APP_SEND_OP_COND.
