@@ -107,7 +107,7 @@
 #define R6_RCA_MASK    0xffff0000
 
 // Response types.
-// Note that on the PI, the index and CRC are dropped, leaving 32 bits in RESP0.
+// Note that on the Pi, the index and CRC are dropped, leaving 32 bits in RESP0.
 #define RESP_NO    0     // No response
 #define RESP_R1    1     // 48  RESP0    contains card status
 #define RESP_R1b  11     // 48  RESP0    contains card status, data line indicates busy
