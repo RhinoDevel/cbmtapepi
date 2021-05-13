@@ -561,6 +561,12 @@ static uint32_t get_clock_divider(uint32_t const freq)
     uint32_t const hi = (divider & 0x00000300) >> 2; // 00000000 11000000
 
     return lo + hi;
+    //
+    // => For 250MHz => 400kHz <=> 26624.
+    //               =>  25MHz <=>   512.
+    //                  BUT I have not measured, if these frequencies are
+    //                  really reached by using these "cdiv" values
+    //                  (it just works).
 }
 
 /* Set the SD clock to the given frequency.
