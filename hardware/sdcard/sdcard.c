@@ -620,7 +620,7 @@ static int sdSetClock(int freq)
     return SD_OK;
 }
 
-/** Reset card.
+/** Reset controller.
  */
 static int reset_card()
 {
