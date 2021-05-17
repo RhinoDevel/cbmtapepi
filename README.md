@@ -37,7 +37,7 @@ You need:
 - 1x LED.
 - 3x NPN transistor (e.g. a BC547 or a PN2222A).
 - 1x PNP transistor (e.g. a BC557).
-- 10x 10k Ohm resistors (two of these are used to get a 20k Ohm resistor).
+- 10x 10k Ohm resistors (two of these are used to get a 20k Ohm resistor). Optionally replace R1 (LED series resistor) with a lower value resistor to let the LED burn brighter.
 - 1x Commodore cassette port plug.
 - 1x Raspberry Pi 1, 2, 3 or Zero (other models may also work, not tested, yet).
 - 1x SD card supported by your Raspberry Pi.
