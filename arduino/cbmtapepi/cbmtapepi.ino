@@ -13,6 +13,13 @@
 //
 // - Which PINs to use? See:
 //   https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
+//
+// - From ESP8266 "Datasheet":
+//     - Input low voltage maximum is 0.825V (0.25 * 3.3V).
+//     - Input high voltage minimum is 2.475V (0.75 * 3.3V).
+//     - Output low voltage maximum is 0.33V (0.1 * 3.3V).
+//     - Output high voltage minimum is 2.64V (0.8 * 3.3V).
+//     - Maximum drive capability is 12mA.
 
 #include "ESP8266TimerInterrupt.h"
 #include "ESP8266_ISR_Timer.h"
