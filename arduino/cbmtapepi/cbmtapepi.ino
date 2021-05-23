@@ -15,11 +15,11 @@
 //   https://randomnerdtutorials.com/esp8266-pinout-reference-gpios/
 //
 // - From ESP8266 "Datasheet":
-//     - Input low voltage maximum is 0.825V (0.25 * 3.3V).
-//     - Input high voltage minimum is 2.475V (0.75 * 3.3V).
-//     - Output low voltage maximum is 0.33V (0.1 * 3.3V).
-//     - Output high voltage minimum is 2.64V (0.8 * 3.3V).
-//     - Maximum drive capability is 12mA.
+//     - Input low voltage maximum is 0.825V (0.25 * 3.3V) [Pi: 0.9V].
+//     - Input high voltage minimum is 2.475V (0.75 * 3.3V) [Pi: 1.6V!].
+//     - Output low voltage maximum is 0.33V (0.1 * 3.3V) [Pi: 0.14V].
+//     - Output high voltage minimum is 2.64V (0.8 * 3.3V) [Pi: 3.0V].
+//     - Maximum drive capability is 12mA [Pi: 3mA, if on each port at once].
 
 #include "ESP8266TimerInterrupt.h"
 #include "ESP8266_ISR_Timer.h"
