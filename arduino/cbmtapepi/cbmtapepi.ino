@@ -20,9 +20,9 @@
 #define GPIO_PIN_NR_ACT LED_BUILTIN // == D4 == 2 (inverted, HIGH = off, LOW = on).
 //
 #define MT_TAPE_GPIO_PIN_NR_READ D3 // == 0 
-//#define MT_TAPE_GPIO_PIN_NR_SENSE 
+#define MT_TAPE_GPIO_PIN_NR_SENSE D5 // == 14
 //#define MT_TAPE_GPIO_PIN_NR_MOTOR D2 // == 4
-//#define MT_TAPE_GPIO_PIN_NR_WRITE
+//#define MT_TAPE_GPIO_PIN_NR_WRITE D6 // == 12
 //
 #define MT_GPIO_PIN_NR_LED D1 // == 5
 
@@ -56,18 +56,20 @@ void IRAM_ATTR irq_timer_handler()
 void setup()
 {
     pinMode(GPIO_PIN_NR_ACT, OUTPUT);
+    digitalWrite(GPIO_PIN_NR_ACT, HIGH); // (inverted)
     
     pinMode(MT_GPIO_PIN_NR_LED, OUTPUT);
-    
-    pinMode(MT_TAPE_GPIO_PIN_NR_READ, OUTPUT);
+    digitalWrite(MT_GPIO_PIN_NR_LED, LOW); 
 
-    digitalWrite(GPIO_PIN_NR_ACT, HIGH);
-    
-    digitalWrite(MT_GPIO_PIN_NR_LED, LOW);
-    
+    pinMode(MT_TAPE_GPIO_PIN_NR_SENSE, OUTPUT);
+    digitalWrite(MT_TAPE_GPIO_PIN_NR_SENSE, LOW);
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    pinMode(MT_TAPE_GPIO_PIN_NR_READ, OUTPUT);
     digitalWrite(MT_TAPE_GPIO_PIN_NR_READ, LOW);
     //
-    // Inverted by interfacing circuit. => HIGH at CBM (default).
+    // (inverted, because circuit inverts signal to CBM)
 
     irq_timer.attachInterruptInterval(s_t_measure, irq_timer_handler);
 }
