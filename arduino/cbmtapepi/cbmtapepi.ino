@@ -21,7 +21,7 @@
 //
 #define MT_TAPE_GPIO_PIN_NR_READ D3 // == 0 
 #define MT_TAPE_GPIO_PIN_NR_SENSE D5 // == 14
-//#define MT_TAPE_GPIO_PIN_NR_MOTOR D2 // == 4
+#define MT_TAPE_GPIO_PIN_NR_MOTOR D2 // == 4
 //#define MT_TAPE_GPIO_PIN_NR_WRITE D6 // == 12
 //
 #define MT_GPIO_PIN_NR_LED D1 // == 5
@@ -65,6 +65,10 @@ void setup()
     digitalWrite(MT_TAPE_GPIO_PIN_NR_SENSE, LOW);
     //
     // (inverted, because circuit inverts signal to CBM)
+
+    // Different from Pi: No internal pull-down!
+    //
+    pinMode(MT_TAPE_GPIO_PIN_NR_MOTOR, INPUT);
 
     pinMode(MT_TAPE_GPIO_PIN_NR_READ, OUTPUT);
     digitalWrite(MT_TAPE_GPIO_PIN_NR_READ, LOW);
