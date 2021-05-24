@@ -16,6 +16,14 @@
 //               | | |
 //               C B E
 //
+// - BC557 PNP: ------- Looking at the flat side of the transistor, here
+//              |f 618| (as if it is lying on its rounded side).
+//              |BC557|
+//              |  B  |
+//              -------
+//               | | |
+//               C B E
+//
 // - At start-up, pins are configured as INPUT (internal pull-ups disabled)
 //   (https://arduino-esp8266.readthedocs.io/en/3.0.0/reference.html#digital-io).
 //
