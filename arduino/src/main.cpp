@@ -5,6 +5,7 @@
 //
 // - ESP8266
 // - Board (title in Arduino): "NodeMCU 1.0 (ESP-12E Module)"
+// - Using PlatformIO.
 //
 // *** Notes: ***
 //
@@ -36,6 +37,8 @@
 //     - Output low voltage maximum is 0.33V (0.1 * 3.3V) [Pi: 0.14V].
 //     - Output high voltage minimum is 2.64V (0.8 * 3.3V) [Pi: 3.0V].
 //     - Maximum drive capability is 12mA [Pi: 3mA, if on each port at once].
+
+#include <Arduino.h>
 
 #include "ESP8266TimerInterrupt.h"
 #include "ESP8266_ISR_Timer.h"
@@ -78,6 +81,8 @@ void IRAM_ATTR irq_timer_handler()
 
 void setup()
 {
+    Serial.begin(115200);
+
     pinMode(GPIO_PIN_NR_ACT, OUTPUT);
     digitalWrite(GPIO_PIN_NR_ACT, HIGH); // (inverted)
     
