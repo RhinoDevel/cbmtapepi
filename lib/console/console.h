@@ -12,6 +12,10 @@
 
 #include "console_params.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void console_init(struct console_params const * const p);
 
 char console_read_char();
@@ -55,5 +59,9 @@ void console_writeline(char const * const buf);
             console_writeline(buf); \
         } \
     }while(0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_CONSOLE
