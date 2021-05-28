@@ -7,6 +7,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Send Commodore datassette/datasette symbols in given buffer via read-from-
  *  tape GPIO pin with given nr., until pseudo-symbol tape_symbol_done is found.
  *
@@ -33,5 +37,9 @@ void tape_send_buf_init(
     void (*timer_busywait_microseconds)(uint32_t const microseconds),
     void (*gpio_write)(uint32_t const pin_nr, bool const high),
     bool (*gpio_read)(uint32_t const pin_nr));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_SEND_BUF
