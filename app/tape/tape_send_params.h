@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct tape_send_params
 {
     // Optional function to be able to stop waiting for Commodore and to be able
@@ -19,5 +23,9 @@ struct tape_send_params
 
     struct tape_input* data;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_SEND_PARAMS

@@ -18,6 +18,10 @@
 #define MT_TAPE_INPUT_NAME_LEN 16 // (4)
 #define MT_TAPE_INPUT_ADD_BYTES_LEN 171 // (5)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct tape_input
 {
     uint8_t name[MT_TAPE_INPUT_NAME_LEN]; // PETSCII(!), padded with blanks/$20.
@@ -46,5 +50,9 @@ char* tape_input_create_str_from_name(struct tape_input const * const d);
 char* tape_input_create_str_from_name_only(uint8_t const * const name);
 
 void tape_input_fill_add_bytes(uint8_t * const add_bytes);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_INPUT

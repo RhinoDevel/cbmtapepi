@@ -8,6 +8,14 @@
 
 #include "tape_sample_type.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool tape_sample_send(enum tape_sample_type const t);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_SAMPLE

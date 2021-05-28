@@ -6,9 +6,17 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void tape_init(
     void (*timer_start_one_mhz)(),
     uint32_t (*timer_get_tick)(),
     void (*timer_busywait_microseconds)(uint32_t const microseconds));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_INIT

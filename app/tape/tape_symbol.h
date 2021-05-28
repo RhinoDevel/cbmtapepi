@@ -4,6 +4,10 @@
 #ifndef MT_TAPE_SYMBOL
 #define MT_TAPE_SYMBOL
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // - Each symbol holds two pulses.
 //
 enum tape_symbol
@@ -18,5 +22,9 @@ enum tape_symbol
                                        // motor line to get HIGH.
     tape_symbol_done = 0xFF // Pseudo-symbol to stop transfer.
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_SYMBOL

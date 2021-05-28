@@ -4,6 +4,10 @@
 #ifndef MT_TAPE_FILETYPE
 #define MT_TAPE_FILETYPE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum tape_filetype
 {
     tape_filetype_unknown = 0,
@@ -14,5 +18,9 @@ enum tape_filetype
     //tape_filetype_seq_header = 4,
     //tape_filetype_end_of_tape_marker = 5
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_FILETYPE

@@ -8,6 +8,10 @@
 
 #include "tape_send_params.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Requirements: - Sense line must be configured as output and set to HIGH.
  *               - Motor line must be configured as input with internal pull-
@@ -17,5 +21,9 @@
  * <=> Call tape_init() before calling this function!
  */
 bool tape_send(struct tape_send_params const * const p, uint32_t * const mem);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_SEND

@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct tape_receive_params
 {
     // Optional function to be able to stop waiting for Commodore and to be able
@@ -17,5 +21,9 @@ struct tape_receive_params
     uint32_t gpio_pin_nr_sense;
     uint32_t gpio_pin_nr_motor;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_RECEIVE_PARAMS

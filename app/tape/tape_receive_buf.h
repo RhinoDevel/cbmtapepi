@@ -7,6 +7,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Receive data from Commodore datassette/datasette write-to-tape GPIO pin with
  *  given nr. and write it as symbols to given buffer.
  *
@@ -28,5 +32,9 @@ bool tape_receive_buf(
 
 void tape_receive_buf_init(
     void (*timer_start_one_mhz)(), uint32_t (*timer_get_tick)());
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_TAPE_RECEIVE_BUF
