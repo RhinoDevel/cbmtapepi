@@ -43,6 +43,9 @@
 #include "ESP8266TimerInterrupt.h"
 #include "ESP8266_ISR_Timer.h"
 
+#include "lib/console/console_params.h"
+#include "lib/console/console.h"
+
 #define GPIO_PIN_NR_ACT LED_BUILTIN // == D4 == 2 (inverted, HIGH = off, LOW = on).
 //
 #define MT_TAPE_GPIO_PIN_NR_READ D3 // == 0 
@@ -79,6 +82,39 @@ void IRAM_ATTR irq_timer_handler()
     digitalWrite(GPIO_PIN_NR_ACT, act_state);
 }
 
+/**
+ * - Must not be called. Just for error handling..
+ */
+static uint8_t dummy_read()
+{
+    //assert(false);
+
+    return 0;
+}
+
+static void write_byte(uint8_t const byte)
+{
+    Serial.write(byte);
+}
+
+void init_console()
+{
+    struct console_params p;
+
+    Serial.flush();
+    Serial.begin(115200, SERIAL_8N1);
+    Serial.println("");
+
+    // No read:
+    //
+    p.read_byte = dummy_read;
+
+    p.write_byte = write_byte;
+    p.write_newline_with_cr = false;
+
+    console_init(&p);
+}
+
 void setup()
 {
     pinMode(GPIO_PIN_NR_ACT, OUTPUT);
@@ -103,9 +139,10 @@ void setup()
 
     irq_timer.attachInterruptInterval(s_t_measure, irq_timer_handler);
 
-    Serial.flush();
-    Serial.begin(115200, SERIAL_8N1);
-    Serial.println("");
+    init_console();
+
+    delay(3000);
+    console_writeline("setup: Done. exiting method..");
 }
 
 void loop()
