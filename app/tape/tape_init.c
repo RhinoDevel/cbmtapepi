@@ -18,7 +18,7 @@ void tape_init(
 {
     tape_receive_buf_init(timer_start_one_mhz, timer_get_tick);
 
-    tape_send_buf_init(timer_busywait_microseconds);
+    tape_send_buf_init(timer_busywait_microseconds, gpio_write, gpio_read);
 
     console_deb_writeline("tape_init: Setting sense output line to HIGH at CBM..");
     gpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, !true);

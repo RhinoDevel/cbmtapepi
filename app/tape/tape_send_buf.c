@@ -6,7 +6,6 @@
 
 #include "tape_send_buf.h"
 #include "tape_symbol.h"
-#include "../../hardware/gpio/gpio.h"
 #include "../../lib/console/console.h"
 
 // Short: 2840 Hz
@@ -36,12 +35,14 @@ static uint32_t const micro_long = 336;
 // Initialized by tape_send_buf_init():
 //
 static void (*s_timer_busywait_microseconds)(uint32_t const microseconds) = 0;
+static void (*s_gpio_write)(uint32_t const pin_nr, bool const high) = 0;
+static bool (*s_gpio_read)(uint32_t const pin_nr) = 0;
 
 static void transfer_pulse(uint32_t const micro, uint32_t const gpio_pin_nr)
 {
-    gpio_write(gpio_pin_nr, !false); // (to-be-inverted by circuit)
+    s_gpio_write(gpio_pin_nr, !false); // (to-be-inverted by circuit)
     s_timer_busywait_microseconds(micro);
-    gpio_write(gpio_pin_nr, !true); // (to-be-inverted by circuit)
+    s_gpio_write(gpio_pin_nr, !true); // (to-be-inverted by circuit)
     s_timer_busywait_microseconds(micro);
 }
 
@@ -75,13 +76,13 @@ bool tape_send_buf(
             return false;
         }
 
-        if(!gpio_read(gpio_pin_nr_motor))
+        if(!s_gpio_read(gpio_pin_nr_motor))
         {
             if(motor_wait)
             {
                 console_deb_writeline("tape_send_buf: Motor is OFF, waiting..");
 
-                while(!gpio_read(gpio_pin_nr_motor))
+                while(!s_gpio_read(gpio_pin_nr_motor))
                 {
                     // Pause, as long as motor signal from Commodore computer is
                     // LOW.
@@ -168,9 +169,15 @@ bool tape_send_buf(
 }
 
 void tape_send_buf_init(
-    void (*timer_busywait_microseconds)(uint32_t const microseconds))
+    void (*timer_busywait_microseconds)(uint32_t const microseconds),
+    void (*gpio_write)(uint32_t const pin_nr, bool const high),
+    bool (*gpio_read)(uint32_t const pin_nr))
 {
     // assert(s_timer_busywait_microseconds == 0);
+    // assert(s_gpio_write == 0);
+    // assert(s_gpio_read == 0);
 
     s_timer_busywait_microseconds = timer_busywait_microseconds;
+    s_gpio_write = gpio_write;
+    s_gpio_read = gpio_read;
 }
