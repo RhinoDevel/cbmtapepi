@@ -81,8 +81,6 @@ void IRAM_ATTR irq_timer_handler()
 
 void setup()
 {
-    Serial.begin(115200);
-
     pinMode(GPIO_PIN_NR_ACT, OUTPUT);
     digitalWrite(GPIO_PIN_NR_ACT, HIGH); // (inverted)
     
@@ -104,6 +102,10 @@ void setup()
     // (inverted, because circuit inverts signal to CBM)
 
     irq_timer.attachInterruptInterval(s_t_measure, irq_timer_handler);
+
+    Serial.flush();
+    Serial.begin(115200, SERIAL_8N1);
+    Serial.println("");
 }
 
 void loop()
