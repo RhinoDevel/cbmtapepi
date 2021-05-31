@@ -43,6 +43,7 @@
 #include "ESP8266TimerInterrupt.h"
 #include "ESP8266_ISR_Timer.h"
 
+//#include "lib/assert.h"
 #include "lib/console/console_params.h"
 #include "lib/console/console.h"
 
