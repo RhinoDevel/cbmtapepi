@@ -105,10 +105,15 @@ You can toggle to another mode from compatibility mode this way:
 
 Feel free to enter all commands described below for compatibility mode, but now use ```!``` character followed by command (instead of using ```SAVE``` and ```LOAD```). E.g. to load a PRG: ```!MYCBMAPP.PRG```
 
+**Hint**: Change the mode when fast mode is active:
+- Enter ```!MODE <mode name>``` to let the Pi be in another mode from the next start on.
+- Switch back to compatibility mode with ```!MODE SAVE```.
+
 ## How to use compatibility mode
 
 - The commands to the Pi will be send via Commodore SAVE command (no need for a wedge).
 - If you have a (big) PRG loaded in memory, consider executing ```NEW``` before ```SAVE```, to avoid that the PRG will unnecessarily be sent to the Pi.
+- **Hint**: The same commands described below are used in fast mode. Just enter the ```!``` character followed by the command (instead of using ```SAVE``` and ```LOAD```). E.g. to load the directory contents in fast mode enter: ```!$```
 - **LOAD**: E.g. a PRG file named ```mycbmapp.prg```:
 
   ```
