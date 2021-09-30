@@ -33,7 +33,7 @@ The main goal was to provide such a solution for the **CBM/PET** machines with a
 You need:
 
 - Some cables (not that many, if you want to solder).
-- 1x breadboard (if you do not want to solder) or a circuit board.
+- 1x breadboard (if you do not want to solder) or a circuit board. Alternative use a PCB via [Sven Petersen's layout](https://github.com/svenpetersen1965/CBM-Tape-Pi-PCB)!
 - 1x LED.
 - 3x NPN transistor (e.g. a BC547 or a PN2222A).
 - 1x PNP transistor (e.g. a BC557).
