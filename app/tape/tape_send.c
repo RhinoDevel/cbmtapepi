@@ -28,7 +28,14 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
 
     console_deb_writeline(
         "tape_send: Filling send buffer from input structure..");
-    tape_fill_buf(p->data, buf);
+    
+    int const symbol_count = tape_fill_buf(p->data, buf);
+
+#ifndef NDEBUG
+    console_write("tape_send: Filled send buffer with ");
+    console_write_dword_dec((uint32_t)symbol_count);
+    console_writeline(" symbols/bytes.");
+#endif //NDEBUG
 
     // Send data via GPIO pin with given nr:
 
