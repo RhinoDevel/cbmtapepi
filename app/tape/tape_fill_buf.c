@@ -202,15 +202,17 @@ static void add_contentdatablock(
     add_data_following_sync(input->bytes, input->len, buf, pos);
 }
 
-void tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
+int tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
 {
-    int i = 0;
+    int ret_val = 0;
 
-    add_headerdatablock(input, buf, &i);
+    add_headerdatablock(input, buf, &ret_val);
 
-    add_symbol(tape_symbol_motor_wait_off, buf, &i);
+    add_symbol(tape_symbol_motor_wait_off, buf, &ret_val);
 
-    add_contentdatablock(input, buf, &i);
+    add_contentdatablock(input, buf, &ret_val);
 
-    add_symbol(tape_symbol_done, buf, &i);
+    add_symbol(tape_symbol_done, buf, &ret_val);
+
+    return ret_val;
 }
