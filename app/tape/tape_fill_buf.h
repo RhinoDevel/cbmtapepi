@@ -16,8 +16,6 @@ extern "C" {
  *  and add these symbols to the buffer given.
  *
  *  Returns count of symbols (bytes) added to given buffer.
- * 
- *  Last symbol added (tape_symbol_done) will mark the end of added symbols.
  */
 int tape_fill_buf(struct tape_input const * const input, uint8_t * const buf);
 

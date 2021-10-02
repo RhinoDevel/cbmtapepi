@@ -46,7 +46,11 @@ bool tape_send(struct tape_send_params const * const p, uint32_t * const mem)
 
     console_deb_writeline("tape_send: Sending buffer content..");
     if(tape_send_buf(
-        buf, p->gpio_pin_nr_motor, p->gpio_pin_nr_read, p->is_stop_requested))
+        buf,
+        symbol_count,
+        p->gpio_pin_nr_motor,
+        p->gpio_pin_nr_read,
+        p->is_stop_requested))
     {
         console_deb_writeline(
             "tape_send: Success. Setting tape read line and sense line to HIGH at CBM..");

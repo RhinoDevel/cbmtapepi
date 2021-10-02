@@ -14,8 +14,8 @@ extern "C" {
 /** Receive data from Commodore datassette/datasette write-to-tape GPIO pin with
  *  given nr. and write it as symbols to given buffer.
  *
- *  Adds pseudo-symbol tape_symbol_done after received data in buffer.
- *
+ *  Returns count of symbols/bytes in buffer on success or -1 on failure.
+ * 
  *  See tape_extract_buf() for how to extract data from buffer.
  *
  *  - Does not care about sense line (must already be set to low).
@@ -24,7 +24,7 @@ extern "C" {
  *  - Motor GPIO pin must already be configured as input with internal pull-down
  *    resistor.
  */
-bool tape_receive_buf(
+int tape_receive_buf(
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_write,
     uint8_t * const buf,

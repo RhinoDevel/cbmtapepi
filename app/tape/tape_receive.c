@@ -31,8 +31,14 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
     // (inverted, because circuit inverts signal to CBM)
 
     console_deb_writeline("tape_receive: Receiving data..");
-    if(tape_receive_buf(
-        p->gpio_pin_nr_motor, p->gpio_pin_nr_write, buf, p->is_stop_requested))
+
+    int const symbol_count = tape_receive_buf(
+                                p->gpio_pin_nr_motor,
+                                p->gpio_pin_nr_write,
+                                buf,
+                                p->is_stop_requested);
+
+    if(symbol_count != -1)
     {
         struct tape_input * input;
 
@@ -42,7 +48,7 @@ struct tape_input * tape_receive(struct tape_receive_params const * const p)
         //
         // (inverted, because circuit inverts signal to CBM)
 
-        input = tape_extract_buf(buf);
+        input = tape_extract_buf(buf, symbol_count);
         alloc_free(buf);
         return input;
     }

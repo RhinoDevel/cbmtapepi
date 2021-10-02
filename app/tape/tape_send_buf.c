@@ -57,17 +57,17 @@ static void transfer_symbol(
 
 bool tape_send_buf(
     uint8_t const * const buf,
+    int const buf_len,
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_read,
     bool (*is_stop_requested)())
 {
-    uint32_t i = 0;
     bool motor_wait = true; // Initially wait for motor to be HIGH.
 
     // As pulse length detection triggers on descending (negative) edges,
     // GPIO pin's current output value is expected to be set to HIGH.
 
-    while(true)
+    for(int i = 0; i < buf_len; ++i)
     {
         uint32_t f = 0, l = 0;
 
@@ -146,12 +146,6 @@ bool tape_send_buf(
                 motor_wait = false;
                 break;
             }
-            case tape_symbol_done:
-            {
-                console_deb_writeline(
-                    "tape_send_buf: Done symbol found. Done.");
-                return true; // Transfer done (fake symbol).
-            }
 
             default: // Must not happen.
             {
@@ -163,9 +157,10 @@ bool tape_send_buf(
         {
             transfer_symbol(f, l, gpio_pin_nr_read);
         }
-
-        ++i;
     }
+
+    console_deb_writeline("tape_send_buf: Done.");
+    return true; // Transfer done.
 }
 
 void tape_send_buf_init(

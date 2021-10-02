@@ -134,7 +134,10 @@ static bool consume_countdown(
  * - Caller takes ownership of return value.
  */
 static uint8_t* get_payload_from_transmit_data(
-    uint8_t const * const buf, int * const pos, int * const len)
+    uint8_t const * const buf,
+    int const buf_len,
+    int * const pos,
+    int * const len)
 {
     static int const byte_symbol_count = 10;
     //
@@ -148,14 +151,17 @@ static uint8_t* get_payload_from_transmit_data(
 
     while(true)
     {
-        uint8_t const cur = buf[*pos + offset_end];
+        int const buf_index = *pos + offset_end;
 
-        if(cur == tape_symbol_done)
+        if(buf_index >= buf_len)
         {
-            console_deb_writeline("get_payload_from_transmit_data : Error: Expected symbol could not be found!");
+            console_deb_writeline(
+                "get_payload_from_transmit_data : Error: Expected symbol could not be found!");
 
             return 0; // Expected symbol could not be found.
         }
+
+        uint8_t const cur = buf[buf_index];
 
         if(cur == tape_symbol_end)
         {
@@ -259,6 +265,7 @@ static bool consume_transmit_block_gap(
 static uint8_t* get_data_from_transmit(
     bool const second,
     uint8_t const * const buf,
+    int const buf_len,
     int * const pos,
     int * const len)
 {
@@ -273,7 +280,7 @@ static uint8_t* get_data_from_transmit(
 
     // Data:
 
-    payload = get_payload_from_transmit_data(buf, pos, len);
+    payload = get_payload_from_transmit_data(buf, buf_len, pos, len);
     if(payload == 0)
     {
         return 0;
@@ -295,7 +302,10 @@ static uint8_t* get_data_from_transmit(
  * - Caller takes ownership of return value.
  */
 static uint8_t* get_data_following_sync(
-    uint8_t const * const buf, int * const pos, int * const len)
+    uint8_t const * const buf,
+    int const buf_len,
+    int * const pos,
+    int * const len)
 {
     uint8_t *data_first,
         *data_second;
@@ -310,7 +320,7 @@ static uint8_t* get_data_following_sync(
 
     // 1st data transmit:
     //
-    data_first = get_data_from_transmit(false, buf, pos, &len_first);
+    data_first = get_data_from_transmit(false, buf, buf_len, pos, &len_first);
     if(data_first == 0)
     {
         return 0;
@@ -318,7 +328,7 @@ static uint8_t* get_data_following_sync(
 
     // 2nd data transmit:
     //
-    data_second = get_data_from_transmit(true, buf, pos, &len_second);
+    data_second = get_data_from_transmit(true, buf, buf_len, pos, &len_second);
     if(data_second == 0)
     {
         alloc_free(data_first);
@@ -348,7 +358,10 @@ static uint8_t* get_data_following_sync(
  * - Properties of input may also be changed, if returning with error.
  */
 static bool extract_headerdatablock(
-    uint8_t const * const buf, int * const pos, struct tape_input * const input)
+    uint8_t const * const buf,
+    int const buf_len,
+    int * const pos,
+    struct tape_input * const input)
 {
     static int const header_data_byte_count = 192, // TODO: Replace!
         name_len = (int)(sizeof input->name / sizeof *input->name),
@@ -360,7 +373,7 @@ static bool extract_headerdatablock(
     uint8_t* data;
     uint16_t end_addr_plus_one;
 
-    data = get_data_following_sync(buf, pos, &len);
+    data = get_data_following_sync(buf, buf_len, pos, &len);
     if(data == 0)
     {
         console_deb_writeline(
@@ -418,10 +431,13 @@ static bool extract_headerdatablock(
  * - input->len must already be set. Will be checked, here.
  */
 static bool extract_contentdatablock(
-    uint8_t const * const buf, int * const pos, struct tape_input * const input)
+    uint8_t const * const buf,
+    int const buf_len,
+    int * const pos,
+    struct tape_input * const input)
 {
     int len;
-    uint8_t * const data = get_data_following_sync(buf, pos, &len);
+    uint8_t * const data = get_data_following_sync(buf, buf_len, pos, &len);
     if(data == 0)
     {
         return false;
@@ -441,10 +457,19 @@ static bool extract_contentdatablock(
     return true;
 }
 
-struct tape_input * tape_extract_buf(uint8_t const * const buf)
+struct tape_input * tape_extract_buf(
+    uint8_t const * const buf, int const buf_len)
 {
-    struct tape_input * const input = alloc_alloc(sizeof *input);
     int i = 0;
+
+    if(buf_len <= 0)
+    {
+        console_deb_writeline(
+            "tape_extract_buf: Error: Given buffer seems to be empty!");
+        return 0;
+    }
+
+    struct tape_input * const input = alloc_alloc(sizeof *input);
 
     if(input == 0)
     {
@@ -453,7 +478,7 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
         return 0;
     }
 
-    if(!extract_headerdatablock(buf, &i, input))
+    if(!extract_headerdatablock(buf, buf_len, &i, input))
     {
         console_deb_writeline(
             "tape_extract_buf: Error: Failed to extract header data block!");
@@ -468,7 +493,7 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
         ++i;
     }
 
-    if(!extract_contentdatablock(buf, &i, input))
+    if(!extract_contentdatablock(buf, buf_len, &i, input))
     {
         console_deb_writeline(
             "tape_extract_buf: Error: Failed to extract content data block!");
@@ -476,7 +501,7 @@ struct tape_input * tape_extract_buf(uint8_t const * const buf)
         return 0;
     }
 
-    assert(buf[i] == tape_symbol_done);
+    assert(i == buf_len);
 
     return input;
 }

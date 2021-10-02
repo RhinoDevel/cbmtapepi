@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 /** Send Commodore datassette/datasette symbols in given buffer via read-from-
- *  tape GPIO pin with given nr., until pseudo-symbol tape_symbol_done is found.
+ *  tape GPIO pin with given nr.
  *
  *  Pauses each time, when the motor signal gets LOW,
  *  until it is getting HIGH again OR exits (with return value true),
@@ -29,6 +29,7 @@ extern "C" {
  */
 bool tape_send_buf(
     uint8_t const * const buf,
+    int const buf_len,
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_read,
     bool (*is_stop_requested)());

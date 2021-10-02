@@ -100,7 +100,7 @@ static enum tape_symbol get_symbol(
     console_writeline(")!");
 #endif //NDEBUG
 
-    return tape_symbol_done; // Misused as error indicator.
+    return tape_symbol_err;
 }
 
 static bool wait_for(
@@ -221,7 +221,7 @@ static uint32_t get_ticks_short_average(
     return ticks_short / sync_count; // Calculate and return average value.
 }
 
-bool tape_receive_buf(
+int tape_receive_buf(
     uint32_t const gpio_pin_nr_motor,
     uint32_t const gpio_pin_nr_write,
     uint8_t * const buf,
@@ -232,7 +232,7 @@ bool tape_receive_buf(
     uint32_t ticks_short = 0,
         ticks_long_timeout = 0,
         pulse_type[2];
-    int pos = 0,
+    int ret_val = 0,
         pulse_type_index = 0,
         sync_workaround_count = 0;
     bool dyn_low_timeout_reached_once = false;
@@ -242,15 +242,13 @@ bool tape_receive_buf(
     tick_long_max = 0;
 #endif //NDEBUG
 
-    
-
     if(!gpio_read(gpio_pin_nr_motor))
     {
         console_deb_writeline("tape_receive_buf: Motor is OFF, waiting..");
 
         if(!wait_for(gpio_pin_nr_motor, HIGH, false, is_stop_requested))
         {
-            return false;
+            return -1;
         }
 
         console_deb_writeline("tape_receive_buf: Motor is ON, starting..");
@@ -318,10 +316,10 @@ bool tape_receive_buf(
     //
     if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
     {
-        return false;
+        return -1;
     }
 
-    assert(pos == 0);
+    assert(ret_val == 0);
     while(true)
     {
         bool timeout_reached = false;
@@ -407,7 +405,7 @@ bool tape_receive_buf(
             //
             if(!wait_for(gpio_pin_nr_write, HIGH, true, is_stop_requested))
             {
-                return false;
+                return -1;
             }
             console_deb_writeline(
                 "tape_receive_buf: HIGH at CBM again (ignoring last LOW).");
@@ -419,7 +417,7 @@ bool tape_receive_buf(
         pulse_type[pulse_type_index] = get_pulse_type(
             s_timer_get_tick() - low_start_tick);
 
-        if(pos == 0 
+        if(ret_val == 0 
             && pulse_type_index == 0 
             && pulse_type[pulse_type_index] == micro_short)
         {
@@ -438,19 +436,16 @@ bool tape_receive_buf(
                 continue;
             }
 
-            buf[pos] = get_symbol(pulse_type[0], pulse_type[1]);
-            if(buf[pos] == tape_symbol_done) // Misused as error indicator.
+            buf[ret_val] = get_symbol(pulse_type[0], pulse_type[1]);
+            if(buf[ret_val] == tape_symbol_err)
             {
-                return false;
+                return -1;
             }
-            ++pos;
+            ++ret_val;
         }
 
         pulse_type_index = 1 - pulse_type_index;
     }
-
-    buf[pos] = tape_symbol_done;
-    //++pos;
 
 #ifndef NDEBUG
     console_write("tape_receive_buf: Min. tick count that was interpreted as short pulse: ");
@@ -461,7 +456,7 @@ bool tape_receive_buf(
     console_writeline("");
 
     console_write("tape_receive_buf: Symbols read: ");
-    console_write_dword_dec((uint32_t)pos);
+    console_write_dword_dec((uint32_t)ret_val);
     console_writeline("");
 
     if(sync_workaround_count > 0)
@@ -472,7 +467,7 @@ bool tape_receive_buf(
     }
 #endif //NDEBUG
 
-    return true;
+    return ret_val;
 }
 
 void tape_receive_buf_init(

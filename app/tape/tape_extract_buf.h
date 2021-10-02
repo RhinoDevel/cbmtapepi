@@ -17,7 +17,8 @@ extern "C" {
  *
  *  - Caller takes ownership of return value.
  */
-struct tape_input * tape_extract_buf(uint8_t const * const buf);
+struct tape_input * tape_extract_buf(
+    uint8_t const * const buf, int const buf_len);
 
 #ifdef __cplusplus
 }
