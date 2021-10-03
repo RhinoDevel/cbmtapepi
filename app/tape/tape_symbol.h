@@ -18,9 +18,6 @@ enum tape_symbol
     tape_symbol_new = 4,
     tape_symbol_end = 8, // (also for transmit block gap start)
 
-    tape_symbol_motor_wait_off = 0xEE, // Pseudo-symbol to disable waiting for
-                                       // motor line to get HIGH.
-
     tape_symbol_err = 0xFF // Pseudo-symbol to indicate an error.
 };
 

@@ -7,6 +7,13 @@
 #include "tape_fill_buf.h"
 #include "tape_input.h"
 #include "tape_symbol.h"
+#include "tape_defines.h"
+
+#include "../../lib/assert.h"
+
+#ifndef NDEBUG
+    #include "../../lib/console/console.h"
+#endif //NDEBUG
 
 static int const sync_pulse_count = 1500;
 //
@@ -212,7 +219,12 @@ int tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
 
     add_headerdatablock(input, buf, &ret_val);
 
-    add_symbol(tape_symbol_motor_wait_off, buf, &ret_val);
+#ifndef NDEBUG
+    console_write("tape_fill_buf: Header data block length is ");
+    console_write_dword_dec(ret_val);
+    console_writeline(" symbols/bytes.");
+#endif //NDEBUG
+    assert(MT_HEADERDATABLOCK_LEN == ret_val);
 
     add_contentdatablock(input, buf, &ret_val);
 

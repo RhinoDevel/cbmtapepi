@@ -16,8 +16,7 @@ extern "C" {
  *
  *  Pauses each time, when the motor signal gets LOW,
  *  until it is getting HIGH again OR exits (with return value true),
- *  if motor-wait was already disabled by pseudo-symbol
- *  tape_symbol_motor_wait_off.
+ *  if motor-wait was already disabled by reaching end of header data block.
  *
  *  See tape_fill_buf() for how to fill the buffer.
  *

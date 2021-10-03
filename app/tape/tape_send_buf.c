@@ -6,6 +6,7 @@
 
 #include "tape_send_buf.h"
 #include "tape_symbol.h"
+#include "tape_defines.h"
 #include "../../lib/console/console.h"
 
 // Short: 2840 Hz
@@ -62,8 +63,6 @@ bool tape_send_buf(
     uint32_t const gpio_pin_nr_read,
     bool (*is_stop_requested)())
 {
-    bool motor_wait = true; // Initially wait for motor to be HIGH.
-
     // As pulse length detection triggers on descending (negative) edges,
     // GPIO pin's current output value is expected to be set to HIGH.
 
@@ -78,7 +77,7 @@ bool tape_send_buf(
 
         if(!s_gpio_read(gpio_pin_nr_motor))
         {
-            if(motor_wait)
+            if(i < MT_HEADERDATABLOCK_LEN)
             {
                 console_deb_writeline("tape_send_buf: Motor is OFF, waiting..");
 
@@ -140,23 +139,14 @@ bool tape_send_buf(
                 break;
             }
 
-            case tape_symbol_motor_wait_off: // (fake symbol)
-            {
-                console_deb_writeline("tape_send_buf: Disabling motor-wait..");
-                motor_wait = false;
-                break;
-            }
-
+            case tape_symbol_err: // (falls through)
             default: // Must not happen.
             {
                 console_deb_writeline("tape_send_buf: Error: Unknown symbol!");
                 return false; // Error!
             }
         }
-        if(f != 0) // => No fake symbol.
-        {
-            transfer_symbol(f, l, gpio_pin_nr_read);
-        }
+        transfer_symbol(f, l, gpio_pin_nr_read);
     }
 
     console_deb_writeline("tape_send_buf: Done.");

@@ -486,13 +486,6 @@ struct tape_input * tape_extract_buf(
         return 0;
     }
 
-    // For compatibility with tape_fill_buf():
-    //
-    if(buf[i] == tape_symbol_motor_wait_off)
-    {
-        ++i;
-    }
-
     if(!extract_contentdatablock(buf, buf_len, &i, input))
     {
         console_deb_writeline(
