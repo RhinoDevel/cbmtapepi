@@ -9,7 +9,13 @@
 #include "tape_symbol.h"
 
 static int const sync_pulse_count = 1500;
+//
+// Divide by 2, because a symbol has two pulses:
+//
+static int const sync_symbol_count = sync_pulse_count / 2;
+
 static int const transmit_block_gap_pulse_count = 60;
+
 static int const header_data_byte_count = 192;
 
 static void add_symbol(
@@ -114,9 +120,7 @@ static void add_data_transmit(
 
 static void add_sync(uint8_t * const buf, int * const pos)
 {
-    // Divide by 2, because a symbol has two pulses:
-    //
-    for(int c = 0;c < sync_pulse_count/2;++c)
+    for(int c = 0;c < sync_symbol_count;++c)
     {
         add_symbol(tape_symbol_sync, buf, pos);
     }
