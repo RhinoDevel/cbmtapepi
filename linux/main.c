@@ -312,6 +312,13 @@ static bool send(char * const file_name)
     return true;
 }
 
+static bool symbols(char * const file_name)
+{
+    console_writeline("Symbols output mode is not implemented, yet.");
+
+    return false;
+}
+
 static bool receive()
 {
     console_writeline("Receive mode is not implemented, yet.");
@@ -321,21 +328,47 @@ static bool receive()
 
 static bool exec(int const argc, char * const argv[])
 {
-    if(argc != 1 && argc != 2)
+    if(argc == 2)
     {
-        console_writeline(
-            "Add no parameter to receive or one parameter (the file name) to send.");
-        return false;
+        switch(argv[1][0]) // TODO: Bad!
+        {
+            case 'r':
+            {
+                return receive();
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        if(argc == 3)
+        {
+            switch(argv[1][0]) // TODO: Bad!
+            {
+                case 's':
+                {
+                    return send(argv[2]);
+                }
+                case 'y':
+                {
+                    return symbols(argv[2]);
+                }
+
+                default:
+                {
+                    break;
+                }
+            }
+        }
     }
 
-    if(argc == 1)
-    {
-        return receive();
-    }
-
-    assert(argc == 2);
-
-    return send(argv[1]);
+    console_writeline(
+        "r = Receive; s <filename> = Send; y = <filename> = Output symbols.");
+    return false;
 }
 
 int main(int argc, char* argv[])
