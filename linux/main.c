@@ -166,49 +166,68 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
     alloc_free(buf);
 }
 
+static struct tape_send_params * create_send_params(
+    uint8_t /*const*/ * const bytes,
+    char const * const name,
+    uint32_t const count)
+{
+    struct tape_send_params * const ret_val = alloc_alloc(sizeof *ret_val);
+
+    ret_val->is_stop_requested = NULL;
+    ret_val->gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
+    ret_val->gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
+    ret_val->gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
+    ret_val->data = alloc_alloc(sizeof *(ret_val->data));
+
+    fill_name(ret_val->data->name, name);
+
+    // Hard-coded for PET PRG files. C64 (and other) machines need to load
+    // PRGs that are not starting at BASIC start address / are not relocatable
+    // as non-relocatable because of this (e.g.: LOAD"",1,1 on C64):
+    //
+    ret_val->data->type = tape_filetype_relocatable;
+
+    // First two bytes hold the start address:
+    //
+    ret_val->data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
+    ret_val->data->bytes = bytes + 2;
+    ret_val->data->len = count - 2;
+
+    tape_input_fill_add_bytes(ret_val->data->add_bytes);
+
+#ifndef NDEBUG
+    console_write("Start address is 0x");
+    console_write_word(ret_val->data->addr);
+    console_write(" (");
+    console_write_word_dec(ret_val->data->addr);
+    console_writeline(").");
+#endif //NDEBUG
+
+    return ret_val;
+}
+
+/**
+ *  - Takes ownership of given object by freeing all of its memory.
+ */
+static void free_send_params(struct tape_send_params * const p)
+{
+    alloc_free(p->data);
+    alloc_free(p);
+}
+
 static bool send_to_commodore(
     uint8_t /*const*/ * const bytes,
     char const * const name,
     uint32_t const count)
 {
     bool ret_val = false;
-    struct tape_send_params p;
     uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
+    struct tape_send_params * const p = create_send_params(bytes, name, count);    
 
-    p.is_stop_requested = NULL;
-    p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
-    p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
-    p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
-    p.data = alloc_alloc(sizeof *(p.data));
+    ret_val = tape_send(p, mem_addr);
 
-    fill_name(p.data->name, name);
-
-    // Hard-coded for PET PRG files. C64 (and other) machines need to load
-    // PRGs that are not starting at BASIC start address / are not relocatable
-    // as non-relocatable because of this (e.g.: LOAD"",1,1 on C64):
-    //
-    p.data->type = tape_filetype_relocatable;
-
-    // First two bytes hold the start address:
-    //
-    p.data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
-    p.data->bytes = bytes + 2;
-    p.data->len = count - 2;
-
-    tape_input_fill_add_bytes(p.data->add_bytes);
-
-#ifndef NDEBUG
-    console_write("Start address is 0x");
-    console_write_word(p.data->addr);
-    console_write(" (");
-    console_write_word_dec(p.data->addr);
-    console_writeline(").");
-#endif //NDEBUG
-
-    ret_val = tape_send(&p, mem_addr);
-
+    free_send_params(p);
     alloc_free(mem_addr);
-    alloc_free(p.data);
     return ret_val;
 }
 
