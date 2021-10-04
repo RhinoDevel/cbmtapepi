@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <assert.h>
 
 #include "../hardware/peribase.h"
 #include "../lib/str/str.h"
@@ -151,7 +152,9 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
 
     while(i < MT_TAPE_INPUT_NAME_LEN && buf[i] != '\0')
     {
-        name_out[i] = (uint8_t)buf[i]; // TODO: Implement real conversion to PETSCII.
+        // TODO: Implement real conversion to PETSCII!
+        //
+        name_out[i] = (uint8_t)buf[i];
         ++i;
     }
     while(i < MT_TAPE_INPUT_NAME_LEN)
@@ -209,13 +212,15 @@ static bool send_to_commodore(
     return ret_val;
 }
 
-/** Source: http://stackoverflow.com/questions/8236/how-do-you-determine-the-size-of-a-file-in-c
+/** Source:
+ *
+ *  http://stackoverflow.com/questions/8236/how-do-you-determine-the-size-of-a-file-in-c
  */
 off_t get_file_size(char const * const path)
 {
-    struct stat s;
+    assert(path != NULL);
 
-    //assert(path != NULL);
+    struct stat s;
 
     if(stat(path, &s) == 0)
     {
@@ -229,7 +234,8 @@ off_t get_file_size(char const * const path)
  *  - Returns NULL on error.
  *  - Caller takes ownership of return value.
  */
-static unsigned char * load_file(char const * const path, off_t * const out_size)
+static unsigned char * load_file(
+    char const * const path, off_t * const out_size)
 {
     *out_size = -1;
 
@@ -275,7 +281,7 @@ static bool send(char * const file_name)
         return false;
     }
 
-    char * const name = file_name; // TODO: Remove eventually trailing path!
+    char * const name = file_name; // TODO: Remove eventually preceding path!
     uint32_t const count = (uint32_t)size;
 
     if(!send_to_commodore(bytes, name, count))
@@ -298,7 +304,8 @@ static bool exec(int const argc, char * const argv[])
 {
     if(argc != 1 && argc != 2)
     {
-        console_writeline("Add no parameter to receive or one parameter (the file name) to send.");
+        console_writeline(
+            "Add no parameter to receive or one parameter (the file name) to send.");
         return false;
     }
 
@@ -307,7 +314,7 @@ static bool exec(int const argc, char * const argv[])
         return receive();
     }
 
-    //assert(argc == 2);
+    assert(argc == 2);
 
     return send(argv[1]);
 }
