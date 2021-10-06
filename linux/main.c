@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <time.h>
 #include <sys/stat.h>
@@ -360,13 +361,45 @@ static bool receive()
 
 static bool exec(int const argc, char * const argv[])
 {
-    if(argc == 2)
+    do
     {
-        switch(argv[1][0]) // TODO: Bad!
+        if(argc < 2) // At least a command must be given.
+        {
+            break;
+        }
+        if(strnlen(argv[1], 2) != 1) // Single letter commands, only.
+        {
+            break;
+        }
+
+        char const cmd = argv[1][0];
+
+        switch(cmd)
         {
             case 'r':
             {
+                if(argc != 2)
+                {
+                    break;
+                }
                 return receive();
+            }
+
+            case 's':
+            {
+                if(argc != 3)
+                {
+                    break;
+                }
+                return send(argv[2]);
+            }
+            case 'y':
+            {
+                if(argc != 3)
+                {
+                    break;
+                }
+                return symbols(argv[2]);
             }
 
             default:
@@ -374,32 +407,13 @@ static bool exec(int const argc, char * const argv[])
                 break;
             }
         }
-    }
-    else
-    {
-        if(argc == 3)
-        {
-            switch(argv[1][0]) // TODO: Bad!
-            {
-                case 's':
-                {
-                    return send(argv[2]);
-                }
-                case 'y':
-                {
-                    return symbols(argv[2]);
-                }
-
-                default:
-                {
-                    break;
-                }
-            }
-        }
-    }
+    }while(false);
 
     console_writeline(
-        "r = Receive; s <filename> = Send; y = <filename> = Output symbols.");
+        "r = Receive"
+        "\ns <filename> = Send"
+        "\ny <filename> = Output symbols"
+        ".");
     return false;
 }
 
@@ -408,9 +422,7 @@ int main(int argc, char* argv[])
     bool success = false;
 
     init();
-
     success = exec(argc, argv);
-
     deinit();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
