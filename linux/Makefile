@@ -10,6 +10,9 @@ CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
 LDFLAGS=-lm
 SOURCES=\
 	main.c \
+	\
+	pigpio/pigpio.c \
+	\
 	../lib/mem/mem.c \
 	../lib/alloc/alloc.c \
 	../lib/alloc/alloc_mem.c \
@@ -18,7 +21,9 @@ SOURCES=\
 	../lib/calc/calc.c \
 	../lib/console/console.c \
 	../lib/petasc/petasc.c \
+	\
 	../hardware/gpio/gpio.c \
+	\
 	../app/tape/tape_input.c \
 	../app/tape/tape_extract_buf.c \
 	../app/tape/tape_fill_buf.c \
