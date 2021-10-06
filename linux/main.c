@@ -272,6 +272,14 @@ static bool symbols(char * const file_name)
         write_byte(((uint8_t * const)mem_addr)[i]);
     }
 
+    // TODO: Debugging:
+    //
+    assert(
+        pigpio_create_wave(
+            MT_TAPE_GPIO_PIN_NR_READ,
+            (uint8_t const * const)mem_addr,
+            symbol_count) >= 0);
+
     alloc_free(mem_addr);
     free_send_params(p);
     free(bytes);
@@ -334,10 +342,6 @@ static bool exec(int const argc, char * const argv[])
             }
         }
     }while(false);
-
-    // TODO: Debugging:
-    //
-    assert(pigpio_create_wave(MT_TAPE_GPIO_PIN_NR_READ, NULL, 0) >= 0);
 
     console_writeline(
         "r = Receive"

@@ -33,13 +33,35 @@ int pigpio_create_wave(
 
     // TODO: Implement correctly:
     //
-    p.gpioOn = gpio_pin_nr;
-    p.gpioOff = 0;
-    p.usDelay = 176; // us
-    //
-    if(gpioWaveAddGeneric(1, &p) == PI_TOO_MANY_PULSES)
+    for(int i = 0; i < symbol_count; ++i)
     {
-        return -1;
+        p.gpioOn = gpio_pin_nr;
+        p.gpioOff = 0;
+        p.usDelay = 176; // us
+        if(gpioWaveAddGeneric(1, &p) == PI_TOO_MANY_PULSES)
+        {
+            return -1;
+        }
+        p.gpioOn = 0;
+        p.gpioOff = gpio_pin_nr;
+        if(gpioWaveAddGeneric(1, &p) == PI_TOO_MANY_PULSES)
+        {
+            return -1;
+        }
+
+        p.gpioOn = gpio_pin_nr;
+        p.gpioOff = 0;
+        p.usDelay = 336; // us
+        if(gpioWaveAddGeneric(1, &p) == PI_TOO_MANY_PULSES)
+        {
+            return -1;
+        }
+        p.gpioOn = 0;
+        p.gpioOff = gpio_pin_nr;
+        if(gpioWaveAddGeneric(1, &p) == PI_TOO_MANY_PULSES)
+        {
+            return -1;
+        }
     }
 
     int const wave_id = gpioWaveCreate();
@@ -48,5 +70,14 @@ int pigpio_create_wave(
     {
         return -1;
     }
+
+#ifndef NDEBUG
+    console_write("pigpio_create_wave: Wave with ID ");
+    console_write_dword_dec((uint32_t)wave_id);
+    console_write(" successfully created from ");
+    console_write_dword_dec((uint32_t)symbol_count);
+    console_writeline(" symbols.");
+#endif //NDEBUG
+
     return wave_id;
 }
