@@ -28,7 +28,8 @@
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
-static int const s_max_file_size = 65536;
+static int const s_max_file_size = 64 * 1024; // 64 KiB.
+static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MiB.
 
 static void timer_start_one_mhz()
 {
@@ -225,7 +226,7 @@ static bool send_to_commodore(
     uint32_t const count)
 {
     bool ret_val = false;
-    uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
+    uint32_t * const mem_addr = alloc_alloc(s_mem_buf_size);
     struct tape_send_params * const p = create_send_params(bytes, name, count);    
 
     ret_val = tape_send(p, mem_addr);
@@ -337,7 +338,7 @@ static bool symbols(char * const file_name)
         bytes,
         "dummy", // Name
         (uint32_t)size);
-    uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
+    uint32_t * const mem_addr = alloc_alloc(s_mem_buf_size);
 
     int const symbol_count = tape_fill_buf(p->data, (uint8_t * const)mem_addr);
 
