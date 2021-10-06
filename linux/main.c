@@ -31,65 +31,26 @@ static uint8_t * s_mem = NULL; // [see init() and deinit()]
 static int const s_max_file_size = 64 * 1024; // 64 KB.
 static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
 
-static void timer_start_one_mhz()
+static void dummy_timer_start_one_mhz()
 {
     // Nothing to do.
 }
-
-static uint32_t timer_get_tick()
+static uint32_t dummy_timer_get_tick()
 {
-    // 1 MHz <=> 1,000,000 ticks per second.
-    //
-    // 32 bit wide counter <=> 2^32 values.
-    //
-    // => More than 71 minutes until wrap-around.
-
-    struct timeval tv;
-
-    if(gettimeofday(&tv, NULL) != 0)
-    {
-        console_writeline("Error: gettimeofday failed!");
-        return 0;
-    }
-
-    return 1000000 * tv.tv_sec + tv.tv_usec;
+    assert(false); // Do not use this.
+    return 0;
+}
+static void dummy_timer_wait_microseconds(uint32_t const microseconds)
+{
+    assert(false); // Do not use this.
 }
 
-// TODO: This is not reliable, because of user mode and scheduling of OS!
-//
-static void timer_wait_microseconds(uint32_t const microseconds)
-{
-    // struct timespec req, rem;
-    //
-    // req.tv_sec = 0;
-    // req.tv_nsec = 1000 * microseconds;
-    //
-    // if(nanosleep(&req, &rem) != 0) // (implicit cast)
-    // {
-    //     console_writeline("Error: nanosleep failed!");
-    // }
-
-    uint32_t const start = timer_get_tick();
-
-    while(true)
-    {
-        if(timer_get_tick() - start >= microseconds)
-        {
-            return;
-        }
-    }
-}
-
-/**
- * - Must not be called. Just for error handling..
- */
 static uint8_t dummy_read()
 {
-    //assert(false);
+    assert(false); // Do not use this.
 
     return 0;
 }
-
 static void write_byte(uint8_t const byte)
 {
     putchar((int)byte);
@@ -100,7 +61,7 @@ static void init_gpio()
     // Initialize bare GPIO singleton:
     //
     gpio_init((struct gpio_params){
-        .wait_microseconds = timer_wait_microseconds,
+        .wait_microseconds = dummy_timer_wait_microseconds,
         .peri_base = PERI_BASE
     });
 }
@@ -141,7 +102,10 @@ static void init()
 
     // Initialize for tape transfer:
     //
-    tape_init(timer_start_one_mhz, timer_get_tick, timer_wait_microseconds);
+    tape_init(
+        dummy_timer_start_one_mhz,
+        dummy_timer_get_tick,
+        dummy_timer_wait_microseconds);
 }
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
@@ -230,7 +194,7 @@ static bool send_to_commodore(
     uint32_t * const mem_addr = alloc_alloc(s_mem_buf_size);
     struct tape_send_params * const p = create_send_params(bytes, name, count);    
 
-    ret_val = tape_send(p, mem_addr);
+    ret_val = tape_send(p, mem_addr); // TODO: Use pigpio!
 
     free_send_params(p);
     alloc_free(mem_addr);
