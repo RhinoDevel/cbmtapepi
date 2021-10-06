@@ -28,8 +28,8 @@
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
-static int const s_max_file_size = 64 * 1024; // 64 KiB.
-static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MiB.
+static int const s_max_file_size = 64 * 1024; // 64 KB.
+static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
 
 static void timer_start_one_mhz()
 {
@@ -135,6 +135,7 @@ static void init()
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
+    assert(s_mem_buf_size < MT_HEAP_SIZE);
     s_mem = malloc(MT_HEAP_SIZE * sizeof *s_mem);
     alloc_init((void*)s_mem, MT_HEAP_SIZE);
 
