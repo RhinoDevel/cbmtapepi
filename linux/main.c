@@ -6,44 +6,25 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/time.h>
-#include <time.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <pigpio.h>
 
-#include "../hardware/peribase.h"
 #include "../lib/str/str.h"
 #include "../lib/mem/mem.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/console/console_params.h"
 #include "../lib/console/console.h"
-#include "../hardware/gpio/gpio.h"
-#include "../hardware/gpio/gpio_params.h"
 #include "../app/config.h"
-#include "../app/tape/tape_init.h"
 #include "../app/tape/tape_send_params.h"
 #include "../app/tape/tape_input.h"
-#include "../app/tape/tape_send.h"
 #include "../app/tape/tape_fill_buf.h"
+#include "pigpio/pigpio.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
 static int const s_max_file_size = 64 * 1024; // 64 KB.
 static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
-
-static void dummy_timer_start_one_mhz()
-{
-    // Nothing to do.
-}
-static uint32_t dummy_timer_get_tick()
-{
-    assert(false); // Do not use this.
-    return 0;
-}
-static void dummy_timer_wait_microseconds(uint32_t const microseconds)
-{
-    assert(false); // Do not use this.
-}
 
 static uint8_t dummy_read()
 {
@@ -54,16 +35,6 @@ static uint8_t dummy_read()
 static void write_byte(uint8_t const byte)
 {
     putchar((int)byte);
-}
-
-static void init_gpio()
-{
-    // Initialize bare GPIO singleton:
-    //
-    gpio_init((struct gpio_params){
-        .wait_microseconds = dummy_timer_wait_microseconds,
-        .peri_base = PERI_BASE
-    });
 }
 
 /** Connect console (singleton) to wanted in-/output.
@@ -80,6 +51,35 @@ static void init_console()
     p.write_newline_with_cr = true;
 
     console_init(&p);
+}
+
+static void init_gpio()
+{
+    pigpio_init();
+
+    console_deb_writeline(
+        "init_gpio: Setting sense output line to HIGH at CBM..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_SENSE, PI_OUTPUT);
+    gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!true));
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    console_deb_writeline(
+        "init_gpio: Setting motor line to input with pull-down..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_INPUT);
+    gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_PUD_DOWN);
+
+    console_deb_writeline(
+        "init_gpio: Setting tape read output line to HIGH at CBM..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_READ, PI_OUTPUT);
+    gpioWrite(MT_TAPE_GPIO_PIN_NR_READ, (unsigned)(!true));
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    console_deb_writeline(
+        "init_gpio: Setting tape write line to input with pull-down..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_WRITE, PI_INPUT);
+    gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_WRITE, PI_PUD_DOWN);
 }
 
 static void deinit()
@@ -99,13 +99,6 @@ static void init()
     assert(s_mem_buf_size < MT_HEAP_SIZE);
     s_mem = malloc(MT_HEAP_SIZE * sizeof *s_mem);
     alloc_init((void*)s_mem, MT_HEAP_SIZE);
-
-    // Initialize for tape transfer:
-    //
-    tape_init(
-        dummy_timer_start_one_mhz,
-        dummy_timer_get_tick,
-        dummy_timer_wait_microseconds);
 }
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
@@ -185,22 +178,6 @@ static void free_send_params(struct tape_send_params * const p)
     alloc_free(p);
 }
 
-static bool send_to_commodore(
-    uint8_t /*const*/ * const bytes,
-    char const * const name,
-    uint32_t const count)
-{
-    bool ret_val = false;
-    uint32_t * const mem_addr = alloc_alloc(s_mem_buf_size);
-    struct tape_send_params * const p = create_send_params(bytes, name, count);    
-
-    ret_val = tape_send(p, mem_addr); // TODO: Use pigpio!
-
-    free_send_params(p);
-    alloc_free(mem_addr);
-    return ret_val;
-}
-
 /** Source:
  *
  *  http://stackoverflow.com/questions/8236/how-do-you-determine-the-size-of-a-file-in-c
@@ -265,26 +242,9 @@ static unsigned char * load_file(
 
 static bool send(char * const file_name)
 {
-    // Assuming uint8_t being equal to unsigned char.
+    console_writeline("Send mode is not implemented, yet.");
 
-    off_t size = 0;
-    uint8_t /*const*/ * const bytes = load_file(file_name, &size);
-
-    if(bytes == NULL)
-    {
-        return false;
-    }
-
-    char * const name = file_name; // TODO: Remove eventually preceding path!
-    uint32_t const count = (uint32_t)size;
-
-    if(!send_to_commodore(bytes, name, count))
-    {
-        free(bytes);
-        return false;
-    }
-    free(bytes);
-    return true;
+    return false;
 }
 
 static bool symbols(char * const file_name)
@@ -374,6 +334,10 @@ static bool exec(int const argc, char * const argv[])
             }
         }
     }while(false);
+
+    // TODO: Debugging:
+    //
+    assert(pigpio_create_wave(MT_TAPE_GPIO_PIN_NR_READ, NULL, 0) >= 0);
 
     console_writeline(
         "r = Receive"

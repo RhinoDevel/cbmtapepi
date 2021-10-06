@@ -4,10 +4,10 @@
 
 CC=gcc
 
-#CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX
-CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
+#CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX -pthread
+CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX -pthread
 
-LDFLAGS=-lm
+LDFLAGS=-lm -lpigpio -lrt
 SOURCES=\
 	main.c \
 	\
