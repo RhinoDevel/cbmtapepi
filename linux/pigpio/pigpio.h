@@ -11,9 +11,12 @@
  */
 bool pigpio_init();
 
+/**
+ * - Returns the created wave ID or -1 on failure.
+ */
 int pigpio_create_wave(
-        uint32_t const gpio_pin_nr,
-        uint8_t const * const symbols,
-        int const symbol_count);
+    uint32_t const gpio_pin_nr,
+    uint8_t const * const symbols,
+    int const symbol_count);
 
 #endif //MT_PIGPIO
