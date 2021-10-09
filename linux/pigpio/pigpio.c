@@ -9,25 +9,13 @@
 #include "../../lib/console/console.h"
 #include "../../app/tape/tape_symbol.h"
 
+static int const s_pulses_per_symbol = 4;
+
 // TODO: Replace:
 //
 static uint32_t const s_micro_short = 176; // us
 static uint32_t const s_micro_medium = 256; // us
 static uint32_t const s_micro_long = 336; // us
-
-static void fill_pulse_pair_from_micro(
-    uint32_t const micro,
-    uint32_t const gpio_pin_nr,
-    gpioPulse_t * const out_pulses)
-{
-    out_pulses[0].gpioOn = gpio_pin_nr; // (to-be-inverted by circuit)
-    out_pulses[0].gpioOff = 0;          //
-    out_pulses[0].usDelay = micro;
-
-    out_pulses[1].gpioOn = 0;            // (to-be-inverted by circuit)
-    out_pulses[1].gpioOff = gpio_pin_nr; //
-    out_pulses[1].usDelay = micro;
-}
 
 static bool fill_pulse_quadruple_from_symbol(
     enum tape_symbol const symbol,
@@ -79,42 +67,72 @@ static bool fill_pulse_quadruple_from_symbol(
         }
     }
 
-    fill_pulse_pair_from_micro(f, gpio_pin_nr, out_pulses); // First pulse pair.
-    fill_pulse_pair_from_micro(l, gpio_pin_nr, out_pulses + 2); // 2nd pair.
+    assert(s_pulses_per_symbol == 4);
+
+    // First pulse pair:
+
+    out_pulses[0].gpioOn = (1 << gpio_pin_nr); // (to-be-inverted by circuit)
+    out_pulses[0].gpioOff = 0;                 //
+    out_pulses[0].usDelay = f;
+    
+    out_pulses[1].gpioOn = 0;                   // (to-be-inverted by circuit)
+    out_pulses[1].gpioOff = (1 << gpio_pin_nr); //
+    out_pulses[1].usDelay = f;
+
+    // Second pulse pair:
+
+    out_pulses[2].gpioOn = (1 << gpio_pin_nr); // (to-be-inverted by circuit)
+    out_pulses[2].gpioOff = 0;                 //
+    out_pulses[2].usDelay = l;
+
+    out_pulses[3].gpioOn = 0;                   // (to-be-inverted by circuit)
+    out_pulses[3].gpioOff = (1 << gpio_pin_nr); //
+    out_pulses[3].usDelay = l;
+
     return true;
 }
 
-int pigpio_create_wave(
-        uint32_t const gpio_pin_nr,
-        uint8_t const * const symbols,
-        int const symbol_count)
+gpioPulse_t const * pigpio_create_pulses(
+    uint32_t const gpio_pin_nr,
+    enum tape_symbol const * const symbols,
+    int const symbol_count,
+    int * const out_pulse_count)
 {
-    gpioPulse_t p[4];
+    gpioPulse_t * const pulses = malloc(
+        s_pulses_per_symbol * symbol_count * (sizeof *pulses));
 
-    if(gpioWaveAddNew() != 0)
+    *out_pulse_count = 0;
+
+    for(int i = 0;i < symbol_count; ++i)
+    {
+        if(!fill_pulse_quadruple_from_symbol(
+                symbols[i], gpio_pin_nr, pulses + s_pulses_per_symbol * i))
+        {
+            free(pulses);
+            return NULL;
+        }
+    }
+    out_pulse_count = s_pulses_per_symbol * symbol_count;
+    return pulses;
+}
+
+int pigpio_create_wave(gpioPulse_t const * const pulses, int const pulse_count)
+{
+    // if(gpioWaveClear() != 0) // Clears ALL waveform data!
+    // {
+    //     return -1;
+    // }
+
+    // if(gpioWaveAddNew() != 0) // Not necessary.
+    // {
+    //     return -1;
+    // }
+
+    // Add pulses to wave:
+    //
+    if(gpioWaveAddGeneric(pulse_count, pulses) == PI_TOO_MANY_PULSES)
     {
         return -1;
-    }
-
-    for(int i = 0; i < symbol_count; ++i)
-    {
-        // Symbol to pulses:
-
-        if(!fill_pulse_quadruple_from_symbol(
-            (enum tape_symbol)symbols[i], gpio_pin_nr, p))
-        {
-            return -1;
-        }
-
-        // Add pulses to wave:
-        //
-        for(int j = 0; j < 4; ++j)
-        {
-            if(gpioWaveAddGeneric(1, p + j) == PI_TOO_MANY_PULSES)
-            {
-                return -1;
-            }
-        }
     }
 
     int const wave_id = gpioWaveCreate();
@@ -127,9 +145,15 @@ int pigpio_create_wave(
 #ifndef NDEBUG
     console_write("pigpio_create_wave: Wave with ID ");
     console_write_dword_dec((uint32_t)wave_id);
-    console_write(" successfully created from ");
-    console_write_dword_dec((uint32_t)symbol_count);
-    console_writeline(" symbols.");
+    console_write(" successfully created with ");
+    console_write_dword_dec((uint32_t)pulse_count);
+    console_writeline(" given pulses.");
+
+    console_write("pigpio_create_wave: Waveform size is ");
+    console_write_dword_dec((uint32_t)gpioWaveGetMicros());
+    console_write("us / ");
+    console_write_dword_dec((uint32_t)gpioWaveGetPulses());
+    console_writeline(" pulses.");
 #endif //NDEBUG
 
     return wave_id;
@@ -144,5 +168,14 @@ bool pigpio_init()
         console_writeline("pigpio_init : Error: Initialization failed!");
         return false;
     }
+
+#ifndef NDEBUG
+    console_write("pigpio_init: Max. waveform size is ");
+    console_write_dword_dec((uint32_t)gpioWaveGetMaxMicros());
+    console_write("us / ");
+    console_write_dword_dec((uint32_t)gpioWaveGetMaxPulses());
+    console_writeline(" pulses.");
+#endif //NDEBUG
+
     return true;
 }
