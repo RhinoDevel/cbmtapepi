@@ -68,25 +68,28 @@ static bool fill_pulse_quadruple_from_symbol(
     }
 
     assert(s_pulses_per_symbol == 4);
+    assert(gpio_pin_nr >= 1 && gpio_pin_nr <= 31);
+
+    uint32_t const gpio_mask = (1 << gpio_pin_nr);
 
     // First pulse pair:
 
-    out_pulses[0].gpioOn = (1 << gpio_pin_nr); // (to-be-inverted by circuit)
-    out_pulses[0].gpioOff = 0;                 //
+    out_pulses[0].gpioOn = gpio_mask; // (to-be-inverted by circuit)
+    out_pulses[0].gpioOff = 0;        //
     out_pulses[0].usDelay = f;
     
-    out_pulses[1].gpioOn = 0;                   // (to-be-inverted by circuit)
-    out_pulses[1].gpioOff = (1 << gpio_pin_nr); //
+    out_pulses[1].gpioOn = 0;          // (to-be-inverted by circuit)
+    out_pulses[1].gpioOff = gpio_mask; //
     out_pulses[1].usDelay = f;
 
     // Second pulse pair:
 
-    out_pulses[2].gpioOn = (1 << gpio_pin_nr); // (to-be-inverted by circuit)
-    out_pulses[2].gpioOff = 0;                 //
+    out_pulses[2].gpioOn = gpio_mask; // (to-be-inverted by circuit)
+    out_pulses[2].gpioOff = 0;        //
     out_pulses[2].usDelay = l;
-
-    out_pulses[3].gpioOn = 0;                   // (to-be-inverted by circuit)
-    out_pulses[3].gpioOff = (1 << gpio_pin_nr); //
+    
+    out_pulses[3].gpioOn = 0;          // (to-be-inverted by circuit)
+    out_pulses[3].gpioOff = gpio_mask; //
     out_pulses[3].usDelay = l;
 
     return true;
