@@ -292,7 +292,7 @@ static bool symbols(char * const file_name)
 
     uint32_t pulse_count = 0;
 
-    gpioPulse_t const * const pulses = pigpio_create_pulses(
+    gpioPulse_t * const pulses = pigpio_create_pulses(
         MT_TAPE_GPIO_PIN_NR_READ,
         symbols,
         symbol_count,
