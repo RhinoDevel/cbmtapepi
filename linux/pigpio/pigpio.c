@@ -120,7 +120,7 @@ gpioPulse_t* pigpio_create_pulses(
     return pulses;
 }
 
-int pigpio_create_wave(gpioPulse_t const * const pulses, int const pulse_count)
+int pigpio_create_wave(gpioPulse_t * const pulses, int const pulse_count)
 {
     // if(gpioWaveClear() != 0) // Clears ALL waveform data!
     // {

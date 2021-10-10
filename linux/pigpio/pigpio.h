@@ -27,6 +27,6 @@ gpioPulse_t const * pigpio_create_pulses(
 /**
  * - Returns the created wave ID or -1 on failure.
  */
-int pigpio_create_wave(gpioPulse_t const * const pulses, int const pulse_count);
+int pigpio_create_wave(gpioPulse_t * const pulses, int const pulse_count);
 
 #endif //MT_PIGPIO
