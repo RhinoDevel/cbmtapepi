@@ -229,7 +229,7 @@ static uint8_t* create_symbols_from_bytes(
     uint8_t * const bytes,
     uint32_t const byte_count,
     char const * const name,
-    uint32_t * const out_symbol_count)
+    int * const out_symbol_count)
 {
     struct tape_input * const t = create_tape_input(bytes, byte_count, name);
     uint32_t * const ret_val = alloc_alloc(s_mem_buf_size);
@@ -244,7 +244,7 @@ static uint8_t* create_symbols_from_bytes(
  * - Caller takes ownership of returned object.
  */
 static uint8_t* create_symbols_from_file(
-    char * const file_name, uint32_t * const out_symbol_count)
+    char * const file_name, int * const out_symbol_count)
 {
     // Assuming uint8_t being equal to unsigned char.
 
@@ -275,7 +275,7 @@ static bool send(char * const file_name)
 
 static bool symbols(char * const file_name)
 {
-    uint32_t symbol_count = 0;
+    int symbol_count = 0;
     uint8_t* symbols = create_symbols_from_file(file_name, &symbol_count);
 
     if(symbols == NULL)
@@ -290,7 +290,9 @@ static bool symbols(char * const file_name)
 
     // TODO: Debugging:
 
-    uint32_t pulse_count = 0;
+    //symbol_count = MT_HEADERDATABLOCK_LEN;
+
+    int pulse_count = 0;
 
     gpioPulse_t * const pulses = pigpio_create_pulses(
         MT_TAPE_GPIO_PIN_NR_READ,
@@ -307,7 +309,6 @@ static bool symbols(char * const file_name)
         return false;
     }
 
-    //pulse_count = 4 * MT_HEADERDATABLOCK_LEN;
     int const wave_id = pigpio_create_wave(pulses, pulse_count);
 
     if(wave_id < 0)
