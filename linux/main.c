@@ -292,28 +292,15 @@ static bool symbols(char * const file_name)
 
     //symbol_count = MT_HEADERDATABLOCK_LEN;
 
-    int pulse_count = 0;
-
-    gpioPulse_t * const pulses = pigpio_create_pulses(
-        MT_TAPE_GPIO_PIN_NR_READ,
-        symbols,
-        symbol_count,
-        &pulse_count);
+    int const wave_id = pigpio_create_wave(
+                            MT_TAPE_GPIO_PIN_NR_READ, symbols, symbol_count);
 
     alloc_free(symbols);
     symbols = NULL;
     symbol_count = 0;
 
-    if(pulses == NULL)
-    {
-        return false;
-    }
-
-    int const wave_id = pigpio_create_wave(pulses, pulse_count);
-
     if(wave_id < 0)
     {
-        alloc_free(pulses);
         return false;
     }
 
@@ -326,7 +313,6 @@ static bool symbols(char * const file_name)
 
     if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
     {
-        alloc_free(pulses);
         return false;
     }
 
@@ -337,7 +323,6 @@ static bool symbols(char * const file_name)
         ;
     }
 
-    alloc_free(pulses);
     return true;
 }
 

@@ -96,7 +96,7 @@ static bool fill_pulse_quadruple_from_symbol(
     return true;
 }
 
-gpioPulse_t* pigpio_create_pulses(
+static gpioPulse_t* create_pulses(
     uint32_t const gpio_pin_nr,
     uint8_t const * const symbols,
     int const symbol_count,
@@ -120,24 +120,41 @@ gpioPulse_t* pigpio_create_pulses(
     return pulses;
 }
 
-int pigpio_create_wave(gpioPulse_t * const pulses, int const pulse_count)
+int pigpio_create_wave(
+        uint32_t const gpio_pin_nr,
+        uint8_t const * const symbols,
+        int const symbol_count)
 {
-    // if(gpioWaveClear() != 0) // Clears ALL waveform data!
-    // {
-    //     return -1;
-    // }
+    int pulse_count = 0;
+    gpioPulse_t* pulses = NULL;
 
-    // if(gpioWaveAddNew() != 0) // Not necessary.
-    // {
-    //     return -1;
-    // }
+    if(gpioWaveClear() != 0) // Clears ALL waveform data!
+    {
+        return -1;
+    }
+
+    if(gpioWaveAddNew() != 0) // Not necessary.
+    {
+        return -1;
+    }
+
+    pulses = pigpio_create_pulses(
+                gpio_pin_nr, symbols, symbol_count, &pulse_count);
+    if(pulses == NULL)
+    {
+        return -1;
+    }
 
     // Add pulses to wave:
     //
     if(gpioWaveAddGeneric(pulse_count, pulses) == PI_TOO_MANY_PULSES)
     {
+        alloc_free(pulses);
         return -1;
     }
+    alloc_free(pulses);
+    pulses = NULL;
+    pulse_count = 0;
 
     int const wave_id = gpioWaveCreate();
 
@@ -147,12 +164,6 @@ int pigpio_create_wave(gpioPulse_t * const pulses, int const pulse_count)
     }
 
 #ifndef NDEBUG
-    console_write("pigpio_create_wave: Wave with ID ");
-    console_write_dword_dec((uint32_t)wave_id);
-    console_write(" successfully created with ");
-    console_write_dword_dec((uint32_t)pulse_count);
-    console_writeline(" given pulses.");
-
     console_write("pigpio_create_wave: Waveform size is ");
     console_write_dword_dec((uint32_t)gpioWaveGetMicros());
     console_write("us / ");
