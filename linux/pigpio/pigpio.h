@@ -20,7 +20,7 @@ bool pigpio_init();
  */
 gpioPulse_t const * pigpio_create_pulses(
     uint32_t const gpio_pin_nr,
-    enum tape_symbol const * const symbols,
+    uint8_t const * const symbols,
     int const symbol_count,
     int * const out_pulse_count);
 

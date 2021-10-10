@@ -19,13 +19,13 @@ static uint32_t const s_micro_medium = 256; // us
 static uint32_t const s_micro_long = 336; // us
 
 static bool fill_pulse_quadruple_from_symbol(
-    enum tape_symbol const symbol,
+    uint8_t const symbol,
     uint32_t const gpio_pin_nr,
     gpioPulse_t * const out_pulses)
 {
     uint32_t f = 0, l = 0;
 
-    switch(symbol)
+    switch((enum tape_symbol)symbol)
     {
         case tape_symbol_zero:
         {
@@ -98,7 +98,7 @@ static bool fill_pulse_quadruple_from_symbol(
 
 gpioPulse_t const * pigpio_create_pulses(
     uint32_t const gpio_pin_nr,
-    enum tape_symbol const * const symbols,
+    uint8_t const * const symbols,
     int const symbol_count,
     int * const out_pulse_count)
 {
