@@ -5,98 +5,94 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys/time.h>
-#include <time.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <assert.h>
+#include <pigpio.h>
 
-#include "../hardware/peribase.h"
 #include "../lib/str/str.h"
-#include "../lib/mem/mem.h"
 #include "../lib/alloc/alloc.h"
 #include "../lib/console/console_params.h"
 #include "../lib/console/console.h"
-#include "../hardware/gpio/gpio.h"
-#include "../hardware/gpio/gpio_params.h"
 #include "../app/config.h"
-#include "../app/tape/tape_init.h"
-#include "../app/tape/tape_send_params.h"
 #include "../app/tape/tape_input.h"
-#include "../app/tape/tape_send.h"
+#include "../app/tape/tape_fill_buf.h"
+#include "../app/tape/tape_defines.h"
+#include "pigpio/pigpio.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
-static void timer_start_one_mhz()
-{
-    // Nothing to do.
-}
+static int const s_max_file_size = 64 * 1024; // 64 KB.
+static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
 
-static uint32_t timer_get_tick()
-{
-    // 1 MHz <=> 1,000,000 ticks per second.
-    //
-    // 32 bit wide counter <=> 2^32 values.
-    //
-    // => More than 71 minutes until wrap-around.
-
-    struct timeval tv;
-
-    if(gettimeofday(&tv, NULL) != 0)
-    {
-        console_writeline("Error: gettimeofday failed!");
-        return 0;
-    }
-
-    return 1000000 * tv.tv_sec + tv.tv_usec;
-}
-
-// TODO: This is not reliable, because of user mode and scheduling of OS!
-//
-static void timer_wait_microseconds(uint32_t const microseconds)
-{
-    // struct timespec req, rem;
-    //
-    // req.tv_sec = 0;
-    // req.tv_nsec = 1000 * microseconds;
-    //
-    // if(nanosleep(&req, &rem) != 0) // (implicit cast)
-    // {
-    //     console_writeline("Error: nanosleep failed!");
-    // }
-
-    uint32_t const start = timer_get_tick();
-
-    while(true)
-    {
-        if(timer_get_tick() - start >= microseconds)
-        {
-            return;
-        }
-    }
-}
-
-/**
- * - Must not be called. Just for error handling..
- */
 static uint8_t dummy_read()
 {
-    //assert(false);
+    assert(false); // Do not use this.
 
     return 0;
 }
-
 static void write_byte(uint8_t const byte)
 {
     putchar((int)byte);
 }
 
-static void init_gpio()
+off_t get_file_size(char const * const path)
 {
-    // Initialize bare GPIO singleton:
-    //
-    gpio_init((struct gpio_params){
-        .wait_microseconds = timer_wait_microseconds,
-        .peri_base = PERI_BASE
-    });
+    assert(path != NULL);
+
+    struct stat s;
+
+    if(stat(path, &s) == 0)
+    {
+        return s.st_size;
+    }
+    return -1;
+}
+
+/** Return content of file at given path.
+ *
+ *  - Returns NULL on error.
+ *  - Caller takes ownership of return value.
+ */
+static unsigned char * load_file(
+    char const * const path, off_t * const out_size)
+{
+    *out_size = -1;
+
+    off_t const signed_size = get_file_size(path);
+
+    if(signed_size == -1)
+    {
+        console_writeline("load_file : Error: Failed to get size of file!");
+        return NULL;
+    }
+    if(signed_size > (off_t)s_max_file_size)
+    {
+        console_writeline("load_file : Error: File is too big!");
+        return NULL;
+    }
+
+    FILE * const file = fopen(path, "rb");
+
+    if(file == NULL)
+    {
+        console_writeline("load_file : Error: Failed to open source file!");
+        return NULL;
+    }
+
+    size_t const size = (size_t)signed_size;
+    unsigned char * const buf = alloc_alloc(size * sizeof *buf);
+
+    if(fread(buf, sizeof(*buf), size, file) != size)
+    {
+        console_writeline(
+            "load_file : Error: Failed to completely load file content!");
+        return NULL;
+    }
+
+    fclose(file);
+    *out_size = signed_size;
+    return buf;
 }
 
 /** Connect console (singleton) to wanted in-/output.
@@ -115,6 +111,35 @@ static void init_console()
     console_init(&p);
 }
 
+static void init_gpio()
+{
+    pigpio_init();
+
+    console_deb_writeline(
+        "init_gpio: Setting sense output line to HIGH at CBM..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_SENSE, PI_OUTPUT);
+    gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!true));
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    console_deb_writeline(
+        "init_gpio: Setting motor line to input with pull-down..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_INPUT);
+    gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_PUD_DOWN);
+
+    console_deb_writeline(
+        "init_gpio: Setting tape read output line to HIGH at CBM..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_READ, PI_OUTPUT);
+    gpioWrite(MT_TAPE_GPIO_PIN_NR_READ, (unsigned)(!true));
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    console_deb_writeline(
+        "init_gpio: Setting tape write line to input with pull-down..");
+    gpioSetMode(MT_TAPE_GPIO_PIN_NR_WRITE, PI_INPUT);
+    gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_WRITE, PI_PUD_DOWN);
+}
+
 static void deinit()
 {
     free(s_mem);
@@ -129,12 +154,9 @@ static void init()
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
+    assert(s_mem_buf_size < MT_HEAP_SIZE);
     s_mem = malloc(MT_HEAP_SIZE * sizeof *s_mem);
     alloc_init((void*)s_mem, MT_HEAP_SIZE);
-
-    // Initialize for tape transfer:
-    //
-    tape_init(timer_start_one_mhz, timer_get_tick, timer_wait_microseconds);
 }
 
 static void fill_name(uint8_t * const name_out, char const * const name_in)
@@ -151,7 +173,9 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
 
     while(i < MT_TAPE_INPUT_NAME_LEN && buf[i] != '\0')
     {
-        name_out[i] = (uint8_t)buf[i]; // TODO: Implement real conversion to PETSCII.
+        // TODO: Implement real conversion to PETSCII!
+        //
+        name_out[i] = (uint8_t)buf[i];
         ++i;
     }
     while(i < MT_TAPE_INPUT_NAME_LEN)
@@ -163,127 +187,157 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
     alloc_free(buf);
 }
 
-static bool send_to_commodore(
-    uint8_t /*const*/ * const bytes,
-    char const * const name,
-    uint32_t const count)
+/**
+ * - Caller takes ownership of returned object.
+ */
+static struct tape_input * create_tape_input(
+    uint8_t * const bytes, uint32_t const count, char const * const name)
 {
-    bool ret_val = false;
-    struct tape_send_params p;
-    uint32_t * const mem_addr = alloc_alloc(4 * 1024 * 1024); // Hard-coded
+    struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
 
-    p.is_stop_requested = NULL;
-    p.gpio_pin_nr_read = MT_TAPE_GPIO_PIN_NR_READ;
-    p.gpio_pin_nr_sense = MT_TAPE_GPIO_PIN_NR_SENSE;
-    p.gpio_pin_nr_motor = MT_TAPE_GPIO_PIN_NR_MOTOR;
-    p.data = alloc_alloc(sizeof *(p.data));
-
-    fill_name(p.data->name, name);
+    fill_name(ret_val->name, name);
 
     // Hard-coded for PET PRG files. C64 (and other) machines need to load
     // PRGs that are not starting at BASIC start address / are not relocatable
     // as non-relocatable because of this (e.g.: LOAD"",1,1 on C64):
     //
-    p.data->type = tape_filetype_relocatable;
+    ret_val->type = tape_filetype_relocatable;
 
     // First two bytes hold the start address:
     //
-    p.data->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
-    p.data->bytes = bytes + 2;
-    p.data->len = count - 2;
+    ret_val->addr = (((uint16_t)bytes[1]) << 8) | (uint16_t)bytes[0];
+    ret_val->bytes = bytes + 2;
+    ret_val->len = count - 2;
 
-    tape_input_fill_add_bytes(p.data->add_bytes);
+    tape_input_fill_add_bytes(ret_val->add_bytes);
 
 #ifndef NDEBUG
-    console_write("Start address is 0x");
-    console_write_word(p.data->addr);
+    console_write("create_tape_input: Start address is 0x");
+    console_write_word(ret_val->addr);
     console_write(" (");
-    console_write_word_dec(p.data->addr);
+    console_write_word_dec(ret_val->addr);
     console_writeline(").");
 #endif //NDEBUG
 
-    ret_val = tape_send(&p, mem_addr);
-
-    alloc_free(mem_addr);
-    alloc_free(p.data);
     return ret_val;
 }
 
-/** Source: http://stackoverflow.com/questions/8236/how-do-you-determine-the-size-of-a-file-in-c
+/**
+ * - Caller takes ownership of returned object.
  */
-off_t get_file_size(char const * const path)
+static uint8_t* create_symbols_from_bytes(
+    uint8_t * const bytes,
+    uint32_t const byte_count,
+    char const * const name,
+    int * const out_symbol_count)
 {
-    struct stat s;
+    struct tape_input * const t = create_tape_input(bytes, byte_count, name);
+    uint32_t * const ret_val = alloc_alloc(s_mem_buf_size);
 
-    //assert(path != NULL);
+    *out_symbol_count = tape_fill_buf(t, (uint8_t * const)ret_val);
 
-    if(stat(path, &s) == 0)
-    {
-        return s.st_size;
-    }
-    return -1;
+    alloc_free(t);
+    return (uint8_t*)ret_val;
 }
 
-/** Return content of file at given path.
- *
- *  - Returns NULL on error.
- *  - Caller takes ownership of return value.
+/**
+ * - Caller takes ownership of returned object.
  */
-static unsigned char * load_file(char const * const path, off_t * const out_size)
-{
-    *out_size = -1;
-
-    off_t const signed_size = get_file_size(path);
-
-    if(signed_size == -1)
-    {
-        console_writeline("Error: Failed to get size of file!");
-        return NULL;
-    }
-
-    FILE * const file = fopen(path, "rb");
-
-    if(file == NULL)
-    {
-        console_writeline("Error: Failed to open source file!");
-        return NULL;
-    }
-
-    size_t const size = (size_t)signed_size;
-    unsigned char * const buf = malloc(size * sizeof *buf);
-
-    if(fread(buf, sizeof(*buf), size, file) != size)
-    {
-        console_writeline("Error: Failed to completely load file content!");
-        return NULL;
-    }
-
-    fclose(file);
-    *out_size = signed_size;
-    return buf;
-}
-
-static bool send(char * const file_name)
+static uint8_t* create_symbols_from_file(
+    char * const file_name, int * const out_symbol_count)
 {
     // Assuming uint8_t being equal to unsigned char.
 
     off_t size = 0;
-    uint8_t /*const*/ * const bytes = load_file(file_name, &size);
+    uint8_t * const bytes = load_file(file_name, &size);
 
     if(bytes == NULL)
     {
         return false;
     }
 
-    char * const name = file_name; // TODO: Remove eventually trailing path!
-    uint32_t const count = (uint32_t)size;
+    uint8_t * const symbols = create_symbols_from_bytes(
+        bytes,
+        (uint32_t)size,
+        file_name, // TODO: Remove maybe preceding path!
+        out_symbol_count);
 
-    if(!send_to_commodore(bytes, name, count))
+    alloc_free(bytes);
+    return symbols;
+}
+
+static bool send(char * const file_name)
+{
+    console_writeline("Send mode is not implemented, yet.");
+
+    return false;
+}
+
+static bool symbols(char * const file_name)
+{
+    int symbol_count = 0;
+    uint8_t* symbols = create_symbols_from_file(file_name, &symbol_count);
+
+    if(symbols == NULL)
     {
-        free(bytes);
         return false;
     }
-    free(bytes);
+
+    // for(int i = 0;i < symbol_count;++i)
+    // {
+    //     write_byte(symbols[i]);
+    // }
+
+    // TODO: Debugging:
+
+    //symbol_count = MT_HEADERDATABLOCK_LEN;
+
+    int pulse_count = 0;
+
+    gpioPulse_t * const pulses = pigpio_create_pulses(
+        MT_TAPE_GPIO_PIN_NR_READ,
+        symbols,
+        symbol_count,
+        &pulse_count);
+
+    alloc_free(symbols);
+    symbols = NULL;
+    symbol_count = 0;
+
+    if(pulses == NULL)
+    {
+        return false;
+    }
+
+    int const wave_id = pigpio_create_wave(pulses, pulse_count);
+
+    if(wave_id < 0)
+    {
+        alloc_free(pulses);
+        return false;
+    }
+
+    console_deb_writeline("symbols: Setting sense output line to LOW at CBM..");
+    gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!false));
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    int const send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_REPEAT_SYNC);
+
+    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    {
+        alloc_free(pulses);
+        return false;
+    }
+
+    console_deb_writeline("symbols: Starting infinite loop..");
+
+    while(true)
+    {
+        ;
+    }
+
+    alloc_free(pulses);
     return true;
 }
 
@@ -296,20 +350,60 @@ static bool receive()
 
 static bool exec(int const argc, char * const argv[])
 {
-    if(argc != 1 && argc != 2)
+    do
     {
-        console_writeline("Add no parameter to receive or one parameter (the file name) to send.");
-        return false;
-    }
+        if(argc < 2) // At least a command must be given.
+        {
+            break;
+        }
+        if(strnlen(argv[1], 2) != 1) // Single letter commands, only.
+        {
+            break;
+        }
 
-    if(argc == 1)
-    {
-        return receive();
-    }
+        char const cmd = argv[1][0];
 
-    //assert(argc == 2);
+        switch(cmd)
+        {
+            case 'r':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
+                return receive();
+            }
 
-    return send(argv[1]);
+            case 's':
+            {
+                if(argc != 3)
+                {
+                    break;
+                }
+                return send(argv[2]);
+            }
+            case 'y':
+            {
+                if(argc != 3)
+                {
+                    break;
+                }
+                return symbols(argv[2]);
+            }
+
+            default:
+            {
+                break;
+            }
+        }
+    }while(false);
+
+    console_writeline(
+        "r = Receive"
+        "\ns <filename> = Send"
+        "\ny <filename> = Output symbols"
+        ".");
+    return false;
 }
 
 int main(int argc, char* argv[])
@@ -317,9 +411,7 @@ int main(int argc, char* argv[])
     bool success = false;
 
     init();
-
     success = exec(argc, argv);
-
     deinit();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

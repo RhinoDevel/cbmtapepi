@@ -4,12 +4,15 @@
 
 CC=gcc
 
-#CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX
-CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
+#CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX -pthread
+CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX -pthread
 
-LDFLAGS=-lm
+LDFLAGS=-lm -lpigpio -lrt
 SOURCES=\
 	main.c \
+	\
+	pigpio/pigpio.c \
+	\
 	../lib/mem/mem.c \
 	../lib/alloc/alloc.c \
 	../lib/alloc/alloc_mem.c \
@@ -17,7 +20,11 @@ SOURCES=\
 	../lib/str/str.c \
 	../lib/calc/calc.c \
 	../lib/console/console.c \
+	../lib/petasc/petasc.c \
+	\
 	../hardware/gpio/gpio.c \
+	\
+	../app/tape/tape_input.c \
 	../app/tape/tape_extract_buf.c \
 	../app/tape/tape_fill_buf.c \
 	../app/tape/tape_init.c \
