@@ -96,7 +96,7 @@ static bool fill_pulse_quadruple_from_symbol(
     return true;
 }
 
-gpioPulse_t const * pigpio_create_pulses(
+gpioPulse_t* pigpio_create_pulses(
     uint32_t const gpio_pin_nr,
     uint8_t const * const symbols,
     int const symbol_count,
@@ -116,7 +116,7 @@ gpioPulse_t const * pigpio_create_pulses(
             return NULL;
         }
     }
-    out_pulse_count = s_pulses_per_symbol * symbol_count;
+    *out_pulse_count = s_pulses_per_symbol * symbol_count;
     return pulses;
 }
 
