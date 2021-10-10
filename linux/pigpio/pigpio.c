@@ -138,8 +138,7 @@ int pigpio_create_wave(
         return -1;
     }
 
-    pulses = pigpio_create_pulses(
-                gpio_pin_nr, symbols, symbol_count, &pulse_count);
+    pulses = create_pulses(gpio_pin_nr, symbols, symbol_count, &pulse_count);
     if(pulses == NULL)
     {
         return -1;
