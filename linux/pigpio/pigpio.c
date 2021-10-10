@@ -6,6 +6,7 @@
 #include <pigpio.h>
 
 #include "pigpio.h"
+#include "../../lib/alloc/alloc.h"
 #include "../../lib/console/console.h"
 #include "../../app/tape/tape_symbol.h"
 
@@ -101,7 +102,7 @@ gpioPulse_t const * pigpio_create_pulses(
     int const symbol_count,
     int * const out_pulse_count)
 {
-    gpioPulse_t * const pulses = malloc(
+    gpioPulse_t * const pulses = alloc_alloc(
         s_pulses_per_symbol * symbol_count * (sizeof *pulses));
 
     *out_pulse_count = 0;
@@ -111,7 +112,7 @@ gpioPulse_t const * pigpio_create_pulses(
         if(!fill_pulse_quadruple_from_symbol(
                 symbols[i], gpio_pin_nr, pulses + s_pulses_per_symbol * i))
         {
-            free(pulses);
+            alloc_free(pulses);
             return NULL;
         }
     }
