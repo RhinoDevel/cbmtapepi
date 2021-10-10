@@ -17,6 +17,7 @@
 #include "../app/config.h"
 #include "../app/tape/tape_input.h"
 #include "../app/tape/tape_fill_buf.h"
+#include "../app/tape/tape_defines.h"
 #include "pigpio/pigpio.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
@@ -80,7 +81,7 @@ static unsigned char * load_file(
     }
 
     size_t const size = (size_t)signed_size;
-    unsigned char * const buf = malloc(size * sizeof *buf);
+    unsigned char * const buf = alloc_alloc(size * sizeof *buf);
 
     if(fread(buf, sizeof(*buf), size, file) != size)
     {
@@ -261,7 +262,7 @@ static uint8_t* create_symbols_from_file(
         file_name, // TODO: Remove maybe preceding path!
         out_symbol_count);
 
-    free(bytes);
+    alloc_free(bytes);
     return symbols;
 }
 
@@ -275,21 +276,67 @@ static bool send(char * const file_name)
 static bool symbols(char * const file_name)
 {
     uint32_t symbol_count = 0;
-    uint8_t * const symbols = create_symbols_from_file(
-                                file_name, &symbol_count);
+    uint8_t* symbols = create_symbols_from_file(file_name, &symbol_count);
 
-    for(int i = 0;i < symbol_count;++i)
+    if(symbols == NULL)
     {
-        write_byte(symbols[i]);
+        return false;
     }
 
+    // for(int i = 0;i < symbol_count;++i)
+    // {
+    //     write_byte(symbols[i]);
+    // }
+
     // TODO: Debugging:
-    //
-    assert(
-        pigpio_create_wave(MT_TAPE_GPIO_PIN_NR_READ, symbols, symbol_count)
-            >= 0);
+
+    uint32_t pulse_count = 0;
+
+    gpioPulse_t const * const pulses = pigpio_create_pulses(
+        MT_TAPE_GPIO_PIN_NR_READ,
+        symbols,
+        symbol_count,
+        &pulse_count);
 
     alloc_free(symbols);
+    symbols = NULL;
+    symbol_count = 0;
+
+    if(pulses == NULL)
+    {
+        return false;
+    }
+
+    //pulse_count = 4 * MT_HEADERDATABLOCK_LEN;
+    int const wave_id = pigpio_create_wave(pulses, pulse_count);
+
+    if(wave_id < 0)
+    {
+        alloc_free(pulses);
+        return false;
+    }
+
+    console_deb_writeline("symbols: Setting sense output line to LOW at CBM..");
+    gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!false));
+    //
+    // (inverted, because circuit inverts signal to CBM)
+
+    int const send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_REPEAT_SYNC);
+
+    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    {
+        alloc_free(pulses);
+        return false;
+    }
+
+    console_deb_writeline("symbols: Starting infinite loop..");
+
+    while(true)
+    {
+        ;
+    }
+
+    alloc_free(pulses);
     return true;
 }
 
