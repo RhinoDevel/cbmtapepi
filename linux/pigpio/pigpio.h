@@ -25,6 +25,8 @@ gpioPulse_t* pigpio_create_pulses(
     int * const out_pulse_count);
 
 /**
+ * - Does NOT take ownership of given pulses, but seems to directly access/use
+ *   them, until wave gets deleted.
  * - Returns the created wave ID or -1 on failure.
  */
 int pigpio_create_wave(gpioPulse_t * const pulses, int const pulse_count);
