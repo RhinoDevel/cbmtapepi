@@ -18,7 +18,7 @@ bool pigpio_init();
  * - Caller takes ownership of returned object.
  * - Returns NULL on error.
  */
-gpioPulse_t const * pigpio_create_pulses(
+gpioPulse_t* pigpio_create_pulses(
     uint32_t const gpio_pin_nr,
     uint8_t const * const symbols,
     int const symbol_count,
