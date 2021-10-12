@@ -191,6 +191,6 @@ Connect Raspberry Pi and Commodore machine this way:
 - Read/write from/to USB storage device.
 - New command: "md" to create a folder.
 - Automatically create a folder (if missing) and use it as "root" (e.g. "CBMTAPEPI").
-- Probably impossible, at least for compatibility mode (kernel module - timer interrupt handler or DMA usage?): Raspbian port of CBM Tape Pi, see [Linux README](./linux/README.md).
+- (Raspbian) Linux port of CBM Tape Pi, see [Linux README](./linux/README.md).
 
 ![RhinoDevel](./data/rhino.bmp)
