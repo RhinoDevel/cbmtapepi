@@ -18,6 +18,7 @@
 #include "../app/tape/tape_input.h"
 #include "../app/tape/tape_fill_buf.h"
 #include "../app/tape/tape_defines.h"
+#include "../app/petload/petload_c64tom.h"
 #include "pigpio/pigpio.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
@@ -266,34 +267,30 @@ static uint8_t* create_symbols_from_file(
     return symbols;
 }
 
-static bool send(char * const file_name)
-{
-    console_writeline("Send mode is not implemented, yet.");
-
-    return false;
-}
-
-static bool symbols(char * const file_name)
+/** Send bytes given via compatibility mode.
+ */
+static bool send_bytes(
+    uint8_t * const bytes,
+    uint32_t const byte_count,
+    char const * const name,
+    bool const infinitely)
 {
     int symbol_count = 0;
-    uint8_t* symbols = create_symbols_from_file(file_name, &symbol_count);
+    uint8_t* symbols = create_symbols_from_bytes(
+        bytes, byte_count, name, &symbol_count);
 
     if(symbols == NULL)
     {
         return false;
     }
 
-    // for(int i = 0;i < symbol_count;++i)
-    // {
-    //     write_byte(symbols[i]);
-    // }
-
-    // TODO: Debugging:
-
+    // TODO: Pause, if motor signal stopps before MT_HEADERDATABLOCK_LEN is
+    //       reached!
+    //
     //symbol_count = MT_HEADERDATABLOCK_LEN;
 
     int const wave_id = pigpio_create_wave(
-                            MT_TAPE_GPIO_PIN_NR_READ, symbols, symbol_count);
+            MT_TAPE_GPIO_PIN_NR_READ, symbols, symbol_count);
 
     alloc_free(symbols);
     symbols = NULL;
@@ -304,33 +301,102 @@ static bool symbols(char * const file_name)
         return false;
     }
 
-    console_deb_writeline("symbols: Setting sense output line to LOW at CBM..");
+    console_deb_writeline(
+        "send_bytes: Setting sense output line to LOW at CBM..");
     gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!false));
     //
     // (inverted, because circuit inverts signal to CBM)
 
-    int const send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_REPEAT_SYNC);
+    int const send_result = gpioWaveTxSend(
+        wave_id, 
+        infinitely
+            ? PI_WAVE_MODE_REPEAT_SYNC
+            : PI_WAVE_MODE_ONE_SHOT_SYNC);
 
     if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    {
+        gpioWaveClear();
+        return false;
+    }
+
+    if(infinitely)
+    {
+        console_writeline(
+            "send_bytes: Starting infinite sending (press any key to exit/stop)..");
+        getchar();
+        console_writeline("send_bytes: Stopping send loop and exiting..");
+
+        if(gpioWaveTxStop() != 0)
+        {
+            gpioWaveClear();
+            return false;
+        }
+    }
+    else
+    {
+        console_writeline(
+            "send_bytes: Waiting for sending to finish..");
+        while(gpioWaveTxBusy() == 1)
+        {
+            ;
+        }
+        console_writeline("send_bytes: Sending done.");
+    }
+
+    gpioWaveClear();
+    return true;
+}
+
+static bool send_petload_c64tom(bool const infinitely)
+{
+    return send_bytes(
+        s_petload_c64tom,
+        sizeof s_petload_c64tom  / sizeof *s_petload_c64tom);
+}
+
+/** Send file with given name/path via compatibility mode.
+ */
+static bool send_file(char * const file_name, bool const infinitely)
+{
+    // Assuming uint8_t being equal to unsigned char.
+
+    off_t size = 0;
+    uint8_t * const bytes = load_file(file_name, &size);
+
+    if(bytes == NULL)
     {
         return false;
     }
 
-    console_deb_writeline("symbols: Starting infinite loop..");
+    bool const success = send_bytes(
+        bytes, 
+        (uint32_t)size,
+        file_name, // TODO: Remove maybe preceding path!
+        infinitely);
 
-    while(true)
+    alloc_free(bytes);
+    return success;
+}
+
+/** Load file from given file name/path, convert it to compatibility mode
+ *  symbols and write these to standard output.
+ */
+static bool print_file_as_symbols(char * const file_name)
+{
+    int symbol_count = 0;
+    uint8_t* symbols = create_symbols_from_file(file_name, &symbol_count);
+
+    if(symbols == NULL)
     {
-        ;
+        return false;
+    }
+
+    for(int i = 0;i < symbol_count;++i)
+    {
+        write_byte(symbols[i]);
     }
 
     return true;
-}
-
-static bool receive()
-{
-    console_writeline("Receive mode is not implemented, yet.");
-
-    return false;
 }
 
 static bool exec(int const argc, char * const argv[])
@@ -350,22 +416,37 @@ static bool exec(int const argc, char * const argv[])
 
         switch(cmd)
         {
-            case 'r':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                return receive();
-            }
-
             case 's':
             {
                 if(argc != 3)
                 {
                     break;
                 }
-                return send(argv[2]);
+                return send_file(argv[2], false);
+            }
+            case 'i':
+            {
+                if(argc != 3)
+                {
+                    break;
+                }
+                return send_file(argv[2], true);
+            }
+            case 't':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
+                return send_petload_c64tom(argv[2], false);
+            }
+            case 'u':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
+                return send_petload_c64tom(argv[2], true);
             }
             case 'y':
             {
@@ -373,7 +454,7 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return symbols(argv[2]);
+                return print_file_as_symbols(argv[2]);
             }
 
             default:
@@ -384,10 +465,15 @@ static bool exec(int const argc, char * const argv[])
     }while(false);
 
     console_writeline(
-        "r = Receive"
-        "\ns <filename> = Send"
-        "\ny <filename> = Output symbols"
-        ".");
+        "s <filename> = Send file via compatibility mode once."
+        "\n"
+        "i <filename> = Send file via compatibility mode in a loop."
+        "\n"
+        "t = Send C64 TOM wedge via compatibility mode once."
+        "\n"
+        "u = Send C64 TOM wedge via compatibility mode in a loop."
+        "\n"
+        "y <filename> = Output file as compatibility mode symbols.");
     return false;
 }
 
