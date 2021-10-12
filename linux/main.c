@@ -322,7 +322,7 @@ static bool send_bytes(
     if(infinitely)
     {
         console_writeline(
-            "send_bytes: Starting infinite sending (press any key to exit/stop)..");
+            "send_bytes: Starting infinite sending (press ENTER to exit/stop)..");
         getchar();
         console_writeline("send_bytes: Stopping send loop and exiting..");
 
@@ -350,8 +350,10 @@ static bool send_bytes(
 static bool send_petload_c64tom(bool const infinitely)
 {
     return send_bytes(
-        s_petload_c64tom,
-        sizeof s_petload_c64tom  / sizeof *s_petload_c64tom);
+        (uint8_t*)s_petload_c64tom, // *** CONST CAST ***
+        sizeof s_petload_c64tom  / sizeof *s_petload_c64tom,
+        "c64tom", // TODO: Use correct name (to help user)!
+        infinitely);
 }
 
 /** Send file with given name/path via compatibility mode.
@@ -438,7 +440,7 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_c64tom(argv[2], false);
+                return send_petload_c64tom(false);
             }
             case 'u':
             {
@@ -446,7 +448,7 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_c64tom(argv[2], true);
+                return send_petload_c64tom(true);
             }
             case 'y':
             {
