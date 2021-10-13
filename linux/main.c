@@ -143,6 +143,8 @@ static void init_gpio()
 
 static void deinit()
 {
+    gpioTerminate();
+
     free(s_mem);
     s_mem = NULL;
 }
