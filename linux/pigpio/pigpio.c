@@ -163,6 +163,10 @@ int pigpio_create_wave(
     }
 
 #ifndef NDEBUG
+    console_write("pigpio_create_wave: Waveform ID is \"");
+    console_write_dword_dec((uint32_t)wave_id);
+    console_writeline("\".");
+
     console_write("pigpio_create_wave: Waveform size is ");
     console_write_dword_dec((uint32_t)gpioWaveGetCbs());
     console_write(" control blocks / ");
