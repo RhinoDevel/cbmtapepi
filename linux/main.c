@@ -8,6 +8,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
+#include <signal.h>
 #include <pigpio.h>
 
 #include "../lib/str/str.h"
@@ -25,6 +26,13 @@ static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
 static int const s_max_file_size = 64 * 1024; // 64 KB.
 static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
+
+static volatile sig_atomic_t s_stop = 0;
+
+static void signal_handler(int p)
+{
+    s_stop = 1;
+}
 
 static uint8_t dummy_read()
 {
@@ -269,6 +277,53 @@ static uint8_t* create_symbols_from_file(
     return symbols;
 }
 
+static bool send_waves(int const header_wave_id, int const content_wave_id)
+{
+    assert(header_wave_id >= 0 && content_wave_id >= 0);
+
+    int send_result = -1;
+    
+    console_deb_writeline("send_waves: Sending..");
+
+    send_result = gpioWaveTxSend(header_wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
+    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    {
+        return false;
+    }
+    console_deb_writeline("send_waves: Waiting for sending header to finish..");
+    while(gpioWaveTxBusy() == 1 && s_stop == 0)
+    {
+        ;
+    }
+    if(s_stop != 0)
+    {
+        console_deb_writeline("send_waves: Stopping (1)..");
+        return gpioWaveTxStop() == 0;
+    }
+
+    // TODO: Take motor signal stop/restart into account!
+
+    send_result = gpioWaveTxSend(content_wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
+    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    {
+        return false;
+    }
+    console_deb_writeline(
+        "send_waves: Waiting for sending content to finish..");
+    while(gpioWaveTxBusy() == 1 && s_stop == 0)
+    {
+        ;
+    }
+    if(s_stop != 0)
+    {
+        console_deb_writeline("send_waves: Stopping (2)..");
+        return gpioWaveTxStop() == 0;
+    }
+
+    console_deb_writeline("send_waves: Sending done.");
+    return true;
+}
+
 /** Send bytes given via compatibility mode.
  */
 static bool send_bytes(
@@ -288,18 +343,32 @@ static bool send_bytes(
 
     // TODO: Pause, if motor signal stopps before MT_HEADERDATABLOCK_LEN is
     //       reached!
-    //
-    //symbol_count = MT_HEADERDATABLOCK_LEN;
 
-    int const wave_id = pigpio_create_wave(
-            MT_TAPE_GPIO_PIN_NR_READ, symbols, symbol_count);
+    assert(symbol_count > MT_HEADERDATABLOCK_LEN);
+
+    int const header_wave_id = pigpio_create_wave(
+            MT_TAPE_GPIO_PIN_NR_READ,
+            symbols,
+            MT_HEADERDATABLOCK_LEN);
+
+    if(header_wave_id < 0)
+    {
+        alloc_free(symbols);
+        return false;
+    }
+
+    int const content_wave_id = pigpio_create_wave(
+            MT_TAPE_GPIO_PIN_NR_READ,
+            symbols + MT_HEADERDATABLOCK_LEN,
+            symbol_count - MT_HEADERDATABLOCK_LEN);
 
     alloc_free(symbols);
     symbols = NULL;
     symbol_count = 0;
 
-    if(wave_id < 0)
+    if(content_wave_id < 0)
     {
+        gpioWaveClear();
         return false;
     }
 
@@ -309,25 +378,29 @@ static bool send_bytes(
     //
     // (inverted, because circuit inverts signal to CBM)
 
-    int const send_result = gpioWaveTxSend(
-        wave_id, 
-        infinitely
-            ? PI_WAVE_MODE_REPEAT_SYNC
-            : PI_WAVE_MODE_ONE_SHOT_SYNC);
-
-    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
-    {
-        gpioWaveClear();
-        return false;
-    }
-
     if(infinitely)
     {
         console_writeline(
-            "send_bytes: Starting infinite sending (press ENTER to exit/stop)..");
-        getchar();
-        console_writeline("send_bytes: Stopping send loop and exiting..");
+            "send_bytes: Starting infinite sending (press CTRL+C to exit/stop)..");
 
+        s_stop = 0;
+        if(signal(SIGINT, signal_handler) == SIG_ERR)
+        {
+            gpioWaveClear();
+            return false;
+        }
+        
+        do
+        {
+            if(!send_waves(header_wave_id, content_wave_id))
+            {
+                gpioWaveClear();
+                return false;
+            }
+        }while(s_stop == 0);
+
+        console_writeline("send_bytes: Stopping send loop and exiting..");
+        
         if(gpioWaveTxStop() != 0)
         {
             gpioWaveClear();
@@ -336,13 +409,11 @@ static bool send_bytes(
     }
     else
     {
-        console_writeline(
-            "send_bytes: Waiting for sending to finish..");
-        while(gpioWaveTxBusy() == 1)
+        if(!send_waves(header_wave_id, content_wave_id))
         {
-            ;
+            gpioWaveClear();
+            return false;
         }
-        console_writeline("send_bytes: Sending done.");
     }
 
     gpioWaveClear();
