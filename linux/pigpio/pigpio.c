@@ -164,6 +164,8 @@ int pigpio_create_wave(
 
 #ifndef NDEBUG
     console_write("pigpio_create_wave: Waveform size is ");
+    console_write_dword_dec((uint32_t)gpioWaveGetCbs());
+    console_write(" control blocks / ");
     console_write_dword_dec((uint32_t)gpioWaveGetMicros());
     console_write("us / ");
     console_write_dword_dec((uint32_t)gpioWaveGetPulses());
