@@ -187,6 +187,8 @@ bool pigpio_init()
 
 #ifndef NDEBUG
     console_write("pigpio_init: Max. waveform size is ");
+    console_write_dword_dec((uint32_t)gpioWaveGetMaxCbs());
+    console_write(" control blocks / ");
     console_write_dword_dec((uint32_t)gpioWaveGetMaxMicros());
     console_write("us / ");
     console_write_dword_dec((uint32_t)gpioWaveGetMaxPulses());
