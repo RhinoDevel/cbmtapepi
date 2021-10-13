@@ -128,10 +128,10 @@ int pigpio_create_wave(
     int pulse_count = 0;
     gpioPulse_t* pulses = NULL;
 
-    if(gpioWaveClear() != 0) // Clears ALL waveform data!
-    {
-        return -1;
-    }
+    // if(gpioWaveClear() != 0) // Clears ALL waveform data!
+    // {
+    //     return -1;
+    // }
 
     if(gpioWaveAddNew() != 0) // Not necessary.
     {

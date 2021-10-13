@@ -15,7 +15,6 @@
 bool pigpio_init();
 
 /**
- * - Overwrites maybe existing wave(-s)!
  * - Returns the created wave ID or -1 on failure.
  */
 int pigpio_create_wave(
