@@ -297,7 +297,7 @@ static bool send_waves(int const header_wave_id, int const content_wave_id)
     }
     if(s_stop != 0)
     {
-        console_deb_writeline("send_waves: Stopping (1)..");
+        console_deb_writeline("\nsend_waves: Stopping (1)..");
         return gpioWaveTxStop() == 0;
     }
 
@@ -316,7 +316,7 @@ static bool send_waves(int const header_wave_id, int const content_wave_id)
     }
     if(s_stop != 0)
     {
-        console_deb_writeline("send_waves: Stopping (2)..");
+        console_deb_writeline("\nsend_waves: Stopping (2)..");
         return gpioWaveTxStop() == 0;
     }
 
