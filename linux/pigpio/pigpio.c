@@ -142,7 +142,7 @@ int pigpio_create_wave_from_pulses(
     if(gpioWaveAddGeneric(pulse_count, pulses) == PI_TOO_MANY_PULSES)
     {
         console_deb_writeline(
-  	    "create_wave_from_pulses : Error: gpioWaveAddGeneric() failed!");
+  	        "create_wave_from_pulses : Error: gpioWaveAddGeneric() failed!");
         return -1;
     }
 
@@ -151,7 +151,7 @@ int pigpio_create_wave_from_pulses(
     if(wave_id < 0)
     {
         console_deb_writeline(
-	    "create_wave_from_pulses : Error: gpioWaveCreate() failed!");
+	        "create_wave_from_pulses : Error: gpioWaveCreate() failed!");
         return -1;
     }
 
