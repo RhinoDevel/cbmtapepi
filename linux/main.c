@@ -284,7 +284,17 @@ static bool send_pulses(
     int send_result = -1, wave_id = -1;
     bool motor_done = false;
 
-    console_deb_writeline("send_pulses: Sending..");
+    if(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 0)
+    {
+        console_deb_writeline("send_pulses : Motor off. Waiting (1)..");
+
+        while(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 0 && s_stop == 0)
+        {
+            ;
+        }
+    }
+
+    console_deb_writeline("send_pulses: Motor on. Sending..");
 
     wave_id = pigpio_create_wave_from_pulses(
         MT_TAPE_GPIO_PIN_NR_READ, header_pulses, header_count);
@@ -348,7 +358,7 @@ static bool send_pulses(
             console_deb_writeline("send_pulses : Motor off. Done.");
             break;
         }
-        console_deb_writeline("send_pulses : Motor off. Waiting..");        
+        console_deb_writeline("send_pulses : Motor off. Waiting (2)..");        
         motor_done = true;
         
         if(gpioWaveTxStop() != 0)
