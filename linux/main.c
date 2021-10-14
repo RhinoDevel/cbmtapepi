@@ -310,6 +310,7 @@ static bool send_waves(int const header_wave_id, int const content_wave_id)
     }
     console_deb_writeline(
         "send_waves: Waiting for sending content to finish..");
+
     while(gpioWaveTxBusy() == 1 && s_stop == 0)
     {
         ;
@@ -341,12 +342,9 @@ static bool send_bytes(
         return false;
     }
 
-    // TODO: Pause, if motor signal stopps before MT_HEADERDATABLOCK_LEN is
-    //       reached!
-
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
-    int const header_wave_id = pigpio_create_wave(
+    int const header_wave_id = pigpio_create_wave_from_symbols(
             MT_TAPE_GPIO_PIN_NR_READ,
             symbols,
             MT_HEADERDATABLOCK_LEN);
@@ -357,7 +355,7 @@ static bool send_bytes(
         return false;
     }
 
-    int const content_wave_id = pigpio_create_wave(
+    int const content_wave_id = pigpio_create_wave_from_symbols(
             MT_TAPE_GPIO_PIN_NR_READ,
             symbols + MT_HEADERDATABLOCK_LEN,
             symbol_count - MT_HEADERDATABLOCK_LEN);

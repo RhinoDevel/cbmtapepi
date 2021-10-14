@@ -15,9 +15,26 @@
 bool pigpio_init();
 
 /**
+ * - Caller takes ownership of returned object.
+ */
+gpioPulse_t* pigpio_create_pulses(
+    uint32_t const gpio_pin_nr,
+    uint8_t const * const symbols,
+    int const symbol_count,
+    int * const out_pulse_count);
+
+/**
  * - Returns the created wave ID or -1 on failure.
  */
-int pigpio_create_wave(
+int pigpio_create_wave_from_pulses(
+        uint32_t const gpio_pin_nr,
+        gpioPulse_t * const pulses,
+        int const pulse_count);
+
+/**
+ * - Returns the created wave ID or -1 on failure.
+ */
+int pigpio_create_wave_from_symbols(
         uint32_t const gpio_pin_nr,
         uint8_t const * const symbols,
         int const symbol_count);
