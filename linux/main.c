@@ -455,19 +455,19 @@ static bool send_bytes(
     //
     // (inverted, because circuit inverts signal to CBM)
 
+    s_stop = 0;
+    if(signal(SIGINT, signal_handler) == SIG_ERR)
+    {
+        alloc_free(content_pulses);
+        alloc_free(header_pulses);
+        gpioWaveClear();
+        return false;
+    }
+
     if(infinitely)
     {
         console_writeline(
             "send_bytes: Starting infinite sending (press CTRL+C to exit/stop)..");
-
-        s_stop = 0;
-        if(signal(SIGINT, signal_handler) == SIG_ERR)
-        {
-            alloc_free(content_pulses);
-            alloc_free(header_pulses);
-            gpioWaveClear();
-            return false;
-        }
         
         do
         {
@@ -494,6 +494,9 @@ static bool send_bytes(
     }
     else
     {
+        console_writeline(
+            "send_bytes: Starting sending (press CTRL+C to exit/stop)..");
+
         if(!send_pulses(
                 header_pulses, header_pulse_count,
                 content_pulses, content_pulse_count))
