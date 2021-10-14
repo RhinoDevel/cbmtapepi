@@ -277,51 +277,78 @@ static uint8_t* create_symbols_from_file(
     return symbols;
 }
 
-static bool send_waves(int const header_wave_id, int const content_wave_id)
+static bool send_pulses(
+    gpioPulse_t * const header_pulses, int const header_count,
+    gpioPulse_t * const content_pulses, int const content_count)
 {
-    assert(header_wave_id >= 0 && content_wave_id >= 0);
-
-    int send_result = -1;
+    int send_result = -1, wave_id = -1;
     
-    console_deb_writeline("send_waves: Sending..");
+    console_deb_writeline("send_pulses: Sending..");
 
-    send_result = gpioWaveTxSend(header_wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
-    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    wave_id = pigpio_create_wave_from_pulses(
+        MT_TAPE_GPIO_PIN_NR_READ, header_pulses, header_count);
+    if(wave_id < 0)
     {
+        gpioWaveClear();
         return false;
     }
-    console_deb_writeline("send_waves: Waiting for sending header to finish..");
+    send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
+    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+    {
+        gpioWaveClear();
+        return false;
+    }
+    console_deb_writeline("send_pulses: Waiting for sending header to finish..");
     while(gpioWaveTxBusy() == 1 && s_stop == 0)
     {
         ;
     }
+    if(gpioWaveTxStop() != 0)
+    {
+        gpioWaveClear();
+        return false;
+    }
+    gpioWaveClear();
     if(s_stop != 0)
     {
-        console_deb_writeline("\nsend_waves: Stopping (1)..");
-        return gpioWaveTxStop() == 0;
+        console_deb_writeline("\send_pulses: Stopping (1)..");
+        return true;
     }
 
     // TODO: Take motor signal stop/restart into account!
 
-    send_result = gpioWaveTxSend(content_wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
+    wave_id = pigpio_create_wave_from_pulses(
+        MT_TAPE_GPIO_PIN_NR_READ, content_pulses, content_count);
+    if(wave_id < 0)
+    {
+        gpioWaveClear();
+        return false;
+    }
+    send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
     if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
     {
+        gpioWaveClear();
         return false;
     }
     console_deb_writeline(
-        "send_waves: Waiting for sending content to finish..");
-
+        "send_pulses: Waiting for sending content to finish..");
     while(gpioWaveTxBusy() == 1 && s_stop == 0)
     {
         ;
     }
+    if(gpioWaveTxStop() != 0)
+    {
+        gpioWaveClear();
+        return false;
+    }
+    gpioWaveClear();
     if(s_stop != 0)
     {
-        console_deb_writeline("\nsend_waves: Stopping (2)..");
-        return gpioWaveTxStop() == 0;
+        console_deb_writeline("\send_pulses: Stopping (2)..");
+        return true;
     }
 
-    console_deb_writeline("send_waves: Sending done.");
+    console_deb_writeline("send_pulses: Sending done.");
     return true;
 }
 
@@ -333,10 +360,12 @@ static bool send_bytes(
     char const * const name,
     bool const infinitely)
 {
-    int symbol_count = 0;
-    uint8_t* symbols = create_symbols_from_bytes(
-        bytes, byte_count, name, &symbol_count);
+    int symbol_count = 0,
+        header_pulse_count = 0, content_pulse_count = 0;
+    uint8_t* symbols = NULL;
+    gpioPulse_t *header_pulses = NULL, *content_pulses = NULL;
 
+    symbols = create_symbols_from_bytes(bytes, byte_count, name, &symbol_count);
     if(symbols == NULL)
     {
         return false;
@@ -344,29 +373,30 @@ static bool send_bytes(
 
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
-    int const header_wave_id = pigpio_create_wave_from_symbols(
-            MT_TAPE_GPIO_PIN_NR_READ,
-            symbols,
-            MT_HEADERDATABLOCK_LEN);
-
-    if(header_wave_id < 0)
+    header_pulses = pigpio_create_pulses(
+        MT_TAPE_GPIO_PIN_NR_READ,
+        symbols,
+        MT_HEADERDATABLOCK_LEN,
+        &header_pulse_count);
+    if(header_pulses == NULL)
     {
         alloc_free(symbols);
         return false;
     }
 
-    int const content_wave_id = pigpio_create_wave_from_symbols(
-            MT_TAPE_GPIO_PIN_NR_READ,
-            symbols + MT_HEADERDATABLOCK_LEN,
-            symbol_count - MT_HEADERDATABLOCK_LEN);
+    content_pulses = pigpio_create_pulses(
+        MT_TAPE_GPIO_PIN_NR_READ,
+        symbols + MT_HEADERDATABLOCK_LEN,
+        symbol_count - MT_HEADERDATABLOCK_LEN,
+        &content_pulse_count);
 
     alloc_free(symbols);
     symbols = NULL;
     symbol_count = 0;
 
-    if(content_wave_id < 0)
+    if(content_pulses == NULL)
     {
-        gpioWaveClear();
+        alloc_free(header_pulses);
         return false;
     }
 
@@ -384,14 +414,20 @@ static bool send_bytes(
         s_stop = 0;
         if(signal(SIGINT, signal_handler) == SIG_ERR)
         {
+            alloc_free(content_pulses);
+            alloc_free(header_pulses);
             gpioWaveClear();
             return false;
         }
         
         do
         {
-            if(!send_waves(header_wave_id, content_wave_id))
+            if(!send_pulses(
+                    header_pulses, header_pulse_count,
+                    content_pulses, content_pulse_count))
             {
+                alloc_free(content_pulses);
+                alloc_free(header_pulses);
                 gpioWaveClear();
                 return false;
             }
@@ -401,19 +437,27 @@ static bool send_bytes(
         
         if(gpioWaveTxStop() != 0)
         {
+            alloc_free(content_pulses);
+            alloc_free(header_pulses);
             gpioWaveClear();
             return false;
         }
     }
     else
     {
-        if(!send_waves(header_wave_id, content_wave_id))
+        if(!send_pulses(
+                header_pulses, header_pulse_count,
+                content_pulses, content_pulse_count))
         {
+            alloc_free(content_pulses);
+            alloc_free(header_pulses);
             gpioWaveClear();
             return false;
         }
     }
 
+    alloc_free(content_pulses);
+    alloc_free(header_pulses);
     gpioWaveClear();
     return true;
 }
