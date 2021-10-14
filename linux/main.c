@@ -282,7 +282,7 @@ static bool send_pulses(
     gpioPulse_t * const content_pulses, int const content_count)
 {
     int send_result = -1, wave_id = -1;
-    
+
     console_deb_writeline("send_pulses: Sending..");
 
     wave_id = pigpio_create_wave_from_pulses(
@@ -311,7 +311,7 @@ static bool send_pulses(
     gpioWaveClear();
     if(s_stop != 0)
     {
-        console_deb_writeline("\send_pulses: Stopping (1)..");
+        console_deb_writeline("\nsend_pulses: Stopping (1)..");
         return true;
     }
 
@@ -344,7 +344,7 @@ static bool send_pulses(
     gpioWaveClear();
     if(s_stop != 0)
     {
-        console_deb_writeline("\send_pulses: Stopping (2)..");
+        console_deb_writeline("\nsend_pulses: Stopping (2)..");
         return true;
     }
 
