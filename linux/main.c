@@ -365,6 +365,10 @@ static bool send_pulses(
         {
             ;
         }
+        if(s_stop != 0)
+        {
+            break;
+        }
 
         console_deb_writeline("send_pulses : Motor on. Resuming..");
 
