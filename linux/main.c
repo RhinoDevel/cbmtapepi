@@ -282,6 +282,7 @@ static bool send_pulses(
     gpioPulse_t * const content_pulses, int const content_count)
 {
     int send_result = -1, wave_id = -1;
+    bool motor_done = false;
 
     console_deb_writeline("send_pulses: Sending..");
 
@@ -308,14 +309,15 @@ static bool send_pulses(
         gpioWaveClear();
         return false;
     }
-    gpioWaveClear();
+    if(gpioWaveClear() != 0)
+    {
+        return false;
+    }
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_pulses: Stopping (1)..");
         return true;
     }
-
-    // TODO: Take motor signal stop/restart into account!
 
     wave_id = pigpio_create_wave_from_pulses(
         MT_TAPE_GPIO_PIN_NR_READ, content_pulses, content_count);
@@ -334,14 +336,61 @@ static bool send_pulses(
         "send_pulses: Waiting for sending content to finish..");
     while(gpioWaveTxBusy() == 1 && s_stop == 0)
     {
-        ;
+        if(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 1)
+        {
+            continue; // Motor is on. Keep "endless tape" running.
+        }
+
+        // Motor is off.
+
+        if(motor_done)
+        {
+            console_deb_writeline("send_pulses : Motor off. Done.");
+            break;
+        }
+        console_deb_writeline("send_pulses : Motor off. Waiting..");        
+        motor_done = true;
+        
+        if(gpioWaveTxStop() != 0)
+        {
+            gpioWaveClear();
+            return false;
+        }
+        if(gpioWaveClear() != 0)
+        {
+            return false;
+        }
+        
+        while(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 0 && s_stop == 0)
+        {
+            ;
+        }
+
+        console_deb_writeline("send_pulses : Motor on. Resuming..");
+
+        wave_id = pigpio_create_wave_from_pulses(
+            MT_TAPE_GPIO_PIN_NR_READ, content_pulses, content_count);
+        if(wave_id < 0)
+        {
+            gpioWaveClear();
+            return false;
+        }
+        send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
+        if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
+        {
+            gpioWaveClear();
+            return false;
+        }
     }
     if(gpioWaveTxStop() != 0)
     {
         gpioWaveClear();
         return false;
     }
-    gpioWaveClear();
+    if(gpioWaveClear() != 0)
+    {
+        return false;
+    }
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_pulses: Stopping (2)..");
@@ -458,7 +507,10 @@ static bool send_bytes(
 
     alloc_free(content_pulses);
     alloc_free(header_pulses);
-    gpioWaveClear();
+    if(gpioWaveClear() != 0)
+    {
+        return false;
+    }
     return true;
 }
 
