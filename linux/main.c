@@ -467,6 +467,9 @@ static bool send_bytes(
         return false;
     }
 
+    console_writeline("send_bytes: Power-on Commodore, start LOAD command and press ENTER key.");
+    getchar();
+
     console_deb_writeline(
         "send_bytes: Setting sense output line to LOW at CBM..");
     gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!false));
