@@ -447,11 +447,15 @@ static bool send_bytes(
         return false;
     }
 
+    assert(header_pulse_count == 4 * MT_HEADERDATABLOCK_LEN);
+
     content_pulses = pigpio_create_pulses(
         MT_TAPE_GPIO_PIN_NR_READ,
         symbols + MT_HEADERDATABLOCK_LEN,
         symbol_count - MT_HEADERDATABLOCK_LEN,
         &content_pulse_count);
+
+    assert(content_pulse_count == 4 * (symbol_count - MT_HEADERDATABLOCK_LEN));
 
     alloc_free(symbols);
     symbols = NULL;
