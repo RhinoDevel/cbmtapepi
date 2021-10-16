@@ -222,11 +222,16 @@ int tape_fill_buf(struct tape_input const * const input, uint8_t * const buf)
 #ifndef NDEBUG
     console_write("tape_fill_buf: Header data block length is ");
     console_write_dword_dec(ret_val);
-    console_writeline(" symbols/bytes.");
+    console_writeline(" symbols.");
 #endif //NDEBUG
     assert(MT_HEADERDATABLOCK_LEN == ret_val);
 
     add_contentdatablock(input, buf, &ret_val);
+#ifndef NDEBUG
+    console_write("tape_fill_buf: Content data block length is ");
+    console_write_dword_dec(ret_val - MT_HEADERDATABLOCK_LEN);
+    console_writeline(" symbols.");
+#endif //NDEBUG
 
     return ret_val;
 }
