@@ -199,10 +199,12 @@ bool pigpio_init()
     int cfg = gpioCfgGetInternals();
 
     console_deb_writeline("pigpio_init : Disabling signal handler..");
-
     cfg |= PI_CFG_NOSIGHANDLER;  // (1<<10)
 
-    //cfg |= 1; // DBG_STARTUP
+    // Debugging does not work, if PI_CFG_NOSIGHANDLER is set!
+    //
+    //console_deb_writeline("pigpio_init : Enabling max. debug level..");
+    //cfg |= 8; // DBG_MAX_LEVEL
 
     if(gpioCfgSetInternals(cfg) != 0)
     {
