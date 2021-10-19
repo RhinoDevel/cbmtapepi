@@ -202,6 +202,8 @@ bool pigpio_init()
 
     cfg |= PI_CFG_NOSIGHANDLER;  // (1<<10)
 
+    //cfg |= 1; // DBG_STARTUP
+
     if(gpioCfgSetInternals(cfg) != 0)
     {
         console_writeline("pigpio_init : Error: Setting internal cfg. failed!");
