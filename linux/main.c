@@ -124,34 +124,39 @@ static void init_gpio()
 {
     pigpio_init();
 
-    console_deb_writeline(
-        "init_gpio: Setting sense output line to HIGH at CBM..");
+    // console_deb_writeline(
+    //     "init_gpio: Setting sense output line to HIGH at CBM..");
     gpioSetMode(MT_TAPE_GPIO_PIN_NR_SENSE, PI_OUTPUT);
     gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!true));
     //
     // (inverted, because circuit inverts signal to CBM)
 
-    console_deb_writeline(
-        "init_gpio: Setting motor line to input with pull-down..");
+    // console_deb_writeline(
+    //     "init_gpio: Setting motor line to input with pull-down..");
     gpioSetMode(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_INPUT);
     gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_PUD_DOWN);
 
-    console_deb_writeline(
-        "init_gpio: Setting tape read output line to HIGH at CBM..");
+    // console_deb_writeline(
+    //     "init_gpio: Setting tape read output line to HIGH at CBM..");
     gpioSetMode(MT_TAPE_GPIO_PIN_NR_READ, PI_OUTPUT);
     gpioWrite(MT_TAPE_GPIO_PIN_NR_READ, (unsigned)(!true));
     //
     // (inverted, because circuit inverts signal to CBM)
 
-    console_deb_writeline(
-        "init_gpio: Setting tape write line to input with pull-down..");
+    // console_deb_writeline(
+    //     "init_gpio: Setting tape write line to input with pull-down..");
     gpioSetMode(MT_TAPE_GPIO_PIN_NR_WRITE, PI_INPUT);
     gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_WRITE, PI_PUD_DOWN);
 }
 
-static void deinit()
+static void deinit_gpio()
 {
     gpioTerminate();
+}
+
+static void deinit()
+{
+    deinit_gpio();
 
     free(s_mem);
     s_mem = NULL;
