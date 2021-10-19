@@ -196,6 +196,18 @@ int pigpio_create_wave_from_symbols(
 
 bool pigpio_init()
 {
+    int cfg = gpioCfgGetInternals();
+
+    console_deb_writeline("pigpio_init : Disabling signal handler..");
+
+    cfg |= PI_CFG_NOSIGHANDLER;  // (1<<10)
+
+    if(gpioCfgSetInternals(cfg) != 0)
+    {
+        console_writeline("pigpio_init : Error: Setting internal cfg. failed!");
+        return false;
+    }
+
     int const result = gpioInitialise();
 
     if(result == PI_INIT_FAILED)
