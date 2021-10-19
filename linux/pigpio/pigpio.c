@@ -132,8 +132,8 @@ int pigpio_create_wave_from_pulses(
 
     if(gpioWaveAddNew() != 0) // Not necessary.
     {
-	console_deb_writeline(
-	    "create_wave_from_pulses : Error: gpioWaveAddNew() failed!");
+	    console_deb_writeline(
+	        "create_wave_from_pulses : Error: gpioWaveAddNew() failed!");
         return -1;
     }
 
@@ -155,19 +155,19 @@ int pigpio_create_wave_from_pulses(
         return -1;
     }
 
-#ifndef NDEBUG
-    console_write("pigpio_create_wave_from_pulses: Waveform ID is \"");
-    console_write_dword_dec((uint32_t)wave_id);
-    console_writeline("\".");
-
-    console_write("pigpio_create_wave_from_pulses: Waveform size is ");
-    console_write_dword_dec((uint32_t)gpioWaveGetCbs());
-    console_write(" control blocks / ");
-    console_write_dword_dec((uint32_t)gpioWaveGetMicros());
-    console_write("us / ");
-    console_write_dword_dec((uint32_t)gpioWaveGetPulses());
-    console_writeline(" pulses.");
-#endif //NDEBUG
+// #ifndef NDEBUG
+//     console_write("pigpio_create_wave_from_pulses: Waveform ID is \"");
+//     console_write_dword_dec((uint32_t)wave_id);
+//     console_writeline("\".");
+//
+//     console_write("pigpio_create_wave_from_pulses: Waveform size is ");
+//     console_write_dword_dec((uint32_t)gpioWaveGetCbs());
+//     console_write(" control blocks / ");
+//     console_write_dword_dec((uint32_t)gpioWaveGetMicros());
+//     console_write("us / ");
+//     console_write_dword_dec((uint32_t)gpioWaveGetPulses());
+//     console_writeline(" pulses.");
+// #endif //NDEBUG
 
     return wave_id;
 }
@@ -198,7 +198,7 @@ bool pigpio_init()
 {
     int cfg = gpioCfgGetInternals();
 
-    console_deb_writeline("pigpio_init : Disabling signal handler..");
+    //console_deb_writeline("pigpio_init : Disabling signal handler..");
 
     cfg |= PI_CFG_NOSIGHANDLER;  // (1<<10)
 
@@ -216,15 +216,15 @@ bool pigpio_init()
         return false;
     }
 
-#ifndef NDEBUG
-    console_write("pigpio_init: Max. waveform size is ");
-    console_write_dword_dec((uint32_t)gpioWaveGetMaxCbs());
-    console_write(" control blocks / ");
-    console_write_dword_dec((uint32_t)gpioWaveGetMaxMicros());
-    console_write("us / ");
-    console_write_dword_dec((uint32_t)gpioWaveGetMaxPulses());
-    console_writeline(" pulses.");
-#endif //NDEBUG
+// #ifndef NDEBUG
+//     console_write("pigpio_init: Max. waveform size is ");
+//     console_write_dword_dec((uint32_t)gpioWaveGetMaxCbs());
+//     console_write(" control blocks / ");
+//     console_write_dword_dec((uint32_t)gpioWaveGetMaxMicros());
+//     console_write("us / ");
+//     console_write_dword_dec((uint32_t)gpioWaveGetMaxPulses());
+//     console_writeline(" pulses.");
+// #endif //NDEBUG
 
     return true;
 }
