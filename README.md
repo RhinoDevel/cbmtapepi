@@ -182,6 +182,7 @@ Connect Raspberry Pi and Commodore machine this way:
 
 ## Next project goals
 
+- Optionally use datassette port 2 on CBM/PET machines.
 - Support loading PRG files with filenames longer than 12 characters.
 - List directory content without erasing possibly existing PRG in memory when using fast mode.
 - Show destination memory addresses and sizes of PRG files in directory listing.
