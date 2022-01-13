@@ -61,21 +61,21 @@ set -e
 export PREFIX="$HOME/Documents/pios/cross/result"
 export PATH="$PREFIX/bin:$PATH"
 
-# # WORKS:
-# #
-# # raspi1 / BCM2835 / ARM1176JZF-S:
-# #
-# export MTUNE=arm1176jzf-s
-# export MFPU=vfp
-# export MARCH=armv6zk
-#
 # WORKS:
 #
-# raspi2 / BCM2836 / Cortex-A7:
+# raspi0 and raspi1 / BCM2835 / ARM1176JZF-S:
 #
-export MTUNE=cortex-a7
-export MFPU=neon-vfpv4
-export MARCH=armv7-a
+export MTUNE=arm1176jzf-s
+export MFPU=vfp
+export MARCH=armv6zk
+#
+# # WORKS:
+# #
+# # raspi2 / BCM2836 / Cortex-A7 and also works for raspi3 / BCM2837:
+# #
+# export MTUNE=cortex-a7
+# export MFPU=neon-vfpv4
+# export MARCH=armv7-a
 
 export OPTIONS_GCC_ALL=" \
     -DNDEBUG \
@@ -90,9 +90,8 @@ export OPTIONS_GCC_C="$OPTIONS_GCC_ALL \
     -O2 \
     -std=gnu99 \
     -Wall \
+    -Werror \
     -Wextra"
-
-#    -Werror \
 
 export MT_CC="arm-none-eabi-gcc $OPTIONS_GCC_C -c"
 
@@ -151,7 +150,11 @@ echo Linking..
 
 # Link:
 #
-arm-none-eabi-ld \
+arm-none-eabi-gcc \
+    $OPTIONS_GCC_C \
+    \
+    -nostdlib \
+    \
     -T app/memmap.ld \
     \
     app/boot.o \
@@ -189,6 +192,8 @@ arm-none-eabi-ld \
     hardware/framebuffer/framebuffer.o \
     hardware/irqcontroller/irqcontroller.o \
     hardware/sdcard/sdcard.o \
+    \
+    -l gcc \
     \
     -o kernel.elf
 

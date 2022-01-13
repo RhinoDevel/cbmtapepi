@@ -23,71 +23,76 @@
 _start:
 
 _handler_arm_reset:
-///*
-    // *************************************
-    // *** Uncomment for PERI_BASE_PI2!  *** START
-    // *************************************
+
+/*
+    // ****************************************
+    // *** Uncomment for PERI_BASE_PI2AND3! *** START
+    // ****************************************
 
     // Return CPU ID (0, 1, 2 or 3) of the CPU currently executing this code:
     //
     mrc     p15, #0, r3, c0, c0, #5 // R3 <= Multiprocessor affinity register (MPIDR).
-    and     r3, r3, #3 // R3 = CPU ID (Bits 0 and 1).
+    and     r3, r3, #3 // R3 = CPU ID (bits 0 and 1).
     cmp     r3, #0
-    beq     go_supervisor // If CPU ID is not 0, branch to infinite loop.
 
-    cmp     r3, #1
-    bne     core_loop
-
-    // Set stack address for CPU 1 (grows downwards to address 0):
+    bne     halt // If CPU ID is NOT 0, branch to infinite loop.
     //
-	mov sp, #0x02F00000 // Above 32kB address. // TODO: Test / find out, if we already are in supervisor mode, here!
-    //ldr sp, =0x04000000 // Above 64MB address.
-    bal     enable_act_led
+    // Code to test, if starting secondary cores worked (it works on Raspi 2):
+    //
+//    cmp     r3, #1
+//    bne     halt // If CPU ID is neither 0, nor 1, branch to infinite loop.
+//    //
+//    // Set stack address for CPU 1 (grows downwards to address 0):
+//    //
+//    // * TODO: Test / find out, if we already are in supervisor mode, here
+//    //         (otherwise setting SP won't work, here..)!
+//    //
+//	mov sp, #0x02F00000 // Above 32kB address.
+//    //ldr sp, =0x04000000 // Above 64MB address.
+//    //
+//    bal     act_led_blink_loop // Let CPU 1 blink ACT LED infinitely.
 
-core_loop: // Infinite loop for cores 1, 2 and 3.
-    b core_loop
-
-go_supervisor:
     // Switch from hypervisor to supervisor mode, if necessary:
     //
     .arch_extension virt
-    mrs		r3, cpsr
-    and		r3, r3, #0x1F
-    cmp		r3, #0x13 // SVR mode.
-    beq		setup_ivt
-    mov		r3, #0x13 // SVR mode.
-    msr		spsr_cxsf, r3
-    add		r3, pc, #4
-    msr		ELR_hyp, r3
-    eret
+    mrs		r3, cpsr // Copies current program status register content to R3.
+    and		r3, r3, #0b11111//#0x1F // Get processor mode bits from CPSR-copy
+                                    // held in R3.
+    cmp		r3, #0b10011//#0x13 // Are we in SVR (supervisor) mode, yet?
+    beq		is_supervisor // We are already in SVR mode. Go on below.
     //
-// Another option to do this (always switches to SVR, assumes HYP to be active):
-//
-//    .arch_extension virt
-//    .arch_extension sec
-//    mrs r3, cpsr
-//    bic r3, r3, #0x1F
-//    orr r3, r3, #0x13 // SVR mode.
-//    msr spsr_cxsf, r3
-//    add r3, pc, #4
-//    msr ELR_hyp, r3
-//    eret
+    // We are assuming to be in hypervisor mode:
+    //
+    mov		r3, #0b10011//#0x13 // Set R3's "mode bits" to SVR mode.
+    msr		spsr_cxsf, r3 // Update whole [by adding "c" (bits 0-7), "x" (bits
+                          // 8-15), "s" (bits 16-23) and "f" (bits 24-31) as
+                          // fields - order is not important] saved program
+                          // status register with contents of R3. 
+    add		r3, pc, #4
+    msr		ELR_hyp, r3 // ELR_hyp holds the address to return to, when an
+                        // exception-taken-to-HYP.
+    eret // Return from an exception-taken-to-HYP. This instructions belongs to
+         // virtualization extensions. In HYP mode, PC will be loaded from
+         // ELR_hyp, CPSR from SPSR_hyp.
+
+is_supervisor:
 
     // On a Raspberry Pi 2, at least L1 instruction cache is necessary for speed
     // (without it, e.g a simple loop counting from 0 <= 50 takes ~16us!):
     //
-    mrc p15, #0, r3, c1, c0, #0 // R3 <= System Control Register
+    mrc p15, #0, r3, c1, c0, #0 // R3 <= System control register
     orr r3, #0x0800 // Branch prediction (bit 11).
     orr r3, #0x1000 // L1 instruction caches (Bit 12).
     orr r3, #0x0004 // L1 data cache (bit 2).
-    mcr p15, #0, r3, c1, c0, #0 // System Control Register <= R3
+    mcr p15, #0, r3, c1, c0, #0 // System control register <= R3
+*/
 
-setup_ivt:
-//*/
+    // *****************************************
+    // *** Uncomment for PERI_BASE_PI2AND3!  *** END
+    // *****************************************
 
-    // *************************************
-    // *** Uncomment for PERI_BASE_PI2!  *** END
-    // *************************************
+    // TODO: Make sure that enabled branch prediction and L1 caches (see above)
+    //       do not make problems. If not, enable them for Pi 1, too.
 
     // Copy interrupt vector table and constants into position:
 
@@ -119,7 +124,7 @@ setup_ivt:
     mov r3, #0xD3 // #(0x13 | 0x80 | 0x40)  // SVR mode | IRQ inhibit | FIRQ inhibit.
     msr cpsr_c, r3
 
-	// Set stack address for CPU 0 (grows downwards to address 0):
+	// Set stack address (grows downwards to address 0):
     //
 	mov sp, #0x03700000 // Above 32kB address.
     //ldr sp, =0x04000000 // Above 64MB address.
@@ -146,10 +151,10 @@ setup_ivt:
 	ldr r3, =kernel_main
 	blx r3
 
-	// Halt:
+	// Halt (also used for unused cores in multiprocessor system - see above):
     //
 halt:
-	wfe // Wait for event (hint).
+	wfe // Wait for event (hint). Allows a core to enter low-power state!
 	b halt
 
 ivt_src:

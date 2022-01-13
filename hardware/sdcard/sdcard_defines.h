@@ -7,7 +7,6 @@
 // https://raw.githubusercontent.com/moizumi99/RPiHaribote/master/haribote/sdcard.c
 //
 // Includes comments by other authors, too.
-//
 // *****************************************************************************
 
 #ifndef MT_SDCARD_DEFINES
@@ -32,7 +31,6 @@
 #define TM_MULTI_BLOCK   0x00000020
 #define TM_DAT_DIR_HC    0x00000000
 #define TM_DAT_DIR_CH    0x00000010
-#define TM_AUTO_CMD12    0x00000004
 #define TM_BLKCNT_EN     0x00000002
 #define TM_MULTI_DATA    (CMD_IS_DATA | TM_MULTI_BLOCK | TM_BLKCNT_EN)
 
@@ -71,11 +69,7 @@
 #define FREQ_SETUP           400000  // 400 Khz
 #define FREQ_NORMAL        25000000  // 25 Mhz
 
-// SLOTISR_VER values used:
-//
-#define HOST_SPEC_NUM              0x00ff0000
-#define HOST_SPEC_NUM_SHIFT        16
-#define HOST_SPEC_V2               1
+#define HOST_SPEC_V2 1
 
 // STATUS register settings used:
 //
@@ -99,24 +93,21 @@
 
 // R1 (status) values used:
 //
-#define ST_CARD_STATE        0x00001e00  // 12:9
 #define ST_APP_CMD           0x00000020  // 5
 
-#define R1_CARD_STATE_SHIFT  9
 #define R1_ERRORS_MASK       0xfff9c004  // All bits which indicate errors.
 
 // R3 (ACMD41 APP_SEND_OP_COND) used:
 //
 #define R3_COMPLETE    0x80000000
 #define R3_CCS         0x40000000
-#define R3_S18A        0x01000000
 
 // R6 (CMD3 SEND_REL_ADDR) used:
 //
 #define R6_RCA_MASK    0xffff0000
 
 // Response types.
-// Note that on the PI, the index and CRC are dropped, leaving 32 bits in RESP0.
+// Note that on the Pi, the index and CRC are dropped, leaving 32 bits in RESP0.
 #define RESP_NO    0     // No response
 #define RESP_R1    1     // 48  RESP0    contains card status
 #define RESP_R1b  11     // 48  RESP0    contains card status, data line indicates busy
@@ -131,32 +122,28 @@
 
 // Command indexes in the command table (just the used ones are listed, here):
 //
-#define IX_GO_IDLE_STATE    0
-#define IX_ALL_SEND_CID     1
-#define IX_SEND_REL_ADDR    2
-#define IX_CARD_SELECT      5
-#define IX_SEND_IF_COND     6
-#define IX_SEND_CSD         7
-#define IX_STOP_TRANS       10
-#define IX_SEND_STATUS      11
-#define IX_SET_BLOCKLEN     13
-#define IX_READ_SINGLE      14
-#define IX_READ_MULTI       15
-#define IX_SET_BLOCKCNT     18
-#define IX_WRITE_SINGLE     19
-#define IX_WRITE_MULTI      20
-#define IX_ERASE_WR_ST      25
-#define IX_ERASE_WR_END     26
-#define IX_ERASE            27
-#define IX_APP_CMD          29
-#define IX_APP_CMD_RCA      30 // APP_CMD used once we have the RCA.
-
+#define IX_GO_IDLE_STATE     0
+#define IX_ALL_SEND_CID      1 
+#define IX_SEND_REL_ADDR     2
+#define IX_CARD_SELECT       3
+#define IX_SEND_IF_COND      4
+#define IX_SEND_CSD          5
+#define IX_STOP_TRANS        6
+#define IX_SET_BLOCKLEN      7
+#define IX_READ_SINGLE       8
+#define IX_READ_MULTI        9
+#define IX_SET_BLOCKCNT     10
+#define IX_WRITE_SINGLE     11
+#define IX_WRITE_MULTI      12
+#define IX_APP_CMD          13
+#define IX_APP_CMD_RCA      14 // APP_CMD used once we have the RCA.
+//
 // Commands hereafter require APP_CMD (just the used ones are listed, here):
 //
-#define IX_APP_CMD_START    32
-#define IX_SET_BUS_WIDTH    32
-#define IX_APP_SEND_OP_COND 36
-#define IX_SEND_SCR         38
+#define IX_SET_BUS_WIDTH    15
+#define IX_APP_CMD_START    IX_SET_BUS_WIDTH
+#define IX_APP_SEND_OP_COND 16
+#define IX_SEND_SCR         17
 
 // CSD flags:
 //
@@ -166,15 +153,10 @@
 //  - in V1 the size is 12 bits with a 3 bit multiplier
 //  - in V1 currents for read and write are specified
 //  - in V2 the size is 22 bits, no multiplier, no currents
-//
-#define CSD0_VERSION               0x00c00000
-#define CSD0_V1                    0x00000000
-#define CSD0_V2                    0x00400000
 
 #define CSD1VN_READ_BL_LEN         0x00000f00
 #define CSD1VN_READ_BL_LEN_SHIFT   8
 
-#define CSD3VN_WRITE_BL_LEN        0x0003c000
 #define CSD3VN_FILE_FORMAT         0x0000000c
 #define CSD3VN_FILE_FORMAT_HDD     0x00000000
 #define CSD3VN_FILE_FORMAT_DOSFAT  0x00000004
@@ -194,25 +176,14 @@
 
 // SCR flags used:
 // NOTE: SCR is big-endian, so flags appear byte-wise reversed from the spec.
-#define SCR_STRUCTURE              0x000000f0
 
-#define SCR_SD_SPEC                0x0000000f
-
-#define SCR_SD_BUS_WIDTH_1         0x00000100
 #define SCR_SD_BUS_WIDTH_4         0x00000400
 
 #define SCR_CMD_SUPP_SET_BLKCNT    0x02000000
-#define SCR_CMD_SUPP_SPEED_CLASS   0x01000000
 
 // SD card types used:
 #define SD_TYPE_1    2
 #define SD_TYPE_2_SC 3
 #define SD_TYPE_2_HC 4
-
-// SD card functions supported values.
-#define SD_SUPP_SET_BLOCK_COUNT 0x80000000
-#define SD_SUPP_SPEED_CLASS     0x40000000
-#define SD_SUPP_BUS_WIDTH_4     0x20000000
-#define SD_SUPP_BUS_WIDTH_1     0x10000000
 
 #endif //MT_SDCARD_DEFINES

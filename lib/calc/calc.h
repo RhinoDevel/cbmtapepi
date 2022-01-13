@@ -6,6 +6,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 char calc_get_dec(uint8_t const n);
 
 /** Split given byte into high and low parts and fill characters at
@@ -33,9 +37,8 @@ uint32_t calc_get_pow_of_ten(uint32_t const val);
 
 uint32_t calc_str_to_dword(char const * const s);
 
-#ifndef MT_LINUX
-    unsigned int __aeabi_uidiv(
-        unsigned int numerator, unsigned int denominator);
-#endif //MT_LINUX
+#ifdef __cplusplus
+}
+#endif
 
 #endif //MT_CALC

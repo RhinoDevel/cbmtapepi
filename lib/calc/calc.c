@@ -4,7 +4,21 @@
 #include <stdint.h>
 
 #include "calc.h"
-#include "../str/str.h"
+
+/**
+ * - Same functionality as str_get_len(), but also defined here to avoid
+ *   dependency from str.
+ */
+static uint32_t get_str_len(char const * const s)
+{
+    uint32_t ret_val = 0;
+
+    while(s[ret_val] != '\0')
+    {
+        ++ret_val;
+    }
+    return ret_val;
+}
 
 static char get_hex(uint8_t const n)
 {
@@ -108,7 +122,7 @@ uint32_t calc_get_pow_of_ten(uint32_t const val)
 
 uint32_t calc_str_to_dword(char const * const s)
 {
-    uint32_t const len = str_get_len(s);
+    uint32_t const len = get_str_len(s);
 
     uint32_t ret_val = 0;
 

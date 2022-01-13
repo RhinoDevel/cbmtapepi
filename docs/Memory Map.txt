@@ -24,12 +24,7 @@
 ^
 | (stack grows downwards)
 |
-0x02F00000 / 47 MB  Top of CPU 1 stack (4 byte / 32 bit - aligned).
-
-^
-| (stack grows downwards)
-|
-0x03700000 / 55 MB  Top of CPU 0 stack (4 byte / 32 bit - aligned).
+0x03700000 / 55 MB  Top of stack (4 byte / 32 bit - aligned).
 
 ^
 | (stack grows downwards)
