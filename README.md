@@ -1,7 +1,7 @@
 *This is **not** a release version of the README! Please follow [this link](https://github.com/RhinoDevel/cbmtapepi/blob/v1.7.0/README.md) to get to the README of **CBM Tape Pi**'s latest stable release version ([v1.7.0](https://github.com/RhinoDevel/cbmtapepi/releases/tag/v1.7.0)).*
 
 # CBM Tape Pi
-*Marcel Timm, RhinoDevel, 2021, [rhinodevel.com](http://rhinodevel.com/)*
+*Marcel Timm, RhinoDevel, 2024, [rhinodevel.com](http://rhinodevel.com/)*
 
 ![CBM Tape Pi hardware](./docs/title.jpg)
 
@@ -192,7 +192,7 @@ Connect Raspberry Pi and Commodore machine this way:
 - Read/write from/to USB storage device.
 - New command: "md" to create a folder.
 - Automatically create a folder (if missing) and use it as "root" (e.g. "CBMTAPEPI").
-- ESP8266 and ESP32 port of CBM Tape Pi.
-- (Raspbian) Linux port of CBM Tape Pi, see [Linux README](./linux/README.md).
+- ESP8266 and ESP32 port of CBM Tape Pi, see [ESP port](./arduino).
+- (Raspbian) Linux port of CBM Tape Pi (via DMA trickery), see [Linux README](./linux/README.md).
 
 ![RhinoDevel](./data/rhino.bmp)
