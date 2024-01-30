@@ -293,16 +293,13 @@ static uint8_t* create_symbols_from_file(
 }
 
 /**
- * - Header sending must stop when done, content sending must be an infinite
- *   loop (by concatenating the last CB and the first). 
+ * - Header and content sending both must stop when done.
  */
 static bool send_cbs(
     struct dma_cb * const header_cbs,
     int const header_cbs_count,
     struct dma_cb * const content_cbs)
 {
-    // TODO: Not sure if this is working with motor on/off..!
-
     bool motor_done = false;
 
     if(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
@@ -327,7 +324,7 @@ static bool send_cbs(
         return true;
     }
 
-    dma_start(header_cbs_count); // Infinite loop of CBs.
+    dma_start(header_cbs_count); // Sends content once.
     console_deb_writeline("send_cbs: Waiting for sending content to finish..");
     while(s_stop == 0)
     {
@@ -346,7 +343,7 @@ static bool send_cbs(
         console_deb_writeline("send_cbs: Motor off. Waiting (2)..");        
         motor_done = true;
         
-        // TODO: NO pause possible!? Necessary?
+        dma_pause();
 
         while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
         {
@@ -359,7 +356,7 @@ static bool send_cbs(
 
         console_deb_writeline("send_cbs: Motor on. Resuming..");
 
-        // TODO: NO resume possible!? Necessary?
+        dma_resume();
     }
     if(s_stop != 0)
     {
