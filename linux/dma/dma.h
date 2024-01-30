@@ -52,12 +52,17 @@
 //
 // You have to make sure to wait long enough, depending on the use case.
 //
+// Eventually you want to use dma_pause() and dma_resume().
+//
 // 5) Make sure that DMA transfer is stopped and deinitialize:
 // -----------------------------------------------------------
 // dma_stop();
 // dma_deinit();
 
 uint32_t dma_get_bus_addr_from_vc_ptr(void * const ptr);
+
+void dma_pause();
+void dma_resume();
 
 void dma_start(int const cb_offset);
 void dma_stop();

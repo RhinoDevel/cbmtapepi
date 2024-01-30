@@ -65,7 +65,7 @@ static void enable()
 {
     assert(s_mapped_dmac != NULL);
 
-    volatile uint32_t * const enable_reg = 
+    volatile uint32_t * const enable_reg =
         REG_PTR(s_mapped_dmac, s_offset_enable);
 
     *enable_reg = *enable_reg | (uint32_t)(1 << s_channel); // Enable channel.
@@ -75,6 +75,42 @@ static void enable()
 uint32_t dma_get_bus_addr_from_vc_ptr(void * const ptr)
 {
     return VC_PTR_TO_BUS_ADDR(ptr);   
+}
+
+void dma_pause()
+{
+    assert(s_mapped_dmac != NULL);
+    assert(s_channel < 15); // See comment at definition.
+
+    volatile uint32_t * const cs_reg = REG_PTR(s_mapped_dmac, s_offset_cs);
+
+    // Page 47 - 50:
+    //
+    // 1098 7654   3210 9876   5432 1098   7654 3210
+    // 0011 0000 | 1111 1111 | 0000 0000 | 0000 0000
+    //                                             ^
+    //                                             |
+    //                                             ACTIVE = 0 => Pause!
+    //
+    *cs_reg = 0x30FF0000 & *cs_reg;
+}
+
+void dma_resume()
+{
+    assert(s_mapped_dmac != NULL);
+    assert(s_channel < 15); // See comment at definition.
+
+    volatile uint32_t * const cs_reg = REG_PTR(s_mapped_dmac, s_offset_cs);
+
+    // Page 47 - 50:
+    //
+    // 1098 7654   3210 9876   5432 1098   7654 3210
+    // 0000 0000 | 0000 0000 | 0000 0000 | 0000 0001
+    //                                             ^
+    //                                             |
+    //                                             ACTIVE = 1 => Resume!
+    //
+    *cs_reg = 0x00000001 | *cs_reg;
 }
 
 void dma_start(int const cb_offset)
@@ -102,8 +138,9 @@ void dma_stop()
 
 bool dma_is_busy()
 {
-    assert(false);
-    return false; // TODO: Implement!
+    volatile uint32_t * const cs_reg = REG_PTR(s_mapped_dmac, s_offset_cs);
+
+    return (*cs_reg & 2) != 0; // End flag.
 }
 
 void dma_deinit()
