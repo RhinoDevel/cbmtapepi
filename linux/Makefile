@@ -4,34 +4,34 @@
 
 CC=gcc
 
-#CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX -pthread
-CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX -pthread
+#CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX
+CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
 
-LDFLAGS=-lm -lpigpio -lrt
+LDFLAGS=
+
 SOURCES=\
 	main.c \
 	\
-	pigpio/pigpio.c \
-	\
-	../lib/mem/mem.c \
-	../lib/alloc/alloc.c \
-	../lib/alloc/alloc_mem.c \
-	../lib/alloc/nodemem.c \
-	../lib/str/str.c \
-	../lib/calc/calc.c \
-	../lib/console/console.c \
-	../lib/petasc/petasc.c \
+	dma/dma.c \
+	dma/clk/clk.c \
+	dma/gpio/gpio.c \
+	dma/inf/inf.c \
+	dma/mbo/mbo.c \
+	dma/mem/mem.c \
+	dma/pwm/pwm.c \
 	\
 	../hardware/gpio/gpio.c \
 	\
-	../app/tape/tape_input.c \
-	../app/tape/tape_extract_buf.c \
+	../lib/calc/calc.c \
+	../lib/console/console.c \
+	../lib/alloc/alloc.c \
+    ../lib/alloc/alloc_mem.c \
+    ../lib/alloc/nodemem.c \
+	../lib/str/str.c \
+	../lib/petasc/petasc.c \
+	\
 	../app/tape/tape_fill_buf.c \
-	../app/tape/tape_init.c \
-	../app/tape/tape_receive_buf.c \
-	../app/tape/tape_receive.c \
-	../app/tape/tape_send_buf.c \
-	../app/tape/tape_send.c \
+	../app/tape/tape_input.c
 
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cbmtapepi

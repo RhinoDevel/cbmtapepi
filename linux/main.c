@@ -9,18 +9,26 @@
 #include <sys/stat.h>
 #include <assert.h>
 #include <signal.h>
-#include <pigpio.h>
 
-#include "../lib/str/str.h"
-#include "../lib/alloc/alloc.h"
 #include "../lib/console/console_params.h"
 #include "../lib/console/console.h"
+#include "../lib/alloc/alloc.h"
+#include "../lib/str/str.h"
+#include "../lib/petasc/petasc.h"
+
+#include "../hardware/gpio/gpio_params.h"
+#include "../hardware/gpio/gpio.h"
+#include "../hardware/peribase.h"
+
 #include "../app/config.h"
-#include "../app/tape/tape_input.h"
 #include "../app/tape/tape_fill_buf.h"
+#include "../app/tape/tape_input.h"
+#include "../app/tape/tape_filetype.h"
 #include "../app/tape/tape_defines.h"
 #include "../app/petload/petload_c64tom.h"
-#include "pigpio/pigpio.h"
+
+#include "dma/dma.h"
+#include "dma/dma_cb.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
@@ -43,6 +51,14 @@ static uint8_t dummy_read()
 static void write_byte(uint8_t const byte)
 {
     putchar((int)byte);
+}
+
+/**
+ * - Remember that this will not work precisely! 
+ */
+static void busywait_microseconds(uint32_t const microseconds)
+{
+    usleep((useconds_t)microseconds);
 }
 
 off_t get_file_size(char const * const path)
@@ -122,42 +138,36 @@ static void init_console()
 
 static void init_gpio()
 {
-    pigpio_init();
+    // Initialize GPIO singleton:
+    //
+    gpio_init((struct gpio_params){
+        .wait_microseconds = busywait_microseconds,
+        .peri_base = PERI_BASE
+    });
 
     console_deb_writeline(
         "init_gpio: Setting sense output line to HIGH at CBM..");
-    gpioSetMode(MT_TAPE_GPIO_PIN_NR_SENSE, PI_OUTPUT);
-    gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!true));
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_SENSE, !true);
     //
     // (inverted, because circuit inverts signal to CBM)
 
     console_deb_writeline(
         "init_gpio: Setting motor line to input with pull-down..");
-    gpioSetMode(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_INPUT);
-    gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_MOTOR, PI_PUD_DOWN);
+    gpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_MOTOR);
 
     console_deb_writeline(
         "init_gpio: Setting tape read output line to HIGH at CBM..");
-    gpioSetMode(MT_TAPE_GPIO_PIN_NR_READ, PI_OUTPUT);
-    gpioWrite(MT_TAPE_GPIO_PIN_NR_READ, (unsigned)(!true));
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, !true);
     //
     // (inverted, because circuit inverts signal to CBM)
 
     console_deb_writeline(
         "init_gpio: Setting tape write line to input with pull-down..");
-    gpioSetMode(MT_TAPE_GPIO_PIN_NR_WRITE, PI_INPUT);
-    gpioSetPullUpDown(MT_TAPE_GPIO_PIN_NR_WRITE, PI_PUD_DOWN);
-}
-
-static void deinit_gpio()
-{
-    gpioTerminate();
+    gpio_set_input_pull_down(MT_TAPE_GPIO_PIN_NR_WRITE);
 }
 
 static void deinit()
 {
-    deinit_gpio();
-
     free(s_mem);
     s_mem = NULL;
 }
@@ -282,76 +292,46 @@ static uint8_t* create_symbols_from_file(
     return symbols;
 }
 
-static bool send_pulses(
-    gpioPulse_t * const header_pulses, int const header_count,
-    gpioPulse_t * const content_pulses, int const content_count)
+/**
+ * - Header sending must stop when done, content sending must be an infinite
+ *   loop (by concatenating the last CB and the first). 
+ */
+static bool send_cbs(
+    struct dma_cb * const header_cbs,
+    int const header_cbs_count,
+    struct dma_cb * const content_cbs)
 {
-    int send_result = -1, wave_id = -1;
+    // TODO: Not sure if this is working with motor on/off..!
+
     bool motor_done = false;
 
-    if(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 0)
+    if(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
     {
-        console_deb_writeline("send_pulses : Motor off. Waiting (1)..");
+        console_deb_writeline("send_cbs: Motor off. Waiting (1)..");
 
-        while(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 0 && s_stop == 0)
+        while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
         {
             ;
         }
     }
-
-    console_deb_writeline("send_pulses: Motor on. Sending..");
-
-    wave_id = pigpio_create_wave_from_pulses(
-        MT_TAPE_GPIO_PIN_NR_READ, header_pulses, header_count);
-    if(wave_id < 0)
-    {
-        gpioWaveClear();
-        return false;
-    }
-    send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
-    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
-    {
-        gpioWaveClear();
-        return false;
-    }
-    console_deb_writeline("send_pulses: Waiting for sending header to finish..");
-    while(gpioWaveTxBusy() == 1 && s_stop == 0)
+    console_deb_writeline("send_cbs: Motor on. Sending..");
+    dma_start(0); // Sends header once.
+    console_deb_writeline("send_cbs: Waiting for sending header to finish..");
+    while(dma_is_busy() && s_stop == 0)
     {
         ;
     }
-    if(gpioWaveTxStop() != 0)
-    {
-        gpioWaveClear();
-        return false;
-    }
-    if(gpioWaveClear() != 0)
-    {
-        return false;
-    }
     if(s_stop != 0)
     {
-        console_deb_writeline("\nsend_pulses: Stopping (1)..");
+        console_deb_writeline("\nsend_cbs: Stopping (1)..");
         return true;
     }
 
-    wave_id = pigpio_create_wave_from_pulses(
-        MT_TAPE_GPIO_PIN_NR_READ, content_pulses, content_count);
-    if(wave_id < 0)
+    dma_start(header_cbs_count); // Infinite loop of CBs.
+    console_deb_writeline("send_cbs: Waiting for sending content to finish..");
+    while(s_stop == 0)
     {
-        gpioWaveClear();
-        return false;
-    }
-    send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
-    if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
-    {
-        gpioWaveClear();
-        return false;
-    }
-    console_deb_writeline(
-        "send_pulses: Waiting for sending content to finish..");
-    while(gpioWaveTxBusy() == 1 && s_stop == 0)
-    {
-        if(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 1)
+        if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
         {
             continue; // Motor is on. Keep "endless tape" running.
         }
@@ -360,23 +340,15 @@ static bool send_pulses(
 
         if(motor_done)
         {
-            console_deb_writeline("send_pulses : Motor off. Done.");
+            console_deb_writeline("send_cbs: Motor off. Done.");
             break;
         }
-        console_deb_writeline("send_pulses : Motor off. Waiting (2)..");        
+        console_deb_writeline("send_cbs: Motor off. Waiting (2)..");        
         motor_done = true;
         
-        if(gpioWaveTxStop() != 0)
-        {
-            gpioWaveClear();
-            return false;
-        }
-        if(gpioWaveClear() != 0)
-        {
-            return false;
-        }
-        
-        while(gpioRead(MT_TAPE_GPIO_PIN_NR_MOTOR) == 0 && s_stop == 0)
+        // TODO: NO pause possible!? Necessary?
+
+        while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
         {
             ;
         }
@@ -385,39 +357,27 @@ static bool send_pulses(
             break;
         }
 
-        console_deb_writeline("send_pulses : Motor on. Resuming..");
+        console_deb_writeline("send_cbs: Motor on. Resuming..");
 
-        wave_id = pigpio_create_wave_from_pulses(
-            MT_TAPE_GPIO_PIN_NR_READ, content_pulses, content_count);
-        if(wave_id < 0)
-        {
-            gpioWaveClear();
-            return false;
-        }
-        send_result = gpioWaveTxSend(wave_id, PI_WAVE_MODE_ONE_SHOT_SYNC);
-        if(send_result == PI_BAD_WAVE_ID || send_result == PI_BAD_WAVE_MODE)
-        {
-            gpioWaveClear();
-            return false;
-        }
-    }
-    if(gpioWaveTxStop() != 0)
-    {
-        gpioWaveClear();
-        return false;
-    }
-    if(gpioWaveClear() != 0)
-    {
-        return false;
+        // TODO: NO resume possible!? Necessary?
     }
     if(s_stop != 0)
     {
-        console_deb_writeline("\nsend_pulses: Stopping (2)..");
+        console_deb_writeline("\nsend_cbs: Stopping (2)..");
         return true;
     }
+    console_deb_writeline("send_cbs: Sending done.");
+    return true;  
+}
 
-    console_deb_writeline("send_pulses: Sending done.");
-    return true;
+static struct dma_cb * fill_cbs(
+    struct dma_cb * const cbs,
+    uint32_t const gpio_pin_nr,
+    uint8_t * const symbols,
+    uint32_t const symbol_count,
+    int * const out_cbs_count)
+{
+    return NULL; // TODO: Implement!
 }
 
 /** Send bytes given via compatibility mode.
@@ -429,9 +389,12 @@ static bool send_bytes(
     bool const infinitely)
 {
     int symbol_count = 0,
-        header_pulse_count = 0, content_pulse_count = 0;
+        header_cbs_count = 0,
+        content_cbs_count = 0;
     uint8_t* symbols = NULL;
-    gpioPulse_t *header_pulses = NULL, *content_pulses = NULL;
+    struct dma_cb * cbs = NULL, 
+        * header_cbs = NULL,
+        * content_cbs = NULL;
 
     symbols = create_symbols_from_bytes(bytes, byte_count, name, &symbol_count);
     if(symbols == NULL)
@@ -441,52 +404,63 @@ static bool send_bytes(
 
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
-    header_pulses = pigpio_create_pulses(
-        MT_TAPE_GPIO_PIN_NR_READ,
-        symbols,
-        MT_HEADERDATABLOCK_LEN,
-        &header_pulse_count);
-    if(header_pulses == NULL)
+    cbs = dma_init(88 * 1000, 1000, 32 * 1024 * 1024); // TODO: Hard-coded!
+    if(cbs == NULL)
     {
         alloc_free(symbols);
         return false;
     }
 
-    assert(header_pulse_count == 4 * MT_HEADERDATABLOCK_LEN);
+    // TODO: Add check, that there is enough memory available for CBs!
 
-    content_pulses = pigpio_create_pulses(
+    header_cbs = fill_cbs(
+        cbs,
+        MT_TAPE_GPIO_PIN_NR_READ,
+        symbols,
+        MT_HEADERDATABLOCK_LEN,
+        &header_cbs_count);
+    if(header_cbs == NULL)
+    {
+        alloc_free(symbols);
+        dma_deinit();
+        return false;
+    }
+
+    // assert(header_pulse_count == 4 * MT_HEADERDATABLOCK_LEN);
+
+    content_cbs = fill_cbs(
+        cbs + header_cbs_count,
         MT_TAPE_GPIO_PIN_NR_READ,
         symbols + MT_HEADERDATABLOCK_LEN,
         symbol_count - MT_HEADERDATABLOCK_LEN,
-        &content_pulse_count);
+        &content_cbs_count);
+    if(content_cbs == NULL)
+    {
+        alloc_free(symbols);
+        dma_deinit();
+        return false;
+    }
 
-    assert(content_pulse_count == 4 * (symbol_count - MT_HEADERDATABLOCK_LEN));
+    // assert(content_pulse_count == 4 * (symbol_count - MT_HEADERDATABLOCK_LEN));
 
     alloc_free(symbols);
     symbols = NULL;
     symbol_count = 0;
 
-    if(content_pulses == NULL)
-    {
-        alloc_free(header_pulses);
-        return false;
-    }
-
-    console_writeline("send_bytes: Power-on Commodore, start LOAD command and press ENTER key.");
+    console_writeline(
+        "send_bytes: Power-on Commodore, start LOAD command and press ENTER key.");
     getchar();
 
     console_deb_writeline(
         "send_bytes: Setting sense output line to LOW at CBM..");
-    gpioWrite(MT_TAPE_GPIO_PIN_NR_SENSE, (unsigned)(!false));
+    gpio_write(MT_TAPE_GPIO_PIN_NR_SENSE, !false);
     //
     // (inverted, because circuit inverts signal to CBM)
 
     s_stop = 0;
     if(signal(SIGINT, signal_handler) == SIG_ERR)
     {
-        alloc_free(content_pulses);
-        alloc_free(header_pulses);
-        gpioWaveClear();
+        dma_deinit();
         return false;
     }
 
@@ -497,49 +471,28 @@ static bool send_bytes(
         
         do
         {
-            if(!send_pulses(
-                    header_pulses, header_pulse_count,
-                    content_pulses, content_pulse_count))
+            if(!send_cbs(header_cbs, header_cbs_count, content_cbs))
             {
-                alloc_free(content_pulses);
-                alloc_free(header_pulses);
-                gpioWaveClear();
+                dma_deinit();
                 return false;
             }
         }while(s_stop == 0);
 
         console_writeline("send_bytes: Stopping send loop and exiting..");
-        
-        if(gpioWaveTxStop() != 0)
-        {
-            alloc_free(content_pulses);
-            alloc_free(header_pulses);
-            gpioWaveClear();
-            return false;
-        }
     }
     else
     {
         console_writeline(
             "send_bytes: Starting sending (press CTRL+C to exit/stop)..");
 
-        if(!send_pulses(
-                header_pulses, header_pulse_count,
-                content_pulses, content_pulse_count))
+        if(!send_cbs(header_cbs, header_cbs_count, content_cbs))
         {
-            alloc_free(content_pulses);
-            alloc_free(header_pulses);
-            gpioWaveClear();
+            dma_deinit();
             return false;
         }
     }
 
-    alloc_free(content_pulses);
-    alloc_free(header_pulses);
-    if(gpioWaveClear() != 0)
-    {
-        return false;
-    }
+    dma_deinit();
     return true;
 }
 
