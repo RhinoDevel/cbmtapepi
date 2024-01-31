@@ -7,14 +7,14 @@ CC=gcc
 #CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX
 CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
 
-LDFLAGS=
+LDFLAGS=-lbcm_host
 
 SOURCES=\
 	main.c \
 	\
 	dma/dma.c \
 	dma/clk/clk.c \
-	dma/gpio/gpio.c \
+	dma/dma_gpio/dma_gpio.c \
 	dma/inf/inf.c \
 	dma/mbo/mbo.c \
 	dma/mem/mem.c \
@@ -39,7 +39,7 @@ EXECUTABLE=cbmtapepi
 all: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
 
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@

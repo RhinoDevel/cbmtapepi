@@ -15,7 +15,7 @@
 #include "dma.h"
 #include "dma_cb.h"
 #include "pwm/pwm.h"
-#include "gpio/gpio.h"
+#include "dma_gpio/dma_gpio.h"
 #include "deb.h"
 #include "mem/mem.h"
 #include "reg.h"

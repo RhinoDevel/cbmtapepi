@@ -39,8 +39,8 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include "gpio.h"
-#include "gpio_func.h"
+#include "dma_gpio.h"
+#include "dma_gpio_func.h"
 #include "../inf/inf.h"
 #include "../reg.h"
 
@@ -59,9 +59,9 @@
 
 #define GET_PIN_MASK(PIN_NR) (1 << ((uint32_t)(PIN_NR)) % 32)
 
-static void * s_base_ptr = NULL; // Set gpio_init() and gpio_deinit().
+static void * s_base_ptr = NULL; // Set dma_gpio_init() and dma_gpio_deinit().
 
-void gpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
+void dma_gpio_set_func(uint32_t const pin_nr, enum dma_gpio_func const func)
 {
     assert(s_base_ptr != NULL);
 
@@ -77,7 +77,7 @@ void gpio_set_func(uint32_t const pin_nr, enum gpio_func const func)
     *reg_ptr = val;
 }
 
-void gpio_write(uint32_t const pin_nr, bool const high)
+void dma_gpio_write(uint32_t const pin_nr, bool const high)
 {
     uint32_t const pin_mask = GET_PIN_MASK(pin_nr),
         offset = high ? GET_SET_OFFSET(pin_nr) : GET_CLR_OFFSET(pin_nr);
@@ -86,18 +86,18 @@ void gpio_write(uint32_t const pin_nr, bool const high)
     *reg_ptr = pin_mask;
 }
 
-void gpio_set_output(uint32_t const pin_nr, bool const high)
+void dma_gpio_set_output(uint32_t const pin_nr, bool const high)
 {
-    gpio_set_func(pin_nr, gpio_func_output);
-    gpio_write(pin_nr, high);
+    dma_gpio_set_func(pin_nr, dma_gpio_func_output);
+    dma_gpio_write(pin_nr, high);
 }
 
-void gpio_deinit()
+void dma_gpio_deinit()
 {
     s_base_ptr = NULL;
 }
 
-void gpio_init(void * const base_ptr)
+void dma_gpio_init(void * const base_ptr)
 {
     assert(s_base_ptr == NULL);
     assert(base_ptr != NULL);
