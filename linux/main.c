@@ -1,6 +1,8 @@
 
 // Marcel Timm, RhinoDevel, 2019apr23
 
+// TODO: Free ALL (including DMA-reserved Video Core RAM) memory on (e.g.) CTRL+C!
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -515,7 +517,7 @@ static struct dma_cb * add_pulse_long_to_cbs(struct dma_cb * const cbs)
 static struct dma_cb * add_symbol_to_cbs(
     uint8_t const symbol, struct dma_cb * const cbs)
 {
-    struct dma_cb * ret_val = NULL;
+    struct dma_cb * ret_val = cbs;
 
     switch((enum tape_symbol)symbol)
     {
@@ -555,6 +557,7 @@ static struct dma_cb * add_symbol_to_cbs(
         {
             assert(false);
             console_deb_writeline("add_symbol_to_cbs: Error: Unknown symbol!");
+            ret_val = NULL;
             break;
         }
     }
@@ -612,6 +615,8 @@ static bool send_bytes(
         return false;
     }
 
+    console_writeline("send_bytes: DMA is initialized.");
+
     // TODO: Add check, that there is enough memory available for CBs!
 
     // Misuse to not destroy 32 byte alignment of following real code blocks:
@@ -620,13 +625,16 @@ static bool send_bytes(
     s_data_cb->reserved0 = 1 << MT_TAPE_GPIO_PIN_NR_READ; // Pin data.
     s_data_cb->reserved1 = 1000; // TODO: Hard-coded PWM range.
 
-    header_cbs = fill_cbs(
-        cbs + 1,
+    header_cbs = cbs + 1;
+
+    content_cbs = fill_cbs(
+        header_cbs,
         symbols,
         MT_HEADERDATABLOCK_LEN,
         &header_cbs_count);
-    if(header_cbs == NULL)
+    if(content_cbs == NULL)
     {
+        s_data_cb = NULL;
         alloc_free(symbols);
         dma_deinit();
         return false;
@@ -638,13 +646,13 @@ static bool send_bytes(
 
     // assert(header_pulse_count == 4 * MT_HEADERDATABLOCK_LEN);
 
-    content_cbs = fill_cbs(
-        cbs + 1 + header_cbs_count,
+    if(fill_cbs(
+        content_cbs,
         symbols + MT_HEADERDATABLOCK_LEN,
         symbol_count - MT_HEADERDATABLOCK_LEN,
-        &content_cbs_count);
-    if(content_cbs == NULL)
+        &content_cbs_count) == NULL)
     {
+        s_data_cb = NULL;
         alloc_free(symbols);
         dma_deinit();
         return false;
@@ -656,6 +664,7 @@ static bool send_bytes(
 
     // assert(content_pulse_count == 4 * (symbol_count - MT_HEADERDATABLOCK_LEN));
 
+    s_data_cb = NULL;
     alloc_free(symbols);
     symbols = NULL;
     symbol_count = 0;
@@ -673,6 +682,7 @@ static bool send_bytes(
     s_stop = 0;
     if(signal(SIGINT, signal_handler) == SIG_ERR)
     {
+        s_data_cb = NULL;
         dma_deinit();
         return false;
     }
@@ -681,11 +691,12 @@ static bool send_bytes(
     {
         console_writeline(
             "send_bytes: Starting infinite sending (press CTRL+C to exit/stop)..");
-        
+
         do
         {
             if(!send_cbs(header_cbs, header_cbs_count, content_cbs))
             {
+                s_data_cb = NULL;
                 dma_deinit();
                 return false;
             }
@@ -700,11 +711,13 @@ static bool send_bytes(
 
         if(!send_cbs(header_cbs, header_cbs_count, content_cbs))
         {
+            s_data_cb = NULL;
             dma_deinit();
             return false;
         }
     }
 
+    s_data_cb = NULL;
     dma_deinit();
     return true;
 }
