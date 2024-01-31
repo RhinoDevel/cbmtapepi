@@ -140,7 +140,7 @@ bool dma_is_busy()
 {
     volatile uint32_t * const cs_reg = REG_PTR(s_mapped_dmac, s_offset_cs);
 
-    return (*cs_reg & 2) != 0; // End flag.
+    return (*cs_reg & 1) != 0; // ACTIVE flag.
 }
 
 void dma_deinit()
