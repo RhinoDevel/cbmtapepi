@@ -25,15 +25,20 @@
 #include "../app/tape/tape_input.h"
 #include "../app/tape/tape_filetype.h"
 #include "../app/tape/tape_defines.h"
+#include "../app/tape/tape_symbol.h"
 #include "../app/petload/petload_c64tom.h"
 
 #include "dma/dma.h"
 #include "dma/dma_cb.h"
+#include "dma/inf/inf.h"
+#include "dma/dma_gpio/dma_gpio.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
 static int const s_max_file_size = 64 * 1024; // 64 KB.
 static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
+
+static struct dma_cb * s_data_cb = NULL; // Set and reset by send_bytes().
 
 static volatile sig_atomic_t s_stop = 0;
 
@@ -367,14 +372,211 @@ static bool send_cbs(
     return true;  
 }
 
+static struct dma_cb * add_pulse_atomic_spacer(struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = cbs;
+
+    ret_val->src_addr = dma_get_bus_addr_from_vc_ptr(
+        (void*)(&(s_data_cb->reserved1))); // PWM data.
+    ret_val->dest_addr = DMA_PWM_OFFSET_TO_BUS_ADDR(PWM_OFFSET_FIF1);
+    
+    // Enable paced transfer via PWM:
+    //
+    ret_val->transfer_info =
+        (5 << 16) // PERMAP (bits 16-20, page 51). 5 <=> PWM.
+            | (1 << 6); // DEST_DREQ (bit 6, page 52).
+    
+    ret_val->transfer_len = 4;
+    ret_val->next_cb_addr = dma_get_bus_addr_from_vc_ptr((void*)(ret_val + 1));
+    ret_val->stride = 0;
+    ret_val->reserved0 = 0;
+    ret_val->reserved1 = 0;
+
+    return ret_val + 1;
+}
+
+static struct dma_cb * add_set_to_low(struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = cbs;
+
+    // TODO: Check, if polarity is correct (inverted?)!
+
+    ret_val->src_addr = dma_get_bus_addr_from_vc_ptr(
+        (void*)(&(s_data_cb->reserved0))); // GPIO pin data.
+    ret_val->dest_addr =
+        DMA_GPIO_OFFSET_TO_BUS_ADDR(GPIO_OFFSET_SET0); // Inverted
+    
+    // Enable paced transfer via PWM:
+    //
+    ret_val->transfer_info =
+        (5 << 16) // PERMAP (bits 16-20, page 51). 5 <=> PWM.
+            | (1 << 6); // DEST_DREQ (bit 6, page 52).
+    
+    ret_val->transfer_len = 4;
+    ret_val->next_cb_addr = dma_get_bus_addr_from_vc_ptr((void*)(ret_val + 1));
+    ret_val->stride = 0;
+    ret_val->reserved0 = 0;
+    ret_val->reserved1 = 0;
+
+    return ret_val + 1;
+}
+
+static struct dma_cb * add_set_to_high(struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = cbs;
+
+    // TODO: Check, if polarity is correct (inverted?)!
+
+    ret_val->src_addr = dma_get_bus_addr_from_vc_ptr(
+        (void*)(&(s_data_cb->reserved0))); // GPIO pin data.
+    ret_val->dest_addr =
+        DMA_GPIO_OFFSET_TO_BUS_ADDR(GPIO_OFFSET_CLR0); // Inverted
+    
+    // Enable paced transfer via PWM:
+    //
+    ret_val->transfer_info =
+        (5 << 16) // PERMAP (bits 16-20, page 51). 5 <=> PWM.
+            | (1 << 6); // DEST_DREQ (bit 6, page 52).
+    
+    ret_val->transfer_len = 4;
+    ret_val->next_cb_addr = dma_get_bus_addr_from_vc_ptr((void*)(ret_val + 1));
+    ret_val->stride = 0;
+    ret_val->reserved0 = 0;
+    ret_val->reserved1 = 0;
+
+    return ret_val + 1;
+}
+
+static struct dma_cb * add_pulse_short_to_cbs(struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = cbs;
+
+    // LOAD: Low to high.
+    //
+    // Short: 2840 Hz / 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88us HIGH.
+
+    ret_val = add_set_to_low(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_set_to_high(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+
+    return ret_val;
+}
+
+static struct dma_cb * add_pulse_medium_to_cbs(struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = cbs;
+
+    // LOAD: Low to high.
+    //
+    // Short:  2840 Hz / 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88 us HIGH.
+    // Medium: 1953 Hz / 512 us ~ 6 x 88 us = 3 x 88 us LOW + 3 x 88 us HIGH.
+
+    ret_val = add_set_to_low(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_set_to_high(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+
+    return ret_val;
+}
+
+static struct dma_cb * add_pulse_long_to_cbs(struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = cbs;
+
+    // LOAD: Low to high.
+    //
+    // Short:  2840 Hz / 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88 us HIGH.
+    // Medium: 1953 Hz / 512 us ~ 6 x 88 us = 3 x 88 us LOW + 3 x 88 us HIGH.
+    // Long:   1488 Hz / 672 us ~ 8 x 88 us = 4 x 88 us LOW + 4 x 88 us HIGH.
+
+    ret_val = add_set_to_low(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_set_to_high(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+    ret_val = add_pulse_atomic_spacer(ret_val);
+
+    return ret_val;
+}
+
+/**
+ * - Returns NULL on error (that must never happen).
+ */
+static struct dma_cb * add_symbol_to_cbs(
+    uint8_t const symbol, struct dma_cb * const cbs)
+{
+    struct dma_cb * ret_val = NULL;
+    uint32_t f = 0, l = 0;
+
+    switch((enum tape_symbol)symbol)
+    {
+        case tape_symbol_zero:
+        {
+            ret_val = add_pulse_short_to_cbs(ret_val);
+            ret_val = add_pulse_medium_to_cbs(ret_val);
+            break;
+        }
+        case tape_symbol_one:
+        {
+            ret_val = add_pulse_medium_to_cbs(ret_val);
+            ret_val = add_pulse_short_to_cbs(ret_val);
+            break;
+        }
+        case tape_symbol_sync:
+        {
+            ret_val = add_pulse_short_to_cbs(ret_val);
+            ret_val = add_pulse_short_to_cbs(ret_val);
+            break;
+        }
+        case tape_symbol_new:
+        {
+            ret_val = add_pulse_long_to_cbs(ret_val);
+            ret_val = add_pulse_medium_to_cbs(ret_val);
+            break;
+        }
+        case tape_symbol_end: // Used for transmit block gap start, only.
+        {
+            ret_val = add_pulse_long_to_cbs(ret_val);
+            ret_val = add_pulse_short_to_cbs(ret_val);
+            break;
+        }
+
+        case tape_symbol_err: // (falls through)
+        default: // Must not happen.
+        {
+            assert(false);
+            console_deb_writeline("add_symbol_to_cbs: Error: Unknown symbol!");
+            break;
+        }
+    }
+    return ret_val;
+}
+
 static struct dma_cb * fill_cbs(
     struct dma_cb * const cbs,
-    uint32_t const gpio_pin_nr,
     uint8_t * const symbols,
     uint32_t const symbol_count,
     int * const out_cbs_count)
 {
-    return NULL; // TODO: Implement!
+    struct dma_cb * ret_val = cbs;
+
+    for(int i = 0;i < symbol_count; ++i)
+    {
+        ret_val = add_symbol_to_cbs(symbols[i], ret_val);
+    }
+    *out_cbs_count = ret_val - cbs;
+    return ret_val;
 }
 
 /** Send bytes given via compatibility mode.
@@ -410,9 +612,14 @@ static bool send_bytes(
 
     // TODO: Add check, that there is enough memory available for CBs!
 
+    // Misuse to not destroy 32 byte alignment of following real code blocks:
+    //
+    s_data_cb = cbs;
+    s_data_cb->reserved0 = 1 << MT_TAPE_GPIO_PIN_NR_READ; // Pin data.
+    s_data_cb->reserved1 = 1000; // TODO: Hard-coded PWM range.
+
     header_cbs = fill_cbs(
-        cbs,
-        MT_TAPE_GPIO_PIN_NR_READ,
+        cbs + 1,
         symbols,
         MT_HEADERDATABLOCK_LEN,
         &header_cbs_count);
@@ -426,8 +633,7 @@ static bool send_bytes(
     // assert(header_pulse_count == 4 * MT_HEADERDATABLOCK_LEN);
 
     content_cbs = fill_cbs(
-        cbs + header_cbs_count,
-        MT_TAPE_GPIO_PIN_NR_READ,
+        cbs + 1 + header_cbs_count,
         symbols + MT_HEADERDATABLOCK_LEN,
         symbol_count - MT_HEADERDATABLOCK_LEN,
         &content_cbs_count);
