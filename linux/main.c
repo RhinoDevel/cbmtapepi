@@ -27,7 +27,10 @@
 #include "../app/tape/tape_defines.h"
 #include "../app/tape/tape_symbol.h"
 #include "../app/petload/petload_c64tom.h"
+#include "../app/petload/petload_pet4.h"
+#include "../app/petload/petload_pet4tom.h"
 
+#include "dma/pwm/pwm.h"
 #include "dma/dma.h"
 #include "dma/dma_cb.h"
 #include "dma/inf/inf.h"
@@ -708,6 +711,24 @@ static bool send_petload_c64tom(bool const infinitely)
         infinitely);
 }
 
+static bool send_petload_pet4(bool const infinitely)
+{
+    return send_bytes(
+        (uint8_t*)s_petload_pet4, // *** CONST CAST ***
+        sizeof s_petload_pet4  / sizeof *s_petload_pet4,
+        "pet4", // TODO: Use correct name (to help user)!
+        infinitely);
+}
+
+static bool send_petload_pet4tom(bool const infinitely)
+{
+    return send_bytes(
+        (uint8_t*)s_petload_pet4tom, // *** CONST CAST ***
+        sizeof s_petload_pet4tom  / sizeof *s_petload_pet4tom,
+        "pet4tom", // TODO: Use correct name (to help user)!
+        infinitely);
+}
+
 /** Send file with given name/path via compatibility mode.
  */
 static bool send_file(char * const file_name, bool const infinitely)
@@ -802,6 +823,22 @@ static bool exec(int const argc, char * const argv[])
                 }
                 return send_petload_c64tom(true);
             }
+            case 'v':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
+                return send_petload_pet4(false);
+            }
+            case 'w':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
+                return send_petload_pet4tom(true);
+            }
             case 'y':
             {
                 if(argc != 3)
@@ -826,6 +863,10 @@ static bool exec(int const argc, char * const argv[])
         "t = Send C64 TOM wedge via compatibility mode once."
         "\n"
         "u = Send C64 TOM wedge via compatibility mode in a loop."
+        "\n"
+        "v = Send PET BASIC v4 wedge via compatibility mode once."
+        "\n"
+        "w = Send PET BASIC v4 TOM wedge via compatibility mode in a loop."
         "\n"
         "y <filename> = Output file as compatibility mode symbols.");
     return false;
