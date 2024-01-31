@@ -520,7 +520,6 @@ static struct dma_cb * add_symbol_to_cbs(
     uint8_t const symbol, struct dma_cb * const cbs)
 {
     struct dma_cb * ret_val = NULL;
-    uint32_t f = 0, l = 0;
 
     switch((enum tape_symbol)symbol)
     {
