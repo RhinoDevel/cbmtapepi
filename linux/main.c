@@ -402,8 +402,6 @@ static struct dma_cb * add_set_to_low(struct dma_cb * const cbs)
 {
     struct dma_cb * ret_val = cbs;
 
-    // TODO: Check, if polarity is correct (inverted?)!
-
     ret_val->src_addr = dma_get_bus_addr_from_vc_ptr(
         (void*)(&(s_data_cb->reserved0))); // GPIO pin data.
     ret_val->dest_addr =
@@ -427,8 +425,6 @@ static struct dma_cb * add_set_to_low(struct dma_cb * const cbs)
 static struct dma_cb * add_set_to_high(struct dma_cb * const cbs)
 {
     struct dma_cb * ret_val = cbs;
-
-    // TODO: Check, if polarity is correct (inverted?)!
 
     ret_val->src_addr = dma_get_bus_addr_from_vc_ptr(
         (void*)(&(s_data_cb->reserved0))); // GPIO pin data.
@@ -603,6 +599,10 @@ static bool send_bytes(
         return false;
     }
 
+    console_write("send_bytes: Symbol count: ");
+    console_write_dword_dec(symbol_count);
+    console_writeline("");
+
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
     cbs = dma_init(88 * 1000, 1000, 32 * 1024 * 1024); // TODO: Hard-coded!
@@ -632,6 +632,10 @@ static bool send_bytes(
         return false;
     }
 
+    console_write("send_bytes: Header CBS count: ");
+    console_write_dword_dec(header_cbs_count);
+    console_writeline("");
+
     // assert(header_pulse_count == 4 * MT_HEADERDATABLOCK_LEN);
 
     content_cbs = fill_cbs(
@@ -645,6 +649,10 @@ static bool send_bytes(
         dma_deinit();
         return false;
     }
+
+    console_write("send_bytes: Content CBS count: ");
+    console_write_dword_dec(content_cbs_count);
+    console_writeline("");
 
     // assert(content_pulse_count == 4 * (symbol_count - MT_HEADERDATABLOCK_LEN));
 
