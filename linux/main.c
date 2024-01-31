@@ -608,7 +608,7 @@ static bool send_bytes(
 
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
-    cbs = dma_init(88 * 1000, 1000, 32 * 1024 * 1024); // TODO: Hard-coded!
+    cbs = dma_init(88 * 1000, 1000, 8 * 1024 * 1024); // TODO: Hard-coded!
     if(cbs == NULL)
     {
         alloc_free(symbols);
