@@ -133,6 +133,7 @@ void dma_start(int const cb_offset)
 void dma_stop()
 {
     pwm_stop();
+    // TODO: Disable channel [see enable()]!
     reset();
 }
 
