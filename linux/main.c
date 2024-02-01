@@ -338,7 +338,7 @@ static bool send_cbs(
 
     dma_start(1 + header_cbs_count); // Sends content once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending content to finish..");
-    while(s_stop == 0)
+    while(dma_is_busy() && s_stop == 0)
     {
         if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
         {
@@ -624,7 +624,7 @@ static bool send_bytes(
 
     cbs = dma_init(
         113640, // TODO: Hard-coded!
-        10, // TODO: Hard-coded!
+        20, // TODO: Hard-coded!
         8 * 1024 * 1024); // TODO: Hard-coded!
     if(cbs == NULL)
     {
