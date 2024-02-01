@@ -122,7 +122,7 @@ void dma_start(int const cb_offset)
     pwm_start();
 
     *conblk_ad_reg = VC_PTR_TO_BUS_ADDR(
-        s_mapped_vc_mem + cb_offset * 32); // TODO: Hard-coded!
+        (void*)((struct dma_cb *)(s_mapped_vc_mem) + cb_offset));
     *cs_reg = 2; // Clear end flag.
     *debug_reg = 7; // Clear error bits.
     *cs_reg = 1; // Start
