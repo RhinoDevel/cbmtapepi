@@ -3,8 +3,6 @@
 
 // TODO: Free ALL (including DMA-reserved Video Core RAM) memory on (e.g.) CTRL+C!
 
-// TODO: Check, if GPIO set and clear via DMA does not change other pin values in use!
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
