@@ -3,6 +3,8 @@
 
 // TODO: Free ALL (including DMA-reserved Video Core RAM) memory on (e.g.) CTRL+C!
 
+// TODO: Make some more variables volatile?
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -381,6 +383,8 @@ static struct dma_cb * add_pulse_atomic_spacer(struct dma_cb * const cbs)
 {
     struct dma_cb * ret_val = cbs;
 
+    // Update PWM FIFO (clearing DMA request):
+
     ret_val->src_addr = dma_get_bus_addr_from_vc_ptr(
         (void*)(&(s_data_cb->reserved1))); // PWM data.
     ret_val->dest_addr = DMA_PWM_OFFSET_TO_BUS_ADDR(PWM_OFFSET_FIF1);
@@ -397,7 +401,9 @@ static struct dma_cb * add_pulse_atomic_spacer(struct dma_cb * const cbs)
     ret_val->reserved0 = 0;
     ret_val->reserved1 = 0;
 
-    return ret_val + 1;
+    ret_val = ret_val + 1;
+    assert(ret_val - cbs == 1);
+    return ret_val;
 }
 
 static struct dma_cb * add_set_to_low(struct dma_cb * const cbs)
@@ -421,7 +427,9 @@ static struct dma_cb * add_set_to_low(struct dma_cb * const cbs)
     ret_val->reserved0 = 0;
     ret_val->reserved1 = 0;
 
-    return ret_val + 1;
+    ret_val = ret_val + 1;
+    assert(ret_val - cbs == 1);
+    return ret_val;
 }
 
 static struct dma_cb * add_set_to_high(struct dma_cb * const cbs)
@@ -445,7 +453,9 @@ static struct dma_cb * add_set_to_high(struct dma_cb * const cbs)
     ret_val->reserved0 = 0;
     ret_val->reserved1 = 0;
 
-    return ret_val + 1;
+    ret_val = ret_val + 1;
+    assert(ret_val - cbs == 1);
+    return ret_val;
 }
 
 static struct dma_cb * add_pulse_short_to_cbs(struct dma_cb * const cbs)
@@ -463,6 +473,7 @@ static struct dma_cb * add_pulse_short_to_cbs(struct dma_cb * const cbs)
     ret_val = add_pulse_atomic_spacer(ret_val);
     ret_val = add_pulse_atomic_spacer(ret_val);
 
+    assert(ret_val - cbs == 6);
     return ret_val;
 }
 
@@ -484,6 +495,7 @@ static struct dma_cb * add_pulse_medium_to_cbs(struct dma_cb * const cbs)
     ret_val = add_pulse_atomic_spacer(ret_val);
     ret_val = add_pulse_atomic_spacer(ret_val);
 
+    assert(ret_val - cbs == 8);
     return ret_val;
 }
 
@@ -508,6 +520,7 @@ static struct dma_cb * add_pulse_long_to_cbs(struct dma_cb * const cbs)
     ret_val = add_pulse_atomic_spacer(ret_val);
     ret_val = add_pulse_atomic_spacer(ret_val);
 
+    assert(ret_val - cbs == 10);
     return ret_val;
 }
 
