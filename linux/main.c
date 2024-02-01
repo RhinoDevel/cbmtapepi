@@ -3,6 +3,8 @@
 
 // TODO: Free ALL (including DMA-reserved Video Core RAM) memory on (e.g.) CTRL+C!
 
+// TODO: Check, if GPIO set and clear via DMA does not change other pin values in use!
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -322,7 +324,7 @@ static bool send_cbs(
         }
     }
     console_deb_writeline("send_cbs: Motor on. Sending..");
-    dma_start(0); // Sends header once.
+    dma_start(1); // Sends header once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending header to finish..");
     while(dma_is_busy() && s_stop == 0)
     {
@@ -334,7 +336,7 @@ static bool send_cbs(
         return true;
     }
 
-    dma_start(header_cbs_count); // Sends content once.
+    dma_start(1 + header_cbs_count); // Sends content once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending content to finish..");
     while(s_stop == 0)
     {
@@ -576,6 +578,7 @@ static struct dma_cb * fill_cbs(
     {
         ret_val = add_symbol_to_cbs(symbols[i], ret_val);
     }
+    (ret_val - 1)->next_cb_addr = 0;
     *out_cbs_count = ret_val - cbs;
     return ret_val;
 }
@@ -623,7 +626,7 @@ static bool send_bytes(
     //
     s_data_cb = cbs;
     s_data_cb->reserved0 = 1 << MT_TAPE_GPIO_PIN_NR_READ; // Pin data.
-    s_data_cb->reserved1 = 1000; // TODO: Hard-coded PWM range.
+    s_data_cb->reserved1 = 1000 / 2; // TODO: Hard-coded PWM range.
 
     header_cbs = cbs + 1;
 
