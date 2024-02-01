@@ -27,9 +27,7 @@
 // application's virtual address space) to its (unsigned 32-bit) bus address:
 //
 #define VC_PTR_TO_BUS_ADDR(ptr) \
-    ((uint32_t)((ptr) - s_mapped_vc_mem) + s_vc_mem_bus_addr)
-    //
-    // (converting from ptrdiff_t)
+    ((uint32_t)(ptr) - (uint32_t)s_mapped_vc_mem + s_vc_mem_bus_addr)
 
 // DMA channel to use (warning: The offsets calculated from channel nr. are
 // correct for channels 0 to 14 and not for channel 15):
