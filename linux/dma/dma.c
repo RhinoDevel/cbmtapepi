@@ -49,7 +49,7 @@ static void* s_mapped_dmac = NULL; // See dma_init() & dma_deinit().
 static uint32_t s_byte_count = 0;      // See dma_init() & dma_deinit().
 static uint32_t s_vc_mem_addr = 0;     //
 static uint32_t s_vc_mem_bus_addr = 0; //
-static void* s_mapped_vc_mem = NULL;   // 
+static void* s_mapped_vc_mem = NULL;   //
 
 static void reset()
 {
@@ -74,7 +74,7 @@ static void enable()
 
 uint32_t dma_get_bus_addr_from_vc_ptr(void * const ptr)
 {
-    return VC_PTR_TO_BUS_ADDR(ptr);   
+    return VC_PTR_TO_BUS_ADDR(ptr);
 }
 
 void dma_pause()
@@ -124,7 +124,7 @@ void dma_start(int const cb_offset)
     pwm_start();
 
     *conblk_ad_reg = VC_PTR_TO_BUS_ADDR(
-        s_mapped_vc_mem + cb_offset * sizeof (struct dma_cb));
+        s_mapped_vc_mem + cb_offset * 32); // TODO: Hard-coded!
     *cs_reg = 2; // Clear end flag.
     *debug_reg = 7; // Clear error bits.
     *cs_reg = 1; // Start
@@ -233,4 +233,4 @@ struct dma_cb * dma_init(
         return NULL;
     }
     return (struct dma_cb *)s_mapped_vc_mem;
-} 
+}
