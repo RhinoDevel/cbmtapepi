@@ -10,21 +10,22 @@ fast mode wedge PRG to the Commodore machine.
 Doing this with the CPU only is not possible as the timing requirements are not
 met, because the Linux OS scheduler interrupts sending the signal.
 
-But it can be done with DMA, which is finally implemented!!
+But it can be done with DMA, which is finally **implemented**!!
 
-Current state (February 2., 2024):
+### Current state (February 2., 2024):
 
-Sending relatively short program files to the PET 3032 (BASIC v4) works!
+Sending relatively short program files to the PET 3032 (BASIC v4) **works**!
 
-Next steps:
+#### Next steps:
 
 - Source code clean-up.
 - Entering fast mode on the Raspberry Pi and handle following requests from the
   Commodore after initially loading the fast loader.
 - ...
 
-Nice things may happening in the future:
+### Nice things may happening in the future:
 
-- Internet access for the Commodore via Raspberry Pi.
+- Access a USB stick via Commodore.
+- Internet/network access for the Commodore via Raspberry Pi.
 - Use Commodore as Linux terminal for Raspbian on the Raspberry Pi.
 - ...
