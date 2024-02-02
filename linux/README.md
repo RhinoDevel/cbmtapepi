@@ -1,7 +1,8 @@
 # CBM Tape Pi for Linux OS (e.g. Raspbian)
 *Marcel Timm, RhinoDevel, 2024, [rhinodevel.com](http://rhinodevel.com/)*
 
-This folder contains the source code of the Linux OS port of CBM Tape Pi.
+This folder contains the source code of the Linux OS port of CBM Tape Pi which
+has work-in-progress state.
 
 The compatibility mode of CBM Tape Pi must be used at least once to transfer the
 fast mode wedge PRG to the Commodore machine.
@@ -9,8 +10,21 @@ fast mode wedge PRG to the Commodore machine.
 Doing this with the CPU only is not possible as the timing requirements are not
 met, because the Linux OS scheduler interrupts sending the signal.
 
-But it can be done with DMA, e.g. via [pigpio](http://abyz.me.uk/rpi/pigpio/).
+But it can be done with DMA, which is finally implemented!!
 
-Initial tests with DMA were successful, but work on the first version of the
-Linux port (which will give us easy access to cool features like WLAN) is not
-done, yet.
+Current state (February 2., 2024):
+
+Sending relatively short program files to the PET 3032 (BASIC v4) works!
+
+Next steps:
+
+- Source code clean-up.
+- Entering fast mode on the Raspberry Pi and handle following requests from the
+  Commodore after initially loading the fast loader.
+- ...
+
+Nice things may happening in the future:
+
+- Internet access for the Commodore via Raspberry Pi.
+- Use Commodore as Linux terminal for Raspbian on the Raspberry Pi.
+- ...
