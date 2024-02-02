@@ -3,8 +3,6 @@
 
 // TODO: Free ALL (including DMA-reserved Video Core RAM) memory on (e.g.) CTRL+C!
 
-// TODO: Make some more variables volatile?
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -357,6 +355,10 @@ static bool send_cbs(
         
         dma_pause();
 
+        // TODO: Sometimes the loading is finished, but we are stuck, here
+        //       (maybe because the first motor-off was not detected, because
+        //       of OS scheduling?)!
+        //
         while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
         {
             ;
@@ -625,7 +627,7 @@ static bool send_bytes(
     cbs = dma_init(
         113640, // TODO: Hard-coded!
         20, // TODO: Hard-coded!
-        8 * 1024 * 1024); // TODO: Hard-coded!
+        32 * 1024 * 1024); // TODO: Hard-coded!
     if(cbs == NULL)
     {
         alloc_free(symbols);
