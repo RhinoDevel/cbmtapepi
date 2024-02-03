@@ -131,9 +131,11 @@ static void init()
 
     file_init(s_max_file_size);
 
-    // Initialize memory (heap) manager for dynamic allocation/deallocation:
+    // Initialize memory (heap) manager for dynamic allocation/deallocation
+    // [this is used by the parts of the code that originate in the bare metal
+    // version of CBM Tape Pi, where no malloc() exists]:
     //
-    assert(s_mem_buf_size < MT_HEAP_SIZE);
+    assert(s_mem_buf_size < MT_HEAP_SIZE); // (probably just by-definition..)
     s_mem = malloc(MT_HEAP_SIZE * sizeof *s_mem);
     alloc_init((void*)s_mem, MT_HEAP_SIZE);
 }
@@ -725,10 +727,15 @@ static bool send_file(char * const file_name, bool const infinitely)
         return false;
     }
 
+    int const last_path_sep_pos = str_get_last_index(
+            file_name, MT_FILE_PATH_SEP);
+
     bool const success = send_bytes(
         bytes, 
         (uint32_t)size,
-        file_name, // TODO: Remove maybe preceding path!
+        last_path_sep_pos == -1
+            ? file_name
+            : (file_name + last_path_sep_pos + 1),
         infinitely);
 
     alloc_free(bytes);
