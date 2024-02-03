@@ -592,7 +592,7 @@ static bool send_bytes(
     //
     s_data_cb = cbs;
     s_data_cb->reserved0 = 1 << MT_TAPE_GPIO_PIN_NR_READ; // Pin data.
-    s_data_cb->reserved1 = 1000 / 2; // TODO: Hard-coded PWM range.
+    s_data_cb->reserved1 = 1000 / 2; // TODO: Hard-coded "PWM range", but this is just for the FIFO (value should not matter)..
 
     header_cbs = cbs + 1;
 
