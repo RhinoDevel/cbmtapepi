@@ -9,3 +9,5 @@ cbm/*.tmp
 *.ihx
 
 *.bak
+
+linux/cbmtapepi
