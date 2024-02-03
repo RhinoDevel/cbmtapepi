@@ -530,6 +530,27 @@ static struct dma_cb * add_symbol_to_cbs(
     return ret_val;
 }
 
+/**
+ * - The real control block count necessary for the symbol count given is always
+ *   lower. 
+ */
+static uint32_t get_max_cbs_count(uint32_t const symbol_count)
+{
+    // tape_symbol_new <=> long & medium pulse. <=> 10 CBs + 8 CBs.
+
+    return (10 + 8) * symbol_count; // Hard-coded CB counts per symbol types.
+}
+
+/**
+ * - The real byte count necessary for the symbol count given is always lower. 
+ */
+static uint32_t get_max_cbs_byte_count(uint32_t const symbol_count)
+{
+    uint32_t const max_cbs_count = get_max_cbs_count(symbol_count);
+
+    return 32 * (1 + max_cbs_count); // Hard-coded bytes per control block & +1.
+}
+
 static struct dma_cb * fill_cbs(
     struct dma_cb * const cbs,
     uint8_t * const symbols,
@@ -575,10 +596,16 @@ static bool send_bytes(
 
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
+    uint32_t const max_byte_count = get_max_cbs_byte_count(symbol_count);
+
+    console_write("send_bytes: Max. bytes necessary in Video Core RAM: ");
+    console_write_dword_dec(max_byte_count);
+    console_writeline("");
+
     cbs = dma_init(
         113640, // 2 x 88 us = 176 us <-> 5682 Hz => 2 x 5682 Hz = 11364 Hz
         20, // 11364 Hz / 2 = 5682 Hz <-> 176 us = 2 x 88 us
-        32 * 1024 * 1024); // TODO: Hard-coded!
+        max_byte_count);
     if(cbs == NULL)
     {
         alloc_free(symbols);
