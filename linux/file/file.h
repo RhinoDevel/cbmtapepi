@@ -4,6 +4,8 @@
 #ifndef MT_FILE
 #define MT_FILE
 
+#define MT_FILE_PATH_SEP '/'
+
 #include <sys/types.h>
 
 /** Return content of file at given path.
