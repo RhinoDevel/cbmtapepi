@@ -8,7 +8,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <assert.h>
 #include <signal.h>
 
@@ -32,6 +31,7 @@
 #include "../app/petload/petload_pet4.h"
 #include "../app/petload/petload_pet4tom.h"
 
+#include "file/file.h"
 #include "dma/pwm/pwm.h"
 #include "dma/dma.h"
 #include "dma/dma_cb.h"
@@ -69,65 +69,6 @@ static void write_byte(uint8_t const byte)
 static void busywait_microseconds(uint32_t const microseconds)
 {
     usleep((useconds_t)microseconds);
-}
-
-off_t get_file_size(char const * const path)
-{
-    assert(path != NULL);
-
-    struct stat s;
-
-    if(stat(path, &s) == 0)
-    {
-        return s.st_size;
-    }
-    return -1;
-}
-
-/** Return content of file at given path.
- *
- *  - Returns NULL on error.
- *  - Caller takes ownership of return value.
- */
-static unsigned char * load_file(
-    char const * const path, off_t * const out_size)
-{
-    *out_size = -1;
-
-    off_t const signed_size = get_file_size(path);
-
-    if(signed_size == -1)
-    {
-        console_writeline("load_file : Error: Failed to get size of file!");
-        return NULL;
-    }
-    if(signed_size > (off_t)s_max_file_size)
-    {
-        console_writeline("load_file : Error: File is too big!");
-        return NULL;
-    }
-
-    FILE * const file = fopen(path, "rb");
-
-    if(file == NULL)
-    {
-        console_writeline("load_file : Error: Failed to open source file!");
-        return NULL;
-    }
-
-    size_t const size = (size_t)signed_size;
-    unsigned char * const buf = alloc_alloc(size * sizeof *buf);
-
-    if(fread(buf, sizeof(*buf), size, file) != size)
-    {
-        console_writeline(
-            "load_file : Error: Failed to completely load file content!");
-        return NULL;
-    }
-
-    fclose(file);
-    *out_size = signed_size;
-    return buf;
 }
 
 /** Connect console (singleton) to wanted in-/output.
@@ -187,6 +128,8 @@ static void init()
     init_console();
 
     init_gpio();
+
+    file_init(s_max_file_size);
 
     // Initialize memory (heap) manager for dynamic allocation/deallocation:
     //
@@ -285,7 +228,7 @@ static uint8_t* create_symbols_from_file(
     // Assuming uint8_t being equal to unsigned char.
 
     off_t size = 0;
-    uint8_t * const bytes = load_file(file_name, &size);
+    uint8_t * const bytes = file_load(file_name, &size);
 
     if(bytes == NULL)
     {

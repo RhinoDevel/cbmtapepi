@@ -12,6 +12,7 @@ LDFLAGS=-lbcm_host
 SOURCES=\
 	main.c \
 	\
+	file/file.c \
 	dma/dma.c \
 	dma/clk/clk.c \
 	dma/dma_gpio/dma_gpio.c \
