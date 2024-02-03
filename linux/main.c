@@ -237,10 +237,15 @@ static uint8_t* create_symbols_from_file(
         return false;
     }
 
+    int const last_path_sep_pos = str_get_last_index(
+            file_name, MT_FILE_PATH_SEP);
+
     uint8_t * const symbols = create_symbols_from_bytes(
         bytes,
         (uint32_t)size,
-        file_name, // TODO: Remove maybe preceding path!
+        last_path_sep_pos == -1
+            ? file_name
+            : (file_name + last_path_sep_pos + 1),
         out_symbol_count);
 
     alloc_free(bytes);
