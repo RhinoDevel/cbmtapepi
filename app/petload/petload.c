@@ -1,4 +1,7 @@
 
+// Marcel Timm, RhinoDevel
+
+#include "petload_prg_name.h"
 #include "petload.h"
 #include "petload_pet1.h"
 #include "petload_pet1tom.h"
@@ -216,8 +219,8 @@ static struct tape_input * create(
     assert(bytes[0] == 0x8f);
     assert(bytes[1] == 0x02);
     assert(0x028f == 655);
-    //                               "1234567890123456"
-    static char const * const name = "FASTMODE: SYS655";
+    //                               
+    static char const * const name = MT_PETLOAD_PRG_NAME_TAPE_BUF;
     static int const dest_byte_count =
         MT_TAPE_INPUT_ADD_BYTES_LEN
         + 192; // Tape buffer #2 length.
@@ -292,8 +295,7 @@ static struct tape_input * create(
 static struct tape_input * create_tom(
     uint8_t const * const bytes, int const count)
 {
-    //                               "1234567890123456"
-    static char const * const name = "FASTMODE: RUN   ";
+    static char const * const name = MT_PETLOAD_PRG_NAME_RUN;
 
     struct tape_input * const ret_val = alloc_alloc(sizeof *ret_val);
     int i = 0;
