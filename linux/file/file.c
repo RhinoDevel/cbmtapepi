@@ -7,6 +7,7 @@
 
 #include "file.h"
 #include "../../lib/console/console.h"
+#include "../../lib/alloc/alloc.h"
 
 static int s_max_size = -1; // See file_init().
 
