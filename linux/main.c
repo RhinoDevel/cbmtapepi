@@ -466,7 +466,7 @@ static struct dma_cb * add_pulse_short_to_cbs(struct dma_cb * const cbs)
 
     // LOAD: Low to high.
     //
-    // Short: 2840 Hz / 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88us HIGH.
+    // Short: 2840 Hz <-> 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88us HIGH.
 
     ret_val = add_set_to_low(ret_val);
     ret_val = add_pulse_atomic_spacer(ret_val);
@@ -485,8 +485,8 @@ static struct dma_cb * add_pulse_medium_to_cbs(struct dma_cb * const cbs)
 
     // LOAD: Low to high.
     //
-    // Short:  2840 Hz / 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88 us HIGH.
-    // Medium: 1953 Hz / 512 us ~ 6 x 88 us = 3 x 88 us LOW + 3 x 88 us HIGH.
+    // Short:  2840 Hz <-> 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88 us HIGH.
+    // Medium: 1953 Hz <-> 512 us ~ 6 x 88 us = 3 x 88 us LOW + 3 x 88 us HIGH.
 
     ret_val = add_set_to_low(ret_val);
     ret_val = add_pulse_atomic_spacer(ret_val);
@@ -507,9 +507,9 @@ static struct dma_cb * add_pulse_long_to_cbs(struct dma_cb * const cbs)
 
     // LOAD: Low to high.
     //
-    // Short:  2840 Hz / 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88 us HIGH.
-    // Medium: 1953 Hz / 512 us ~ 6 x 88 us = 3 x 88 us LOW + 3 x 88 us HIGH.
-    // Long:   1488 Hz / 672 us ~ 8 x 88 us = 4 x 88 us LOW + 4 x 88 us HIGH.
+    // Short:  2840 Hz <-> 352 us = 4 x 88 us = 2 x 88 us LOW + 2 x 88 us HIGH.
+    // Medium: 1953 Hz <-> 512 us ~ 6 x 88 us = 3 x 88 us LOW + 3 x 88 us HIGH.
+    // Long:   1488 Hz <-> 672 us ~ 8 x 88 us = 4 x 88 us LOW + 4 x 88 us HIGH.
 
     ret_val = add_set_to_low(ret_val);
     ret_val = add_pulse_atomic_spacer(ret_val);
@@ -625,8 +625,8 @@ static bool send_bytes(
     assert(symbol_count > MT_HEADERDATABLOCK_LEN);
 
     cbs = dma_init(
-        113640, // TODO: Hard-coded!
-        20, // TODO: Hard-coded!
+        113640, // 2 x 88 us = 176 us <-> 5682 Hz => 2 x 5682 Hz = 11364 Hz
+        20, // 11364 Hz / 2 = 5682 Hz <-> 176 us = 2 x 88 us
         32 * 1024 * 1024); // TODO: Hard-coded!
     if(cbs == NULL)
     {
