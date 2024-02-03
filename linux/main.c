@@ -27,6 +27,7 @@
 #include "../app/tape/tape_filetype.h"
 #include "../app/tape/tape_defines.h"
 #include "../app/tape/tape_symbol.h"
+#include "../app/petload/petload_prg_name.h"
 #include "../app/petload/petload_c64tom.h"
 #include "../app/petload/petload_pet4.h"
 #include "../app/petload/petload_pet4tom.h"
@@ -696,7 +697,7 @@ static bool send_petload_c64tom(bool const infinitely)
     return send_bytes(
         (uint8_t*)s_petload_c64tom, // *** CONST CAST ***
         sizeof s_petload_c64tom  / sizeof *s_petload_c64tom,
-        "c64tom", // TODO: Use correct name (to help user)!
+        MT_PETLOAD_PRG_NAME_RUN,
         infinitely);
 }
 
@@ -705,7 +706,7 @@ static bool send_petload_pet4(bool const infinitely)
     return send_bytes(
         (uint8_t*)s_petload_pet4, // *** CONST CAST ***
         sizeof s_petload_pet4  / sizeof *s_petload_pet4,
-        "pet4", // TODO: Use correct name (to help user)!
+        MT_PETLOAD_PRG_NAME_TAPE_BUF,
         infinitely);
 }
 
@@ -714,7 +715,7 @@ static bool send_petload_pet4tom(bool const infinitely)
     return send_bytes(
         (uint8_t*)s_petload_pet4tom, // *** CONST CAST ***
         sizeof s_petload_pet4tom  / sizeof *s_petload_pet4tom,
-        "pet4tom", // TODO: Use correct name (to help user)!
+        MT_PETLOAD_PRG_NAME_RUN,
         infinitely);
 }
 
@@ -831,6 +832,22 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
+                return send_petload_pet4(true);
+            }
+            case 'q':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
+                return send_petload_pet4tom(false);
+            }
+            case 'r':
+            {
+                if(argc != 2)
+                {
+                    break;
+                }
                 return send_petload_pet4tom(true);
             }
             case 'y':
@@ -860,7 +877,11 @@ static bool exec(int const argc, char * const argv[])
         "\n"
         "v = Send PET BASIC v4 wedge via compatibility mode once."
         "\n"
-        "w = Send PET BASIC v4 TOM wedge via compatibility mode in a loop."
+        "w = Send PET BASIC v4 wedge via compatibility mode in a loop."
+        "\n"
+        "q = Send PET BASIC v4 TOM wedge via compatibility mode once."
+        "\n"
+        "r = Send PET BASIC v4 TOM wedge via compatibility mode in a loop."
         "\n"
         "y <filename> = Output file as compatibility mode symbols.");
     return false;
