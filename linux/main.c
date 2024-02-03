@@ -718,7 +718,7 @@ static bool send_file(char * const file_name, bool const infinitely)
     // Assuming uint8_t being equal to unsigned char.
 
     off_t size = 0;
-    uint8_t * const bytes = load_file(file_name, &size);
+    uint8_t * const bytes = file_load(file_name, &size);
 
     if(bytes == NULL)
     {
