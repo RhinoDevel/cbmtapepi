@@ -20,6 +20,7 @@ SOURCES=\
 	dma/mbo/mbo.c \
 	dma/mem/mem.c \
 	dma/pwm/pwm.c \
+        ProgressBar/ProgressBar.c \
 	\
 	../hardware/gpio/gpio.c \
 	\

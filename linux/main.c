@@ -32,6 +32,7 @@
 #include "../app/petload/petload_pet4.h"
 #include "../app/petload/petload_pet4tom.h"
 
+#include "ProgressBar/ProgressBar.h"
 #include "file/file.h"
 #include "dma/pwm/pwm.h"
 #include "dma/dma.h"
