@@ -7,8 +7,8 @@
 
 void ProgressBar_print(int const inFirst, int const inCur, int const inLast, int const inWidth, bool const inShowAbs)
 {
-    double const lastD = (double)(inLast-inFirst),
-        curD = (double)(inCur-inFirst),
+    double const lastD = (double)(inLast-inFirst+1),
+        curD = (double)(inCur-inFirst+1),
         percentD = (100.0*curD)/lastD;
     int const percent = (int)(percentD+0.5); // Rounds
 
