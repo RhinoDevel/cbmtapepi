@@ -316,6 +316,7 @@ static bool send_cbs(
     {
         uint32_t const first_addr = dma_get_bus_addr_from_vc_ptr(content_cbs);
         uint32_t const last_addr = first_addr + 32 * (content_cbs_count - 1);
+        uint32_t left_cbs = UINT32_MAX; // Value must be high enough, only.
 
         while(dma_is_busy() && s_stop == 0)
         {
@@ -325,6 +326,8 @@ static bool send_cbs(
 
                 if(first_addr <= next_cb_addr && next_cb_addr <= last_addr)
                 {
+                    left_cbs = (last_addr - next_cb_addr) / 32 + 1;
+
                     ProgressBar_print(
                         1,
                         1 + (next_cb_addr - first_addr) / 32,
@@ -349,11 +352,18 @@ static bool send_cbs(
             
             dma_pause();
 
-            // TODO: Sometimes the loading is finished, but we are stuck, here
-            //       (maybe because the first motor-off was not detected,
-            //       because of OS scheduling?)!
+            // Sometimes the loading is finished, but we are stuck, here
+            // (maybe because the first motor-off was not detected, because of
+            // OS scheduling?). That is why we stop waiting for the motor and
+            // resume sending, if the data was already completely transferred
+            // and there are only pulses for the last transmit block gap left.
+            // Because of motor_done == true, the loop will be left successfully
+            // after that.
             //
-            while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
+            while(
+                !gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) 
+                && s_stop == 0
+                && left_cbs > 2 * 6 * 60 / 2) // Hard-coded, see tape_fill_buf.c and transmit_block_gap_pulse_count!
             {
                 usleep(100);
             }
