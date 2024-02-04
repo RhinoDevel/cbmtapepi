@@ -260,7 +260,8 @@ static uint8_t* create_symbols_from_file(
 static bool send_cbs(
     struct dma_cb * const header_cbs,
     int const header_cbs_count,
-    struct dma_cb * const content_cbs)
+    struct dma_cb * const content_cbs,
+    int const content_cbs_count)
 {
     bool motor_done = false;
 
@@ -276,9 +277,26 @@ static bool send_cbs(
     console_deb_writeline("send_cbs: Motor on. Sending..");
     dma_start(1); // Sends header once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending header to finish..");
-    while(dma_is_busy() && s_stop == 0)
+    
     {
-        ;
+        uint32_t const first_addr = (uint32_t)header_cbs;
+        uint32_t const last_addr = 
+            (uint32_t)header_cbs + 32 * (header_cbs_count - 1);
+        
+        while(dma_is_busy() && s_stop == 0)
+        {
+            uint32_t const next_cb_addr = dma_get_next_control_block_addr();
+
+            if(first_addr <= next_cb_addr && next_cb_addr <= last_addr)
+            {
+                ProgressBar_print(
+                    1,
+                    1 + (next_cb_addr - first_addr) / 32,
+                    header_cbs_count,
+                    80,
+                    true);
+            }
+        }
     }
     if(s_stop != 0)
     {
@@ -692,7 +710,11 @@ static bool send_bytes(
 
         do
         {
-            if(!send_cbs(header_cbs, header_cbs_count, content_cbs))
+            if(!send_cbs(
+                    header_cbs,
+                    header_cbs_count,
+                    content_cbs,
+                    content_cbs_count))
             {
                 s_data_cb = NULL;
                 dma_deinit();
@@ -707,7 +729,11 @@ static bool send_bytes(
         console_writeline(
             "send_bytes: Starting sending (press CTRL+C to exit/stop)..");
 
-        if(!send_cbs(header_cbs, header_cbs_count, content_cbs))
+        if(!send_cbs(
+                header_cbs,
+                header_cbs_count,
+                content_cbs,
+                content_cbs_count))
         {
             s_data_cb = NULL;
             dma_deinit();
