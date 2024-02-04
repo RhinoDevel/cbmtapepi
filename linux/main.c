@@ -297,6 +297,8 @@ static bool send_cbs(
                     s_progress_bar_len,
                     true);
             }
+
+            usleep(100);
         }
     }
     if(s_stop != 0)
@@ -304,52 +306,75 @@ static bool send_cbs(
         console_deb_writeline("\nsend_cbs: Stopping (1)..");
         return true;
     }
-    ProgressBar_print(1, header_cbs_count, header_cbs_count, s_progress_bar_len, true);
+    ProgressBar_print( // Cheating..
+        1, header_cbs_count, header_cbs_count, s_progress_bar_len, true);
     printf("\n");
 
     dma_start(1 + header_cbs_count); // Sends content once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending content to finish..");
-    while(dma_is_busy() && s_stop == 0)
+
     {
-        if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
+        uint32_t const first_addr = dma_get_bus_addr_from_vc_ptr(content_cbs);
+        uint32_t const last_addr = first_addr + 32 * (content_cbs_count - 1);
+
+        while(dma_is_busy() && s_stop == 0)
         {
-            continue; // Motor is on. Keep "endless tape" running.
+            if(gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
+            {
+                uint32_t const next_cb_addr = dma_get_next_control_block_addr();
+
+                if(first_addr <= next_cb_addr && next_cb_addr <= last_addr)
+                {
+                    ProgressBar_print(
+                        1,
+                        1 + (next_cb_addr - first_addr) / 32,
+                        content_cbs_count,
+                        s_progress_bar_len,
+                        true);
+                }
+
+                usleep(100);
+                continue; // Motor is on. Keep "endless tape" running.
+            }
+
+            // Motor is off.
+
+            if(motor_done)
+            {
+                //console_deb_writeline("send_cbs: Motor off. Done.");
+                break;
+            }
+            //console_deb_writeline("send_cbs: Motor off. Waiting (2)..");        
+            motor_done = true;
+            
+            dma_pause();
+
+            // TODO: Sometimes the loading is finished, but we are stuck, here
+            //       (maybe because the first motor-off was not detected,
+            //       because of OS scheduling?)!
+            //
+            while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
+            {
+                usleep(100);
+            }
+            if(s_stop != 0)
+            {
+                break;
+            }
+
+            //console_deb_writeline("send_cbs: Motor on. Resuming..");
+
+            dma_resume();
         }
-
-        // Motor is off.
-
-        if(motor_done)
-        {
-            console_deb_writeline("send_cbs: Motor off. Done.");
-            break;
-        }
-        console_deb_writeline("send_cbs: Motor off. Waiting (2)..");        
-        motor_done = true;
-        
-        dma_pause();
-
-        // TODO: Sometimes the loading is finished, but we are stuck, here
-        //       (maybe because the first motor-off was not detected, because
-        //       of OS scheduling?)!
-        //
-        while(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR) && s_stop == 0)
-        {
-            ;
-        }
-        if(s_stop != 0)
-        {
-            break;
-        }
-
-        console_deb_writeline("send_cbs: Motor on. Resuming..");
-
-        dma_resume();
     }
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (2)..");
         return true;
     }
+    ProgressBar_print( // Cheating..
+        1, content_cbs_count, content_cbs_count, s_progress_bar_len, true);
+    printf("\n");
     console_deb_writeline("send_cbs: Sending done.");
     return true;  
 }
