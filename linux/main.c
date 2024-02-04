@@ -671,8 +671,6 @@ static bool send_bytes(
 
     console_writeline("send_bytes: DMA is initialized.");
 
-    // TODO: Add check, that there is enough memory available for CBs!
-
     // Misuse to not destroy 32 byte alignment of following real code blocks:
     //
     s_data_cb = cbs;
