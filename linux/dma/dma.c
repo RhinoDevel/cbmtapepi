@@ -38,12 +38,13 @@ static unsigned int const s_channel = 5; // TODO: Hard-coded! Make dynamic(?)!
 //
 static off_t const s_offset_cs = (off_t)(s_channel * 0x100 + 0x00);
 static off_t const s_offset_conblk_ad = (off_t)(s_channel * 0x100 + 0x04);
+static off_t const s_offset_nextconbk = (off_t)(s_channel * 0x100 + 0x1c);
 static off_t const s_offset_debug = (off_t)(s_channel * 0x100 + 0x20);
 
 static off_t const s_offset_enable = 0xFF0; // Global enable bits per channel.
 
 static void* s_mapped_dmac = NULL; // See dma_init() & dma_deinit().
- 
+
 static uint32_t s_byte_count = 0;      // See dma_init() & dma_deinit().
 static uint32_t s_vc_mem_addr = 0;     //
 static uint32_t s_vc_mem_bus_addr = 0; //
@@ -73,6 +74,14 @@ static void enable()
 uint32_t dma_get_bus_addr_from_vc_ptr(void * const ptr)
 {
     return VC_PTR_TO_BUS_ADDR(ptr);
+}
+
+uint32_t dma_get_next_control_block_addr()
+{
+    volatile uint32_t * const nextconbk_reg =
+        REG_PTR(s_mapped_dmac, s_offset_nextconbk);
+
+    return *nextconbk_reg;
 }
 
 void dma_pause()

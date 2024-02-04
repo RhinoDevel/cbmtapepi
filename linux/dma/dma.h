@@ -60,6 +60,7 @@
 // dma_deinit();
 
 uint32_t dma_get_bus_addr_from_vc_ptr(void * const ptr);
+uint32_t dma_get_next_control_block_addr();
 
 void dma_pause();
 void dma_resume();
