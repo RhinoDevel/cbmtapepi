@@ -45,6 +45,8 @@ static uint8_t * s_mem = NULL; // [see init() and deinit()]
 static int const s_max_file_size = 64 * 1024; // 64 KB.
 static int const s_mem_buf_size = 4 * 1024 * 1024; // 4 MB.
 
+static int const s_progress_bar_len = 50; // Characters.
+
 static struct dma_cb * s_data_cb = NULL; // Set and reset by send_bytes().
 
 static volatile sig_atomic_t s_stop = 0;
@@ -279,10 +281,9 @@ static bool send_cbs(
     console_deb_writeline("send_cbs: Waiting for sending header to finish..");
     
     {
-        uint32_t const first_addr = (uint32_t)header_cbs;
-        uint32_t const last_addr = 
-            (uint32_t)header_cbs + 32 * (header_cbs_count - 1);
-        
+        uint32_t const first_addr = dma_get_bus_addr_from_vc_ptr(header_cbs);
+        uint32_t const last_addr = first_addr + 32 * (header_cbs_count - 1);
+
         while(dma_is_busy() && s_stop == 0)
         {
             uint32_t const next_cb_addr = dma_get_next_control_block_addr();
@@ -293,7 +294,7 @@ static bool send_cbs(
                     1,
                     1 + (next_cb_addr - first_addr) / 32,
                     header_cbs_count,
-                    80,
+                    s_progress_bar_len,
                     true);
             }
         }
@@ -303,6 +304,8 @@ static bool send_cbs(
         console_deb_writeline("\nsend_cbs: Stopping (1)..");
         return true;
     }
+    ProgressBar_print(1, header_cbs_count, header_cbs_count, s_progress_bar_len, true);
+    printf("\n");
 
     dma_start(1 + header_cbs_count); // Sends content once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending content to finish..");
