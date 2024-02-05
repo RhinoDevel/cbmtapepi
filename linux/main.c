@@ -256,13 +256,17 @@ static uint8_t* create_symbols_from_file(
     return symbols;
 }
 
+/**
+ * - Returns false, if stop signal was received (NOT an error). 
+ */
 static bool send_cbs(
     struct dma_cb * const header_cbs,
     int const header_cbs_count,
     struct dma_cb * const content_cbs,
     int const content_cbs_count)
 {
-    bool motor_done = false;
+    bool ret_val = true, // TRUE by default. 
+        motor_done = false;
 
     if(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
     {
@@ -276,6 +280,7 @@ static bool send_cbs(
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (1)..");
+        ret_val = false; // Meaning: Stop signal received, NOT an error.
         goto send_cbs_done;
     }
 
@@ -309,6 +314,7 @@ static bool send_cbs(
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (2)..");
+        ret_val = false; // Meaning: Stop signal received, NOT an error.
         goto send_cbs_done;
     }
     ProgressBar_print( // Cheating..
@@ -389,6 +395,7 @@ static bool send_cbs(
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (3)..");
+        ret_val = false; // Meaning: Stop signal received, NOT an error.
         goto send_cbs_done;
     }
     ProgressBar_print( // Cheating..
@@ -406,7 +413,7 @@ send_cbs_done:
     //
     // (inverted, because circuit inverts signal to CBM)
     
-    return true;  
+    return ret_val;  
 }
 
 static struct dma_cb * add_pulse_atomic_spacer(struct dma_cb * const cbs)
@@ -745,6 +752,8 @@ static bool send_bytes(
         "send_bytes: Power-on Commodore, start LOAD command and press ENTER key.");
     getchar();
 
+    // Simulate the PLAY button to be pressed by the user on the tape drive:
+    //
     console_deb_writeline(
         "send_bytes: Setting sense output line to LOW at CBM..");
     gpio_write(MT_TAPE_GPIO_PIN_NR_SENSE, !false);
@@ -772,6 +781,8 @@ static bool send_bytes(
                     content_cbs,
                     content_cbs_count))
             {
+                // Not an error, but the stop signal was received.
+
                 s_data_cb = NULL;
                 dma_deinit();
                 return false;
@@ -791,6 +802,8 @@ static bool send_bytes(
                 content_cbs,
                 content_cbs_count))
         {
+            // Not an error, but the stop signal was received.
+
             s_data_cb = NULL;
             dma_deinit();
             return false;
