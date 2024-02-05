@@ -1,8 +1,6 @@
 
 // Marcel Timm, RhinoDevel, 2019apr23
 
-// TODO: Free ALL (including DMA-reserved Video Core RAM) memory on (e.g.) CTRL+C!
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdint.h>
