@@ -256,9 +256,6 @@ static uint8_t* create_symbols_from_file(
     return symbols;
 }
 
-/**
- * - Header and content sending both must stop when done.
- */
 static bool send_cbs(
     struct dma_cb * const header_cbs,
     int const header_cbs_count,
@@ -276,6 +273,14 @@ static bool send_cbs(
             ;
         }
     }
+    if(s_stop != 0)
+    {
+        console_deb_writeline("\nsend_cbs: Stopping (1)..");
+        goto send_cbs_done;
+    }
+
+    // Start header data tranfer to CBM via MT_TAPE_GPIO_PIN_READ:
+    //
     console_deb_writeline("send_cbs: Motor on. Sending..");
     dma_start(1); // Sends header once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending header to finish..");
@@ -303,13 +308,17 @@ static bool send_cbs(
     }
     if(s_stop != 0)
     {
-        console_deb_writeline("\nsend_cbs: Stopping (1)..");
-        return true;
+        console_deb_writeline("\nsend_cbs: Stopping (2)..");
+        goto send_cbs_done;
     }
     ProgressBar_print( // Cheating..
         1, header_cbs_count, header_cbs_count, s_progress_bar_len, true);
     printf("\n");
 
+    // [dma_stop() must not be called, here (maybe improve this, later..)]
+
+    // Start content data tranfer to CBM via MT_TAPE_GPIO_PIN_READ:
+    //
     dma_start(1 + header_cbs_count); // Sends content once. // TODO: Hard-coded offset!
     console_deb_writeline("send_cbs: Waiting for sending content to finish..");
 
@@ -379,13 +388,24 @@ static bool send_cbs(
     }
     if(s_stop != 0)
     {
-        console_deb_writeline("\nsend_cbs: Stopping (2)..");
-        return true;
+        console_deb_writeline("\nsend_cbs: Stopping (3)..");
+        goto send_cbs_done;
     }
     ProgressBar_print( // Cheating..
         1, content_cbs_count, content_cbs_count, s_progress_bar_len, true);
     printf("\n");
+
     console_deb_writeline("send_cbs: Sending done.");
+
+send_cbs_done:
+    dma_stop();
+
+    console_deb_writeline(
+        "send_cbs: Setting tape read line to HIGH at CBM..");
+    gpio_set_output(MT_TAPE_GPIO_PIN_NR_READ, !true);
+    //
+    // (inverted, because circuit inverts signal to CBM)
+    
     return true;  
 }
 
@@ -776,6 +796,12 @@ static bool send_bytes(
             return false;
         }
     }
+
+    console_deb_writeline(
+        "send_bytes: Setting sense output line to HIGH at CBM..");
+    gpio_write(MT_TAPE_GPIO_PIN_NR_SENSE, !true);
+    //
+    // (inverted, because circuit inverts signal to CBM)
 
     s_data_cb = NULL;
     dma_deinit();
