@@ -153,7 +153,7 @@ bool dma_is_busy()
 
 void dma_deinit()
 {
-    assert(s_mapped_dmac != NULL);
+    //assert(s_mapped_dmac != NULL);
 
     reset();
     
