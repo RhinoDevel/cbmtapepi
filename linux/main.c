@@ -646,6 +646,12 @@ static struct dma_cb * fill_cbs(
     for(int i = 0;i < symbol_count; ++i)
     {
         ret_val = add_symbol_to_cbs(symbols[i], ret_val);
+        if(ret_val == NULL)
+        {
+            assert(false); // Must not happen.
+            *out_cbs_count = -1;
+            return ret_val;
+        }
     }
     (ret_val - 1)->next_cb_addr = 0;
     *out_cbs_count = ret_val - cbs;
@@ -660,6 +666,7 @@ static bool send_bytes(
     char const * const name,
     bool const infinitely)
 {
+    bool ret_val = true; // TRUE by default (meaning: No error).
     int symbol_count = 0,
         header_cbs_count = 0,
         content_cbs_count = 0;
@@ -671,14 +678,16 @@ static bool send_bytes(
     symbols = create_symbols_from_bytes(bytes, byte_count, name, &symbol_count);
     if(symbols == NULL)
     {
-        return false;
+        assert(false); // Should not fail.
+        ret_val = false;
+        goto send_bytes_done;
     }
 
     console_write("send_bytes: Symbol count: ");
     console_write_dword_dec(symbol_count);
     console_writeline("");
 
-    assert(symbol_count > MT_HEADERDATABLOCK_LEN);
+    assert(symbol_count > MT_HEADERDATABLOCK_LEN); // Not a real check..
 
     uint32_t const max_byte_count = get_max_cbs_byte_count(symbol_count);
 
@@ -692,8 +701,10 @@ static bool send_bytes(
         max_byte_count);
     if(cbs == NULL)
     {
-        alloc_free(symbols);
-        return false;
+        // Can happen, if there is not enough (Video Core) memory.
+
+        ret_val = false;
+        goto send_bytes_done;
     }
 
     console_writeline("send_bytes: DMA is initialized.");
@@ -713,10 +724,9 @@ static bool send_bytes(
         &header_cbs_count);
     if(content_cbs == NULL)
     {
-        s_data_cb = NULL;
-        alloc_free(symbols);
-        dma_deinit();
-        return false;
+        assert(false); // Must not happen.
+        ret_val = false;
+        goto send_bytes_done;
     }
 
     console_write("send_bytes: Header CBS count: ");
@@ -731,18 +741,17 @@ static bool send_bytes(
         symbol_count - MT_HEADERDATABLOCK_LEN,
         &content_cbs_count) == NULL)
     {
-        s_data_cb = NULL;
-        alloc_free(symbols);
-        dma_deinit();
-        return false;
+        assert(false); // Must not happen.
+        ret_val = false;
+        goto send_bytes_done;
     }
 
     console_write("send_bytes: Content CBS count: ");
     console_write_dword_dec(content_cbs_count);
     console_writeline("");
 
-    // assert(content_pulse_count == 4 * (symbol_count - MT_HEADERDATABLOCK_LEN));
-
+    // Free stuff that already can be freed:
+    //
     s_data_cb = NULL;
     alloc_free(symbols);
     symbols = NULL;
@@ -763,9 +772,9 @@ static bool send_bytes(
     s_stop = 0;
     if(signal(SIGINT, signal_handler) == SIG_ERR)
     {
-        s_data_cb = NULL;
-        dma_deinit();
-        return false;
+        assert(false); // Must not happen.
+        ret_val = false;
+        goto send_bytes_done;
     }
 
     if(infinitely)
@@ -783,9 +792,8 @@ static bool send_bytes(
             {
                 // Not an error, but the stop signal was received.
 
-                s_data_cb = NULL;
-                dma_deinit();
-                return false;
+                //ret_val = true;
+                goto send_bytes_done;
             }
         }while(s_stop == 0);
 
@@ -804,11 +812,15 @@ static bool send_bytes(
         {
             // Not an error, but the stop signal was received.
 
-            s_data_cb = NULL;
-            dma_deinit();
-            return false;
+            //ret_val = true;
+            goto send_bytes_done;
         }
     }
+
+send_bytes_done:
+    alloc_free(symbols); // (works with NULL)
+    //symbols = NULL;
+    //symbol_count = 0;
 
     console_deb_writeline(
         "send_bytes: Setting sense output line to HIGH at CBM..");
@@ -818,7 +830,7 @@ static bool send_bytes(
 
     s_data_cb = NULL;
     dma_deinit();
-    return true;
+    return ret_val;
 }
 
 static bool send_petload_c64tom(bool const infinitely)
