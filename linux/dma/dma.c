@@ -73,6 +73,8 @@ static void enable()
 
 uint32_t dma_get_bus_addr_from_vc_ptr(void * const ptr)
 {
+    assert(s_mapped_vc_mem != NULL);
+
     return VC_PTR_TO_BUS_ADDR(ptr);
 }
 
