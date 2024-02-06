@@ -30,7 +30,7 @@ install_high
 
 starty   ldy #$ff       ;   255 * ~252us = ~64ms for server to detect signal.
 
-startlvl lda cas_wrt    ;   4! toggle level on write line to generage frequency
+startlvl lda cas_wrt    ;   4! toggle level on write line to generate frequency
          eor #ackmask   ;   2! signaling to server that fastmode wedge is
          sta cas_wrt    ;   4! installed at cbm.
 
