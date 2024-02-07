@@ -37,6 +37,30 @@ void gpio_write(uint32_t const pin_nr, bool const high);
 
 bool gpio_read(uint32_t const pin_nr);
 
+/** Enable rising edge detection for pin with given nr.
+ */
+void gpio_enable_ren(uint32_t const pin_nr);
+
+/** Enable falling edge detection for pin with given nr.
+ */
+void gpio_disable_ren(uint32_t const pin_nr);
+
+/** Enable falling edge detection for pin with given nr. 
+ */
+void gpio_enable_fen(uint32_t const pin_nr);
+
+/** Disable falling edge detection for pin with given nr.
+ */
+void gpio_disable_fen(uint32_t const pin_nr);
+
+/** Clear edge-detected flag for pin with given nr. 
+ */
+void gpio_clear_eds(uint32_t const pin_nr);
+
+/** Returns value of edge-detected flag for pin with given nr.
+ */
+bool gpio_get_eds(uint32_t const pin_nr);
+
 /** Busy-wait, until pin with given nr. is LOW.
  */
 void gpio_wait_for_low(uint32_t const pin_nr);

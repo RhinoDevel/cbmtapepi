@@ -75,6 +75,21 @@ static uint32_t const s_offset_from_peribase = 0x00200000;
 //
 // [lev1 will dynamically be used with the help of function get_lev()]
 
+//static uint32_t const s_offset_eds0 = 0x40; // GPIO pin event detect status 0.
+#define OFFSET_EDS0 ((uint32_t)0x40) // GPIO pin event detect status 0.
+//
+// [eds1 will dynamically be used with the help of function get_eds()]
+
+//static uint32_t const s_offset_ren0 = 0x4c; // GPIO pin rising edge detect enable 0.
+#define OFFSET_REN0 ((uint32_t)0x4c)  // GPIO pin rising edge detect enable 0.
+//
+// [ren1 will dynamically be used with the help of function get_ren()]
+
+//static uint32_t const s_offset_fen0 = 0x58; // GPIO pin falling edge detect enable 0.
+#define OFFSET_FEN0 ((uint32_t)0x58) // GPIO pin falling edge detect enable 0.
+//
+// [fen1 will dynamically be used with the help of function get_fen()]
+
 static uint32_t const s_offset_pud = 0x94; // GPIO pull-up/-down (page 100).
 
 // GPIO pull-up/-down enable clock 0:
@@ -121,6 +136,30 @@ static void (*s_wait_microseconds)(uint32_t const microseconds) = 0;
 //     // 4 bytes for 32 pins.
 // }
 #define get_lev(PIN_NR) (s_addr_base + OFFSET_LEV0 + 4 * ((uint32_t)(PIN_NR) / 32))
+
+// static uint32_t get_eds(uint32_t const pin_nr)
+// {
+//     return s_addr_base + OFFSET_EDS0 + 4 * (pin_nr / 32);
+//     //
+//     // 4 bytes for 32 pins.
+// }
+#define get_eds(PIN_NR) (s_addr_base + OFFSET_EDS0 + 4 * ((uint32_t)(PIN_NR) / 32))
+
+// static uint32_t get_ren(uint32_t const pin_nr)
+// {
+//     return s_addr_base + OFFSET_REN0 + 4 * (pin_nr / 32);
+//     //
+//     // 4 bytes for 32 pins.
+// }
+#define get_ren(PIN_NR) (s_addr_base + OFFSET_REN0 + 4 * ((uint32_t)(PIN_NR) / 32))
+
+// static uint32_t get_fen(uint32_t const pin_nr)
+// {
+//     return s_addr_base + OFFSET_FEN0 + 4 * (pin_nr / 32);
+//     //
+//     // 4 bytes for 32 pins.
+// }
+#define get_fen(PIN_NR) (s_addr_base + OFFSET_FEN0 + 4 * ((uint32_t)(PIN_NR) / 32))
 
 /** Return address of GPPUDCLK register responsible for pin with given nr.
  */
@@ -231,6 +270,39 @@ void gpio_write(uint32_t const pin_nr, bool const high)
 bool gpio_read(uint32_t const pin_nr)
 {
     return (mem_read(get_lev(pin_nr)) & get_pin_mask(pin_nr)) != 0;
+}
+
+void gpio_enable_ren(uint32_t const pin_nr)
+{
+    uint32_t const ren_addr = get_ren(pin_nr);
+
+    mem_write(ren_addr, mem_read(ren_addr) | get_pin_mask(pin_nr));
+}
+void gpio_disable_ren(uint32_t const pin_nr)
+{
+    uint32_t const ren_addr = get_ren(pin_nr);
+
+    mem_write(ren_addr, mem_read(ren_addr) & ~get_pin_mask(pin_nr));
+}
+void gpio_enable_fen(uint32_t const pin_nr)
+{
+    uint32_t const fen_addr = get_fen(pin_nr);
+
+    mem_write(fen_addr, mem_read(fen_addr) | get_pin_mask(pin_nr));
+}
+void gpio_disable_fen(uint32_t const pin_nr)
+{
+    uint32_t const fen_addr = get_ren(pin_nr);
+
+    mem_write(fen_addr, mem_read(fen_addr) & ~get_pin_mask(pin_nr));
+}
+void gpio_clear_eds(uint32_t const pin_nr)
+{
+    mem_write(get_eds(pin_nr), get_pin_mask(pin_nr));
+}
+bool gpio_get_eds(uint32_t const pin_nr)
+{
+    return (mem_read(get_eds(pin_nr)) & get_pin_mask(pin_nr)) != 0;
 }
 
 void gpio_wait_for_low(uint32_t const pin_nr)
