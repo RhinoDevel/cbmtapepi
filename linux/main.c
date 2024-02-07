@@ -860,7 +860,7 @@ static bool send_petload_pet4tom(bool const infinitely)
 
 /** Send file with given name/path via compatibility mode.
  */
-static bool send_file(char * const file_name, bool const infinitely)
+static bool send_file(char * const file_name)
 {
     // Assuming uint8_t being equal to unsigned char.
 
@@ -881,7 +881,7 @@ static bool send_file(char * const file_name, bool const infinitely)
         last_path_sep_pos == -1
             ? file_name
             : (file_name + last_path_sep_pos + 1),
-        infinitely);
+        false); // Always send a file one time, only.
 
     alloc_free(bytes);
     return success;
@@ -931,24 +931,9 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_file(argv[2], false);
+                return send_file(argv[2]);
             }
-            case 'i':
-            {
-                if(argc != 3)
-                {
-                    break;
-                }
-                return send_file(argv[2], true);
-            }
-            case 't':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                return send_petload_c64tom(false);
-            }
+
             case 'u':
             {
                 if(argc != 2)
@@ -956,14 +941,6 @@ static bool exec(int const argc, char * const argv[])
                     break;
                 }
                 return send_petload_c64tom(true);
-            }
-            case 'v':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                return send_petload_pet4(false);
             }
             case 'w':
             {
@@ -973,14 +950,6 @@ static bool exec(int const argc, char * const argv[])
                 }
                 return send_petload_pet4(true);
             }
-            case 'q':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                return send_petload_pet4tom(false);
-            }
             case 'r':
             {
                 if(argc != 2)
@@ -989,6 +958,7 @@ static bool exec(int const argc, char * const argv[])
                 }
                 return send_petload_pet4tom(true);
             }
+
             case 'y':
             {
                 if(argc != 3)
@@ -1008,17 +978,9 @@ static bool exec(int const argc, char * const argv[])
     console_writeline(
         "s <filename> = Send file via compatibility mode once."
         "\n"
-        "i <filename> = Send file via compatibility mode in a loop."
-        "\n"
-        "t = Send C64 TOM wedge via compatibility mode once."
-        "\n"
         "u = Send C64 TOM wedge via compatibility mode in a loop."
         "\n"
-        "v = Send PET BASIC v4 wedge via compatibility mode once."
-        "\n"
         "w = Send PET BASIC v4 wedge via compatibility mode in a loop."
-        "\n"
-        "q = Send PET BASIC v4 TOM wedge via compatibility mode once."
         "\n"
         "r = Send PET BASIC v4 TOM wedge via compatibility mode in a loop."
         "\n"
