@@ -292,7 +292,7 @@ void gpio_enable_fen(uint32_t const pin_nr)
 }
 void gpio_disable_fen(uint32_t const pin_nr)
 {
-    uint32_t const fen_addr = get_ren(pin_nr);
+    uint32_t const fen_addr = get_fen(pin_nr);
 
     mem_write(fen_addr, mem_read(fen_addr) & ~get_pin_mask(pin_nr));
 }
