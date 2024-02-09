@@ -830,9 +830,12 @@ static bool send_bytes(
     symbols = NULL;
     symbol_count = 0;
 
-    console_writeline(
-        "send_bytes: Power-on Commodore, start LOAD command and press ENTER key.");
-    getchar();
+    if(!infinitely)
+    {
+        console_writeline(
+            "send_bytes: Power-on Commodore, start LOAD command and press ENTER key.");
+        getchar();
+    }
 
     // Simulate the PLAY button to be pressed by the user on the tape drive:
     //
