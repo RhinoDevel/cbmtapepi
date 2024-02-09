@@ -1039,7 +1039,11 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_c64tom(&fast_mode_detected); // TODO: Enter fast mode, if detected at CBM!
+                if(!send_petload_c64tom(&fast_mode_detected))
+                {
+                    return false;
+                }
+                break; // => Enter fast mode, below!
             }
             case 'w':
             {
@@ -1047,7 +1051,11 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_pet4(&fast_mode_detected); // TODO: Enter fast mode, if detected at CBM!
+                if(!send_petload_pet4(&fast_mode_detected)
+                {
+                    return false;
+                }
+                break; // => Enter fast mode, below!
             }
             case 'r':
             {
@@ -1055,7 +1063,11 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_pet4tom(&fast_mode_detected); // TODO: Enter fast mode, if detected at CBM!
+                if(!send_petload_pet4tom(&fast_mode_detected))
+                {
+                    return false;
+                }
+                break; // => Enter fast mode, below!
             }
 
             case 'y':
@@ -1072,6 +1084,14 @@ static bool exec(int const argc, char * const argv[])
                 break;
             }
         }
+
+        // ************************
+        // *** Enter fast mode: ***
+        // ************************
+
+        assert(fast_mode_detected);
+
+        // TODO: Enter fast mode!
     }while(false);
 
     console_writeline(
