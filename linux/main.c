@@ -1007,93 +1007,94 @@ static bool print_file_as_symbols(char * const file_name)
 
 static bool exec(int const argc, char * const argv[])
 {
-    do
+    bool fast_mode_detected = false;
+
+    if(argc < 2) // At least a command must be given.
     {
-        bool fast_mode_detected = false;
+        goto exec_done_show_options;
+    }
+    if(strnlen(argv[1], 2) != 1) // Single letter commands, only.
+    {
+        goto exec_done_show_options;
+    }
 
-        if(argc < 2) // At least a command must be given.
+    char const cmd = argv[1][0];
+
+    switch(cmd)
+    {
+        case 's':
         {
+            if(argc != 3)
+            {
+                goto exec_done_show_options;
+            }
+            return send_file(argv[2]);
+        }
+
+        case 'u':
+        {
+            if(argc != 2)
+            {
+                goto exec_done_show_options;
+            }
+            if(!send_petload_c64tom(&fast_mode_detected))
+            {
+                return false;
+            }
             break;
         }
-        if(strnlen(argv[1], 2) != 1) // Single letter commands, only.
+        case 'w':
         {
+            if(argc != 2)
+            {
+                goto exec_done_show_options;
+            }
+            if(!send_petload_pet4(&fast_mode_detected)
+            {
+                return false;
+            }
+            break;
+        }
+        case 'r':
+        {
+            if(argc != 2)
+            {
+                goto exec_done_show_options;
+            }
+            if(!send_petload_pet4tom(&fast_mode_detected))
+            {
+                return false;
+            }
             break;
         }
 
-        char const cmd = argv[1][0];
-
-        switch(cmd)
+        case 'y':
         {
-            case 's':
+            if(argc != 3)
             {
-                if(argc != 3)
-                {
-                    break;
-                }
-                return send_file(argv[2]);
+                goto exec_done_show_options;
             }
-
-            case 'u':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                if(!send_petload_c64tom(&fast_mode_detected))
-                {
-                    return false;
-                }
-                break; // => Enter fast mode, below!
-            }
-            case 'w':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                if(!send_petload_pet4(&fast_mode_detected)
-                {
-                    return false;
-                }
-                break; // => Enter fast mode, below!
-            }
-            case 'r':
-            {
-                if(argc != 2)
-                {
-                    break;
-                }
-                if(!send_petload_pet4tom(&fast_mode_detected))
-                {
-                    return false;
-                }
-                break; // => Enter fast mode, below!
-            }
-
-            case 'y':
-            {
-                if(argc != 3)
-                {
-                    break;
-                }
-                return print_file_as_symbols(argv[2]);
-            }
-
-            default:
-            {
-                break;
-            }
+            return print_file_as_symbols(argv[2]);
         }
 
-        // ************************
-        // *** Enter fast mode: ***
-        // ************************
+        default:
+        {
+            goto exec_done_show_options;
+        }
+    }
 
-        assert(fast_mode_detected);
+    if(!fast_mode_detected)
+    {
+        return true; // Should have been caused by stop signal (e.g. CTRL+C).
+    }
 
-        // TODO: Enter fast mode!
-    }while(false);
+    // ***********************
+    // *** ENTER FAST MODE ***
+    // ***********************
 
+    return false; // TODO: Implement!
+
+exec_done_show_options:
     console_writeline(
         "s <filename> = Send file via compatibility mode once."
         "\n"
