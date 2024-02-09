@@ -1049,7 +1049,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 goto exec_done_show_options;
             }
-            if(!send_petload_pet4(&fast_mode_detected)
+            if(!send_petload_pet4(&fast_mode_detected))
             {
                 return false;
             }
