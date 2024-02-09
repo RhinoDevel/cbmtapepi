@@ -38,6 +38,7 @@
 #include "dma/dma_cb.h"
 #include "dma/inf/inf.h"
 #include "dma/dma_gpio/dma_gpio.h"
+#include "send_cbs_result.h"
 
 static uint8_t * s_mem = NULL; // [see init() and deinit()]
 
@@ -305,21 +306,18 @@ static void deinit_signal_detect()
     s_signal_last = 0;
 }
 
-// TODO: Let caller know, if detected signal was the reason for returning
-//       (to be able to enter fast-mode)!
-//
 /**
  * - Returns false, if stop signal was received (NOT an error). 
  */
-static bool send_cbs(
+static enum send_cbs_result send_cbs(
     struct dma_cb * const header_cbs,
     int const header_cbs_count,
     struct dma_cb * const content_cbs,
     int const content_cbs_count,
     bool const detect_signal)
 {
-    bool ret_val = true, // TRUE by default. 
-        motor_done = false;
+    enum send_cbs_result ret_val = send_cbs_result_invalid;
+    bool motor_done = false;
 
     if(!gpio_read(MT_TAPE_GPIO_PIN_NR_MOTOR))
     {
@@ -330,7 +328,7 @@ static bool send_cbs(
             if(detect_signal && is_signal_detected())
             {
                 console_deb_writeline("\nsend_cbs: Signal detected (1)!");
-                ret_val = false; // NOT an error.
+                ret_val = send_cbs_result_fast_mode_detected;
                 goto send_cbs_done;   
             }
         }
@@ -338,7 +336,7 @@ static bool send_cbs(
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (1)..");
-        ret_val = false; // Meaning: Stop signal received, NOT an error.
+        ret_val = send_cbs_result_stopped;
         goto send_cbs_done;
     }
 
@@ -369,7 +367,7 @@ static bool send_cbs(
             if(detect_signal && is_signal_detected())
             {
                 console_deb_writeline("\nsend_cbs: Signal detected (2)!");
-                ret_val = false; // NOT an error.
+                ret_val = send_cbs_result_fast_mode_detected;
                 goto send_cbs_done;   
             }
         }
@@ -377,7 +375,7 @@ static bool send_cbs(
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (2)..");
-        ret_val = false; // Meaning: Stop signal received, NOT an error.
+        ret_val = send_cbs_result_stopped;
         goto send_cbs_done;
     }
     ProgressBar_print( // Cheating..
@@ -417,7 +415,7 @@ static bool send_cbs(
                 if(detect_signal && is_signal_detected())
                 {
                     console_deb_writeline("\nsend_cbs: Signal detected (3)!");
-                    ret_val = false; // NOT an error.
+                    ret_val = send_cbs_result_fast_mode_detected;
                     goto send_cbs_done;   
                 }
                 continue; // Motor is on. Keep "endless tape" running.
@@ -451,7 +449,7 @@ static bool send_cbs(
                 if(detect_signal && is_signal_detected())
                 {
                     console_deb_writeline("\nsend_cbs: Signal detected (4)!");
-                    ret_val = false; // NOT an error.
+                    ret_val = send_cbs_result_fast_mode_detected;
                     goto send_cbs_done;   
                 }
             }
@@ -468,7 +466,7 @@ static bool send_cbs(
     if(s_stop != 0)
     {
         console_deb_writeline("\nsend_cbs: Stopping (3)..");
-        ret_val = false; // Meaning: Stop signal received, NOT an error.
+        ret_val = send_cbs_result_stopped;
         goto send_cbs_done;
     }
     ProgressBar_print( // Cheating..
@@ -476,8 +474,12 @@ static bool send_cbs(
     printf("\n");
 
     console_deb_writeline("send_cbs: Sending done.");
+    assert(ret_val == send_cbs_result_invalid);
+    ret_val = send_cbs_result_finished;
 
 send_cbs_done:
+    assert(ret_val != send_cbs_result_invalid);
+
     dma_stop();
 
     console_deb_writeline(
@@ -737,7 +739,8 @@ static bool send_bytes(
     uint8_t * const bytes,
     uint32_t const byte_count,
     char const * const name,
-    bool const infinitely)
+    bool const infinitely,
+    bool * const out_fast_mode_detected)
 {
     bool ret_val = true; // TRUE by default (meaning: No error).
     int symbol_count = 0,
@@ -747,6 +750,7 @@ static bool send_bytes(
     struct dma_cb * cbs = NULL, 
         * header_cbs = NULL,
         * content_cbs = NULL;
+    enum send_cbs_result send_done_reason = send_cbs_result_invalid;
 
     symbols = create_symbols_from_bytes(bytes, byte_count, name, &symbol_count);
     if(symbols == NULL)
@@ -862,18 +866,19 @@ static bool send_bytes(
 
         do
         {
-            if(!send_cbs(
+            send_done_reason = send_cbs(
                     header_cbs,
                     header_cbs_count,
                     content_cbs,
                     content_cbs_count,
-                    true))
+                    true);
+
+            if(send_done_reason != send_cbs_result_finished)
             {
-                // Not an error, but the stop signal was received.
+                assert(send_done_reason != send_cbs_result_invalid);
 
-                // TODO: Enter fast-mode, when signal-detection got us here!
-
-                //ret_val = true;
+                // Either fast mode or stop signal received.
+                
                 goto send_bytes_done;
             }
 
@@ -887,18 +892,12 @@ static bool send_bytes(
         console_writeline(
             "send_bytes: Starting sending (press CTRL+C to exit/stop)..");
 
-        if(!send_cbs(
-                header_cbs,
-                header_cbs_count,
-                content_cbs,
-                content_cbs_count,
-                false))
-        {
-            // Not an error, but the stop signal was received.
-
-            //ret_val = true;
-            goto send_bytes_done;
-        }
+        send_done_reason = send_cbs(
+            header_cbs,
+            header_cbs_count,
+            content_cbs,
+            content_cbs_count,
+            false);
     }
 
 send_bytes_done:
@@ -916,39 +915,48 @@ send_bytes_done:
 
     s_data_cb = NULL;
     dma_deinit();
+    if(out_fast_mode_detected != NULL
+        && send_done_reason == send_cbs_result_fast_mode_detected)
+    {
+        *out_fast_mode_detected = true;
+    }
     return ret_val;
 }
 
-static bool send_petload_c64tom()
+static bool send_petload_c64tom(bool * const out_fast_mode_detected)
 {
     return send_bytes(
         (uint8_t*)s_petload_c64tom, // *** CONST CAST ***
-        sizeof s_petload_c64tom  / sizeof *s_petload_c64tom,
+        sizeof s_petload_c64tom / sizeof *s_petload_c64tom,
         MT_PETLOAD_PRG_NAME_RUN,
-        true); // Always enters infinite send loop.
+        true, // Always enters infinite send loop.
+        out_fast_mode_detected);
 }
 
-static bool send_petload_pet4()
+static bool send_petload_pet4(bool * const out_fast_mode_detected)
 {
     return send_bytes(
         (uint8_t*)s_petload_pet4, // *** CONST CAST ***
-        sizeof s_petload_pet4  / sizeof *s_petload_pet4,
+        sizeof s_petload_pet4 / sizeof *s_petload_pet4,
         MT_PETLOAD_PRG_NAME_TAPE_BUF,
-        true); // Always enters infinite send loop.
+        true, // Always enters infinite send loop.
+        out_fast_mode_detected);
 }
 
-static bool send_petload_pet4tom()
+static bool send_petload_pet4tom(bool * const out_fast_mode_detected)
 {
     return send_bytes(
         (uint8_t*)s_petload_pet4tom, // *** CONST CAST ***
-        sizeof s_petload_pet4tom  / sizeof *s_petload_pet4tom,
+        sizeof s_petload_pet4tom / sizeof *s_petload_pet4tom,
         MT_PETLOAD_PRG_NAME_RUN,
-        true); // Always enters infinite send loop.
+        true, // Always enters infinite send loop.
+        out_fast_mode_detected);
 }
 
 /** Send file with given name/path via compatibility mode.
  */
-static bool send_file(char * const file_name)
+static bool send_file(
+    char * const file_name)
 {
     // Assuming uint8_t being equal to unsigned char.
 
@@ -969,7 +977,8 @@ static bool send_file(char * const file_name)
         last_path_sep_pos == -1
             ? file_name
             : (file_name + last_path_sep_pos + 1),
-        false); // Always send a file one time, only.
+        false, // Always send a file one time, only.
+        NULL); // No fast mode detection (does not make sense).
 
     alloc_free(bytes);
     return success;
@@ -1000,6 +1009,8 @@ static bool exec(int const argc, char * const argv[])
 {
     do
     {
+        bool fast_mode_detected = false;
+
         if(argc < 2) // At least a command must be given.
         {
             break;
@@ -1028,7 +1039,7 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_c64tom();
+                return send_petload_c64tom(&fast_mode_detected); // TODO: Enter fast mode, if detected at CBM!
             }
             case 'w':
             {
@@ -1036,7 +1047,7 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_pet4();
+                return send_petload_pet4(&fast_mode_detected); // TODO: Enter fast mode, if detected at CBM!
             }
             case 'r':
             {
@@ -1044,7 +1055,7 @@ static bool exec(int const argc, char * const argv[])
                 {
                     break;
                 }
-                return send_petload_pet4tom();
+                return send_petload_pet4tom(&fast_mode_detected); // TODO: Enter fast mode, if detected at CBM!
             }
 
             case 'y':
