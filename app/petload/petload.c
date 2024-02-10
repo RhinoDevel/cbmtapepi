@@ -13,7 +13,6 @@
 #include "petload_c64tof.h"
 #include "petload_c64tom.h"
 #include "../config.h"
-#include "../cbm/cbm_send.h"
 #include "../tape/tape_input.h"
 #include "../../lib/alloc/alloc.h"
 #include "../../lib/basic/basic_addr.h"
@@ -27,6 +26,7 @@
 #endif //NDEBUG
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Motor signal rise and fall times,
 // measured these with attached Raspberry Pi 1 and running CBM Tape Pi
