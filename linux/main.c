@@ -1025,6 +1025,11 @@ static bool print_file_as_symbols(char * const file_name)
     return true;
 }
 
+static bool enter_fast_mode()
+{
+    return false; // TODO: Implement!
+}
+
 static bool exec(int const argc, char * const argv[])
 {
     bool fast_mode_detected = false;
@@ -1061,7 +1066,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 return false;
             }
-            break;
+            break; // => Cancelled or fast-mode.
         }
         case 'w':
         {
@@ -1073,7 +1078,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 return false;
             }
-            break;
+            break; // => Cancelled or fast-mode.
         }
         case 'r':
         {
@@ -1085,7 +1090,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 return false;
             }
-            break;
+            break; // => Cancelled or fast-mode.
         }
 
         case 'y':
@@ -1105,6 +1110,7 @@ static bool exec(int const argc, char * const argv[])
 
     if(!fast_mode_detected)
     {
+        assert(s_stop != 0);
         return true; // Should have been caused by stop signal (e.g. CTRL+C).
     }
 
@@ -1112,7 +1118,9 @@ static bool exec(int const argc, char * const argv[])
     // *** ENTER FAST MODE ***
     // ***********************
 
-    return false; // TODO: Implement!
+    assert(s_stop == 0);
+    assert(fast_mode_detected);
+    return enter_fast_mode();
 
 exec_done_show_options:
     console_writeline(
