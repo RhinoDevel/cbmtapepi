@@ -33,7 +33,8 @@ SOURCES=\
 	../lib/petasc/petasc.c \
 	\
 	../app/tape/tape_fill_buf.c \
-	../app/tape/tape_input.c
+	../app/tape/tape_input.c \
+	../app/petload/petload.c
 
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cbmtapepi

@@ -30,6 +30,8 @@
 #include "../app/petload/petload_c64tom.h"
 #include "../app/petload/petload_pet4.h"
 #include "../app/petload/petload_pet4tom.h"
+#include "../app/petload/petload.h"
+#include "../app/cmd/cmd_output.h"
 
 #include "ProgressBar/ProgressBar.h"
 #include "file/file.h"
@@ -101,6 +103,10 @@ static void init_gpio()
         .wait_microseconds = busywait_microseconds,
         .peri_base = PERI_BASE
     });
+
+    console_deb_writeline(
+            "init_gpio: Setting LED output line to LOW..");
+    gpio_set_output(MT_GPIO_PIN_NR_LED, false);
 
     console_deb_writeline(
         "init_gpio: Setting sense output line to HIGH at CBM..");
@@ -1027,7 +1033,71 @@ static bool print_file_as_symbols(char * const file_name)
 
 static bool enter_fast_mode()
 {
-    return false; // TODO: Implement!
+    gpio_set_output(MT_GPIO_PIN_NR_LED, true);
+    //
+    // Indicates waiting-for-command-from-CBM "mode".
+
+    while(true)
+    {
+        struct cmd_output * o = NULL;
+
+        // Get command (or PRG to save) from Commodore machine:
+
+        struct tape_input * const ti = petload_retrieve();
+
+        assert(ti != NULL);
+
+        // Create "command" string to react accordingly:
+
+        char * const name = tape_input_create_str_from_name(ti);
+
+#ifndef NDEBUG
+        console_write("enter_fast_mode : Name from tape input = \"");
+        console_write(name);
+        console_writeline("\".");
+#endif //NDEBUG
+
+        if(false/*cmd_exec(mode, name, ti, &o)*/) // TODO: Implement!
+        {
+            if(o != 0) // Something to send back to CBM.
+            {
+                gpio_set_output(MT_GPIO_PIN_NR_LED, false);
+                //
+                // Indicated sending-data-to-CBM "mode".
+                
+                petload_send(o->bytes, o->count);
+            }
+            else // Nothing to send back to CBM.
+            {
+                // Get CBM out of waiting-for-response mode:
+                //
+                petload_send_nop();
+            }
+
+            gpio_set_output(MT_GPIO_PIN_NR_LED, true);
+            //
+            // Indicates waiting-for-command-from-CBM mode.
+        }
+        else
+        {
+            // TODO: Implement correctly:
+            //
+            console_writeline("enter_fast_mode : \"Error\": Command failed!");
+            //on_failed_cmd(mode); // (sets LED to blinking)
+        }
+
+        // Deallocate memory:
+
+        cmd_free_output(o);
+        alloc_free(name);
+        if(ti != 0)
+        {
+            alloc_free(ti->bytes);
+            alloc_free(ti);
+        }
+    }
+    gpio_set_output(MT_GPIO_PIN_NR_LED, false);
+    return true; // TODO: Implement reacting to stop signal [above and especially in petload_retrieve()]!
 }
 
 static bool exec(int const argc, char * const argv[])
