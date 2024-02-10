@@ -20,7 +20,11 @@
 #include "../../lib/petasc/petasc.h"
 #include "../../lib/assert.h"
 #include "../../hardware/gpio/gpio.h"
-#include "../../hardware/armtimer/armtimer.h"
+#ifdef MT_LINUX
+    #include <unistd.h> // For usleep().
+#else //MT_LINUX
+    #include "../../hardware/armtimer/armtimer.h"
+#endif //MT_LINUX
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
 #endif //NDEBUG
@@ -124,7 +128,11 @@ static void send_data_ack_pulse()
     //
     // (inverted, because circuit inverts signal to CBM)
 
+#ifdef MT_LINUX
+    usleep(pulse_microseconds); // This is NOT precise!
+#else //MT_LINUX
     armtimer_busywait_microseconds(pulse_microseconds);
+#endif //MT_LINUX
     
     gpio_set_output(s_data_ack_to_pet, !s_data_ack_to_pet_default_level);
     //
