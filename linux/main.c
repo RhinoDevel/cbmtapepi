@@ -1088,7 +1088,7 @@ static bool enter_fast_mode()
 
         // Deallocate memory:
 
-        cmd_free_output(o);
+        //cmd_free_output(o); // TODO: Re-enable!
         alloc_free(name);
         if(ti != 0)
         {
