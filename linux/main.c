@@ -859,6 +859,15 @@ static bool send_bytes(
 
     if(infinitely)
     {
+        // TODO: Not sure, if this makes sense:
+        //
+        // // Wait some time for user to power-on CBM and push
+        // // <shift> + <run/stop> for loading:
+        // //
+        // console_writeline(
+        //     "send_bytes: Waiting some time before starting loop..");
+        // sleep(5); // Seconds
+
         console_writeline(
             "send_bytes: Starting infinite sending (press CTRL+C to exit/stop)..");
 
