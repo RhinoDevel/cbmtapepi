@@ -12,9 +12,14 @@ met, because the Linux OS scheduler interrupts sending the signal.
 
 But it can be done with DMA, which is finally **implemented**!!
 
-### Current state (February 2., 2024):
+### Current state (February 10., 2024):
 
-Sending relatively short program files to the PET 3032 (BASIC v4) **works**!
+- Sending program files to the PET 3032 (BASIC v4) **works**!
+- Raspberry Pi detects, if fast mode wedge got loaded on the Commodore.
+- You **need** to execute ```sudo dtoverlay gpio-no-irq``` before loading a
+  fast mode wedge to the Commodore, if you Raspberry Pi freezes while doing
+  that (see [this](https://github.com/raspberrypi/linux/issues/2550) issue on
+  GitHub).
 
 #### Next steps:
 
