@@ -11,7 +11,7 @@ Setting tape read output line to HIGH at CBM (circuit inverts signal).
 Setting motor line to input with pull-down (circuit does NOT invert signal).
 Setting tape write line to input with pull-down (circuit does invert signal).
 
-2) Reading configuration file and either entering SAVE or one of the fast modes:
+2) Reading configuration file and either entering SAVE or fast mode:
 
 2)a) Either SAVE mode:
 
@@ -23,27 +23,52 @@ Setting tape write line to input with pull-down (circuit does invert signal).
 
 -> Going back to first step 2)a)1).
 
-2)b) Or one of the fast modes (each "machine" has its own fast mode):
+2)b) Or fast mode:
 
-2)b)1) Entering load loop (this example is for the PET series):
+2)b)1) Entering load loop:
 
-2)b)1)1) Waiting for WRITE getting HIGH at CBM (correct for PET, only!).
+Actually entering loop, where Pi sends the fast mode PRG over and over to the
+CBM (simulating an endless tape).
 
-2)b)1)2) Actually entering loop, where Pi sends the fast mode PRG over and over
-         to the CBM (simulating an endless tape).
+This loop will break, if Pi detected the signal that the CBM sends for some
+short time to indicate that the fast mode wedge got installed and is ready to
+use after a successful load.
 
-         After each send, check, if WRITE signal changed to LOW.
-         
-         If not waiting to give CBM enough time for the ISR to disable the motor
-         signal.
+If Pi did not detect the fast-mode-wedge-installed signal, yet, wait to give CBM
+enough time for the ISR (of the CBM) to disable the motor signal.
 
--> At some point CBM loaded fast mode PRG and user entered SYS command to run
-   the fast mode PRG installer.
+-> At some point CBM loaded fast mode PRG and user entered SYS or RUN command to
+   execute the fast mode PRG installer.
 
-   -> Fast mode installer sets WRITE to LOW.
+   -> Fast mode installer sends the signal (see above) for some time.
 
       -> Pi exits the load loop.
 
-2)b)1)3) Entering command loop (with fast mode enabled).
+2)b)2) Entering command loop (with fast mode enabled).
+
+petload_retrieve():
+
+- Waiting for MOTOR (data-ready-from-CBM) line to really be LOW again.
+
+- Set READ (data-ack-to-CBM) line to HIGH at CBM.
+
+2)b)2)1) Retrieve the "name" (the command to execute) from CBM:
+
+For each character: retrieve_byte():
+
+For each bit: retrieve_bit():
+
+For each bit that is correctly set by the CBM, the CBM will toggle the level of
+the MOTOR (data-ready-from-CBM) line.
+
+...
+
+2)b)2)2) Retrieve the address from CBM:
+
+...
+
+2)b)2)3) If address is not zero: Retrieve the payload:
+
+...
 
 --- WORK IN PROGRESS ---
