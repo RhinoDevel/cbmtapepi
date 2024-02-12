@@ -1,6 +1,8 @@
 
 // Marcel Timm, RhinoDevel
 
+#include <stdio.h>
+
 #include "petload_prg_name.h"
 #include "petload.h"
 #include "petload_pet1.h"
@@ -102,9 +104,11 @@ static void wait_for_data_ack(bool const is_even_bit)
         //
         // (inverted, because circuit inverts signal from CBM)
 
-        is_even_bit
-            ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
-            : (!s_send_expected_data_ack_level
+          // TODO: Fix this correctly for Linux port (1/2):
+          //
+ //       is_even_bit
+ //           ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
+           /* :*/ (!s_send_expected_data_ack_level
             //
             // (inverted, because circuit inverts signal to CBM)
 
@@ -167,8 +171,12 @@ static uint8_t retrieve_bit(int const bit_nr)
 
     petload_wait_for_data_ready_val(
         wait_for_val,
-        even_bit); // Make sure on rise (faster than fall time),
-                   // no need to make sure on fall.
+
+        // TODO: Fix this correctly for Linux port (2/2):
+        //
+        true);
+        //even_bit); // Make sure on rise (faster than fall time),
+        //           // no need to make sure on fall.
 
     s_send_expected_data_ack_level = gpio_read(s_data_from_pet);
     //
@@ -176,6 +184,7 @@ static uint8_t retrieve_bit(int const bit_nr)
     //
     // (because data-from-pet line used here during retrieval
     //  and data-ack.-from-pet line used during send are both using WRITE)
+
 
     // Send data-ack to Commodore:
     //
