@@ -1,0 +1,43 @@
+[also see file "protocol.txt"]
+
+- Pi:  Starts infinite send loop:
+
+       SENSE -> LOW  (at CBM)
+       - send HIGH-to-LOW (at CBM) pulses to transfer data while stopping (see
+         details in code) under some circumstances, if CBM set MOTOR to LOW -
+       SENSE -> HIGH (at CBM)
+       READ  -> HIGH (at CBM)
+       
+       - next iteration -
+
+- CBM: LOADs data from READ:
+
+       May disables the MOTOR signal in-between (normally after the header data
+       is retrieved).
+       Should set MOTOR signal to low when ready, even if SENSE is still LOW
+       (at CBM) (not sure, if all CBMs do that).
+
+!!! There may be just a very short time between load above and wedge installer
+    run below, because (at least on some CBMs) you can use RUN key to trigger
+    LOAD and immediate RUN command execution after loading.
+
+- CBM: Executes loaded wedge installer:
+
+       - toggle WRITE signal for some time (with a frequency that is much higher
+         than the "toggle" frequency used by VIC's ISR for keyboard scan) to
+         indicate to the Pi, that the fast mode wedge is installed -
+
+- Pi:  Detect fast-mode-is-installed signal & break send loop:
+
+       When the signal from CBM is detected:
+       SENSE -> HIGH (at CBM)
+       READ  -> HIGH (at CBM)
+       - enter fast-mode -
+       - wait for MOTOR line to get LOW -
+       - wait for MOTOR line to get HIGH (will indicate data-ready-from-CBM) -
+
+!!! REMEMBER: The CBM (itself and in combination with the hardware interface)
+              does not necessarily toggle from HIGH to LOW and vice versa fast
+              enough to meet the requirements of the Pi.
+
+              => We must take care of that problem in software.

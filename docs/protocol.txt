@@ -1,3 +1,5 @@
+[also see file "protocol-another_attempt.txt"]
+
 0) On power-on or soft-reset:
 
 Sense, tape read, motor line and tape write GPIO pins at Pi are all by default
