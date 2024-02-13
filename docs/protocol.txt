@@ -35,7 +35,8 @@ short time to indicate that the fast mode wedge got installed and is ready to
 use after a successful load.
 
 If Pi did not detect the fast-mode-wedge-installed signal, yet, wait to give CBM
-enough time for the ISR (of the CBM) to disable the motor signal.
+enough time for the ISR (of the CBM) to disable the motor signal before entering
+next send iteration (of endless loop).
 
 -> At some point CBM loaded fast mode PRG and user entered SYS or RUN command to
    execute the fast mode PRG installer.
@@ -44,11 +45,31 @@ enough time for the ISR (of the CBM) to disable the motor signal.
 
       -> Pi exits the load loop.
 
+         Pi sets READ and SENSE line to HIGH at CBM.
+
 2)b)2) Entering command loop (with fast mode enabled).
 
 petload_retrieve():
 
 - Waiting for MOTOR (data-ready-from-CBM) line to really be LOW again.
+  
+  Why this is necessary:
+
+      MOTOR signal is set to LOW by CBM's ISR directly after successful LOAD,
+      but next iteration of infinite loop will trigger CBM's ISR to set MOTOR to
+      HIGH again (by setting SENSE to LOW at CBM).
+
+      The wedge installation signals the Pi to exit infinite send loop and Pi
+      sets SENSE to HIGH at CBM then. That will cause the CBM's ISR to set MOTOR
+      to LOW some time later.
+      
+      But petload_retrieve() is called immediately when the Pi enters fast mode
+      and the MOTOR signal may still be HIGH, then.
+
+      For the first bit to retrieve, the Pi waits for the data-ready-from-CBM
+      signal (which is MOTOR) to be HIGH!
+
+      => That is why waiting for MOTOR line to really be LOW is necessary.
 
 - Set READ (data-ack-to-CBM) line to HIGH at CBM.
 
