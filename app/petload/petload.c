@@ -104,16 +104,19 @@ static void wait_for_data_ack(bool const is_even_bit)
         //
         // (inverted, because circuit inverts signal from CBM)
 
-          // TODO: Fix this correctly for Linux port (1/2):
-          //
- //       is_even_bit
- //           ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
-           /* :*/ (!s_send_expected_data_ack_level
-            //
-            // (inverted, because circuit inverts signal to CBM)
+        // TODO: Fix this correctly, at least for Linux port (1/2):
+        //
+#ifndef MT_LINUX
+        is_even_bit
+            ? 0 // No making-sure necessary for bit 0, 2, 4 and 6.
+            :
+#endif //MT_LINUX
+        (!s_send_expected_data_ack_level
+        //
+        // (inverted, because circuit inverts signal to CBM)
 
-                ? pause_rise_microseconds
-                : pause_fall_microseconds));
+            ? pause_rise_microseconds
+            : pause_fall_microseconds));
 
     s_send_expected_data_ack_level = !s_send_expected_data_ack_level;
 }
@@ -172,11 +175,14 @@ static uint8_t retrieve_bit(int const bit_nr)
     petload_wait_for_data_ready_val(
         wait_for_val,
 
-        // TODO: Fix this correctly for Linux port (2/2):
+        // TODO: Fix this correctly (at least) for Linux port (2/2):
         //
+#ifdef MT_LINUX
         true);
-        //even_bit); // Make sure on rise (faster than fall time),
-        //           // no need to make sure on fall.
+#else //MT_LINUX
+        even_bit); // Make sure on rise (faster than fall time),
+                   // no need to make sure on fall.
+#endif //MT_LINUX
 
     s_send_expected_data_ack_level = gpio_read(s_data_from_pet);
     //
