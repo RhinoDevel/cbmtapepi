@@ -40,6 +40,7 @@ SOURCES=\
 	../lib/str/str.c \
 	../lib/petasc/petasc.c \
         ../lib/mem/mem.c \
+	../lib/sort/sort.c \
         ../lib/filesys/filesys.c \
         ../lib/dir/dir.c \
         ../lib/basic/basic.c \
