@@ -13,6 +13,9 @@
 #include "../../lib/basic/basic.h"
 #include "../../lib/basic/basic_addr.h"
 #include "../../lib/mem/mem.h"
+#ifdef MT_LINUX
+    #include <string.h>
+#endif //MT_LINUX
 
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
