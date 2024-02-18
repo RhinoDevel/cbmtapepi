@@ -43,8 +43,8 @@ static bool rewind()
     {
         return false;
     }
-    return true;
 #endif //MT_LINUX
+    return true;
 }
 
 /**
