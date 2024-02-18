@@ -150,7 +150,7 @@ uint8_t* filesys_load(
     uint8_t * const ret_val = load(full_path, out_byte_count);
    
     // (called function debug-logs on error)
-    assert((ret_val == null) == (*out_byte_count == 0));
+    assert((ret_val == 0) == (*out_byte_count == 0));
     alloc_free(full_path);
     dir_deinit();
     filesys_unmount();
@@ -159,7 +159,6 @@ uint8_t* filesys_load(
 
 #ifdef MT_LINUX
 static bool save(
-    static bool save(
     char const * const full_path,
     uint8_t const * const bytes,
     uint32_t const byte_count,
