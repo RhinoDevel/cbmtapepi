@@ -21,12 +21,12 @@
     static FATFS * s_fs = 0;
 #endif //MT_LINUX
 
+#ifndef MT_LINUX
 /**
  * - Also returns false, if s_fs is not 0.
  */
 static bool mount()
 {
-#ifndef MT_LINUX // Always "mounted" in Linux.
     if(s_fs != 0)
     {
         return false;
@@ -44,9 +44,9 @@ static bool mount()
         s_fs = 0;
         return false;
     }
-#endif //MT_LINUX
     return true;
 }
+#endif //MT_LINUX
 
 bool filesys_unmount()
 {
