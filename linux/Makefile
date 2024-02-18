@@ -6,8 +6,16 @@ CC=gcc
 
 #CFLAGS=-c -O3 -std=gnu11 -Wall -DNDEBUG -DMT_LINUX
 CFLAGS=-c -g -std=gnu11 -Wall -DMT_LINUX
+#
+# Add for "older" Raspberry OS versions:
+#
+# -I/opt/vc/include
 
 LDFLAGS=-lbcm_host
+#
+# Add for "older" Raspberry OS versions:
+#
+# -L/opt/vc/lib
 
 SOURCES=\
 	main.c \
@@ -27,14 +35,19 @@ SOURCES=\
 	../lib/calc/calc.c \
 	../lib/console/console.c \
 	../lib/alloc/alloc.c \
-    ../lib/alloc/alloc_mem.c \
-    ../lib/alloc/nodemem.c \
+        ../lib/alloc/alloc_mem.c \
+	../lib/alloc/nodemem.c \
 	../lib/str/str.c \
 	../lib/petasc/petasc.c \
+        ../lib/mem/mem.c \
+        ../lib/filesys/filesys.c \
+        ../lib/dir/dir.c \
+        ../lib/basic/basic.c \
 	\
 	../app/tape/tape_fill_buf.c \
 	../app/tape/tape_input.c \
-	../app/petload/petload.c
+	../app/petload/petload.c \
+        ../app/cmd/cmd.c
 
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=cbmtapepi
