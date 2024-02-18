@@ -7,6 +7,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#ifdef MT_LINUX
+    #include <string.h>
+#endif //MT_LINUX
 
 void sort_insertion(
     void * const arr,
