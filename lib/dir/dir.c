@@ -5,7 +5,15 @@
 #include "../alloc/alloc.h"
 #include "../sort/sort.h"
 #include "../str/str.h"
-#include "../ff14/source/ff.h"
+
+#ifdef MT_LINUX
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <dirent.h>
+    #include <errno.h>
+#else //MT_LINUX
+    #include "../ff14/source/ff.h"
+#endif //MT_LINUX
 
 #ifndef NDEBUG
     #include "../console/console.h"
@@ -27,11 +35,16 @@ static bool rewind()
     {
         return false;
     }
+
+#ifdef MT_LINUX
+    rewinddir(s_dir);
+#else //MT_LINUX
     if(f_readdir(s_dir, 0) != FR_OK)
     {
         return false;
     }
     return true;
+#endif //MT_LINUX
 }
 
 /**
@@ -48,6 +61,13 @@ static bool init(char const * const dir_path)
         return false;
     }
 
+#ifdef MT_LINUX
+    s_dir = opendir(dir_path);
+    if(s_dir == 0)
+    {
+        return false;
+    }
+#else //MT_LINUX
     s_dir = alloc_alloc(sizeof *s_dir);
     if(s_dir == 0)
     {
@@ -67,6 +87,7 @@ static bool init(char const * const dir_path)
 #endif //NDEBUG
         return false;
     }
+#endif //MT_LINUX
 
     s_dir_path = str_create_copy(dir_path);
 
@@ -80,7 +101,11 @@ char const * dir_get_dir_path()
 
 char* dir_create_name_of_next_entry(bool * const is_dir)
 {
+#ifdef MT_LINUX
+    struct dirent * info;
+#else //MT_LINUX
     FILINFO info;
+#endif //MT_LINUX
 
     if(s_dir == 0)
     {
@@ -96,6 +121,30 @@ char* dir_create_name_of_next_entry(bool * const is_dir)
         return 0;
     }
 
+#ifdef MT_LINUX
+    errno = 0;
+    info = readdir(s_dir);
+    if(info == 0)
+    {
+        *is_dir = false;
+        if(errno != 0)
+        {
+            return 0;
+        }
+        return str_create_copy("");
+    }
+    
+    // Better use dir_is_file(), here?
+    //
+    if(info->d_type == DT_UNKNOWN)
+    {
+        *is_dir = false;
+        return 0;
+    }
+    *is_dir = info->d_type == DT_DIR;
+
+    return str_create_copy(info->d_name);
+#else //MT_LINUX
     if(f_readdir(s_dir, &info) != FR_OK)
     {
         return 0;
@@ -104,6 +153,7 @@ char* dir_create_name_of_next_entry(bool * const is_dir)
     *is_dir = (info.fattrib & AM_DIR) != 0;
 
     return str_create_copy(info.fname);
+#endif //MT_LINUX
 }
 
 /**
@@ -161,7 +211,9 @@ static int cmp_dir_entry(void const * const a, void const * const b)
 static int get_entry_count()
 {
     int count = 0;
+#ifndef MT_LINUX
     FILINFO info;
+#endif //MT_LINUX
 
     if(s_dir == 0)
     {
@@ -179,6 +231,17 @@ static int get_entry_count()
 
     do
     {
+#ifdef MT_LINUX
+        errno = 0;
+        if(readdir(s_dir) == 0)
+        {
+            if(errno != 0)
+            {
+                return -1;
+            }
+            break;
+        }
+#else //MT_LINUX
         if(f_readdir(s_dir, &info) != FR_OK)
         {
             return -1;
@@ -187,6 +250,7 @@ static int get_entry_count()
         {
             break;
         }
+#endif //MT_LINUX
 
         ++count;
     }while(true);
@@ -253,7 +317,11 @@ struct dir_entry * * dir_create_entry_arr(int * const count)
 
 bool dir_has_sub_dir(char const * const name)
 {
+#ifdef MT_LINUX
+    struct stat info;
+#else //MT_LINUX
     FILINFO info;
+#endif //MT_LINUX
     char* full_path = 0;
 
     if(s_dir == 0)
@@ -267,21 +335,37 @@ bool dir_has_sub_dir(char const * const name)
 
     full_path = dir_create_full_path(s_dir_path, name);
 
+#ifdef MT_LINUX
+    int const r = stat(full_path, &info);
+#else //MT_LINUX
     FRESULT const r = f_stat(full_path, &info);
+#endif //MT_LINUX
 
     alloc_free(full_path);
     full_path = 0;
 
+#ifdef MT_LINUX
+    if(r != 0)
+#else //MT_LINUX
     if(r != FR_OK)
+#endif //MT_LINUX
     {
         return false;
     }
+#ifdef MT_LINUX
+    return (info.st_mode & S_IFDIR) != 0;
+#else //MT_LINUX
     return (info.fattrib & AM_DIR) != 0;
+#endif //MT_LINUX
 }
 
 bool dir_is_file(char const * const name)
 {
+#ifdef MT_LINUX
+    struct stat info;
+#else //MT_LINUX
     FILINFO info;
+#endif //MT_LINUX
     char* full_path = 0;
 
     if(s_dir == 0)
@@ -295,20 +379,36 @@ bool dir_is_file(char const * const name)
 
     full_path = dir_create_full_path(s_dir_path, name);
 
+#ifdef MT_LINUX
+    int const r = stat(full_path, &info);
+#else //MT_LINUX
     FRESULT const r = f_stat(full_path, &info);
+#endif //MT_LINUX
 
     alloc_free(full_path);
     full_path = 0;
 
+#ifdef MT_LINUX
+    if(r != 0)
+#else //MT_LINUX
     if(r != FR_OK)
+#endif //MT_LINUX
     {
         return false;
     }
+#ifdef MT_LINUX
+    return (info.st_mode & S_IFDIR) == 0;
+#else //MT_LINUX
     return (info.fattrib & AM_DIR) == 0;
+#endif //MT_LINUX
 }
 
 bool dir_deinit()
 {
+    if(s_dir_path == 0)
+    {
+        return true;
+    }
     if(s_dir == 0)
     {
         if(s_dir_path != 0)
@@ -323,7 +423,11 @@ bool dir_deinit()
         return false;
     }
 
+#ifdef MT_LINUX
+    if(closedir(s_dir) != 0)
+#else //MT_LINUX
     if(f_closedir(s_dir) != FR_OK)
+#endif //MT_LINUX
     {
         return false;
     }

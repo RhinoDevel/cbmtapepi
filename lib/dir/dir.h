@@ -42,11 +42,13 @@ struct dir_entry * * dir_create_entry_arr(int * const count);
 
 /**
  * - Also returns false on error (!).
+ * - The given name is the name of the sub directory to check for.
  */
 bool dir_has_sub_dir(char const * const name);
 
 /**
  * - Also returns false on error (!).
+ * - Assumes that anything is a file, if it isn't a directory(!).
  */
 bool dir_is_file(char const * const name);
 
@@ -56,7 +58,7 @@ bool dir_is_file(char const * const name);
 bool dir_deinit();
 
 /**
- * - Filesystem object must already have been mounted [f_mount()].
+ * - Bare metal: Filesystem object must already have been mounted [f_mount()].
  */
 bool dir_reinit(char const * const dir_path);
 
