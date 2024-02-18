@@ -3,9 +3,12 @@
 
 #include "filesys.h"
 #include "../alloc/alloc.h"
-#include "../ff14/source/ff.h"
 #include "../assert.h"
 #include "../dir/dir.h"
+
+#ifndef MT_LINUX
+    #include "../ff14/source/ff.h"
+#endif //MT_LINUX
 
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
@@ -14,13 +17,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-static FATFS * s_fs = 0;
+#ifndef MT_LINUX
+    static FATFS * s_fs = 0;
+#endif //MT_LINUX
 
 /**
  * - Also returns false, if s_fs is not 0.
  */
 static bool mount()
 {
+#ifndef MT_LINUX // Always "mounted" in Linux.
     if(s_fs != 0)
     {
         return false;
@@ -38,12 +44,13 @@ static bool mount()
         s_fs = 0;
         return false;
     }
-
+#endif //MT_LINUX
     return true;
 }
 
 bool filesys_unmount()
 {
+#ifndef MT_LINUX // No need to unmount something in Linux.
     if(s_fs == 0)
     {
         return true;
@@ -56,11 +63,15 @@ bool filesys_unmount()
 
     alloc_free(s_fs);
     s_fs = 0;
+#endif //MT_LINUX
     return true;
 }
 
 bool filesys_remount()
 {
+#ifdef MT_LINUX // Doing nothing in Linux.
+    return true;
+#else //MT_LINUX
     if(s_fs != 0)
     {
         if(!filesys_unmount())
@@ -69,33 +80,36 @@ bool filesys_remount()
         }
     }
     return mount();
+#endif //MT_LINUX
 }
 
-uint8_t* filesys_load(
-    char const * const dir_path,
-    char const * const filename,
-    uint32_t * const out_byte_count)
+#ifdef MT_LINUX
+static uint8_t* load(
+    char const * const full_path, uint32_t * const out_byte_count)
+{
+    assert(out_byte_count != 0);
+
+    // TODO: Implement!
+    //
+    *out_byte_count = 0;
+    return 0;
+}
+#else //MT_LINUX
+static uint8_t* load(
+    char const * const full_path, uint32_t * const out_byte_count)
 {
     assert(out_byte_count != 0);
 
     FIL fil;
     UINT read_len = 0;
 
-    filesys_remount();
-    dir_reinit(dir_path);
-
-    char * const full_path = dir_create_full_path(dir_path, filename);
-
     if(f_open(&fil, full_path, FA_READ) != FR_OK)
     {
 #ifndef NDEBUG
-        console_write("filesys_load : Error: Opening file \"");
+        console_write("load : Error: Opening file \"");
         console_write(full_path);
         console_writeline("\" failed!");
 #endif //NDEBUG
-        alloc_free(full_path);
-        dir_deinit();
-        filesys_unmount();
         *out_byte_count = 0;
         return 0;
     }
@@ -111,23 +125,53 @@ uint8_t* filesys_load(
 #ifndef NDEBUG
     assert(count == read_len);
 
-    console_write("filesys_load: Read ");
+    console_write("load: Read ");
     console_write_dword_dec(read_len);
     console_writeline(" byte(-s).");
 #endif
 
     f_close(&fil);
-    alloc_free(full_path);
-    dir_deinit();
-    filesys_unmount();
-
     *out_byte_count = read_len;
     return bytes;
 }
+#endif //MT_LINUX
 
-bool filesys_save(
+uint8_t* filesys_load(
     char const * const dir_path,
     char const * const filename,
+    uint32_t * const out_byte_count)
+{
+    assert(out_byte_count != 0);
+
+    filesys_remount();
+    dir_reinit(dir_path);
+
+    char * const full_path = dir_create_full_path(dir_path, filename);
+    uint8_t * const ret_val = load(full_path, out_byte_count);
+   
+    // (called function debug-logs on error)
+    assert((ret_val == null) == (*out_byte_count == 0));
+    alloc_free(full_path);
+    dir_deinit();
+    filesys_unmount();
+    return ret_val;
+}
+
+#ifdef MT_LINUX
+static bool save(
+    static bool save(
+    char const * const full_path,
+    uint8_t const * const bytes,
+    uint32_t const byte_count,
+    bool const overwrite)
+{
+    // TODO: Implement!
+    //
+    return false;
+}
+#else //MT_LINUX
+static bool save(
+    char const * const full_path,
     uint8_t const * const bytes,
     uint32_t const byte_count,
     bool const overwrite)
@@ -135,11 +179,6 @@ bool filesys_save(
     bool ret_val = false,
         file_is_open = false;
     FIL fil;
-
-    filesys_remount();
-    dir_reinit(dir_path);
-
-    char * const full_path = dir_create_full_path(dir_path, filename);
 
     do
     {
@@ -160,13 +199,13 @@ bool filesys_save(
         if(open_result != FR_OK)
         {
 #ifndef NDEBUG
-        console_write("filesys_save : Error: Opening file \"");
-        console_write(full_path);
-        console_write("\" with mode 0x");
-        console_write_byte((uint8_t)mode);
-        console_write(" failed with err. nr. ");
-        console_write_dword_dec((uint32_t)open_result);
-        console_writeline("!");
+            console_write("save : Error: Opening file \"");
+            console_write(full_path);
+            console_write("\" with mode 0x");
+            console_write_byte((uint8_t)mode);
+            console_write(" failed with err. nr. ");
+            console_write_dword_dec((uint32_t)open_result);
+            console_writeline("!");
 #endif //NDEBUG
             break;
         }
@@ -191,11 +230,61 @@ bool filesys_save(
 
         if(!ret_val)
         {
-            f_unlink(filename);
+            f_unlink(full_path);
         }
     }
+    return ret_val;
+}
+#endif //MT_LINUX
+
+bool filesys_save(
+    char const * const dir_path,
+    char const * const filename,
+    uint8_t const * const bytes,
+    uint32_t const byte_count,
+    bool const overwrite)
+{
+    bool ret_val = false;
+
+    filesys_remount();
+    dir_reinit(dir_path);
+
+    char * const full_path = dir_create_full_path(dir_path, filename);
+
+    ret_val = save(full_path, bytes, byte_count, overwrite);
     alloc_free(full_path);
     dir_deinit();
     filesys_unmount();
+    return ret_val;
+}
+
+#ifdef MT_LINUX
+static bool remove(char const * const full_path)
+{
+    // TODO: Implement!
+    //
+    return false;
+}
+#else //MT_LINUX
+static bool remove(char const * const full_path)
+{
+    // It seems to be better to make sure that the file exists, before this:
+    //
+    return f_unlink(full_path) == FR_OK;
+}
+#endif //MT_LINUX
+
+bool filesys_remove(char const * const dir_path, char const * const filename)
+{
+    filesys_remount();
+    dir_reinit(dir_path);
+    
+    char * const full_path = dir_create_full_path(dir_path, filename);
+    bool const ret_val = dir_is_file(filename) && remove(full_path);
+
+    alloc_free(full_path);
+    dir_deinit();
+    filesys_unmount();
+
     return ret_val;
 }

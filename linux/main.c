@@ -32,6 +32,8 @@
 #include "../app/petload/petload_pet4tom.h"
 #include "../app/petload/petload.h"
 #include "../app/cmd/cmd_output.h"
+#include "../app/cmd/cmd.h"
+#include "../app/mode/mode_type.h"
 
 #include "ProgressBar/ProgressBar.h"
 #include "file/file.h"
@@ -1031,11 +1033,13 @@ static bool print_file_as_symbols(char * const file_name)
     return true;
 }
 
-static bool enter_fast_mode()
+static bool enter_fast_mode(enum mode_type mode)
 {
     gpio_set_output(MT_GPIO_PIN_NR_LED, true);
     //
     // Indicates waiting-for-command-from-CBM "mode".
+
+    cmd_reinit(NULL, MT_FILESYS_ROOT);
 
     while(true)
     {
@@ -1057,7 +1061,7 @@ static bool enter_fast_mode()
         console_writeline("\".");
 #endif //NDEBUG
 
-        if(false/*cmd_exec(mode, name, ti, &o)*/) // TODO: Implement!
+        if(cmd_exec(mode, name, ti, &o))
         {
             if(o != 0) // Something to send back to CBM.
             {
@@ -1088,7 +1092,7 @@ static bool enter_fast_mode()
 
         // Deallocate memory:
 
-        //cmd_free_output(o); // TODO: Re-enable!
+        cmd_free_output(o);
         alloc_free(name);
         if(ti != 0)
         {
@@ -1103,6 +1107,7 @@ static bool enter_fast_mode()
 static bool exec(int const argc, char * const argv[])
 {
     bool fast_mode_detected = false;
+    enum mode_type mode = mode_type_err;
 
     if(argc < 2) // At least a command must be given.
     {
@@ -1136,6 +1141,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 return false;
             }
+            mode = mode_type_c64tom;
             break; // => Cancelled or fast-mode.
         }
         case 'w':
@@ -1148,6 +1154,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 return false;
             }
+            mode = mode_type_pet4;
             break; // => Cancelled or fast-mode.
         }
         case 'r':
@@ -1160,6 +1167,7 @@ static bool exec(int const argc, char * const argv[])
             {
                 return false;
             }
+            mode = mode_type_pet4tom;
             break; // => Cancelled or fast-mode.
         }
 
@@ -1190,7 +1198,8 @@ static bool exec(int const argc, char * const argv[])
 
     assert(s_stop == 0);
     assert(fast_mode_detected);
-    return enter_fast_mode();
+    assert(mode != mode_type_err && mode != mode_type_save);
+    return enter_fast_mode(mode);
 
 exec_done_show_options:
     console_writeline(

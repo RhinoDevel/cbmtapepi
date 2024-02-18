@@ -12,19 +12,23 @@
 #include "../../lib/dir/dir.h"
 #include "../../lib/basic/basic.h"
 #include "../../lib/basic/basic_addr.h"
-#include "../../lib/ff14/source/ff.h"
+#include "../../lib/mem/mem.h"
 
 #ifndef NDEBUG
     #include "../../lib/console/console.h"
-
-    // For load via YMODEM command:
-    //
-    #include "../../lib/ymodem/ymodem.h"
-    #include "../../lib/ymodem/ymodem_receive_params.h"
-    #include "../../lib/ymodem/ymodem_receive_err.h"
-    #include "../../hardware/armtimer/armtimer.h"
-    #include "../../hardware/miniuart/miniuart.h"
 #endif //NDEBUG
+
+#ifndef MT_LINUX // No YMODEM support for Linux.
+    #ifndef NDEBUG
+        // For load via YMODEM command:
+        //
+        #include "../../lib/ymodem/ymodem.h"
+        #include "../../lib/ymodem/ymodem_receive_params.h"
+        #include "../../lib/ymodem/ymodem_receive_err.h"
+        #include "../../hardware/armtimer/armtimer.h"
+        #include "../../hardware/miniuart/miniuart.h"
+    #endif //NDEBUG
+#endif //MT_LINUX
 
 #include <stdbool.h>
 
@@ -33,21 +37,25 @@
 // => 16 - 8 - 1 - 3 = 4 characters available for commands.
 //
 //                                 "   thegreat.prg "
-static char const * const s_mode = "mode ";
+#ifndef MT_LINUX // No mode change support for Linux.
+    static char const * const s_mode = "mode ";
+#endif //MT_LINUX
 static char const * const s_dir  = "$"; // (no parameters)
 static char const * const s_rm   = "rm ";
 static char const * const s_save = "+"; // Actually save file (no space).
 static char const * const s_cd   = "cd "; // Supports "..", too.
-#ifndef NDEBUG
-    static char const * const s_load_ymodem = "y*";
-#endif //NDEBUG
+#ifndef MT_LINUX // No YMODEM support for Linux.
+    #ifndef NDEBUG
+        static char const * const s_load_ymodem = "y*";
+    #endif //NDEBUG
+#endif //MT_LINUX
 // static char const * const s_md   =    "md "; // Create a directory.
 // static char const * const s_cp   =    "cp "; // Outp. file name by Pi.
 // static char const * const s_mv   =    "mv "; // New file name by Pi.
 //
 // Anything else. => Load file.
 
-static bool (*s_save_mode)(char const * const) = 0;
+static bool (*s_save_mode)(char const * const) = 0; // Stays NULL in Linux.
 //
 // Initialized by cmd_reinit().
 
@@ -125,28 +133,12 @@ static struct cmd_output * exec_dir(enum mode_type const mode)
  */
 static bool exec_remove(char const * const command)
 {
-    FRESULT r = FR_NO_FILE;
     char const * const name_only = command + str_get_len(s_rm);
 
-    filesys_remount();
-    dir_reinit(s_cur_dir_path);
-
-    if(dir_is_file(name_only))
-    {
-        char * const full_path = dir_create_full_path(
-            s_cur_dir_path, name_only);
-
-        r = f_unlink(full_path);
-
-        alloc_free(full_path);
-    }
-
-    dir_deinit();
-    filesys_unmount();
-
-    return r == FR_OK;
+    return filesys_remove(s_cur_dir_path, name_only);
 }
 
+#ifndef MT_LINUX // NO support for YMODEM in Linux.
 #ifndef NDEBUG
     static struct cmd_output * exec_load_ymodem()
     {
@@ -200,6 +192,7 @@ static bool exec_remove(char const * const command)
         return o;
     }
 #endif //NDEBUG
+#endif //MT_LINUX
 
 static struct cmd_output * exec_load(char const * const command)
 {
@@ -292,100 +285,54 @@ static bool exec_cd(char const * const command)
     return ret_val;
 }
 
-static bool exec_mode(char const * const command)
-{
-    char const * const name_only = command + str_get_len(s_mode);
-    bool const ret_val = s_save_mode(name_only);
-
-#ifndef NDEBUG
-    if(ret_val)
+#ifndef MT_LINUX // No mode change support in Linux.
+    static bool exec_mode(char const * const command)
     {
-        console_write("cmd/exec_mode : Changed mode to \"");
-        console_write(name_only);
-        console_writeline("\".");
-    }
-    else
-    {
-        console_write("cmd/exec_mode : Failed to change mode to \"");
-        console_write(name_only);
-        console_writeline("\".");
-    }
-#endif //NDEBUG
+        char const * const name_only = command + str_get_len(s_mode);
+        bool const ret_val = s_save_mode(name_only);
 
-    return ret_val;
-}
+    #ifndef NDEBUG
+        if(ret_val)
+        {
+            console_write("cmd/exec_mode : Changed mode to \"");
+            console_write(name_only);
+            console_writeline("\".");
+        }
+        else
+        {
+            console_write("cmd/exec_mode : Failed to change mode to \"");
+            console_write(name_only);
+            console_writeline("\".");
+        }
+    #endif //NDEBUG
+
+        return ret_val;
+    }
+#endif //MT_LINUX
 
 static bool exec_save(
     char const * const command, struct tape_input const * const ti)
 {
-    bool ret_val = false,
-        file_is_open = false;
-    FIL fil;
-
-    filesys_remount();
-    dir_reinit(s_cur_dir_path);
-
     char const * const name_only = command + str_get_len(s_save);
-    char * const full_path = dir_create_full_path(s_cur_dir_path, name_only);
 
-    do
-    {
-        UINT write_count;
-        uint8_t buf;
+    // Using (kind of overdone) buffer to be able to use file system singleton:
 
-        // (no overwrite)
-        //
-        if(f_open(&fil, full_path, FA_CREATE_NEW | FA_WRITE) != FR_OK)
-        {
-            break;
-        }
-        file_is_open = true;
+    uint32_t const full_byte_count = (uint32_t)(2 + ti->len);
+    uint8_t * const bytes = alloc_alloc(
+            full_byte_count * (uint32_t)(sizeof (uint8_t)));
+    int byte_pos = 0;
 
-        buf = (uint8_t)(ti->addr & 0x00FF);
-        if(f_write(&fil, &buf, 1, &write_count) != FR_OK)
-        {
-            break;
-        }
-        if(write_count != 1)
-        {
-            break;
-        }
+    bytes[byte_pos++] = (uint8_t)(ti->addr & 0x00FF);
+    bytes[byte_pos++] = (uint8_t)(ti->addr >> 8);
+    assert(byte_pos == 2);
+    memcpy(bytes + byte_pos, ti->bytes, (size_t)ti->len);
 
-        buf = (uint8_t)(ti->addr >> 8);
-        if(f_write(&fil, &buf, 1, &write_count) != FR_OK)
-        {
-            break;
-        }
-        if(write_count != 1)
-        {
-            break;
-        }
+    bool const ret_val = filesys_save(
+        s_cur_dir_path, name_only,
+        bytes, full_byte_count,
+        false); // No overwrite.
 
-        if(f_write(&fil, ti->bytes, ti->len, &write_count) != FR_OK)
-        {
-            break;
-        }
-        if(write_count != ti->len)
-        {
-            break;
-        }
-
-        ret_val = true;
-    }while(false);
-
-    if(file_is_open)
-    {
-        f_close(&fil);
-        file_is_open = false;
-
-        if(!ret_val)
-        {
-            f_unlink(name_only);
-        }
-    }
-    alloc_free(full_path);
-    dir_deinit();
-    filesys_unmount();
+    alloc_free(bytes);
     return ret_val;
 }
 
@@ -402,10 +349,12 @@ bool cmd_exec(
         return false;
     }
 
+#ifndef MT_LINUX // You cannot switch the mode in Linux.
     if(str_starts_with(command, s_mode))
     {
         return exec_mode(command);
     }
+#endif //MT_LINUX
     if(str_starts_with(command, s_dir))
     {
         *output = exec_dir(mode);
@@ -424,13 +373,15 @@ bool cmd_exec(
         return exec_save(command, ti);
     }
 
-#ifndef NDEBUG
-    if(str_starts_with(command, s_load_ymodem))
-    {
-        *output = exec_load_ymodem();
-        return *output != 0;
-    }
-#endif //NDEBUG
+#ifndef MT_LINUX // No YMODEM support in Linux.
+    #ifndef NDEBUG
+        if(str_starts_with(command, s_load_ymodem))
+        {
+            *output = exec_load_ymodem();
+            return *output != 0;
+        }
+    #endif //NDEBUG
+#endif //MT_LINUX
     *output = exec_load(command);
     return *output != 0;
 }
@@ -439,6 +390,9 @@ void cmd_reinit(
     bool (*save_mode)(char const * const),
     char const * const start_dir_path)
 {
+#ifdef MT_LINUX // Mode change not supported in Linux.
+    assert(save_mode == 0);
+#endif //MT_LINUX
     s_save_mode = save_mode;
 
     if(s_cur_dir_path != 0)

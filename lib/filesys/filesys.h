@@ -11,9 +11,13 @@
 
 /**
  * - OK to be called, if already unmounted (returns true).
+ * - Does absolutely nothing, but returning NULL, in Linux port.
  */
 bool filesys_unmount();
 
+/**
+ * - Does absolutely nothing, but returning NULL, in Linux port.
+ */
 bool filesys_remount();
 
 /** Load full file content and set byte count.
@@ -39,5 +43,12 @@ bool filesys_save(
     uint8_t const * const bytes,
     uint32_t const byte_count,
     bool const overwrite);
+
+/** Remove file.
+ * 
+ *  - Returns, if successful or not.
+ *  - No support for deletion of empty subfolders.
+ */
+bool filesys_remove(char const * const dir_path, char const * const filename);
 
 #endif //MT_FILESYS

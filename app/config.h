@@ -13,7 +13,11 @@
 
 #define MT_GPIO_PIN_NR_LED 17
 
-#define MT_FILESYS_ROOT "/"
+#ifdef MT_LINUX
+    #define MT_FILESYS_ROOT "./" // Using current folder in Linux.
+#else //MT_LINUX
+    #define MT_FILESYS_ROOT "/"
+#endif //MT_LINUX
 
 #define MT_PETSCII_REPLACER 166
 //
