@@ -431,8 +431,9 @@ bool dir_deinit()
     {
         return false;
     }
-
+#ifndef MT_LINUX
     alloc_free(s_dir);
+#endif //MT_LINUX
     s_dir = 0;
 
     alloc_free(s_dir_path);
