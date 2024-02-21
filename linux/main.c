@@ -1068,7 +1068,7 @@ static bool enter_fast_mode(enum mode_type mode)
                 gpio_set_output(MT_GPIO_PIN_NR_LED, false);
                 //
                 // Indicated sending-data-to-CBM "mode".
-                
+
                 petload_send(o->bytes, o->count);
             }
             else // Nothing to send back to CBM.
@@ -1084,10 +1084,9 @@ static bool enter_fast_mode(enum mode_type mode)
         }
         else
         {
-            // TODO: Implement correctly:
-            //
-            console_writeline("enter_fast_mode : \"Error\": Command failed!");
-            //on_failed_cmd(mode); // (sets LED to blinking)
+            console_writeline("enter_fast_mode : \"Error\": Command exec. failed!");
+            // TODO: Set LED to blinking (but stay in waiting-for-command "mode")!
+            petload_send_nop();
         }
 
         // Deallocate memory:
