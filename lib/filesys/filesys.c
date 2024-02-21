@@ -140,7 +140,7 @@ static uint8_t* load(
         return 0;
     }
 
-    fclose(file);
+    fclose(file); // TODO: Add error check!
     *out_byte_count = (uint32_t)signed_size;
     return buf;
 }
