@@ -170,7 +170,7 @@ static uint8_t* load(
     //
     // (+1 to support empty files)
 
-    f_read(&fil, bytes, (UINT)count, &read_len);
+    f_read(&fil, bytes, (UINT)count, &read_len); // TODO: Add error check!
 
 #ifndef NDEBUG
     assert(count == read_len);
@@ -180,7 +180,7 @@ static uint8_t* load(
     console_writeline(" byte(-s).");
 #endif
 
-    f_close(&fil);
+    f_close(&fil); // TODO: Add error check!
     *out_byte_count = read_len;
     return bytes;
 }
@@ -208,15 +208,81 @@ uint8_t* filesys_load(
 }
 
 #ifdef MT_LINUX
+static bool remove_from(char const * const full_path)
+{
+    return unlink(full_path) == 0;
+}
+#else //MT_LINUX
+static bool remove_from(char const * const full_path)
+{
+    // It seems to be better to make sure that the file exists, before this:
+    //
+    return f_unlink(full_path) == FR_OK;
+}
+#endif //MT_LINUX
+
+#ifdef MT_LINUX
 static bool save(
     char const * const full_path,
     uint8_t const * const bytes,
     uint32_t const byte_count,
     bool const overwrite)
 {
-    // TODO: Implement!
-    //
-    return false;
+    assert(full_path != 0);
+    
+    if(overwrite && dir_is_file(full_path))
+    {
+        if(!remove_from(full_path))
+        {
+#ifndef NDEBUG
+            console_writeline(
+                "save : Error: Failed to remove existing file, first!");
+#endif //NDEBUG
+            return false;   
+        }
+    }
+
+    FILE * const file = fopen(full_path, "wb");
+
+    if(file == 0)
+    {
+#ifndef NDEBUG
+        console_writeline("save : Error: Failed to create file!");
+#endif //NDEBUG
+        return false;
+    }
+
+    if(byte_count == 0)
+    {
+        // Empty file.
+
+        assert(bytes == 0);
+        fclose(file);
+        return true;
+    }
+
+    assert(bytes != 0);
+
+    size_t const written_bytes = fwrite(
+        bytes, sizeof *bytes, (size_t)byte_count, file);
+    
+    assert(sizeof *bytes == 1);
+    if(written_bytes != (size_t)byte_count)
+    {
+#ifndef NDEBUG
+        console_writeline("save : Error: Failed to write all bytes to file!");
+#endif //NDEBUG
+        return false;   
+    }
+
+    if(fclose(file) != 0)
+    {
+#ifndef NDEBUG
+        console_writeline("save : Error: Failed to close file!");
+#endif //NDEBUG
+        return false;   
+    }
+    return true;
 }
 #else //MT_LINUX
 static bool save(
@@ -306,20 +372,6 @@ bool filesys_save(
     filesys_unmount();
     return ret_val;
 }
-
-#ifdef MT_LINUX
-static bool remove_from(char const * const full_path)
-{
-    return unlink(full_path) == 0;
-}
-#else //MT_LINUX
-static bool remove_from(char const * const full_path)
-{
-    // It seems to be better to make sure that the file exists, before this:
-    //
-    return f_unlink(full_path) == FR_OK;
-}
-#endif //MT_LINUX
 
 bool filesys_remove(char const * const dir_path, char const * const filename)
 {
