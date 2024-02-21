@@ -8,6 +8,7 @@
 
 #ifdef MT_LINUX
     #include <stdio.h>
+    #include <unistd.h>
     #include <sys/stat.h>
 #else //MT_LINUX    
     #include "../ff14/source/ff.h"
@@ -309,9 +310,7 @@ bool filesys_save(
 #ifdef MT_LINUX
 static bool remove_from(char const * const full_path)
 {
-    // TODO: Implement!
-    //
-    return false;
+    return unlink(full_path) == 0;
 }
 #else //MT_LINUX
 static bool remove_from(char const * const full_path)
