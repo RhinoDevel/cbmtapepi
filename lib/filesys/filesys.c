@@ -257,7 +257,13 @@ static bool save(
         // Empty file.
 
         assert(bytes == 0);
-        fclose(file);
+        if(fclose(file) != 0)
+        {
+#ifndef NDEBUG
+            console_writeline("save : Error: Failed to close empty file!");
+#endif //NDEBUG
+            return false;   
+        }
         return true;
     }
 
@@ -278,7 +284,7 @@ static bool save(
     if(fclose(file) != 0)
     {
 #ifndef NDEBUG
-        console_writeline("save : Error: Failed to close file!");
+        console_writeline("save : Error: Failed to close non-empty file!");
 #endif //NDEBUG
         return false;   
     }
