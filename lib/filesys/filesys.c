@@ -116,13 +116,6 @@ static uint8_t* load(
 #endif //NDEBUG
         return 0;
     }
-    if(signed_size > (off_t)s_max_size)
-    {
-#ifndef NDEBUG
-        console_writeline("load : Error: File is too big!");
-#endif //NDEBUG
-        return 0;
-    }
 
     FILE * const file = fopen(full_path, "rb");
 
@@ -314,14 +307,14 @@ bool filesys_save(
 }
 
 #ifdef MT_LINUX
-static bool remove(char const * const full_path)
+static bool remove_from(char const * const full_path)
 {
     // TODO: Implement!
     //
     return false;
 }
 #else //MT_LINUX
-static bool remove(char const * const full_path)
+static bool remove_from(char const * const full_path)
 {
     // It seems to be better to make sure that the file exists, before this:
     //
@@ -335,7 +328,7 @@ bool filesys_remove(char const * const dir_path, char const * const filename)
     dir_reinit(dir_path);
     
     char * const full_path = dir_create_full_path(dir_path, filename);
-    bool const ret_val = dir_is_file(filename) && remove(full_path);
+    bool const ret_val = dir_is_file(filename) && remove_from(full_path);
 
     alloc_free(full_path);
     dir_deinit();
