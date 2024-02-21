@@ -6,7 +6,10 @@
 #include "../assert.h"
 #include "../dir/dir.h"
 
-#ifndef MT_LINUX
+#ifdef MT_LINUX
+    #include <stdio.h>
+    #include <sys/stat.h>
+#else //MT_LINUX    
     #include "../ff14/source/ff.h"
 #endif //MT_LINUX
 
@@ -84,15 +87,68 @@ bool filesys_remount()
 }
 
 #ifdef MT_LINUX
+static off_t get_size(char const * const path)
+{
+    assert(path != NULL);
+
+    struct stat s;
+
+    if(stat(path, &s) == 0)
+    {
+        return s.st_size;
+    }
+    return -1;
+}
+
 static uint8_t* load(
     char const * const full_path, uint32_t * const out_byte_count)
 {
     assert(out_byte_count != 0);
 
-    // TODO: Implement!
-    //
-    *out_byte_count = 0;
-    return 0;
+    *out_byte_count = -1;
+
+    off_t const signed_size = get_size(full_path);
+
+    if(signed_size == -1)
+    {
+#ifndef NDEBUG
+        console_writeline("load : Error: Failed to get size of file!");
+#endif //NDEBUG
+        return 0;
+    }
+    if(signed_size > (off_t)s_max_size)
+    {
+#ifndef NDEBUG
+        console_writeline("load : Error: File is too big!");
+#endif //NDEBUG
+        return 0;
+    }
+
+    FILE * const file = fopen(full_path, "rb");
+
+    if(file == 0)
+    {
+#ifndef NDEBUG
+        console_writeline("load : Error: Failed to open source file!");
+#endif //NDEBUG
+        return 0;
+    }
+
+    size_t const size = (size_t)signed_size;
+    uint8_t * const buf = alloc_alloc(size * sizeof *buf);
+
+    if(fread(buf, sizeof(*buf), size, file) != size)
+    {
+#ifndef NDEBUG
+        console_writeline(
+            "load : Error: Failed to completely load file content!");
+#endif //NDEBUG
+        return 0;
+    }
+
+    fclose(file);
+    *out_byte_count = (uint32_t)signed_size;
+    return buf;
 }
 #else //MT_LINUX
 static uint8_t* load(
