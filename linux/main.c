@@ -1061,6 +1061,26 @@ static bool enter_fast_mode(enum mode_type mode)
         console_writeline("\".");
 #endif //NDEBUG
 
+        // TODO: Execute cmd_exec() as non-root user (the one that started the
+        //       application via sudo)!
+        //
+        //       May be possible via child process (NOT thread) that initially
+        //       drops the root privileges, gets a pointer to some shared memory
+        //       reserved by the parent process via mmap(), before. That shared
+        //       memory needs to hold ti and o.
+        //
+        //       The parent process must wait for the child process to finish
+        //       and then communicate the data in o to the CBM.
+        //
+        //       IDEA: Couldn't we just use mmap() to allocate the memory for
+        //             CBM Tape Pi's own alloc_... mechanism?
+        //
+        //             That way it should be possible for parent and child
+        //             process to just use the same pointers/addresses from
+        //             alloc_...!?
+        //
+        //             See initialization of s_mem!
+        //
         if(cmd_exec(mode, name, ti, &o))
         {
             if(o != 0) // Something to send back to CBM.
