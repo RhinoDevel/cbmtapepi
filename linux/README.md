@@ -12,21 +12,18 @@ met, because the Linux OS scheduler interrupts sending the signal.
 
 But it can be done with DMA, which is finally **implemented**!!
 
-### Current state (February 13., 2024):
+### Current state (February 22., 2024):
 
-- Sending program files to the PET 3032 (BASIC v4) **works**!
+- Sending program files to the Commodore works (tested with PET 3032, BASIC v4).
 - Raspberry Pi detects, if fast mode wedge got loaded on the Commodore and
   enters fast mode.
-- Raspberry Pi retrieves command ("name") via fast mode protocol correctly.
-- Execute ```sudo dtoverlay gpio-no-irq``` before loading a fast mode wedge to
-  the Commodore, if your Raspberry Pi freezes while doing
-  that (see [this](https://github.com/raspberrypi/linux/issues/2550) issue on
-  GitHub).
+- Loading, saving, removing and directory traversal **works** in fast mode!
 
 #### Next steps:
 
+- Do file system access (and later also other things, like networking) with
+  non-root privileges for security and safety.
 - Source code clean-up.
-- Implement fast mode command handling.
 - ...
 
 ### Nice things may happening in the future:
