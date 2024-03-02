@@ -1240,25 +1240,6 @@ int main(int argc, char* argv[])
 
     init();
     success = exec(argc, argv);
-
-//     // TODO: Debugging:
-//     //
-// #ifndef NDEBUG
-//     {
-//         uint64_t const deb_test = get_tick_us();
-    
-//         printf("%llu / 0x%X%X\n", deb_test, (uint32_t)(deb_test >> 32), (uint32_t)(deb_test & 0xFFFFFFFF));
-
-//         //usleep(100);
-
-//         uint64_t const deb_test2 = get_tick_us();
-
-//         printf("%llu / 0x%X%X\n", deb_test2, (uint32_t)(deb_test2 >> 32), (uint32_t)(deb_test2 & 0xFFFFFFFF));
-
-//         printf("%llu\n", deb_test2 - deb_test);
-//     }
-// #endif //NDEBUG
-
     deinit();
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;
