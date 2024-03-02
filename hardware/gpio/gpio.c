@@ -305,21 +305,31 @@ bool gpio_get_eds(uint32_t const pin_nr)
     return (mem_read(get_eds(pin_nr)) & get_pin_mask(pin_nr)) != 0;
 }
 
-void gpio_wait_for_low(uint32_t const pin_nr)
+void gpio_wait_for_low(uint32_t const pin_nr, bool (*is_stop_requested)())
 {
     while(gpio_read(pin_nr))
     {
         // Pin is HIGH.
+
+        if(is_stop_requested != 0 && is_stop_requested())
+        {
+            return;
+        }
     }
 
     // Pin is LOW.
 }
 
-void gpio_wait_for_high(uint32_t const pin_nr)
+void gpio_wait_for_high(uint32_t const pin_nr, bool (*is_stop_requested)())
 {
     while(!gpio_read(pin_nr))
     {
         // Pin is LOW.
+
+        if(is_stop_requested != 0 && is_stop_requested())
+        {
+            return;
+        }
     }
 
     // Pin is HIGH.
@@ -334,11 +344,11 @@ void gpio_wait_for(
     {
         if(val)
         {
-            gpio_wait_for_high(pin_nr);
+            gpio_wait_for_high(pin_nr, 0);
         }
         else
         {
-            gpio_wait_for_low(pin_nr);
+            gpio_wait_for_low(pin_nr, 0);
         }
 
         if(max_change_microseconds == 0)

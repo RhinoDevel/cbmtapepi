@@ -63,11 +63,11 @@ bool gpio_get_eds(uint32_t const pin_nr);
 
 /** Busy-wait, until pin with given nr. is LOW.
  */
-void gpio_wait_for_low(uint32_t const pin_nr);
+void gpio_wait_for_low(uint32_t const pin_nr, bool (*is_stop_requested)());
 
 /** Busy-wait, until pin with given nr. is HIGH.
  */
-void gpio_wait_for_high(uint32_t const pin_nr);
+void gpio_wait_for_high(uint32_t const pin_nr, bool (*is_stop_requested)());
 
 /** First busy-wait, until pin with given nr. has given value (false = LOW,
  *  true = HIGH).
