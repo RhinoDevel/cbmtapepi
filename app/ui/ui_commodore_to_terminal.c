@@ -14,6 +14,7 @@
 #include "../../lib/ymodem/ymodem.h"
 #include "../../hardware/miniuart/miniuart.h"
 #include "../statetoggle/statetoggle.h"
+#include "../config.h"
 
 static void hint()
 {
@@ -76,7 +77,7 @@ bool ui_commodore_to_terminal(bool const interactive)
     //
     for(i = 0;i < sizeof p.name - 1 && i < sizeof input->name;++i)
     {
-        p.name[i] = input->name[i]; // TODO: PETSCII to ASCII conversion!
+        p.name[i] = petasc_get_ascii((char)input->name[i], MT_ASCII_REPLACER);
     }
     while(i < sizeof p.name)
     {
