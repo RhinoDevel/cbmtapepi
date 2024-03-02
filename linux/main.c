@@ -349,7 +349,7 @@ static enum send_cbs_result send_cbs(
         goto send_cbs_done;
     }
 
-    // Start header data tranfer to CBM via MT_TAPE_GPIO_PIN_READ:
+    // Start header data transfer to CBM via MT_TAPE_GPIO_PIN_READ:
     //
     console_deb_writeline("send_cbs: Motor on. Sending..");
     dma_start(1); // Sends header once. // TODO: Hard-coded offset!
