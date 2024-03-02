@@ -185,7 +185,7 @@ static uint8_t retrieve_bit(int const bit_nr, bool (*is_stop_requested)())
         even_bit, // Make sure on rise (faster than fall time),
                    // no need to make sure on fall.
 #endif //MT_LINUX
-        is_stop_requested); // (to support stop before WHOLE receival, only)
+        is_stop_requested);
     if(is_stop_requested != 0 && is_stop_requested())
     {
         return 0;
@@ -227,9 +227,13 @@ static uint8_t retrieve_byte(bool (*is_stop_requested)())
 //        console_write_byte_dec((uint8_t)i);
 //        console_writeline("..");
 //#endif //NDEBUG
-        const uint8_t bit = retrieve_bit(i, 0);
-
-    	if(is_stop_requested != 0 && is_stop_requested())
+        const uint8_t bit = retrieve_bit(
+            i,
+            i == 0 // (to support stop before WHOLE receival, only)
+                ? is_stop_requested
+                : 0);
+        //
+    	if(i == 0 && is_stop_requested != 0 && is_stop_requested())
         {
             return 0;
         }
