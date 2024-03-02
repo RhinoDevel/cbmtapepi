@@ -357,7 +357,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
             case mode_type_c64tof: // (falls through)
             case mode_type_c64tom:
             {
-                return petload_retrieve(); // (must never return 0)
+                return petload_retrieve(0); // (must never return 0)
             }
 
             default:

@@ -57,6 +57,11 @@ static volatile sig_atomic_t s_stop = 0;
 
 static uint64_t s_signal_last = 0;
 
+static bool is_stop_detected()
+{
+    return s_stop != 0;
+}
+
 static void signal_handler(int p)
 {
     s_stop = 1;
@@ -1036,8 +1041,13 @@ static bool enter_fast_mode(enum mode_type mode)
 
         // Get command (or PRG to save) from Commodore machine:
 
-        struct tape_input * const ti = petload_retrieve();
+        struct tape_input * const ti = petload_retrieve(is_stop_detected);
 
+        if(s_stop != 0)
+        {
+            assert(ti == NULL);
+            return true; // By definition.
+        }
         assert(ti != NULL);
 
         // Create "command" string to react accordingly:
@@ -1109,7 +1119,7 @@ static bool enter_fast_mode(enum mode_type mode)
         }
     }
     gpio_set_output(MT_GPIO_PIN_NR_LED, false);
-    return true; // TODO: Implement reacting to stop signal [above and especially in petload_retrieve()]!
+    return true;
 }
 
 static bool exec(int const argc, char * const argv[])

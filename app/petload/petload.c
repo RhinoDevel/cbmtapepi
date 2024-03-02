@@ -442,7 +442,7 @@ struct tape_input * petload_create_c64tom()
         (int)(sizeof s_petload_c64tom / sizeof *s_petload_c64tom));
 }
 
-struct tape_input * petload_retrieve()
+struct tape_input * petload_retrieve(bool (*is_stop_requested)())
 {
     // (motor / data-ready from pet line may be low OR on its way to low)
 
@@ -452,7 +452,11 @@ struct tape_input * petload_retrieve()
         s_data_ready_from_pet,
         s_data_ready_from_pet_default_level,
         2 * s_motor_fall_microseconds,
-        0);
+        is_stop_requested);
+    if(is_stop_requested != 0 && is_stop_requested())
+    {
+        return 0;
+    }
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 
@@ -475,7 +479,13 @@ struct tape_input * petload_retrieve()
 
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        ret_val->name[i] = retrieve_byte(0);
+        ret_val->name[i] = retrieve_byte(i == 0 ? is_stop_requested : 0);
+        if(i == 0 && is_stop_requested != 0 && is_stop_requested())
+        {
+            alloc_free(ret_val);
+            ret_val = 0;
+            return ret_val;
+        }
     }
 #ifndef NDEBUG
     {

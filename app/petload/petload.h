@@ -92,7 +92,7 @@ struct tape_input * petload_create_v1();
  *
  * - Caller takes ownership of returned object.
  */
-struct tape_input * petload_retrieve();
+struct tape_input * petload_retrieve(bool (*is_stop_requested)());
 
 /**
  * - Must be called some time after petload_retrieve() without anything else
