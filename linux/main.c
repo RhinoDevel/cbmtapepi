@@ -168,9 +168,7 @@ static void fill_name(uint8_t * const name_out, char const * const name_in)
 
     while(i < MT_TAPE_INPUT_NAME_LEN && buf[i] != '\0')
     {
-        // TODO: Implement real conversion to PETSCII!
-        //
-        name_out[i] = (uint8_t)buf[i];
+        name_out[i] = petasc_get_petscii(buf[i], MT_PETSCII_REPLACER);
         ++i;
     }
     while(i < MT_TAPE_INPUT_NAME_LEN)
