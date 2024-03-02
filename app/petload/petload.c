@@ -161,7 +161,7 @@ static void send_data_ready_pulse()
 /**
  * - Bit nrs. given: MSB -> 7 6 5 4 3 2 1 0 <- LSB
  */
-static uint8_t retrieve_bit(int const bit_nr)
+static uint8_t retrieve_bit(int const bit_nr, bool (*is_stop_requested)())
 {
     bool const even_bit = bit_nr % 2 == 0,
         wait_for_val = even_bit
@@ -185,7 +185,11 @@ static uint8_t retrieve_bit(int const bit_nr)
         even_bit, // Make sure on rise (faster than fall time),
                    // no need to make sure on fall.
 #endif //MT_LINUX
-        0);
+        is_stop_requested); // (to support stop before WHOLE receival, only)
+    if(is_stop_requested != 0 && is_stop_requested())
+    {
+        return 0;
+    }
 
     s_send_expected_data_ack_level = gpio_read(s_data_from_pet);
     //
@@ -193,7 +197,6 @@ static uint8_t retrieve_bit(int const bit_nr)
     //
     // (because data-from-pet line used here during retrieval
     //  and data-ack.-from-pet line used during send are both using WRITE)
-
 
     // Send data-ack to Commodore:
     //
@@ -224,7 +227,7 @@ static uint8_t retrieve_byte()
 //        console_write_byte_dec((uint8_t)i);
 //        console_writeline("..");
 //#endif //NDEBUG
-        ret_val |= retrieve_bit(i) << i;
+        ret_val |= retrieve_bit(i, 0) << i;
     }
     return ret_val;
 }
