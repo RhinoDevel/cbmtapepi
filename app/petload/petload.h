@@ -11,7 +11,9 @@
  *  parameter).
  */
 void petload_wait_for_data_ready_val(
-    bool const wait_for_val, bool const do_make_sure);
+    bool const wait_for_val, 
+    bool const do_make_sure,
+    bool (*is_stop_requested)());
 
 /** Return C64 fast loader, stored at top of highest free memory.
  *

@@ -180,11 +180,12 @@ static uint8_t retrieve_bit(int const bit_nr)
         // TODO: Fix this correctly (at least) for Linux port (2/2):
         //
 #ifdef MT_LINUX
-        true);
+        true,
 #else //MT_LINUX
-        even_bit); // Make sure on rise (faster than fall time),
+        even_bit, // Make sure on rise (faster than fall time),
                    // no need to make sure on fall.
 #endif //MT_LINUX
+        0);
 
     s_send_expected_data_ack_level = gpio_read(s_data_from_pet);
     //
@@ -348,7 +349,9 @@ static struct tape_input * create_tom(
 }
 
 void petload_wait_for_data_ready_val(
-    bool const wait_for_val, bool const do_make_sure)
+    bool const wait_for_val,
+    bool const do_make_sure,
+    bool (*is_stop_requested)())
 {
     assert(s_data_ready_from_pet == MT_TAPE_GPIO_PIN_NR_MOTOR);
 
@@ -365,7 +368,7 @@ void petload_wait_for_data_ready_val(
                 ? pause_rise_microseconds
                 : pause_fall_microseconds)
             : 0,
-        0);
+        is_stop_requested);
 }
 
 struct tape_input * petload_create_v1()

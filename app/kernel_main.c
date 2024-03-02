@@ -753,7 +753,7 @@ void __attribute__((interrupt("IRQ"))) handler_irq()
                             //     // (SENSE set to HIGH will trigger CBM OS's IRQ routine to set
                             //     // MOTOR signal to LOW again):
                             //     //
-                            //     petload_wait_for_data_ready_val(false, false);
+                            //     petload_wait_for_data_ready_val(false, false, 0);
                             // }
 
                             break;
