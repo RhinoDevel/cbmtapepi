@@ -216,7 +216,7 @@ static void send_bit(uint8_t const bit, bool const is_even_bit)
     wait_for_data_ack(is_even_bit);
 }
 
-static uint8_t retrieve_byte()
+static uint8_t retrieve_byte(bool (*is_stop_requested)())
 {
     uint8_t ret_val = 0;
 
@@ -227,7 +227,14 @@ static uint8_t retrieve_byte()
 //        console_write_byte_dec((uint8_t)i);
 //        console_writeline("..");
 //#endif //NDEBUG
-        ret_val |= retrieve_bit(i, 0) << i;
+        const uint8_t bit = retrieve_bit(i, 0);
+
+    	if(is_stop_requested != 0 && is_stop_requested())
+        {
+            return 0;
+        }
+
+        ret_val |= bit << i;
     }
     return ret_val;
 }
@@ -464,7 +471,7 @@ struct tape_input * petload_retrieve()
 
     for(uint32_t i = 0;i < MT_TAPE_INPUT_NAME_LEN;++i)
     {
-        ret_val->name[i] = retrieve_byte();
+        ret_val->name[i] = retrieve_byte(0);
     }
 #ifndef NDEBUG
     {
@@ -479,8 +486,8 @@ struct tape_input * petload_retrieve()
     }
 #endif //NDEBUG
 
-    ret_val->addr = (uint16_t)retrieve_byte();
-    ret_val->addr |= (uint16_t)retrieve_byte() << 8;
+    ret_val->addr = (uint16_t)retrieve_byte(0);
+    ret_val->addr |= (uint16_t)retrieve_byte(0) << 8;
 #ifndef NDEBUG
     console_write("petload_retrieve : Retrieved address 0x");
     console_write_word(ret_val->addr);
@@ -490,8 +497,8 @@ struct tape_input * petload_retrieve()
     {
         uint16_t lim = 0;
 
-        lim = (uint16_t)retrieve_byte();
-        lim |= (uint16_t)retrieve_byte() << 8;
+        lim = (uint16_t)retrieve_byte(0);
+        lim |= (uint16_t)retrieve_byte(0) << 8;
 
         ret_val->len = lim - ret_val->addr;
 
@@ -506,7 +513,7 @@ struct tape_input * petload_retrieve()
         ret_val->bytes = alloc_alloc(ret_val->len * sizeof *ret_val->bytes);
         for(uint16_t i = 0;i < ret_val->len; ++i)
         {
-            ret_val->bytes[i] = retrieve_byte();
+            ret_val->bytes[i] = retrieve_byte(0);
         }
 #ifndef NDEBUG
         console_writeline("petload_retrieve : Retrieved payload byte(-s).");
