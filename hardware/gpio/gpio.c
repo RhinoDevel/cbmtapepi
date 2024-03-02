@@ -338,17 +338,22 @@ void gpio_wait_for_high(uint32_t const pin_nr, bool (*is_stop_requested)())
 void gpio_wait_for(
     uint32_t const pin_nr,
     bool const val,
-    uint32_t const max_change_microseconds)
+    uint32_t const max_change_microseconds,
+    bool (*is_stop_requested)())
 {
     while(true)
     {
         if(val)
         {
-            gpio_wait_for_high(pin_nr, 0);
+            gpio_wait_for_high(pin_nr, is_stop_requested);
         }
         else
         {
-            gpio_wait_for_low(pin_nr, 0);
+            gpio_wait_for_low(pin_nr, is_stop_requested);
+        }
+        if(is_stop_requested != 0 && is_stop_requested())
+        {
+            break;
         }
 
         if(max_change_microseconds == 0)

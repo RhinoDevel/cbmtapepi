@@ -116,7 +116,9 @@ static void wait_for_data_ack(bool const is_even_bit)
         // (inverted, because circuit inverts signal to CBM)
 
             ? pause_rise_microseconds
-            : pause_fall_microseconds));
+            : pause_fall_microseconds),
+
+        0);
 
     s_send_expected_data_ack_level = !s_send_expected_data_ack_level;
 }
@@ -362,7 +364,8 @@ void petload_wait_for_data_ready_val(
             ? (wait_for_val
                 ? pause_rise_microseconds
                 : pause_fall_microseconds)
-            : 0);
+            : 0,
+        0);
 }
 
 struct tape_input * petload_create_v1()
@@ -431,7 +434,8 @@ struct tape_input * petload_retrieve()
     gpio_wait_for(
         s_data_ready_from_pet,
         s_data_ready_from_pet_default_level,
-        2 * s_motor_fall_microseconds);
+        2 * s_motor_fall_microseconds,
+        0);
 
     struct tape_input * ret_val = alloc_alloc(sizeof *ret_val);
 
