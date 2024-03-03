@@ -1166,6 +1166,13 @@ static bool exec(int const argc, char * const argv[])
             }
             return send_file(argv[2]);
         }
+        
+        case 'f':
+        {
+            fast_mode_detected = true; // (cheating..)
+            mode = mode_type_c64tom;
+            break; 
+        }
 
         case 'u':
         {
@@ -1240,6 +1247,8 @@ static bool exec(int const argc, char * const argv[])
 exec_done_show_options:
     console_writeline(
         "s <filename> = Send file via compatibility mode once."
+        "\n"
+        "f = Enter (C64 TOM) fast mode immediately."
         "\n"
         "u = Send C64 TOM wedge via compatibility mode in a loop."
         "\n"
