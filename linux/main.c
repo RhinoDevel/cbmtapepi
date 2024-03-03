@@ -412,7 +412,7 @@ static enum send_cbs_result send_cbs(
     }
     ProgressBar_print( // Cheating..
         1, header_cbs_count, header_cbs_count, s_progress_bar_len, true);
-    printf("\n");
+    console_writeline("");
 
     // [dma_stop() must not be called, here (maybe improve this, later..)]
 
@@ -503,7 +503,7 @@ static enum send_cbs_result send_cbs(
     }
     ProgressBar_print( // Cheating..
         1, content_cbs_count, content_cbs_count, s_progress_bar_len, true);
-    printf("\n");
+    console_writeline("");
 
     console_deb_writeline("send_cbs: Sending done.");
     assert(ret_val == send_cbs_result_invalid);
