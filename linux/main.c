@@ -272,6 +272,24 @@ static uint8_t* create_symbols_from_file(
 // The following is used to detect the fast-mode-wedge-got-loaded signal the
 // Commodore is sending to the Pi (see kernel_main.c for details).
 //
+// Currently (2024mar03) you need to enable the kernel overlay gpio-no-irq,
+// e.g. via calling
+//
+// sudo dtoverlay gpio-no-irq
+//
+// before starting CBM Tape Pi or alternatively add
+//
+// dtoverlay=gpio-no-irq
+//
+// to content of file
+//
+// /boot/config.txt
+//
+// .
+// 
+// Otherwise the GPIO interrupt will cause Linux to
+// freeze (see https://github.com/raspberrypi/linux/issues/2550).
+//
 static uint64_t get_tick_us()
 {
     struct timespec ts;
