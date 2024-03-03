@@ -106,7 +106,7 @@ static uint8_t* load(
 {
     assert(out_byte_count != 0);
 
-    *out_byte_count = -1;
+    *out_byte_count = 0;
 
     off_t const signed_size = get_size(full_path);
 
