@@ -805,7 +805,10 @@ static bool send_bytes(
     console_writeline("");
 
     cbs = dma_init(
-        113640, // 2 x 88 us = 176 us <-> 5682 Hz => 2 x 5682 Hz = 11364 Hz
+        // Slowed this down a bit to make it work reliably on a C64 (no problems on 3032):
+        //
+        110000,//113640, // 2 x 88 us = 176 us <-> 5682 Hz => 2 x 5682 Hz = 11364 Hz
+
         20, // 11364 Hz / 2 = 5682 Hz <-> 176 us = 2 x 88 us
         max_byte_count);
     if(cbs == NULL)
