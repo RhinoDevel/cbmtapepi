@@ -1,5 +1,5 @@
 # CBM Tape Pi for Linux OS (e.g. Raspbian)
-*Marcel Timm, RhinoDevel, 2024, [rhinodevel.com](http://rhinodevel.com/)*
+*Marcel Timm, RhinoDevel, 2025, [rhinodevel.com](http://rhinodevel.com/)*
 
 This folder contains the source code of the Linux OS port of CBM Tape Pi which
 has work-in-progress state.
@@ -12,7 +12,10 @@ met, because the Linux OS scheduler interrupts sending the signal.
 
 But it can be done with DMA, which is finally **implemented**!!
 
-### Current state (March 3., 2024):
+If you want to compile it yourself (there is no release, yet), do not forget to
+set the version of the Raspberry Pi you are building for in the file [peribase.h](../hardware/peribase.h).
+
+### Current state (January 17., 2025):
 
 - Sending program files to the Commodore works (tested with PET 3032, BASIC v4
   and C64).
